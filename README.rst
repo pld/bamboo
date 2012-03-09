@@ -14,3 +14,10 @@ Install the requirements:
     cd bamboo
 
     pip install -r requirements.pip
+
+Running
+=======
+
+    [start mongodb on localhost and standard port]
+
+    python bamboo.py
