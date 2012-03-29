@@ -4,5 +4,4 @@ from pymongo import Connection
 _connection = Connection()
 _db = _connection.bamboo
 
-@property
 def db(): return _db
