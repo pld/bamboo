@@ -1,3 +1,9 @@
+Dependencies
+------------
+
+* python
+* mongodb
+
 Installation
 ============
 
