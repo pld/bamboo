@@ -1,8 +1,8 @@
-import numpy
+import numpy as np
 
 
 def summary_stats(dtype, data):
     return {
-        numpy.object_: data.value_counts(),
-        numpy.float64: data.describe(),
+        np.object_: data.value_counts(),
+        np.float64: data.describe(),
     }.get(dtype.type, None)
