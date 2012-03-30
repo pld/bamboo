@@ -5,13 +5,12 @@ import cherrypy
 from pandas import read_csv
 
 from db import db
-from utils import df_for_mongo
+from stats import summary_stats
+from utils import df_to_mongo, mongo_to_df
 
 SOURCE = '_source'
 
 class Collection(object):
-
-    collections = db().collections
 
     def __init__(self):
         pass
@@ -20,8 +19,13 @@ class Collection(object):
 
     def GET(self, d=None):
         if d:
+            # query for data related to d
             r = [x for x in db().collections.find({SOURCE: d})]
-            return json.dumps(r)
+            df = mongo_to_df(r)
+            # calculate summary statistics
+            dtypes = df.dtypes
+            stats = [summary_stats(dtypes[c], i) for c, i in df.iteritems()]
+            # TODO return summary statistics
         return 'Ohai World!'
 
     def POST(self, d=None):
@@ -29,7 +33,7 @@ class Collection(object):
             if 'http://' in d or 'https://' in d:
                 f = urllib2.urlopen(d)
                 df = read_csv(f, na_values=['n/a'])
-                j = df_for_mongo(df)
+                j = df_to_mongo(df)
                 # add metadata to file
                 for e in j:
                     e[SOURCE] = d
