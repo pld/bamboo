@@ -1,5 +1,6 @@
 from math import isnan
 
+import numpy as np
 from pandas import DataFrame
 
 
@@ -15,6 +16,8 @@ def is_float_nan(n):
 def get_json_value(v):
     if is_float_nan(v):
         return JSON_NULL
+    if isinstance(v, np.int):
+        return int(v)
     return v
 
 
@@ -45,7 +48,7 @@ def encode_key_for_mongo(k):
 
 
 def series_to_json(s):
-    return dict([(k, get_json_value(v)) for k, v in s.iteritems()])
+    return s if s is None else dict([(k, get_json_value(v)) for k, v in s.iteritems()])
 
 
 def df_to_json(df):

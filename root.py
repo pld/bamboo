@@ -1,2 +1,6 @@
 class Root(object):
-    pass
+
+    exposed = True
+
+    def GET(self):
+        return 'Ohai World!'

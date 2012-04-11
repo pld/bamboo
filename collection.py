@@ -6,7 +6,7 @@ from pandas import read_csv
 
 from db import db
 from stats import summary_stats
-from utils import df_to_mongo, mongo_to_df
+from utils import df_to_mongo, mongo_to_df, series_to_json
 
 SOURCE = '_source'
 
@@ -24,8 +24,8 @@ class Collection(object):
             df = mongo_to_df(r)
             # calculate summary statistics
             dtypes = df.dtypes
-            stats = [summary_stats(dtypes[c], i) for c, i in df.iteritems()]
-            # TODO return summary statistics
+            stats = [series_to_json(summary_stats(dtypes[c], i)) for c, i in df.iteritems()]
+            return json.dumps(stats)
         return 'Ohai World!'
 
     def POST(self, d=None):
