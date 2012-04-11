@@ -4,6 +4,7 @@ import numpy as np
 from pandas import DataFrame
 
 
+SOURCE = '_source'
 MONGO_RESERVED_KEYS = ['_id']
 MONGO_RESERVED_KEY_PREFIX = 'MONGO_RESERVED_KEY_'
 JSON_NULL = 'null'
