@@ -15,13 +15,13 @@ class Calculate(object):
 
     def GET(self, id=None):
         if id:
-            # query for data related to d
+            # query for data related to id
             r = [x for x in db().collections.find({SOURCE: id})]
             df = mongo_to_df(r)
             # calculate summary statistics
             dtypes = df.dtypes
-            df_iter = df.iteritems()
-            stats = filter(None, [
-                series_to_json(summary_stats(dtypes[c], i)) for c, i in df_iter
+            stats = filter(lambda d: d.values()[0] is not None, [
+                {c: series_to_json(summary_stats(dtypes[c], i))}
+                        for c, i in df.iteritems()
             ])
             return json.dumps(stats)
