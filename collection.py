@@ -4,8 +4,9 @@ import urllib2
 import cherrypy
 from pandas import read_csv
 
+from constants import SOURCE
 from db import db
-from utils import df_to_mongo, mongo_to_json, SOURCE
+from utils import df_to_mongo, mongo_to_json
 
 class Collection(object):
 

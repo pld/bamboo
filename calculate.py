@@ -2,9 +2,10 @@ import json
 
 import cherrypy
 
+from constants import DATA, NAME, SOURCE
 from db import db
 from stats import summary_stats
-from utils import mongo_to_df, series_to_json, SOURCE
+from utils import mongo_to_df, series_to_json
 
 class Calculate(object):
 
@@ -20,8 +21,9 @@ class Calculate(object):
             df = mongo_to_df(r)
             # calculate summary statistics
             dtypes = df.dtypes
-            stats = filter(lambda d: d.values()[0] is not None, [
-                {c: series_to_json(summary_stats(dtypes[c], i))}
+            # TODO: filter out those w/only null data
+            stats = [
+                {NAME: c, DATA: series_to_json(summary_stats(dtypes[c], i))}
                         for c, i in df.iteritems()
-            ])
+            ]
             return json.dumps(stats)
