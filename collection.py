@@ -27,8 +27,9 @@ class Collection(object):
         Execute query 'query' in mongo if passed.
         '''
         if id:
-            json_str = mongo_to_json(db().collections.find({SOURCE: id}))
-            raise Exception(json_str)
+            json_str = mongo_to_json([
+                r for r in db().collections.find({SOURCE: id})
+            ])
             return json.dumps(json_str)
 
     def POST(self, url=None, data=None):
