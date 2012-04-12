@@ -22,8 +22,8 @@ class Calculate(object):
             # calculate summary statistics
             dtypes = df.dtypes
             # TODO: filter out those w/only null data
-            stats = [
+            stats = filter(lambda d: d[DATA] and len(d[DATA]), [
                 {NAME: c, DATA: series_to_json(summary_stats(dtypes[c], i))}
                         for c, i in df.iteritems()
-            ]
+            ])
             return json.dumps(stats)
