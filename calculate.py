@@ -20,5 +20,8 @@ class Calculate(object):
             df = mongo_to_df(r)
             # calculate summary statistics
             dtypes = df.dtypes
-            stats = [series_to_json(summary_stats(dtypes[c], i)) for c, i in df.iteritems()]
+            df_iter = df.iteritems()
+            stats = filter(None, [
+                series_to_json(summary_stats(dtypes[c], i)) for c, i in df_iter
+            ])
             return json.dumps(stats)
