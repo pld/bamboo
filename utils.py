@@ -22,7 +22,7 @@ def get_json_value(v):
 
 
 def df_to_mongo(df):
-    df = df_to_json(df)
+    df = df_to_jsondict(df)
     for e in df:
         for k, v in e.items():
             if k in MONGO_RESERVED_KEYS:
@@ -32,10 +32,10 @@ def df_to_mongo(df):
 
 
 def mongo_to_df(m):
-    return DataFrame(mongo_to_json(m))
+    return DataFrame(mongo_to_jsondict(m))
 
 
-def mongo_to_json(m):
+def mongo_to_jsondict(m):
     for e in m:
         for k, v in e.items():
             if k in MONGO_RESERVED_KEYS:
@@ -47,9 +47,9 @@ def encode_key_for_mongo(k):
     return '%s%s' % (MONGO_RESERVED_KEY_PREFIX, k)
 
 
-def series_to_json(s):
+def series_to_jsondict(s):
     return s if s is None else dict([(k, get_json_value(v)) for k, v in s.iteritems()])
 
 
-def df_to_json(df):
-    return [series_to_json(s) for i, s in df.iterrows()]
+def df_to_jsondict(df):
+    return [series_to_jsondict(s) for i, s in df.iterrows()]

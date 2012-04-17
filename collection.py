@@ -6,7 +6,7 @@ from pandas import read_csv
 
 from constants import SOURCE
 from db import db
-from utils import df_to_mongo, mongo_to_json
+from utils import df_to_mongo, mongo_to_jsondict
 
 class Collection(object):
 
@@ -29,7 +29,7 @@ class Collection(object):
         Execute query 'query' in mongo if passed.
         '''
         if id:
-            json_str = mongo_to_json([
+            json_str = mongo_to_jsondict([
                 r for r in db().collections.find({SOURCE: id})
             ])
             return json.dumps(json_str)

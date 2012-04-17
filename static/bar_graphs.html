@@ -18,6 +18,9 @@
             }
 
             d3.json(json_url, function(dataset) {
+                /* TODO deal with non-all elements */
+                dataset = dataset['(ALL)'];
+
                 var parentGraphDiv = document.getElementById('graph');
                 for (var data_key in dataset) {
                 data_element = dataset[data_key];
