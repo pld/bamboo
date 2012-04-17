@@ -2,9 +2,9 @@ import json
 
 import cherrypy
 
-from constants import DATA, NAME, SOURCE
+from constants import SOURCE
 from db import db
-from stats import summary_stats, calculate_group
+from stats import summarize_df 
 from utils import mongo_to_df, series_to_json
 
 class Calculate(object):
@@ -19,12 +19,9 @@ class Calculate(object):
             # query for data related to id
             r = [x for x in db().collections.find({SOURCE: id})]
             df = mongo_to_df(r)
-            dtypes = df.dtypes
             if group:
-                df = calculate_group(df, dtypes, group)
+                stats = series_to_json(df.groupby(group).apply(summarize_df))
             # calculate summary statistics
-            stats = filter(lambda d: d[DATA] and len(d[DATA]), [
-                {NAME: c, DATA: series_to_json(summary_stats(dtypes[c], i))}
-                        for c, i in df.iteritems()
-            ])
+            else: 
+                stats = summarize_df(df)
             return json.dumps(stats)
