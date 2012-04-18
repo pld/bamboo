@@ -5,9 +5,9 @@ from bson import json_util
 import cherrypy
 from pandas import read_csv
 
-from constants import SOURCE
+from constants import BAMBOO_ID, SOURCE
 from db import db
-from utils import df_to_mongo, mongo_encode_keys
+from utils import df_to_mongo, mongo_decode_keys, df_to_hexdigest
 
 class Collection(object):
 
@@ -30,8 +30,8 @@ class Collection(object):
         Execute query 'query' in mongo if passed.
         '''
         if id:
-            json_str = mongo_encode_keys([
-                r for r in db().collections.find({SOURCE: id})
+            json_str = mongo_decode_keys([
+                r for r in db().collections.find({BAMBOO_ID: id})
             ])
             return json.dumps(json_str, default=json_util.default)
 
@@ -43,10 +43,14 @@ class Collection(object):
         if url and 'http://' in url or 'https://' in url:
             f = urllib2.urlopen(url)
             df = read_csv(f, na_values=['n/a'])
-            j = df_to_mongo(df)
-            # add metadata to file
-            for e in j:
-                e[SOURCE] = url
-            # insert data into collections
-            db().collections.insert(j)
-            return json.dumps({'id': url})
+            digest = df_to_hexdigest(df)
+            num_rows_with_digest = db().collections.find({BAMBOO_ID: digest}).count()
+            if not num_rows_with_digest:
+                df = df_to_mongo(df)
+                # add metadata to file
+                for e in df:
+                    e[BAMBOO_ID] = digest
+                    e[SOURCE] = url
+                # insert data into collections
+                db().collections.insert(df)
+            return json.dumps({'id': digest})

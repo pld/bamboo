@@ -2,7 +2,7 @@ import json
 
 import cherrypy
 
-from constants import SOURCE
+from constants import BAMBOO_ID
 from db import db
 from stats import summarize_df
 from utils import mongo_to_df, series_to_jsondict
@@ -17,7 +17,7 @@ class Calculate(object):
     def GET(self, id=None, group=None):
         if id:
             # query for data related to id
-            r = [x for x in db().collections.find({SOURCE: id})]
+            r = [x for x in db().collections.find({BAMBOO_ID: id})]
             df = mongo_to_df(r)
             # calculate summary statistics
             stats = {"(ALL)" : summarize_df(df)}

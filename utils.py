@@ -1,12 +1,10 @@
+import hashlib
 from math import isnan
 
 import numpy as np
 from pandas import DataFrame
 
-
-MONGO_RESERVED_KEYS = ['_id']
-MONGO_RESERVED_KEY_PREFIX = 'MONGO_RESERVED_KEY_'
-JSON_NULL = 'null'
+from constants import BAMBOO_ID, DEFAULT_HASH_ALGORITHM, JSON_NULL, MONGO_RESERVED_KEYS, MONGO_RESERVED_KEY_PREFIX
 
 
 def is_float_nan(n):
@@ -35,12 +33,17 @@ def mongo_to_df(m):
     return DataFrame(mongo_encode_keys(m))
 
 
-def mongo_encode_keys(m):
-    for e in m:
-        for k, v in e.items():
+def mongo_decode_keys(rows):
+    for row in rows:
+        del row[BAMBOO_ID]
+        for k, v in row.items():
             if k in MONGO_RESERVED_KEYS:
-                e[k] = e.pop(encode_key_for_mongo(k))
-    return m
+                v = row.pop(encode_key_for_mongo(k))
+                if v != 'null':
+                    row[k] = v
+                else:
+                    del row[k]
+    return rows
 
 
 def encode_key_for_mongo(k):
@@ -53,3 +56,9 @@ def series_to_jsondict(s):
 
 def df_to_jsondict(df):
     return [series_to_jsondict(s) for i, s in df.iterrows()]
+
+
+def df_to_hexdigest(df, algo=DEFAULT_HASH_ALGORITHM):
+    h = hashlib.new(algo)
+    h.update(df.to_string())
+    return h.hexdigest()
