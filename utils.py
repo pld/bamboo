@@ -32,10 +32,10 @@ def df_to_mongo(df):
 
 
 def mongo_to_df(m):
-    return DataFrame(mongo_to_jsondict(m))
+    return DataFrame(mongo_encode_keys(m))
 
 
-def mongo_to_jsondict(m):
+def mongo_encode_keys(m):
     for e in m:
         for k, v in e.items():
             if k in MONGO_RESERVED_KEYS:

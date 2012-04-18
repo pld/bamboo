@@ -1,12 +1,13 @@
 import json
 import urllib2
 
+from bson import json_util
 import cherrypy
 from pandas import read_csv
 
 from constants import SOURCE
 from db import db
-from utils import df_to_mongo, mongo_to_jsondict
+from utils import df_to_mongo, mongo_encode_keys
 
 class Collection(object):
 
@@ -29,10 +30,10 @@ class Collection(object):
         Execute query 'query' in mongo if passed.
         '''
         if id:
-            json_str = mongo_to_jsondict([
+            json_str = mongo_encode_keys([
                 r for r in db().collections.find({SOURCE: id})
             ])
-            return json.dumps(json_str)
+            return json.dumps(json_str, default=json_util.default)
 
     def POST(self, url=None, data=None):
         '''
