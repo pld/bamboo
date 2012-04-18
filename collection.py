@@ -44,7 +44,8 @@ class Collection(object):
             f = urllib2.urlopen(url)
             df = read_csv(f, na_values=['n/a'])
             digest = df_to_hexdigest(df)
-            num_rows_with_digest = db().collections.find({BAMBOO_ID: digest}).count()
+            num_rows_with_digest = db().collections.find(
+                    {BAMBOO_ID: digest}).count()
             if not num_rows_with_digest:
                 df = df_to_mongo(df)
                 # add metadata to file
