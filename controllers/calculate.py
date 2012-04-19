@@ -4,7 +4,7 @@ import cherrypy
 
 from lib.constants import BAMBOO_ID
 from config.db import db
-from stats import summarize_df
+from lib.stats import summarize_df
 from lib.utils import mongo_to_df, series_to_jsondict
 
 class Calculate(object):
