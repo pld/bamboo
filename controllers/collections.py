@@ -8,7 +8,7 @@ from pandas import read_csv
 from config.db import db
 from lib.constants import BAMBOO_ID, SOURCE
 from lib.utils import df_to_mongo, mongo_decode_keys, df_to_hexdigest
-import models.collection
+from models import collection
 
 class Collections(object):
 
@@ -18,37 +18,28 @@ class Collections(object):
     exposed = True
 
     def DELETE(self, id=None):
-        '''
+        """
         Delete id 'id' from mongo
-        '''
+        """
         if id:
             db().collections.remove({SOURCE: id})
             return 'deleted id: %s' % id
 
     def GET(self, id=None, format='json', query=None):
-        '''
+        """
         Return data set for id 'id' in format 'format'.
         Execute query 'query' in mongo if passed.
-        '''
-        if query:
-            try:
-                query = json.loads(query, object_hook=json_util.object_hook)
-            except ValueError, e:
-                return e.message
-        else:
-            query = {}
+        """
         if id:
-            query[BAMBOO_ID] = id
-            json_str = mongo_decode_keys([
-                r for r in db().collections.find(query)
-            ])
-            return json.dumps(json_str, default=json_util.default)
+            rows =  mongo_decode_keys(collection.get(id, query))
+            return json.dumps(rows, default=json_util.default)
+        return 'id parameter required'
 
     def POST(self, url=None, data=None):
-        '''
+        """
         Read data from URL 'url'.
         If URL is not provided and data is provided, read posted data 'data'.
-        '''
+        """
         if url and 'http://' in url or 'https://' in url:
             f = urllib2.urlopen(url)
             df = read_csv(f, na_values=['n/a'])
