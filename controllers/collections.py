@@ -5,11 +5,12 @@ from bson import json_util
 import cherrypy
 from pandas import read_csv
 
-from constants import BAMBOO_ID, SOURCE
-from db import db
-from utils import df_to_mongo, mongo_decode_keys, df_to_hexdigest
+from config.db import db
+from lib.constants import BAMBOO_ID, SOURCE
+from lib.utils import df_to_mongo, mongo_decode_keys, df_to_hexdigest
+import models.collection
 
-class Collection(object):
+class Collections(object):
 
     def __init__(self):
         pass
@@ -29,9 +30,17 @@ class Collection(object):
         Return data set for id 'id' in format 'format'.
         Execute query 'query' in mongo if passed.
         '''
+        if query:
+            try:
+                query = json.loads(query, object_hook=json_util.object_hook)
+            except ValueError, e:
+                return e.message
+        else:
+            query = {}
         if id:
+            query[BAMBOO_ID] = id
             json_str = mongo_decode_keys([
-                r for r in db().collections.find({BAMBOO_ID: id})
+                r for r in db().collections.find(query)
             ])
             return json.dumps(json_str, default=json_util.default)
 

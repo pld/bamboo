@@ -18,7 +18,7 @@ def summarize_series(dtype, data):
 
 def summarize_df(df):
     dtypes = df.dtypes
-    return filter(lambda d: d[DATA] and len(d[DATA]), [
-                {NAME: c, DATA: series_to_jsondict(summarize_series(dtypes[c], i))}
-                        for c, i in df.iteritems()
-            ])
+    return filter(lambda d: d[DATA] and len(d[DATA]), [{
+                NAME: c,
+                DATA: series_to_jsondict(summarize_series(dtypes[c], i))
+    } for c, i in df.iteritems()])

@@ -30,7 +30,7 @@ def df_to_mongo(df):
 
 
 def mongo_to_df(m):
-    return DataFrame(mongo_encode_keys(m))
+    return DataFrame(mongo_decode_keys(m))
 
 
 def mongo_decode_keys(rows):
