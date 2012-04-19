@@ -49,8 +49,24 @@ class Collections(object):
         Read data from URL 'url'.
         If URL is not provided and data is provided, read posted data 'data'.
         '''
-        if url and 'http://' in url or 'https://' in url:
-            f = urllib2.urlopen(url)
+        def open_data_file(url):
+            import re
+            open_url = lambda url: urllib2.urlopen(url)
+            protocols = {
+                'http':  open_url,
+                'https': open_url,
+                'file':  lambda path: path,
+            }
+            regex = re.compile(
+                '^(?P<url>(?P<protocol>%s):\/\/(?P<path>.+))$' \
+                % '|'.join(protocols)
+            )
+            match = re.match(regex, url)
+            if match:
+                protocols[match.groupdict()['protocol']](url)
+            return None
+        f = open_data_file(url)
+        if f:
             df = read_csv(f, na_values=['n/a'])
             digest = df_to_hexdigest(df)
             num_rows_with_digest = db().collections.find(
