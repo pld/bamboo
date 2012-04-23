@@ -1,13 +1,19 @@
 <html>
     <head>
         <title>Polychart Test</title>
-        <link rel="stylesheet" href="static/tabs.css" type="text/css" media="screen" />
+        <link rel="stylesheet" href="bootstrap.2.0.2/css/bootstrap.min.css" type="text/css" media="screen" />
         <script src="js/polychart.standalone.0.0.2.min.js"></script>
+        <script src="js/jquery-1.7.2.min.js"></script>
+        
+        <script src="bootstrap.2.0.2/js/bootstrap-tab.js"></script>
     </head>
     <body>
-        <div id="graph" ></div>
+        <div id="graphs">
+            <ul id="tabs" class="nav nav-tabs"></ul>
+            <div id="content"></div>
+        </div>
         <script type="text/javascript">
-            var json_url = 'http://localhost:8080/calculate?id=http://formhub.org/education/forms/schooling_status_format_18Nov11/data.csv';
+            var json_url = 'http://localhost:8080/calculate?id=54a35eb05915ad63266d0700c77412d31ada3797&group=learning_levels_reading_nothing';
             function makeTitle(slug) {
                     var words = slug.split('_');
                     for(var i = 0; i < words.length; i++) {
@@ -17,40 +23,56 @@
                     return words.join(' ');
             }
 
-            d3.json(json_url, function(dataset) {
-                /* TODO deal with non-all elements */
-                dataset = dataset['(ALL)'];
+            d3.json(json_url, function(datasets) {
+                var grandParentDiv = document.getElementById('graphs');
+                var contentDiv = document.getElementById('content');
+                $(contentDiv).addClass('tab-content');
+                var tabsDiv = document.getElementById('tabs');
+                _.each(datasets, function(val, key) { 
+                    dataset = val;
 
-                var parentGraphDiv = document.getElementById('graph');
-                for (var data_key in dataset) {
-                data_element = dataset[data_key];
-                /* TODO replace using the form schema */
-                data_element.titleName = makeTitle(data_element.name);
+                    var parentDiv = document.createElement('div');
+                    parentDiv.setAttribute('id', key);
+                    $(parentDiv).addClass('tab-pane');
+                    contentDiv.appendChild(parentDiv);
 
-                    var thisGraphDiv = document.createElement('div');
-                    parentGraphDiv.appendChild(thisGraphDiv);
-                    
-                    var data = data_element.data;
-                    var datasize = _.size(data);
-                    if(datasize == 0 || data_element.name.charAt(0)=='_') {
-                        /*thisGraphDiv.textContent = data_element.titleName + " : 0 responses";*/
-                        continue;
-                    } else if (datasize == 1) {
-                        thisGraphDiv.textContent = data_element.titleName + " : " + _.values(data)[0] + " responses: " + _.keys(data)[0];
-                    } else { 
-                        var key_val_separated = {'x': _.keys(data), 'y': _.values(data)};
-                        if (typeof (key_val_separated.y[0]) === "number") {
-                            /* if number make pure histogram */
-                            gg.graph(key_val_separated)
-                              .layer(gg.layer.bar()
-                              .map('x','x').map('y','y'))
-                              .opts({'width':'500', 'height':'400',
-                                     'padding-right':'90', 'title':data_element.titleName,
-                                     'legend-postion':'bottom'})
-                              .render(thisGraphDiv);
-                        } 
-                    }
-                };
+                    var li = $('<li />')
+                    $('<a />', {href: '#'+key})
+                            .text(key)
+                            .data('toggle', 'tab')
+                            .appendTo(li);
+                    li.appendTo(tabsDiv);
+
+                    for (var data_key in dataset) {
+                        data_element = dataset[data_key];
+                        /* TODO replace using the form schema */
+                        data_element.titleName = makeTitle(data_element.name);
+
+                        var thisDiv = document.createElement('div');
+                        parentDiv.appendChild(thisDiv);
+                        $(thisDiv).data('target', key);    
+                        var data = data_element.data;
+                        var datasize = _.size(data);
+                        if(datasize == 0 || data_element.name.charAt(0)=='_') {
+                            /*thisDiv.textContent = data_element.titleName + " : 0 responses";*/
+                            continue;
+                        } else if (datasize == 1) {
+                            thisDiv.textContent = data_element.titleName + " : " + _.values(data)[0] + " responses: " + _.keys(data)[0];
+                        } else { 
+                            var key_val_separated = {'x': _.keys(data), 'y': _.values(data)};
+                            if (typeof (key_val_separated.y[0]) === "number") {
+                                /* if number make pure histogram */
+                                gg.graph(key_val_separated)
+                                      .layer(gg.layer.bar()
+                                      .map('x','x').map('y','y'))
+                                      .opts({'width':'500', 'height':'400',
+                                             'padding-right':'90', 'title':data_element.titleName,
+                                             'legend-postion':'bottom'})
+                                      .render(thisDiv);
+                            } 
+                        }
+                    };
+                });
             });
         </script>
     </body>
