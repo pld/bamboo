@@ -22,8 +22,9 @@ class Collections(object):
         Delete id 'id' from mongo
         """
         if id:
-            db().collections.remove({SOURCE: id})
+            collection.delete(id)
             return 'deleted id: %s' % id
+        return 'id parameter required'
 
     def GET(self, id=None, format='json', query=None):
         """

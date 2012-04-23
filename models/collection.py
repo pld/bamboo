@@ -6,6 +6,10 @@ from config.db import db
 from lib.constants import BAMBOO_ID
 
 
+def delete(id):
+    db().collections.remove({BAMBOO_ID: id})
+
+
 def get(id, query):
     """
     Try to parse query if exists, then get all rows for ID matching query,
