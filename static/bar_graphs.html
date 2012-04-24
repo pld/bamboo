@@ -40,7 +40,7 @@
                     var li = $('<li />')
                     $('<a />', {href: '#'+key})
                             .text(key)
-                            .data('toggle', 'tab')
+                            .attr('data-toggle', 'tab')
                             .appendTo(li);
                     li.appendTo(tabsDiv);
 
