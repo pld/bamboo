@@ -17,6 +17,7 @@
             /* Assumes that you have run:
              curl -X POST -d "url=http://formhub.org/education/forms/schooling_status_format_18Nov11/data.csv" http://localhost:8080/collections
              */
+        $(function(){
             function makeTitle(slug) {
                     var words = slug.split('_');
                     for(var i = 0; i < words.length; i++) {
@@ -27,63 +28,68 @@
             }
 
             var json_url = 'http://localhost:8080/calculate?id=54a35eb05915ad63266d0700c77412d31ada3797&group=learning_levels_reading_nothing';
-            var contentDiv = document.getElementById('content');
-            var tabsDiv = document.getElementById('tabs');
+            var $contentDiv = $('#content');
+            var $tabsUl = $('#tabs');
             d3.json(json_url, function(datasets) {
 
+                _.each(datasets, function(dataset, key) { 
+                    // dataset = val;
+                    var $tabPane,
+                        $tabNavEl,
+                        dataElement,
+                        data,
+                        dataSize,
+                        dataKey,
+                        keyValSeparated,
+                        $thisDiv;
 
-                _.each(datasets, function(val, key) { 
-                    dataset = val;
                     if(key==="(ALL)") key = "_ALL_"; /* HACK: () don't sit well in anchor tags, apparently */
 
-                    var tab_nav_el = $('<li />');
-                    tab_nav_el.appendTo(tabsDiv);
+                    tabNavEl = $('<li />')
+                        .appendTo($tabsUl);
                     $('<a />', {href: '#'+key})
                             .text(key)
                             .attr('data-toggle', 'tab')
-                            .appendTo(tab_nav_el);
+                            .appendTo(tabNavEl);
 
-                    var parentDiv = document.createElement('div');
-                    $(parentDiv).attr('id', key)
-                                .addClass('tab-pane')
-                                .appendTo(contentDiv);
+                    $tabPane = $('<div />')
+                                  .attr('id', key)
+                                  .addClass('tab-pane')
+                                  .appendTo($contentDiv);
 
-                    for (var data_key in dataset) {
-                        data_element = dataset[data_key];
+                    for (dataKey in dataset) {
+                        dataElement = dataset[dataKey];
                         /* TODO replace using the form schema */
-                        data_element.titleName = makeTitle(data_element.name);
+                        dataElement.titleName = makeTitle(dataElement.name);
 
-                        var thisDiv = document.createElement('div');
-                        $(thisDiv).data('target', key)
-                               .appendTo(parentDiv);
+                        $thisDiv = $('<div />')
+                                      .data('target', key)
+                                      .appendTo($tabPane);
 
-                        var data = data_element.data;
-                        var datasize = _.size(data);
-                        if(datasize == 0 || data_element.name.charAt(0)=='_') {
-                            /*thisDiv.textContent = data_element.titleName + " : 0 responses";*/
+                        data = dataElement.data;
+                        dataSize = _.size(data);
+                        if(dataSize == 0 || dataElement.name.charAt(0)=='_') {
                             continue;
-                        } else if (datasize == 1) {
-                            thisDiv.textContent = data_element.titleName + " : " + _.values(data)[0] + " responses: " + _.keys(data)[0];
+                        } else if (dataSize == 1) {
+                          $thisDiv.text(dataElement.titleName + " : " + _.values(data)[0] + " responses: " + _.keys(data)[0])
                         } else { 
-                            var key_val_separated = {'x': _.keys(data), 'y': _.values(data)};
-                            if (typeof (key_val_separated.y[0]) === "number") {
+                            keyValSeparated = {'x': _.keys(data), 'y': _.values(data)};
+                            if (typeof (keyValSeparated.y[0]) === "number") {
                                 /* if number make pure histogram */
-                                gg.graph(key_val_separated)
+                                gg.graph(keyValSeparated)
                                       .layer(gg.layer.bar()
                                       .map('x','x').map('y','y'))
                                       .opts({'width':'500', 'height':'400',
-                                             'padding-right':'90', 'title':data_element.titleName,
+                                             'padding-right':'90', 'title':dataElement.titleName,
                                              'legend-postion':'bottom'})
-                                      .render(thisDiv);
+                                      .render($thisDiv.get(0));
                             } 
                         }
                     };
                 });
-                $(function () {
-                    $('#graphs a:last').tab('show');
-                    $('#tabs li:last').addClass('active');
-                });
+                $('#tabs a:last').tab('show');
             });
+          });
         </script>
     </body>
 </html>
