@@ -8,15 +8,14 @@
         <script src="bootstrap.2.0.2/js/bootstrap-tab.js"></script>
     </head>
     <body>
-        <div id="graphs">
+        <div id="graphs" class="tabbale">
             <ul id="tabs" class="nav nav-tabs"></ul>
-            <div id="content"></div>
+            <div id="content" class="tab-content"></div>
         </div>
         <script type="text/javascript">
             /* Assumes that you have run:
              curl -X POST -d "url=http://formhub.org/education/forms/schooling_status_format_18Nov11/data.csv" http://localhost:8080/collections
              */
-            var json_url = 'http://localhost:8080/calculate?id=54a35eb05915ad63266d0700c77412d31ada3797&group=learning_levels_reading_nothing';
             function makeTitle(slug) {
                     var words = slug.split('_');
                     for(var i = 0; i < words.length; i++) {
@@ -26,25 +25,27 @@
                     return words.join(' ');
             }
 
+            var json_url = 'http://localhost:8080/calculate?id=54a35eb05915ad63266d0700c77412d31ada3797&group=learning_levels_reading_nothing';
+            var contentDiv = document.getElementById('content');
+            var tabsDiv = document.getElementById('tabs');
             d3.json(json_url, function(datasets) {
-                var grandParentDiv = document.getElementById('graphs');
-                var contentDiv = document.getElementById('content');
-                $(contentDiv).addClass('tab-content');
-                var tabsDiv = document.getElementById('tabs');
+
+
                 _.each(datasets, function(val, key) { 
                     dataset = val;
+                    if(key==="(ALL)") key = "_ALL_"; /* HACK: () don't sit well in anchor tags, apparently */
 
-                    var parentDiv = document.createElement('div');
-                    parentDiv.setAttribute('id', key);
-                    $(parentDiv).addClass('tab-pane');
-                    contentDiv.appendChild(parentDiv);
-
-                    var li = $('<li />')
+                    var tab_nav_el = $('<li />');
+                    tab_nav_el.appendTo(tabsDiv);
                     $('<a />', {href: '#'+key})
                             .text(key)
-                            .data('toggle', 'tab')
-                            .appendTo(li);
-                    li.appendTo(tabsDiv);
+                            .attr('data-toggle', 'tab')
+                            .appendTo(tab_nav_el);
+
+                    var parentDiv = document.createElement('div');
+                    $(parentDiv).attr('id', key)
+                                .addClass('tab-pane')
+                                .appendTo(contentDiv);
 
                     for (var data_key in dataset) {
                         data_element = dataset[data_key];
@@ -52,8 +53,9 @@
                         data_element.titleName = makeTitle(data_element.name);
 
                         var thisDiv = document.createElement('div');
-                        parentDiv.appendChild(thisDiv);
-                        $(thisDiv).data('target', key);    
+                        $(thisDiv).data('target', key)
+                               .appendTo(parentDiv);
+
                         var data = data_element.data;
                         var datasize = _.size(data);
                         if(datasize == 0 || data_element.name.charAt(0)=='_') {
@@ -75,6 +77,10 @@
                             } 
                         }
                     };
+                });
+                $(function () {
+                    $('#graphs a:last').tab('show');
+                    $('#tabs li:last').addClass('active');
                 });
             });
         </script>
