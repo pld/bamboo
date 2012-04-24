@@ -14,6 +14,9 @@
             <div id="content"></div>
         </div>
         <script type="text/javascript">
+            /* Assumes that you have run:
+             curl -X POST -d "url=http://formhub.org/education/forms/schooling_status_format_18Nov11/data.csv" http://localhost:8080/collections
+             */
             var json_url = 'http://localhost:8080/calculate?id=54a35eb05915ad63266d0700c77412d31ada3797&group=learning_levels_reading_nothing';
             function makeTitle(slug) {
                     var words = slug.split('_');
