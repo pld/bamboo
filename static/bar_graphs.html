@@ -70,7 +70,7 @@
                         if(dataSize == 0 || dataElement.name.charAt(0)=='_') {
                             continue;
                         } else if (dataSize == 1) {
-                          $thisDiv.text(dataElement.titleName + " : " + _.values(data)[0] + " responses: " + _.keys(data)[0])
+                          $thisDiv.text(dataElement.titleName + " : " + _.values(data)[0] + " responses: " + _.keys(data)[0]);
                         } else { 
                             keyValSeparated = {'x': _.keys(data), 'y': _.values(data)};
                             if (typeof (keyValSeparated.y[0]) === "number") {
