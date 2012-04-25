@@ -14,7 +14,6 @@ def summarize_series(dtype, data):
         np.object_: parse_value_counts(data),
         np.float64: data.describe(),
     }.get(dtype.type, None)
-    return None
 
 def summarize_df(df):
     dtypes = df.dtypes
