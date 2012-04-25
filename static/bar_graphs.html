@@ -35,7 +35,6 @@
                 _.each(datasets, function(dataset, key) { 
                     // dataset = val;
                     var $tabPane,
-                        $tabNavEl,
                         dataElement,
                         data,
                         dataSize,
@@ -45,12 +44,13 @@
 
                     if(key==="(ALL)") key = "_ALL_"; /* HACK: () don't sit well in anchor tags, apparently */
 
-                    tabNavEl = $('<li />')
-                        .appendTo($tabsUl);
-                    $('<a />', {href: '#'+key})
-                            .text(key)
-                            .attr('data-toggle', 'tab')
-                            .appendTo(tabNavEl);
+                    $('<li />').html(
+                          $('<a />', {
+                              text: key,
+                              'data-toggle': 'tab',
+                              href: '#' + key
+                          })
+                        ).appendTo($tabsUl);
 
                     $tabPane = $('<div />')
                                   .attr('id', key)
