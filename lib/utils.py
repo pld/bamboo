@@ -1,4 +1,6 @@
+import re
 import hashlib
+import urllib2
 from math import isnan
 
 import numpy as np
@@ -62,3 +64,20 @@ def df_to_hexdigest(df, algo=DEFAULT_HASH_ALGORITHM):
     h = hashlib.new(algo)
     h.update(df.to_string())
     return h.hexdigest()
+
+def open_data_file(url):
+    open_url = lambda d: urllib2.urlopen(d['url'])
+    protocols = {
+        'http':  open_url,
+        'https': open_url,
+        'file':  lambda d: d['path'],
+    }
+    regex = re.compile(
+        '^(?P<url>(?P<protocol>%s):\/\/(?P<path>.+))$' \
+        % '|'.join(protocols.keys())
+    )
+    match = re.match(regex, url)
+    if match:
+        args = match.groupdict()
+        return protocols[args['protocol']](args)
+    return None
