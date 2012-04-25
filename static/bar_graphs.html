@@ -18,22 +18,21 @@
              curl -X POST -d "url=http://formhub.org/education/forms/schooling_status_format_18Nov11/data.csv" http://localhost:8080/collections
              */
         $(function(){
-            function makeTitle(slug) {
-                    var words = slug.split('_');
-                    for(var i = 0; i < words.length; i++) {
-                            var word = words[i];
-                            words[i] = word.charAt(0).toUpperCase() + word.slice(1);
-                    }
-                    return words.join(' ');
-            }
+          var jsonUrl = '/calculate?id=54a35eb05915ad63266d0700c77412d31ada3797&group=learning_levels_reading_nothing',
+              $tabsUl = $('#tabs'),
+              $contentDiv = $('#content'),
+              makeTitle = function (slug) {
+                var word, i, words = slug.split('_');
+                for(i = 0; i < words.length; i++) {
+                  word = words[i];
+                  words[i] = word.charAt(0).toUpperCase() + word.slice(1);
+                }
+                return words.join(' ');
+              };
 
-            var json_url = 'http://localhost:8080/calculate?id=54a35eb05915ad63266d0700c77412d31ada3797&group=learning_levels_reading_nothing';
-            var $contentDiv = $('#content');
-            var $tabsUl = $('#tabs');
-            d3.json(json_url, function(datasets) {
+            d3.json(jsonUrl, function(datasets) {
 
                 _.each(datasets, function(dataset, key) { 
-                    // dataset = val;
                     var $tabPane,
                         dataElement,
                         data,
