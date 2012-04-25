@@ -22,3 +22,11 @@ def summarize_df(df):
                 NAME: c,
                 DATA: series_to_jsondict(summarize_series(dtypes[c], i))
     } for c, i in df.iteritems()])
+
+def summarize_with_groups(df, group=None):
+    # calculate summary statistics
+    stats = {"(ALL)" : summarize_df(df)}
+    if group:
+        grouped_stats = series_to_jsondict(df.groupby(group).apply(summarize_df))
+        stats.update(grouped_stats)
+    return stats

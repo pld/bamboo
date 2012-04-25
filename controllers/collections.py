@@ -7,8 +7,8 @@ from pandas import read_csv
 
 from config.db import db
 from lib.constants import BAMBOO_ID, SOURCE
-from lib.utils import df_to_mongo, mongo_decode_keys, df_to_hexdigest, open_data_file
-import models.collection
+from lib.utils import mongo_decode_keys, df_to_hexdigest, open_data_file
+from  models import collection
 
 class Collections(object):
 
@@ -17,24 +17,20 @@ class Collections(object):
 
     exposed = True
 
-    def DELETE(self, id=None):
+    def DELETE(self, id):
         """
         Delete id 'id' from mongo
         """
-        if id:
-            collection.delete(id)
-            return 'deleted id: %s' % id
-        return 'id parameter required'
+        collection.delete(id)
+        return 'deleted id: %s' % id
 
-    def GET(self, id=None, format='json', query=None):
+    def GET(self, id, format='json', query=None):
         """
         Return data set for id 'id' in format 'format'.
         Execute query 'query' in mongo if passed.
         """
-        if id:
-            rows =  mongo_decode_keys(collection.get(id, query))
-            return json.dumps(rows, default=json_util.default)
-        return 'id parameter required'
+        rows =  mongo_decode_keys([x for x in collection.get(id, query)])
+        return json.dumps(rows, default=json_util.default)
 
     def POST(self, url=None, data=None):
         """
@@ -48,14 +44,7 @@ class Collections(object):
         except (IOError, HTTPError):
             return # error reading file/url
         digest = df_to_hexdigest(df)
-        num_rows_with_digest = db().collections.find(
-                {BAMBOO_ID: digest}).count()
+        num_rows_with_digest = collection.get(digest).count()
         if not num_rows_with_digest:
-            df = df_to_mongo(df)
-            # add metadata to file
-            for e in df:
-                e[BAMBOO_ID] = digest
-                e[SOURCE] = url
-            # insert data into collections
-            db().collections.insert(df)
+            collection.save(df)
         return json.dumps({'id': digest})
