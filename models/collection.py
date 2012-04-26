@@ -26,11 +26,11 @@ def get(id, query=None):
     query[BAMBOO_ID] = id
     return db().collections.find(query)
 
-def save(df):
+def save(df, **kwargs):
     df = df_to_mongo(df)
     # add metadata to file
     for e in df:
-        e[BAMBOO_ID] = digest
-        e[SOURCE] = url
-    # insert data into collections
-    db().collections.insert(df)
+        e[BAMBOO_ID] = kwargs['digest']
+        e[SOURCE] = kwargs['url']
+        # insert data into collection
+        db().collections.insert(e)

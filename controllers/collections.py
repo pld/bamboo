@@ -46,5 +46,5 @@ class Collections(object):
         digest = df_to_hexdigest(df)
         num_rows_with_digest = collection.get(digest).count()
         if not num_rows_with_digest:
-            collection.save(df)
+            collection.save(df, digest=digest, url=url)
         return json.dumps({'id': digest})
