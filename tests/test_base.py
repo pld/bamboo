@@ -1,37 +1,15 @@
 import unittest
 
-import cherrypy
-from cherrypy.test.helper import CPWebCase
+from pandas import read_csv
 
-from decorators import requires_internet
+from utils import open_data_file
 
 
-class TestBase(CPWebCase):
+class TestBase(unittest.TestCase):
 
     def setUp(self):
         self._load_test_data()
-        #self._start_cherrypy()
-        #super(TestBase, self).setUp()
 
-    def tearDown(self):
-        pass
-        #self._stop_cherrypy()
-        #super(TestBase, self).tearDown()
-
-    def _start_cherrypy(self):
-        cherrypy.config.update({
-            'server.logToScreen': False,
-            'log.screen': False,
-            'environment': 'embedded',
-        })
-        cherrypy.engine.start()
-
-    def _stop_cherrypy(self):
-        cherrypy.engine.stop()
-
-    @requires_internet
     def _load_test_data(self):
-        pass
-
-    def test_true(self):
-        self.assertTrue(True)
+        f = open_data_file('file://fixtures/good_eats.csv')
+        self.data = read_csv(f, na_values=['n/a'])
