@@ -11,5 +11,5 @@ class TestBase(unittest.TestCase):
         self._load_test_data()
 
     def _load_test_data(self):
-        f = open_data_file('file://fixtures/good_eats.csv')
+        f = open_data_file('file://tests/fixtures/good_eats.csv')
         self.data = read_csv(f, na_values=['n/a'])
