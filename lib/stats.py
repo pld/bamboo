@@ -1,6 +1,6 @@
 import numpy as np
 from pandas import pivot_table
-from lib.constants import DATA, NAME
+from lib.constants import ALL, DATA, NAME
 from lib.utils import series_to_jsondict
 
 def parse_value_counts(data):
@@ -24,7 +24,7 @@ def summarize_df(df):
 
 def summarize_with_groups(df, group=None):
     # calculate summary statistics
-    stats = {"(ALL)" : summarize_df(df)}
+    stats = {ALL : summarize_df(df)}
     if group:
         grouped_stats = series_to_jsondict(df.groupby(group).apply(summarize_df))
         stats.update(grouped_stats)

@@ -1,10 +1,10 @@
 import cherrypy
 from controllers.calculate import Calculate
-from controllers.collections import Collections
+from controllers.observations import Observations
 from controllers.root import Root
 
 root = Root()
 root.calculate = Calculate()
-root.collections = Collections()
+root.observations = Observations()
 
 cherrypy.quickstart(root, config='config/prod.conf')

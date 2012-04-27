@@ -5,12 +5,12 @@ from bson import json_util
 import cherrypy
 from pandas import read_csv
 
-from config.db import db
-from lib.constants import BAMBOO_ID, SOURCE
+from lib.constants import SOURCE
 from lib.utils import mongo_decode_keys, df_to_hexdigest, open_data_file
-from  models import collection
+from models import dataframe, observation
 
-class Collections(object):
+
+class Observations(object):
 
     def __init__(self):
         pass
@@ -29,8 +29,11 @@ class Collections(object):
         Return data set for id 'id' in format 'format'.
         Execute query 'query' in mongo if passed.
         """
-        rows =  mongo_decode_keys([x for x in collection.get(id, query)])
-        return json.dumps(rows, default=json_util.default)
+        df_link = dataframe.find_one(id)
+        if df_link:
+            rows =  mongo_decode_keys([x for x in observation.find(df_link, query)])
+            return json.dumps(rows, default=json_util.default)
+        return 'id not found'
 
     def POST(self, url=None, data=None):
         """
@@ -44,7 +47,7 @@ class Collections(object):
         except (IOError, HTTPError):
             return # error reading file/url
         digest = df_to_hexdigest(df)
-        num_rows_with_digest = collection.get(digest).count()
-        if not num_rows_with_digest:
-            collection.save(df, digest=digest, url=url)
+        if not dataframe.find(digest).count():
+            df_link = dataframe.save(digest)
+            observation.save(df, dataframe=df_link, url=url)
         return json.dumps({'id': digest})

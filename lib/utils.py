@@ -6,7 +6,7 @@ from math import isnan
 import numpy as np
 from pandas import DataFrame
 
-from constants import BAMBOO_ID, DEFAULT_HASH_ALGORITHM, JSON_NULL, MONGO_RESERVED_KEYS, MONGO_RESERVED_KEY_PREFIX
+from constants import DATAFRAME_ID, DEFAULT_HASH_ALGORITHM, JSON_NULL, MONGO_RESERVED_KEYS, MONGO_RESERVED_KEY_PREFIX
 
 
 def is_float_nan(n):
@@ -37,7 +37,7 @@ def mongo_to_df(m):
 
 def mongo_decode_keys(rows):
     for row in rows:
-        del row[BAMBOO_ID]
+        del row[DATAFRAME_ID]
         for k, v in row.items():
             if k in MONGO_RESERVED_KEYS:
                 v = row.pop(encode_key_for_mongo(k))
