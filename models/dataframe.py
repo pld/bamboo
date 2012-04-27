@@ -2,20 +2,19 @@ import uuid
 
 from config.db import db
 from lib.constants import BAMBOO_HASH, DATAFRAME_ID
-from models import observation
 
 
 TABLE = db().dataframes
 
 
-def find(hash):
-    return TABLE.find({BAMBOO_HASH: hash})
+def find(_hash):
+    return TABLE.find({BAMBOO_HASH: _hash})
 
 
-def find_one(hash):
-    return TABLE.find_one({BAMBOO_HASH: hash})
+def find_one(_hash):
+    return TABLE.find_one({BAMBOO_HASH: _hash})
 
-def save(hash):
-    e = {BAMBOO_HASH: hash, DATAFRAME_ID: uuid.uuid4().hex}
-    TABLE.insert(e)
-    return e
+def save(_hash):
+    record = {BAMBOO_HASH: _hash, DATAFRAME_ID: uuid.uuid4().hex}
+    TABLE.insert(record)
+    return record
