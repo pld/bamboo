@@ -5,89 +5,131 @@
         <link rel="stylesheet" href="bootstrap.2.0.2/css/bootstrap.min.css" type="text/css" media="screen" />
         <script src="js/polychart.standalone.0.0.2.min.js"></script>
         <script src="js/jquery-1.7.2.min.js"></script>
-        
         <script src="bootstrap.2.0.2/js/bootstrap-tab.js"></script>
     </head>
     <body>
+        <div class="navbar">
+            <div class="navbar-inner">
+            <div class="container-fluid">
+                <a class="brand" href="#">Summarizr client for bamboo</a>
+                <form class="pull-right navbar-search dataset-url" title="Which file to summarize?">
+                    <input type="text" name="source" size="50">
+                </form>
+            </div>
+            </div>
+        </div>
         <div id="graphs" class="tabbale">
-            <ul id="tabs" class="nav nav-tabs"></ul>
+            <div class="row">
+                <div class="span8">
+                    <ul id="tabs" class="nav nav-tabs"></ul>
+                </div>
+                <div class="span4">
+                        <select id="grouping-select">
+                            <option value=""></option>
+                        </select> 
+                </div>
+            </div>
             <div id="content" class="tab-content"></div>
         </div>
         <script type="text/javascript">
-            /* Assumes that you have run:
-             curl -X POST -d "url=http://formhub.org/education/forms/schooling_status_format_18Nov11/data.csv" http://localhost:8080/observations
-             */
+        var debug1;
         $(function(){
-          var jsonUrl = '/calculate?id=5cf38a967da09c21bb754d091212a8ddc5638889',//&group=learning_levels_reading_nothing',
-              $tabsUl = $('#tabs'),
-              $contentDiv = $('#content'),
-              makeTitle = function (slug) {
-                var word, i, words = slug.split('_');
-                for(i = 0; i < words.length; i++) {
-                  word = words[i];
-                  words[i] = word.charAt(0).toUpperCase() + word.slice(1);
-                }
-                return words.join(' ');
-              };
+            var bambooUrl = 'http://localhost:8080/',
+                observationsUrl = bambooUrl + 'observations',
+                sampleDataSetUrl = 'http://formhub.org/education/forms/schooling_status_format_18Nov11/data.csv';
+            
 
-            d3.json(jsonUrl, function(datasets) {
-
-                _.each(datasets, function(dataset, key) { 
-                    var $tabPane,
-                        dataElement,
-                        data,
-                        dataSize,
-                        dataKey,
-                        keyValSeparated,
-                        $thisDiv;
-
-                    if(key==="(ALL)") key = "_ALL_"; /* HACK: () don't sit well in anchor tags, apparently */
-
-                    $('<li />').html(
-                          $('<a />', {
-                              text: key,
-                              'data-toggle': 'tab',
-                              href: '#' + key
-                          })
-                        ).appendTo($tabsUl);
-
-                    $tabPane = $('<div />')
-                                  .attr('id', key)
-                                  .addClass('tab-pane')
-                                  .appendTo($contentDiv);
-
-                    for (dataKey in dataset) {
-                        dataElement = dataset[dataKey];
-                        /* TODO replace using the form schema */
-                        dataElement.titleName = makeTitle(dataElement.name);
-
-                        $thisDiv = $('<div />')
-                                      .data('target', key)
-                                      .appendTo($tabPane);
-
-                        data = dataElement.data;
-                        dataSize = _.size(data);
-                        if(dataSize == 0 || dataElement.name.charAt(0)=='_') {
-                            continue;
-                        } else if (dataSize == 1) {
-                          $thisDiv.text(dataElement.titleName + " : " + _.values(data)[0] + " responses: " + _.keys(data)[0]);
-                        } else { 
-                            keyValSeparated = {'x': _.keys(data), 'y': _.values(data)};
-                            if (typeof (keyValSeparated.y[0]) === "number") {
-                                /* if number make pure histogram */
-                                gg.graph(keyValSeparated)
-                                      .layer(gg.layer.bar()
-                                      .map('x','x').map('y','y'))
-                                      .opts({'width':'500', 'height':'400',
-                                             'padding-right':'90', 'title':dataElement.titleName,
-                                             'legend-postion':'bottom'})
-                                      .render($thisDiv.get(0));
-                            } 
+            $.post(observationsUrl, { url: sampleDataSetUrl }, function(bambooIdDict) {
+                  var jsonUrl = bambooUrl + 'calculate?id=' + bambooIdDict["id"], 
+                      $tabsUl = $('#tabs'),
+                      $contentDiv = $('#content'),
+                      makeTitle = function (slug) {
+                        var word, i, words = slug.split('_');
+                        for(i = 0; i < words.length; i++) {
+                          word = words[i];
+                          words[i] = word.charAt(0).toUpperCase() + word.slice(1);
                         }
-                    };
+                        return words.join(' ');
+                      };
+
+                    $.getJSON(jsonUrl, function(datasets) {
+                        _.each(datasets, function(dataset, key) { 
+                            var $tabPane,
+                                dataElement,
+                                data,
+                                dataSize,
+                                dataKey,
+                                keyValSeparated,
+                                $thisDiv,
+                                $groupingSelect;
+
+                            if(key==="(ALL)") {
+                                /* Populate the select with possible grouping options; only once per datasets (at the (ALL) key) */    
+                                $groupingSelect = $('#grouping-select');
+
+                                /* TODO: use _.chain for the following two calls */
+                                var l = _.map(dataset, function(x) {
+                                        return '<option value="' + x.name + '">' + x.name + '</option>';
+                                });
+                                _.each(l, function(x) {
+                                        $groupingSelect.append(x)
+                                });
+                                $groupingSelect.change(function() {
+                                    /* TODO change the grouping var at this point  -- need to re-run the whole $.getJSON() bit here,
+                                       which means that the whole thing needs to be wrapped in a function. */
+
+                                });
+                            
+                                /* TODO: HACK because anchor tags and () don't play together. */
+                                key = "_ALL_";
+                            }
+
+                            /* MAKE THE TAB PANE */
+                            $('<li />').html(
+                                  $('<a />', {
+                                      text: key,
+                                      'data-toggle': 'tab',
+                                      href: '#' + key
+                                  })
+                                ).appendTo($tabsUl);
+                            $tabPane = $('<div />')
+                                          .attr('id', key)
+                                          .addClass('tab-pane')
+                                          .appendTo($contentDiv);
+
+                            for (dataKey in dataset) {
+                                dataElement = dataset[dataKey];
+                                /* TODO replace using the form schema */
+                                dataElement.titleName = makeTitle(dataElement.name);
+
+                                $thisDiv = $('<div />')
+                                              .data('target', key)
+                                              .appendTo($tabPane);
+
+                                data = dataElement.data;
+                                dataSize = _.size(data);
+                                if(dataSize == 0 || dataElement.name.charAt(0)=='_') {
+                                    continue;
+                                } else if (dataSize == 1) {
+                                  $thisDiv.text(dataElement.titleName + " : " + _.values(data)[0] + " responses: " + _.keys(data)[0]);
+                                } else { 
+                                    keyValSeparated = {'x': _.keys(data), 'y': _.values(data)};
+                                    if (typeof (keyValSeparated.y[0]) === "number") {
+                                        /* if number make pure histogram */
+                                        gg.graph(keyValSeparated)
+                                              .layer(gg.layer.bar()
+                                              .map('x','x').map('y','y'))
+                                              .opts({'width':'500', 'height':'400',
+                                                     'padding-right':'90', 'title':dataElement.titleName,
+                                                     'legend-postion':'bottom'})
+                                              .render($thisDiv.get(0));
+                                    } 
+                                }
+                            };
                 });
                 $('#tabs a:last').tab('show');
             });
+            }, 'json');
           });
         </script>
     </body>
