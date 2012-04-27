@@ -3,15 +3,18 @@ import json
 from bson import json_util
 
 from config.db import db
-from lib.constants import BAMBOO_ID, SOURCE
+from lib.constants import DATAFRAME_ID, SOURCE
 from lib.utils import df_to_mongo
 
 
+TABLE = db().observations
+
+
 def delete(id):
-    db().collections.remove({BAMBOO_ID: id})
+    TABLE.remove({DATAFRAME_ID: id})
 
 
-def get(id, query=None):
+def find(df, query=None):
     """
     Try to parse query if exists, then get all rows for ID matching query,
     or if no query all.  Decode rows from mongo and return.
@@ -23,14 +26,17 @@ def get(id, query=None):
             return e.message
     else:
         query = {}
-    query[BAMBOO_ID] = id
-    return db().collections.find(query)
+    query[DATAFRAME_ID] = df[DATAFRAME_ID]
+    return TABLE.find(query)
+
 
 def save(df, **kwargs):
     df = df_to_mongo(df)
     # add metadata to file
+    dataframe_id = kwargs['dataframe'][DATAFRAME_ID]
+    url = kwargs['url']
     for e in df:
-        e[BAMBOO_ID] = kwargs['digest']
-        e[SOURCE] = kwargs['url']
+        e[DATAFRAME_ID] = dataframe_id
+        e[SOURCE] = url
         # insert data into collection
-        db().collections.insert(e)
+        TABLE.insert(e)
