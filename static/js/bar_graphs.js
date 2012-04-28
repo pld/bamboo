@@ -46,7 +46,7 @@ function jsonUrlFromIDAndGroup(id, group) {
 }
 
 /* GRAPH BUILDING */
-function makeNavForGroup(groupKey) {
+function makeNavAndContainerForGroup(groupKey) {
     /* TAB NAV */
     $('<li />').html(
           $('<a />', {
@@ -107,24 +107,24 @@ function loadPage(datasetURL) {
     $.post(observationsUrl, { url: datasetURL}, function(bambooIdDict) {
         var makeGraphs = function(id, group) {
             $.getJSON(jsonUrlFromIDAndGroup(id, group), function (datasets) {
+                /* DEAL WITH (ALL) */
+                datasets["ALL"] = datasets["(ALL)"];
+                delete datasets["(ALL)"];
+
                 /* CLEAR THE PAGE FIRST */
                 clearPage();
 
                 /* SET UP THE CONTROLS FOR THIS PAGE */
-                makePageShell(_(datasets['(ALL)']).pluck('name'), group);
+                makePageShell(_(datasets['ALL']).pluck('name'), group);
                 $groupingSelect.change(function() { /* TODO : can refactor into makePageShell somehow? */
                     makeGraphs(id, $(this).val());
                 });
                     
                 _.each(datasets, function(dataset, groupKey) { 
-                    /* TODO: HACK because anchor tags and () don't play together. */
-                    if(groupKey==="(ALL)") {
-                        groupKey = "ALL";
-                    }
-
-                    makeNavForGroup(groupKey);
+                    makeNavAndContainerForGroup(groupKey);
                     renderDataSet(dataset, groupKey);
                 });
+
                 $('#tabs a:last').tab('show');
             });
         };
