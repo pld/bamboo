@@ -46,6 +46,62 @@ function jsonUrlFromIDAndGroup(id, group) {
 }
 
 /* GRAPH BUILDING */
+function makeNavForGroup(groupKey) {
+    /* TAB NAV */
+    $('<li />').html(
+          $('<a />', {
+              text: groupKey,
+              'data-toggle': 'tab',
+              href: '#' + groupKey
+          })
+        ).appendTo($tabsUl);
+    /* CONTAINER WHERE GRAPH CONTENT WILL SIT */
+    $('<div />')
+        .attr('id', groupKey)
+        .addClass('tab-pane')
+        .appendTo($contentDiv);
+}
+function makeInternalContainerForGroup(groupKey) {
+    var $tabPane = $('#' + groupKey + '.tab-pane');
+    return $('<div />')
+        .addClass('gg')
+        .data('target', groupKey)
+        .appendTo($('<div />', {style:'float:left'}).appendTo($tabPane));
+}
+function renderDataSet(dataset, groupKey) {
+    var dataElement,
+        data,
+        dataSize,
+        dataKey,
+        keyValSeparated,
+        $thisDiv;
+    for (dataKey in dataset) {
+        dataElement = dataset[dataKey];
+        dataElement.titleName = makeTitle(dataElement.name);
+
+        $thisDiv = makeInternalContainerForGroup(groupKey);
+        $thisDiv.attr('id', dataElement.name)
+
+        data = dataElement.data;
+        dataSize = _.size(data);
+        if(dataSize == 0 || dataElement.name.charAt(0)=='_') {
+            continue;
+        } else { 
+            keyValSeparated = {'x': _.keys(data), 'y': _.values(data)};
+            if (typeof (keyValSeparated.y[0]) === "number") {
+                /* if number make pure histogram */
+                gg.graph(keyValSeparated)
+                      .layer(gg.layer.bar()
+                      .map('x','x').map('y','y'))
+                      .opts({'width': Math.min(dataSize*60 + 100, 400), 'height':'200',
+                             'padding-right':'50', 'title':dataElement.titleName, 'title-size':12,
+                             'legend-postion':'bottom'})
+                      .render($thisDiv.get(0));
+            } 
+        }
+    };
+}
+
 
 function loadPage(datasetURL) { 
     $.post(observationsUrl, { url: datasetURL}, function(bambooIdDict) {
@@ -60,63 +116,14 @@ function loadPage(datasetURL) {
                     makeGraphs(id, $(this).val());
                 });
                     
-
-                _.each(datasets, function(dataset, key) { 
-                    var $tabPane,
-                        dataElement,
-                        data,
-                        dataSize,
-                        dataKey,
-                        keyValSeparated,
-                        $thisDiv;
-
-                    /* One-time actions really; move out of loop ? */
-                    if(key==="(ALL)") {
-                        /* TODO: HACK because anchor tags and () don't play together. */
-                        key = "ALL";
+                _.each(datasets, function(dataset, groupKey) { 
+                    /* TODO: HACK because anchor tags and () don't play together. */
+                    if(groupKey==="(ALL)") {
+                        groupKey = "ALL";
                     }
 
-                    /* MAKE THE TAB PANE */
-                    $('<li />').html(
-                          $('<a />', {
-                              text: key,
-                              'data-toggle': 'tab',
-                              href: '#' + key
-                          })
-                        ).appendTo($tabsUl);
-                    $tabPane = $('<div />')
-                                  .attr('id', key)
-                                  .addClass('tab-pane')
-                                  .appendTo($contentDiv);
-
-                    for (dataKey in dataset) {
-                        dataElement = dataset[dataKey];
-                        dataElement.titleName = makeTitle(dataElement.name);
-
-                        $thisDiv = $('<div />')
-                                      .addClass('gg')
-                                      .attr('id', dataElement.name)
-                                      .data('target', key)
-                                      .appendTo($('<div />', {style:'float:left'}).appendTo($tabPane));
-
-                        data = dataElement.data;
-                        dataSize = _.size(data);
-                        if(dataSize == 0 || dataElement.name.charAt(0)=='_') {
-                            continue;
-                        } else { 
-                            keyValSeparated = {'x': _.keys(data), 'y': _.values(data)};
-                            if (typeof (keyValSeparated.y[0]) === "number") {
-                                /* if number make pure histogram */
-                                gg.graph(keyValSeparated)
-                                      .layer(gg.layer.bar()
-                                      .map('x','x').map('y','y'))
-                                      .opts({'width': Math.min(dataSize*80 + 100, 400), 'height':'200',
-                                             'padding-right':'90', 'title':dataElement.titleName,
-                                             'legend-postion':'bottom'})
-                                      .render($thisDiv.get(0));
-                            } 
-                        }
-                    };
+                    makeNavForGroup(groupKey);
+                    renderDataSet(dataset, groupKey);
                 });
                 $('#tabs a:last').tab('show');
             });
