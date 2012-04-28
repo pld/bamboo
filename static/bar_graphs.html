@@ -8,35 +8,40 @@
         <script src="bootstrap.2.0.2/js/bootstrap-tab.js"></script>
     </head>
     <body>
-        <div class="navbar navbar-fixed-top">
-            <div class="navbar-inner">
-            <div class="container">
-                <a class="brand" href="#">Summarizr client for bamboo</a>
-                <div class="pull-right">
-                <!-- form id="datasource-form" class="pull-right navbar-search" title="Which file to summarize?" --!>
-                    <input id="datasource-url" type="text" name="url" size="100" value="http://formhub.org/education/forms/schooling_status_format_18Nov11/data.csv"/>
-                    <!-- TODO: make this an <input class="btn" type="submit" ...> and parse the URL parameters --!>
-                    <button class="btn" id="datasource-change-button" > Change </button>
-                <!-- /form --!>
+      <div class="containuer-fluid" style="margin-top:50px">
+                <div class="navbar navbar-fixed-top">
+                    <div class="navbar-inner">
+                    <div class="container">
+                        <a class="brand" href="#">Summarizr client for bamboo</a>
+                        <div class="pull-right">
+                        <!-- form id="datasource-form" class="pull-right navbar-search" title="Which file to summarize?" --!>
+                            <input id="datasource-url" type="text" name="url" size="100" value="http://formhub.org/education/forms/schooling_status_format_18Nov11/data.csv"/>
+                            <!-- TODO: make this an <input class="btn" type="submit" ...> and parse the URL parameters --!>
+                            <button class="btn" id="datasource-change-button" > Change </button>
+                        <!-- /form --!>
+                        </div>
+                    </div>
+                    </div>
                 </div>
-            </div>
-            </div>
+
+        <div class="span3"> <!-- sidebar --!>
+            Group by: 
+            <select id="grouping-select"> </select> <br/>
+
+            Histograms to show:
+            
+            <select id="histogram-select" multiple="multiple" height="300"> </select> <br/>
+            
         </div>
-        <div id="graphs" style="margin-top:50px" class="container">
-            <div class="row">
-                <div class="span8">
-                    <ul id="tabs" class="nav nav-tabs"></ul>
+        <div class="span13"> <!-- body --!>
+                <div id="graphs"  class="container">
+                            <ul id="tabs" class="nav nav-tabs"></ul>
+                    <div id="content" class="tab-content"></div>
                 </div>
-                <div class="span4">
-                        Group by: 
-                        <select id="grouping-select">
-                        </select> 
-                </div>
-            </div>
-            <div id="content" class="tab-content"></div>
         </div>
+     </div>
         <script type="text/javascript">
-        var debug1;
+        var debug1, debug2;
         $(function(){
             var bambooUrl = 'http://localhost:8080/',
                 observationsUrl = bambooUrl + 'datasets',
@@ -45,6 +50,7 @@
                         var $tabsUl = $('#tabs'),
                             $contentDiv = $('#content'),
                             $groupingSelect = $('#grouping-select'),
+                            $histogramSelect = $('#histogram-select'),
                             $datasourceChangeButton = $('#datasource-change-button'),
                             $datasourceUrl = $('#datasource-url');
                             
@@ -63,18 +69,19 @@
                                     return bambooUrl + 'calculate?id=' + id;
                                 }
                             },
+                            refreshPage = function() {
+                                makeGraphs(bambooIdDict["id"], $groupingSelect.val());
+                            },
                             makeGraphs = function(id, group) {
                                 $.getJSON(jsonUrlFromIDAndGroup(id, group), function (datasets) {
                                     /* CLEAR THE PAGE FIRST */
-                                    $contentDiv.empty();
-                                    $tabsUl.empty();
-                                    $groupingSelect.empty();
-                                    $groupingSelect.unbind('change');
+                                    _([$contentDiv, $tabsUl, $groupingSelect]).each(function(x) {x.empty();});
+                                    _([$groupingSelect, $histogramSelect]).each(function(x) { x.unbind('change');});
 
                                     /* SET UP THE CONTROLS FOR THIS PAGE */
-                                    /* Populate the select with possible grouping options; only once per datasets (at the (ALL) key) */    
+                                    /* Populate the grouping select with possible grouping options; only once per datasets (at the (ALL) key) */    
                                     _(datasets["(ALL)"]).chain()
-                                        .map(function(x) { return '<option value="' + x.name + '">' + x.name + '</option>'; })
+                                        .map(function(x) { return '<option value="' + x.name + '">' + makeTitle(x.name) + '</option>'; })
                                         .each(function(x) { $groupingSelect.append(x); });
                                     if(group) {
                                         $groupingSelect.val(group);
@@ -85,6 +92,14 @@
                                     $groupingSelect.change(function() {
                                         makeGraphs(id, $(this).val());
                                     });
+                                    
+                                    /* Populate the histogram selector */
+                                    _(datasets["(ALL)"]).chain()
+                                        .map(function(x) { return '<option value="' + x.name + '">' + makeTitle(x.name) + '</option>'; })
+                                        .each(function(x) { $histogramSelect.append(x); });
+                                   $histogramSelect.change(function() {
+                                        refreshPage(); 
+                                   }); 
                                     
                                     /* Enable the change button to work */
                                     $datasourceChangeButton.click(function() {
@@ -131,6 +146,7 @@
 
                                         for (dataKey in dataset) {
                                             dataElement = dataset[dataKey];
+                                            if(_($histogramSelect.val()).find(function(x) {return (x === dataElement.name);})) {
                                             /* TODO replace using the form schema */
                                             dataElement.titleName = makeTitle(dataElement.name);
 
@@ -158,6 +174,7 @@
                                                                  'legend-postion':'bottom'})
                                                           .render($thisDiv.get(0));
                                                 } 
+                                            }
                                             }
                                         };
                             });
