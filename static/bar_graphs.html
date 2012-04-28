@@ -107,7 +107,7 @@
                                         if(key==="(ALL)") {
                                        
                                             /* TODO: HACK because anchor tags and () don't play together. */
-                                            key = "_ALL_";
+                                            key = "ALL";
                                         }
 
                                         /* MAKE THE TAB PANE */
@@ -143,9 +143,9 @@
                                             dataSize = _.size(data);
                                             if(dataSize == 0 || dataElement.name.charAt(0)=='_') {
                                                 continue;
-                                            } else if (dataSize == 1) {
+                                            /*} else if (dataSize == 1) {
                                         
-                                              $textSummaries.append("All (" + _.values(data)[0] + ") responses for <br/>`" + dataElement.titleName + "`: <br/>" + _.keys(data)[0] + "<br/><br/>");
+                                              $textSummaries.append("All (" + _.values(data)[0] + ") responses for <br/>`" + dataElement.titleName + "`: <br/>" + _.keys(data)[0] + "<br/><br/>"); */
                                             } else { 
                                                 keyValSeparated = {'x': _.keys(data), 'y': _.values(data)};
                                                 if (typeof (keyValSeparated.y[0]) === "number") {
@@ -153,7 +153,7 @@
                                                     gg.graph(keyValSeparated)
                                                           .layer(gg.layer.bar()
                                                           .map('x','x').map('y','y'))
-                                                          .opts({'width': Math.min(dataSize*50 + 200, 400), 'height':'200',
+                                                          .opts({'width': Math.min(dataSize*80 + 100, 400), 'height':'200',
                                                                  'padding-right':'90', 'title':dataElement.titleName,
                                                                  'legend-postion':'bottom'})
                                                           .render($thisDiv.get(0));
