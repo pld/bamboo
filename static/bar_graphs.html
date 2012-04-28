@@ -30,7 +30,7 @@
 
             Histograms to show:
             
-            <select id="histogram-select" multiple="multiple" height="300"> </select> <br/>
+            <select id="histogram-select" multiple="multiple" style="height:300px;"> </select> <br/>
             
         </div>
         <div class="span13"> <!-- body --!>
@@ -76,7 +76,7 @@
                                 $.getJSON(jsonUrlFromIDAndGroup(id, group), function (datasets) {
                                     /* CLEAR THE PAGE FIRST */
                                     _([$contentDiv, $tabsUl, $groupingSelect]).each(function(x) {x.empty();});
-                                    _([$groupingSelect, $histogramSelect]).each(function(x) { x.unbind('change');});
+                                    _([$groupingSelect]).each(function(x) { x.unbind('change');});
 
                                     /* SET UP THE CONTROLS FOR THIS PAGE */
                                     /* Populate the grouping select with possible grouping options; only once per datasets (at the (ALL) key) */    
@@ -94,12 +94,15 @@
                                     });
                                     
                                     /* Populate the histogram selector */
-                                    _(datasets["(ALL)"]).chain()
-                                        .map(function(x) { return '<option value="' + x.name + '">' + makeTitle(x.name) + '</option>'; })
-                                        .each(function(x) { $histogramSelect.append(x); });
-                                   $histogramSelect.change(function() {
-                                        refreshPage(); 
-                                   }); 
+                                    console.log($histogramSelect.children());
+                                    if($histogramSelect.children().length==0) { /* TODO: refactor */
+                                        _(datasets["(ALL)"]).chain()
+                                            .map(function(x) { return '<option value="' + x.name + '">' + makeTitle(x.name) + '</option>'; })
+                                            .each(function(x) { $histogramSelect.append(x); });
+                                        $histogramSelect.change(function() {
+                                            refreshPage(); 
+                                        });
+                                    }; 
                                     
                                     /* Enable the change button to work */
                                     $datasourceChangeButton.click(function() {
