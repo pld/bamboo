@@ -30,6 +30,10 @@ class TestDatasets(TestBase):
         self.assertTrue(isinstance(results[0], dict))
         self.assertEqual(len(results), 19)
 
+    def test_GET_with_query(self):
+        # TODO write me
+        pass
+
     def test_DELETE(self):
         result = json.loads(self.controller.POST(self.url))
         self.controller.DELETE(result['id'])
