@@ -1,20 +1,20 @@
 <!DOCTYPE html>
 <html>
     <head>
-        <title>Polychart Test</title>
+        <title>Summarizr -- using http://github.com/modilabs/bamboo</title>
         <link rel="stylesheet" href="bootstrap.2.0.2/css/bootstrap.min.css" type="text/css" media="screen" />
         <script src="js/polychart.standalone.0.0.2.min.js"></script>
         <script src="js/jquery-1.7.2.min.js"></script>
         <script src="bootstrap.2.0.2/js/bootstrap-tab.js"></script>
     </head>
     <body>
-        <div class="navbar">
+        <div class="navbar navbar-fixed-top">
             <div class="navbar-inner">
-            <div class="container-fluid">
+            <div class="container">
                 <a class="brand" href="#">Summarizr client for bamboo</a>
                 <div class="pull-right">
                 <!-- form id="datasource-form" class="pull-right navbar-search" title="Which file to summarize?" --!>
-                    <input id="datasource-url" type="text" name="url" size="50" />
+                    <input id="datasource-url" type="text" name="url" size="100" value="http://formhub.org/education/forms/schooling_status_format_18Nov11/data.csv"/>
                     <!-- TODO: make this an <input class="btn" type="submit" ...> and parse the URL parameters --!>
                     <button class="btn" id="datasource-change-button" > Change </button>
                 <!-- /form --!>
@@ -22,12 +22,13 @@
             </div>
             </div>
         </div>
-        <div id="graphs" class="tabbale">
+        <div id="graphs" style="margin-top:50px" class="container">
             <div class="row">
                 <div class="span8">
                     <ul id="tabs" class="nav nav-tabs"></ul>
                 </div>
                 <div class="span4">
+                        Group by: 
                         <select id="grouping-select">
                         </select> 
                 </div>
@@ -93,6 +94,8 @@
 
                                     _.each(datasets, function(dataset, key) { 
                                         var $tabPane,
+                                            $textSummaries,
+                                            $graphSummaries,
                                             dataElement,
                                             data,
                                             dataSize,
@@ -119,6 +122,12 @@
                                                       .attr('id', key)
                                                       .addClass('tab-pane')
                                                       .appendTo($contentDiv);
+                                        $graphSummaries = $('<div />')
+                                                      .attr('id', 'graph-summaries')
+                                                      .appendTo($tabPane);
+                                        $textSummaries = $('<div />')
+                                                      .attr('id', 'text-summaries')
+                                                      .appendTo($tabPane);
 
                                         for (dataKey in dataset) {
                                             dataElement = dataset[dataKey];
@@ -126,15 +135,17 @@
                                             dataElement.titleName = makeTitle(dataElement.name);
 
                                             $thisDiv = $('<div />')
+                                                          .addClass('gg')
                                                           .data('target', key)
-                                                          .appendTo($tabPane);
+                                                          .appendTo($('<div />', {style:'float:left'}).appendTo($graphSummaries));
 
                                             data = dataElement.data;
                                             dataSize = _.size(data);
                                             if(dataSize == 0 || dataElement.name.charAt(0)=='_') {
                                                 continue;
                                             } else if (dataSize == 1) {
-                                              $thisDiv.text(dataElement.titleName + " : " + _.values(data)[0] + " responses: " + _.keys(data)[0]);
+                                        
+                                              $textSummaries.append("All (" + _.values(data)[0] + ") responses for <br/>`" + dataElement.titleName + "`: <br/>" + _.keys(data)[0] + "<br/><br/>");
                                             } else { 
                                                 keyValSeparated = {'x': _.keys(data), 'y': _.values(data)};
                                                 if (typeof (keyValSeparated.y[0]) === "number") {
@@ -142,7 +153,7 @@
                                                     gg.graph(keyValSeparated)
                                                           .layer(gg.layer.bar()
                                                           .map('x','x').map('y','y'))
-                                                          .opts({'width':'500', 'height':'400',
+                                                          .opts({'width': Math.min(dataSize*50 + 200, 400), 'height':'200',
                                                                  'padding-right':'90', 'title':dataElement.titleName,
                                                                  'legend-postion':'bottom'})
                                                           .render($thisDiv.get(0));
