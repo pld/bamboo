@@ -149,35 +149,35 @@
 
                                         for (dataKey in dataset) {
                                             dataElement = dataset[dataKey];
-                                            if(_($histogramSelect.val()).find(function(x) {return (x === dataElement.name);})) {
-                                            /* TODO replace using the form schema */
-                                            dataElement.titleName = makeTitle(dataElement.name);
+                                            if(_($histogramSelect.val()).find(function(x) {return (x === dataElement.name);})) { /* TODO: refactor */
+                                                    /* TODO replace using the form schema */
+                                                    dataElement.titleName = makeTitle(dataElement.name);
 
-                                            $thisDiv = $('<div />')
-                                                          .addClass('gg')
-                                                          .data('target', key)
-                                                          .appendTo($('<div />', {style:'float:left'}).appendTo($graphSummaries));
+                                                    $thisDiv = $('<div />')
+                                                                  .addClass('gg')
+                                                                  .data('target', key)
+                                                                  .appendTo($('<div />', {style:'float:left'}).appendTo($graphSummaries));
 
-                                            data = dataElement.data;
-                                            dataSize = _.size(data);
-                                            if(dataSize == 0 || dataElement.name.charAt(0)=='_') {
-                                                continue;
-                                            /*} else if (dataSize == 1) {
-                                        
-                                              $textSummaries.append("All (" + _.values(data)[0] + ") responses for <br/>`" + dataElement.titleName + "`: <br/>" + _.keys(data)[0] + "<br/><br/>"); */
-                                            } else { 
-                                                keyValSeparated = {'x': _.keys(data), 'y': _.values(data)};
-                                                if (typeof (keyValSeparated.y[0]) === "number") {
-                                                    /* if number make pure histogram */
-                                                    gg.graph(keyValSeparated)
-                                                          .layer(gg.layer.bar()
-                                                          .map('x','x').map('y','y'))
-                                                          .opts({'width': Math.min(dataSize*80 + 100, 400), 'height':'200',
-                                                                 'padding-right':'90', 'title':dataElement.titleName,
-                                                                 'legend-postion':'bottom'})
-                                                          .render($thisDiv.get(0));
-                                                } 
-                                            }
+                                                    data = dataElement.data;
+                                                    dataSize = _.size(data);
+                                                    if(dataSize == 0 || dataElement.name.charAt(0)=='_') {
+                                                        continue;
+                                                    /*} else if (dataSize == 1) {
+                                                
+                                                      $textSummaries.append("All (" + _.values(data)[0] + ") responses for <br/>`" + dataElement.titleName + "`: <br/>" + _.keys(data)[0] + "<br/><br/>"); */
+                                                    } else { 
+                                                        keyValSeparated = {'x': _.keys(data), 'y': _.values(data)};
+                                                        if (typeof (keyValSeparated.y[0]) === "number") {
+                                                            /* if number make pure histogram */
+                                                            gg.graph(keyValSeparated)
+                                                                  .layer(gg.layer.bar()
+                                                                  .map('x','x').map('y','y'))
+                                                                  .opts({'width': Math.min(dataSize*80 + 100, 400), 'height':'200',
+                                                                         'padding-right':'90', 'title':dataElement.titleName,
+                                                                         'legend-postion':'bottom'})
+                                                                  .render($thisDiv.get(0));
+                                                        } 
+                                                    }
                                             }
                                         };
                             });
