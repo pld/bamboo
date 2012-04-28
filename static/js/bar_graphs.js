@@ -13,13 +13,15 @@ function makeTitle(slug) {
 
 /* PAGE BUILDING */
 var $tabsUl = $('#tabs'),
+    $altTabsUl = $('#alt-tabs'),
+    $sideBySide = $('#side-by-side'),
     $contentDiv = $('#content'),
     $groupingSelect = $('#grouping-select'),
     $histogramSelect = $('#histogram-select'),
     $datasourceUrl = $('#datasource-url');
 function clearPage() {
-    _([$contentDiv, $tabsUl, $groupingSelect, $histogramSelect]).each(function(x) {x.empty();});
-    _([$groupingSelect, $histogramSelect]).each(function(x) { x.unbind('change');}); 
+    _([$contentDiv, $tabsUl, $altTabsUl, $groupingSelect, $histogramSelect]).each(function(x) {x.empty();});
+    _([$groupingSelect, $histogramSelect, $sideBySide]).each(function(x) { x.unbind('change');}); 
 }
 function makePageShell(groups, currentGroup) {
     var groups2Select = function(groups, $select) {
@@ -38,6 +40,7 @@ function makePageShell(groups, currentGroup) {
     /* Populate the grouping select with possible grouping options; only once per datasets (at the (ALL) key) */    
     groups.unshift(""); /* unshift = prepend */
     groups2Select(groups, $groupingSelect);
+    $groupingSelect.val(currentGroup);
 }
          
 /* GLUE LOGIC */
@@ -58,11 +61,22 @@ function makeNavAndContainerForGroup(groupKey) {
     /* CONTAINER WHERE GRAPH CONTENT WILL SIT */
     $('<div />')
         .attr('id', groupKey)
-        .addClass('tab-pane')
+        .addClass('tab-pane group-nav')
         .appendTo($contentDiv);
 }
+
+function makeAltNavAndContainerForGroup(groupKey) {
+    $('<div />').html(
+          $('<a />', {
+              text: groupKey,
+              href: '#' + groupKey
+          })
+        ).attr('id', groupKey)
+        .addClass('span3 group-nav')
+        .appendTo($altTabsUl);
+}
 function makeInternalContainerForGroup(groupKey) {
-    var $tabPane = $('#' + groupKey + '.tab-pane');
+    var $tabPane = $('#' + groupKey + '.group-nav');
     return $('<div />')
         .addClass('gg')
         .data('target', groupKey)
@@ -93,7 +107,7 @@ function renderDataSet(dataset, groupKey) {
                 gg.graph(keyValSeparated)
                       .layer(gg.layer.bar()
                       .map('x','x').map('y','y'))
-                      .opts({'width': Math.min(dataSize*60 + 100, 400), 'height':'200',
+                      .opts({'width': Math.min(dataSize*60 + 100, 300), 'height':'200',
                              'padding-right':'50', 'title':dataElement.titleName, 'title-size':12,
                              'legend-postion':'bottom'})
                       .render($thisDiv.get(0));
@@ -101,7 +115,6 @@ function renderDataSet(dataset, groupKey) {
         }
     };
 }
-
 
 function loadPage(datasetURL) { 
     $.post(observationsUrl, { url: datasetURL}, function(bambooIdDict) {
@@ -119,11 +132,25 @@ function loadPage(datasetURL) {
                 $groupingSelect.change(function() { /* TODO : can refactor into makePageShell somehow? */
                     makeGraphs(id, $(this).val());
                 });
-                    
-                _.each(datasets, function(dataset, groupKey) { 
-                    makeNavAndContainerForGroup(groupKey);
-                    renderDataSet(dataset, groupKey);
+                $sideBySide.change(function() {
+                    makeGraphs(id, $groupingSelect.val());
                 });
+                
+                if($('#side-by-side:checked').length) {    
+                    var count = 3; 
+                    _.each(datasets, function(dataset, groupKey) {
+                        if (count) {
+                            makeAltNavAndContainerForGroup(groupKey);
+                            renderDataSet(dataset, groupKey);
+                            count--;
+                        }
+                    });
+                } else {
+                    _.each(datasets, function(dataset, groupKey) { 
+                        makeNavAndContainerForGroup(groupKey);
+                        renderDataSet(dataset, groupKey);
+                    });
+                }
 
                 $('#tabs a:last').tab('show');
             });
