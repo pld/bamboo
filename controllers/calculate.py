@@ -1,13 +1,11 @@
 import json
 
-import cherrypy
-
-from config.db import db
 from lib.stats import summarize_with_groups
 from lib.utils import mongo_to_df
 from models import dataframe, observation
 
 class Calculate(object):
+    'Calculate controller'
 
     def __init__(self):
         pass
@@ -15,6 +13,10 @@ class Calculate(object):
     exposed = True
 
     def GET(self, id=None, group=None, query=None):
+        """
+        Retrieve a calculation for dataframe with hash '_hash'.
+        Retrieve data frame using query 'query' and group by 'group'.
+        """
         df_link = dataframe.find_one(id)
         if df_link:
             rows = [x for x in observation.find(df_link, query)]
