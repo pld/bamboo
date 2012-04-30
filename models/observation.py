@@ -14,7 +14,7 @@ def delete(id):
     TABLE.remove({DATAFRAME_ID: id})
 
 
-def find(df, query=None):
+def find(df, query=None, as_df=False):
     """
     Try to parse query if exists, then get all rows for ID matching query,
     or if no query all.  Decode rows from mongo and return.
@@ -27,7 +27,10 @@ def find(df, query=None):
     else:
         query = {}
     query[DATAFRAME_ID] = df[DATAFRAME_ID]
-    return TABLE.find(query)
+    cursor = TABLE.find(query)
+    if as_df:
+        return mongo_to_df(cursor)
+    return cursor
 
 
 def save(df, **kwargs):

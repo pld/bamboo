@@ -4,6 +4,7 @@ import urllib2
 from math import isnan
 
 import numpy as np
+from bson import json_util
 from pandas import DataFrame
 
 from constants import DATAFRAME_ID, DEFAULT_HASH_ALGORITHM, JSON_NULL, MONGO_RESERVED_KEYS, MONGO_RESERVED_KEY_PREFIX
@@ -31,8 +32,13 @@ def df_to_mongo(df):
     return df
 
 
-def mongo_to_df(m):
-    return DataFrame(mongo_decode_keys(m))
+def mongo_to_df(cursor):
+    return DataFrame(mongo_decode_keys([x for x in cursor]))
+
+
+def mongo_to_json(cursor):
+    jsondict = df_to_jsondict(mongo_to_df(cursor))
+    return json.dumps(jsondict, default=json_util.default)
 
 
 def mongo_decode_keys(rows):

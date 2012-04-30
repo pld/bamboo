@@ -14,6 +14,7 @@ def find(_hash):
 def find_one(_hash):
     return TABLE.find_one({BAMBOO_HASH: _hash})
 
+
 def save(_hash):
     record = {BAMBOO_HASH: _hash, DATAFRAME_ID: uuid.uuid4().hex}
     TABLE.insert(record)

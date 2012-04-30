@@ -19,6 +19,6 @@ class Calculate(object):
         """
         df_link = dataframe.find_one(id)
         if df_link:
-            rows = [x for x in observation.find(df_link, query)]
-            stats = summarize_with_groups(mongo_to_df(rows))
+            dframe = observation.find(df_link, query, as_df=True)
+            stats = summarize_with_groups(dframe)
             return json.dumps(stats)

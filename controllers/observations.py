@@ -1,10 +1,9 @@
 import json
 from urllib2 import HTTPError
 
-from bson import json_util
 from pandas import read_csv
 
-from lib.utils import mongo_decode_keys, df_to_hexdigest, open_data_file
+from lib.utils import mongo_to_json, df_to_hexdigest, open_data_file
 from models import dataframe, observation
 
 
@@ -31,9 +30,7 @@ class Observations(object):
         """
         df_link = dataframe.find_one(id)
         if df_link:
-            rows =  mongo_decode_keys(
-                    [x for x in observation.find(df_link, query)])
-            return json.dumps(rows, default=json_util.default)
+            return mongo_to_json(observation.find(df_link, query))
         return 'id not found'
 
     def POST(self, url=None):
