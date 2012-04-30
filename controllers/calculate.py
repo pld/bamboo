@@ -12,12 +12,12 @@ class Calculate(object):
 
     exposed = True
 
-    def GET(self, _hash=None, group=None, query=None):
+    def GET(self, id=None, group=None, query=None):
         """
         Retrieve a calculation for dataframe with hash '_hash'.
         Retrieve data frame using query 'query' and group by 'group'.
         """
-        df_link = dataframe.find_one(_hash)
+        df_link = dataframe.find_one(id)
         if df_link:
             rows = [x for x in observation.find(df_link, query)]
             stats = summarize_with_groups(mongo_to_df(rows))

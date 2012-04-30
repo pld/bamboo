@@ -16,19 +16,20 @@ class Observations(object):
 
     exposed = True
 
-    def DELETE(self, _hash):
+    def DELETE(self, id):
         """
-        Delete dataframe with hash '_hash' from mongo
+        Delete dataframe with hash 'id' from mongo
         """
+        _hash = id
         observation.delete(_hash)
         return 'deleted hash: %s' % _hash
 
-    def GET(self, _hash, query=None):
+    def GET(self, id, query=None):
         """
-        Return data set for hash '_hash' in format 'format'.
+        Return data set for hash 'id' in format 'format'.
         Execute query 'query' in mongo if passed.
         """
-        df_link = dataframe.find_one(_hash)
+        df_link = dataframe.find_one(id)
         if df_link:
             rows =  mongo_decode_keys(
                     [x for x in observation.find(df_link, query)])
