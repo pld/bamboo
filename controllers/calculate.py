@@ -14,7 +14,7 @@ class Calculate(object):
 
     def GET(self, id=None, group=None, query=None):
         """
-        Retrieve a calculation for dataframe with hash '_hash'.
+        Retrieve a calculation for dataframe with hash 'id'.
         Retrieve data frame using query 'query' and group by 'group'.
         """
         df_link = dataframe.find_one(id)
