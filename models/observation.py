@@ -37,11 +37,10 @@ class Observation(AbstractModel):
 
     @classmethod
     def save(cls, dframe, dataset, **kwargs):
-        df = df_to_mongo(dframe)
+        dframe = df_to_mongo(dframe)
         # add metadata to file
         dataframe_id = dataset[DATAFRAME_ID]
         url = kwargs.get('url')
-        #raise Exception(dframe.next())
         for row in dframe:
             row[DATAFRAME_ID] = dataframe_id
             row[SOURCE] = url
