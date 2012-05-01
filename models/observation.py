@@ -2,12 +2,12 @@ import json
 
 from bson import json_util
 
-from config.db import db
+from config.db import Database
 from lib.constants import DATAFRAME_ID, SOURCE
 from lib.utils import df_to_mongo
 
 
-TABLE = db().observations
+TABLE = Database.db().observations
 
 
 def delete(id):
