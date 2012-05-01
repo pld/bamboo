@@ -87,3 +87,9 @@ def open_data_file(url):
         args = match.groupdict()
         return protocols[args['protocol']](args)
     return None
+
+
+class classproperty(property):
+
+    def __get__(self, cls, owner):
+        return self.fget.__get__(None, owner)()

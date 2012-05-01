@@ -1,7 +1,7 @@
 from pymongo.cursor import Cursor
 
 from tests.test_base import TestBase
-from models import dataframe
+from models.dataframe import Dataframe
 from lib.constants import BAMBOO_HASH
 from lib.utils import df_to_hexdigest
 
@@ -13,13 +13,13 @@ class TestDataFrame(TestBase):
         self.digest = df_to_hexdigest(self.data)
 
     def test_dataframe(self):
-        record = dataframe.save(self.digest)
+        record = Dataframe.save(self.digest)
         self.assertTrue(record, isinstance(record, dict))
 
     def test_find(self):
-        record = dataframe.save(self.digest)
-        cursor = dataframe.find(self.digest)
+        record = Dataframe.save(self.digest)
+        cursor = Dataframe.find(self.digest)
         rows = [x for x in cursor]
         self.assertTrue(cursor, isinstance(cursor, Cursor))
         self.assertEqual(record, rows[0])
-        self.assertEqual(record, dataframe.find_one(self.digest))
+        self.assertEqual(record, Dataframe.find_one(self.digest))
