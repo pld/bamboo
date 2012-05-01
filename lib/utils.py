@@ -7,7 +7,8 @@ import numpy as np
 from bson import json_util
 from pandas import DataFrame
 
-from constants import DATAFRAME_ID, DEFAULT_HASH_ALGORITHM, JSON_NULL, MONGO_RESERVED_KEYS, MONGO_RESERVED_KEY_PREFIX
+from constants import DATAFRAME_ID, DEFAULT_HASH_ALGORITHM, JSON_NULL,\
+         MONGO_RESERVED_KEYS, MONGO_RESERVED_KEY_PREFIX
 
 
 def is_float_nan(n):

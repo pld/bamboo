@@ -3,8 +3,9 @@ from urllib2 import HTTPError
 
 from pandas import read_csv
 
-from lib.utils import mongo_to_json, df_to_hexdigest, open_data_file
-from models import dataframe, observation
+from lib.utils import mongo_to_json, open_data_file
+from models.dataset import Dataset
+from models.observation import Observation
 
 
 class Observations(object):
@@ -28,7 +29,7 @@ class Observations(object):
         Return data set for hash 'id' in format 'format'.
         Execute query 'query' in mongo if passed.
         """
-        df_link = dataframe.find_one(id)
+        df_link = dataset.find_one(id)
         if df_link:
             return mongo_to_json(observation.find(df_link, query))
         return 'id not found'
@@ -46,8 +47,5 @@ class Observations(object):
             dframe = read_csv(_file, na_values=['n/a'])
         except (IOError, HTTPError):
             return # error reading file/url
-        digest = df_to_hexdigest(dframe)
-        if not dataframe.find(digest).count():
-            df_link = dataframe.save(digest)
-            observation.save(dframe, dataframe=df_link, url=url)
+        Dataset.find_or_create(dframe, url=url)
         return json.dumps({'id': digest})

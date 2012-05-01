@@ -3,7 +3,7 @@ import unittest
 from pandas import read_csv
 
 from config.db import Database
-from utils import open_data_file
+from lib.utils import open_data_file, df_to_hexdigest
 
 
 class TestBase(unittest.TestCase):
@@ -25,3 +25,4 @@ class TestBase(unittest.TestCase):
     def _load_test_data(self):
         f = open_data_file('file://tests/fixtures/good_eats.csv')
         self.data = read_csv(f, na_values=['n/a'])
+        self.digest = df_to_hexdigest(self.data)
