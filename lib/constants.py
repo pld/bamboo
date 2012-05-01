@@ -13,7 +13,7 @@ SOURCE = '_source'
 
 # special MongoDB keys
 MONGO_RESERVED_KEYS = ['_id']
-MONGO_RESERVED_KEY_PREFIX = 'MONGO_RESERVED_KEY_'
+MONGO_RESERVED_KEY_PREFIX = 'MONGO_RESERVED_KEY'
 
 # output labels
 ALL = '(ALL)'

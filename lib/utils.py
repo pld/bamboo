@@ -42,17 +42,21 @@ def mongo_to_json(cursor):
     return json.dumps(jsondict, default=json_util.default)
 
 
-def mongo_decode_keys(rows):
-    for row in rows:
-        del row[DATAFRAME_ID]
-        for k, v in row.items():
-            if k in MONGO_RESERVED_KEYS:
-                v = row.pop(encode_key_for_mongo(k))
-                if v != 'null':
-                    row[k] = v
+def mongo_decode_keys(observations):
+    """
+    Remove internal keys from collection records.
+    Decode keys that were encoded for mongo.
+    """
+    for observation in observations:
+        del observation[DATAFRAME_ID]
+        for key, value in observation.items():
+            if key in MONGO_RESERVED_KEYS and observation.get(encode_key_for_mongo(key)):
+                value = observation.pop(encode_key_for_mongo(key))
+                if value != 'null':
+                    observation[key] = value
                 else:
-                    del row[k]
-    return rows
+                    del observation[key]
+    return observations
 
 
 def encode_key_for_mongo(k):

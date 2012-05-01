@@ -9,12 +9,12 @@ class TestDataset(TestBase):
 
     def test_save(self):
         record = Dataset.save(self.digest)
-        self.assertTrue(record, isinstance(record, dict))
+        self.assertTrue(isinstance(record, dict))
 
     def test_find(self):
         record = Dataset.save(self.digest)
         cursor = Dataset.find(self.digest)
         rows = [x for x in cursor]
-        self.assertTrue(cursor, isinstance(cursor, Cursor))
+        self.assertTrue(isinstance(cursor, Cursor))
         self.assertEqual(record, rows[0])
         self.assertEqual(record, Dataset.find_one(self.digest))

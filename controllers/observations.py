@@ -29,9 +29,9 @@ class Observations(object):
         Return data set for hash 'id' in format 'format'.
         Execute query 'query' in mongo if passed.
         """
-        df_link = dataset.find_one(id)
-        if df_link:
-            return mongo_to_json(observation.find(df_link, query))
+        dataset = Dataset.find_one(id)
+        if dataset:
+            return mongo_to_json(Observation.find(dataset, query))
         return 'id not found'
 
     def POST(self, url=None):
