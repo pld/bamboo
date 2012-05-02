@@ -1,5 +1,7 @@
-from models.dataset import Dataset
+from pymongo.cursor import Cursor
+
 from models.calculation import Calculation
+from models.dataset import Dataset
 from tests.test_base import TestBase
 
 
@@ -16,4 +18,8 @@ class TestCalculation(TestBase):
         self.assertTrue(isinstance(record, dict))
 
     def test_find(self):
-        pass
+        record = Calculation.save(self.dataset, self.formula, self.name)
+        cursor = Calculation.find(self.dataset)
+        rows = [x for x in cursor]
+        self.assertTrue(isinstance(cursor, Cursor))
+        self.assertEqual(record, rows[0])

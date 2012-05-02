@@ -14,9 +14,10 @@ class Calculation(AbstractModel):
             NAME: name,
         }
         cls.collection.insert(record)
+        return record
 
     @classmethod
-    def find(dframe):
-        return [x for x in cls.collection.find({
-            DATAFRAME_ID: dframe[DATAFRAME_ID],
-        })]
+    def find(cls, dataset):
+        return cls.collection.find({
+            DATAFRAME_ID: dataset[DATAFRAME_ID],
+        })
