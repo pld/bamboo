@@ -16,6 +16,7 @@ class TestCalculation(TestBase):
     def test_save(self):
         record = Calculation.save(self.dataset, self.formula, self.name)
         self.assertTrue(isinstance(record, dict))
+        self.assertTrue('_id' in record.keys())
 
     def test_find(self):
         record = Calculation.save(self.dataset, self.formula, self.name)

@@ -24,6 +24,7 @@ class Dataset(AbstractModel):
         if not cls.find(digest).count():
             dataset = cls.save(digest)
             Observation.save(dframe, dataset, **kwargs)
+        return digest
 
     @classmethod
     def save(cls, _hash):

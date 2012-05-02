@@ -8,8 +8,8 @@ from models.dataset import Dataset
 from models.observation import Observation
 
 
-class Observations(object):
-    'Observation controller'
+class Datasets(object):
+    'Datasets controller'
 
     def __init__(self):
         pass
@@ -18,11 +18,13 @@ class Observations(object):
 
     def DELETE(self, id):
         """
-        Delete dataframe with hash 'id' from mongo
+        Delete observation with hash 'id' from mongo
         """
-        _hash = id
-        observation.delete(_hash)
-        return 'deleted hash: %s' % _hash
+        dataset = Dataset.find_one(id)
+        if dataset:
+            Observation.delete(dataset)
+            return 'deleted observation: %s' % id
+        return 'id not found'
 
     def GET(self, id, query=None):
         """
@@ -47,5 +49,5 @@ class Observations(object):
             dframe = read_csv(_file, na_values=['n/a'])
         except (IOError, HTTPError):
             return # error reading file/url
-        Dataset.find_or_create(dframe, url=url)
+        digest = Dataset.find_or_create(dframe, url=url)
         return json.dumps({'id': digest})

@@ -18,6 +18,7 @@ class TestObservation(TestBase):
         records = Observation.save(self.data, self.dataset)
         self.assertTrue(isinstance(records, list))
         self.assertTrue(isinstance(records[0], dict))
+        self.assertTrue('_id' in records[0].keys())
         self.assertEqual(len(records), 19)
 
     def test_find(self):

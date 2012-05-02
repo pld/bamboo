@@ -10,6 +10,7 @@ class TestDataset(TestBase):
     def test_save(self):
         record = Dataset.save(self.digest)
         self.assertTrue(isinstance(record, dict))
+        self.assertTrue('_id' in record.keys())
 
     def test_find(self):
         record = Dataset.save(self.digest)

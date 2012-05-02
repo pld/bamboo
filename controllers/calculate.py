@@ -2,7 +2,8 @@ import json
 
 from lib.stats import summarize_with_groups
 from lib.utils import mongo_to_df
-from models import dataframe, observation
+from models.dataset import Dataset
+from models.observation import Observation
 
 class Calculate(object):
     'Calculate controller'
@@ -17,8 +18,8 @@ class Calculate(object):
         Retrieve a calculation for dataframe with hash '_hash'.
         Retrieve data frame using query 'query' and group by 'group'.
         """
-        df_link = dataframe.find_one(id)
-        if df_link:
-            dframe = observation.find(df_link, query, as_df=True)
-            stats = summarize_with_groups(dframe)
+        dataset = Dataset.find_one(id)
+        if dataset:
+            observations = Observation.find(dataset, query, as_df=True)
+            stats = summarize_with_groups(observations)
             return json.dumps(stats)
