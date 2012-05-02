@@ -21,6 +21,6 @@ class Calculate(object):
         dataset = Dataset.find_one(id)
         if dataset:
             observations = Observation.find(dataset, query, as_df=True)
-            stats = summarize_with_groups(observations)
+            stats = summarize_with_groups(observations, group)
             return json.dumps(stats)
         return 'dataset not found'
