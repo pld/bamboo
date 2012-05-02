@@ -8,7 +8,7 @@ from models.observation import Observation
 
 class Dataset(AbstractModel):
 
-    __collectionname__ = 'dataset'
+    __collectionname__ = 'datasets'
 
     @classmethod
     def find(cls, _hash):

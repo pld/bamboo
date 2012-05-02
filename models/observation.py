@@ -10,7 +10,7 @@ from models.abstract_model import AbstractModel
 
 class Observation(AbstractModel):
 
-    __collectionname__ = 'observation'
+    __collectionname__ = 'observations'
 
     @classmethod
     def delete(cls, dataset):
