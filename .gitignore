@@ -1,6 +1,7 @@
 /*.csv
 *.pyc
 *~
+.noseids
 
 # a place for a virtualenv
 env
