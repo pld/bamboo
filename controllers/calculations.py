@@ -1,3 +1,5 @@
+import json
+
 from models.calculation import Calculation
 from models.dataset import Dataset
 from lib.utils import mongo_to_df, mongo_to_json
@@ -14,6 +16,11 @@ class Calculations(object):
         dataset = Dataset.find_one(id)
         if dataset:
             Calculation.save(dataset, formula, name)
+            observations = Observation.find(dataset, query, as_df=True)
+            digest = df_to_hexdigest(observations, formula)
+            # store the new digest as a dataset?
+            Dataset.save(digest, column_name, dataset)
+            return json.dumps({'id': digest})
 
     def GET(self, id):
         dataset = Dataset.find_one(id)

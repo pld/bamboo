@@ -16,5 +16,5 @@ class TestCalculations(TestBase):
         self.name = 'test'
 
     def test_POST(self):
-        self.controller.POST(self.digest, self.formula, self.name)
+        self.controller.POST(self.dataset_id, self.formula, self.name)
         # TODO write me

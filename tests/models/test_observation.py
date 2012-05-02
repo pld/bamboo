@@ -12,7 +12,7 @@ class TestObservation(TestBase):
 
     def setUp(self):
         TestBase.setUp(self)
-        self.dataset = Dataset.save(self.digest)
+        self.dataset = Dataset.save(self.dataset_id)
 
     def test_save(self):
         records = Observation.save(self.data, self.dataset)
