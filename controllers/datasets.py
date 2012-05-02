@@ -1,15 +1,15 @@
 import json
 from urllib2 import HTTPError
 
-from bson import json_util
 from pandas import read_csv
 
-from lib.utils import mongo_decode_keys, df_to_hexdigest, open_data_file
-from models import dataframe, observation
+from lib.utils import mongo_to_json, open_data_file
+from models.dataset import Dataset
+from models.observation import Observation
 
 
-class Observations(object):
-    'Observation controller'
+class Datasets(object):
+    'Datasets controller'
 
     def __init__(self):
         pass
@@ -18,22 +18,23 @@ class Observations(object):
 
     def DELETE(self, id):
         """
-        Delete dataframe with hash 'id' from mongo
+        Delete observations (i.e. the dataset) with hash 'id' from mongo
         """
-        _hash = id
-        observation.delete(_hash)
-        return 'deleted hash: %s' % _hash
+        dataset = Dataset.find_one(id)
+        if dataset:
+            Dataset.delete(id)
+            Observation.delete(dataset)
+            return 'deleted dataset: %s' % id
+        return 'id not found'
 
     def GET(self, id, query=None):
         """
         Return data set for hash 'id' in format 'format'.
         Execute query 'query' in mongo if passed.
         """
-        df_link = dataframe.find_one(id)
-        if df_link:
-            rows =  mongo_decode_keys(
-                    [x for x in observation.find(df_link, query)])
-            return json.dumps(rows, default=json_util.default)
+        dataset = Dataset.find_one(id)
+        if dataset:
+            return mongo_to_json(Observation.find(dataset, query))
         return 'id not found'
 
     def POST(self, url=None):
@@ -49,8 +50,5 @@ class Observations(object):
             dframe = read_csv(_file, na_values=['n/a'])
         except (IOError, HTTPError):
             return # error reading file/url
-        digest = df_to_hexdigest(dframe)
-        if not dataframe.find(digest).count():
-            df_link = dataframe.save(digest)
-            observation.save(dframe, dataframe=df_link, url=url)
+        digest = Dataset.find_or_create(dframe, url=url)
         return json.dumps({'id': digest})
