@@ -51,7 +51,8 @@ def mongo_decode_keys(observations):
     for observation in observations:
         del observation[DATASET_OBSERVATION_ID]
         for key, value in observation.items():
-            if key in MONGO_RESERVED_KEYS and observation.get(encode_key_for_mongo(key)):
+            if key in MONGO_RESERVED_KEYS and observation.get(
+                    encode_key_for_mongo(key)):
                 value = observation.pop(encode_key_for_mongo(key))
                 if value != 'null':
                     observation[key] = value
