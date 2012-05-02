@@ -38,7 +38,7 @@
         var debug1;
         $(function(){
             var bambooUrl = 'http://localhost:8080/',
-                observationsUrl = bambooUrl + 'observations',
+                observationsUrl = bambooUrl + 'datasets',
                 loadPage = function(datasetURL) { 
                     $.post(observationsUrl, { url: datasetURL}, function(bambooIdDict) {
                         var $tabsUl = $('#tabs'),
