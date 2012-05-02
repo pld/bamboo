@@ -1,18 +1,22 @@
-from config.db import db
 from lib.constants import DATAFRAME_ID, FORMULA, NAME
+from models.abstract_model import AbstractModel
 
-TABLE = db().calculations
 
+class Calculation(AbstractModel):
 
-def save(dframe, formula, name, **kwargs):
-    record = {
-        DATAFRAME_ID: dframe[DATAFRAME_ID],
-        FORMULA: formula,
-        NAME: name,
-    }
-    TABLE.insert(record)
+    __collectionname__ = 'calculations'
 
-def find(dframe):
-    return [x for x in TABLE.find({
-        DATAFRAME_ID: dframe[DATAFRAME_ID],
-    }]
+    @classmethod
+    def save(cls, dframe, formula, name, **kwargs):
+        record = {
+            DATAFRAME_ID: dframe[DATAFRAME_ID],
+            FORMULA: formula,
+            NAME: name,
+        }
+        cls.collection.insert(record)
+
+    @classmethod
+    def find(dframe):
+        return [x for x in cls.collection.find({
+            DATAFRAME_ID: dframe[DATAFRAME_ID],
+        })]
