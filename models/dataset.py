@@ -1,6 +1,6 @@
 import uuid
 
-from lib.constants import BAMBOO_HASH, DATAFRAME_ID
+from lib.constants import BAMBOO_HASH, DATASET_ID
 from lib.utils import df_to_hexdigest
 from models.abstract_model import AbstractModel
 from models.observation import Observation
@@ -28,6 +28,10 @@ class Dataset(AbstractModel):
 
     @classmethod
     def save(cls, _hash):
-        record = {BAMBOO_HASH: _hash, DATAFRAME_ID: uuid.uuid4().hex}
+        record = {BAMBOO_HASH: _hash, DATASET_ID: uuid.uuid4().hex}
         cls.collection.insert(record)
         return record
+
+    @classmethod
+    def delete(cls, _hash):
+        cls.collection.remove({BAMBOO_HASH: _hash})

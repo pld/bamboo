@@ -18,12 +18,13 @@ class Datasets(object):
 
     def DELETE(self, id):
         """
-        Delete observation with hash 'id' from mongo
+        Delete observations (i.e. the dataset) with hash 'id' from mongo
         """
         dataset = Dataset.find_one(id)
         if dataset:
+            Dataset.delete(id)
             Observation.delete(dataset)
-            return 'deleted observation: %s' % id
+            return 'deleted dataset: %s' % id
         return 'id not found'
 
     def GET(self, id, query=None):

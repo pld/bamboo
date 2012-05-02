@@ -24,8 +24,11 @@ class TestDatasets(TestBase):
         self.assertTrue('id' in result)
 
     def test_GET(self):
-        result = json.loads(self.controller.POST(self.url))
-        self.controller.GET(result['id'])
+        _id = json.loads(self.controller.POST(self._file))['id']
+        results = json.loads(self.controller.GET(_id))
+        self.assertTrue(isinstance(results, list))
+        self.assertTrue(isinstance(results[0], dict))
+        self.assertEqual(len(results), 19)
 
     def test_DELETE(self):
         result = json.loads(self.controller.POST(self.url))

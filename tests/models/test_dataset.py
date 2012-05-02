@@ -19,3 +19,11 @@ class TestDataset(TestBase):
         self.assertTrue(isinstance(cursor, Cursor))
         self.assertEqual(record, rows[0])
         self.assertEqual(record, Dataset.find_one(self.digest))
+
+    def test_delete(self):
+        record = Dataset.save(self.digest)
+        records = [x for x in Dataset.find(self.digest)]
+        self.assertNotEqual(records, [])
+        Dataset.delete(self.digest)
+        records = [x for x in Dataset.find(self.digest)]
+        self.assertEqual(records, [])

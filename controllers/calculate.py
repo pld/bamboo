@@ -13,7 +13,7 @@ class Calculate(object):
 
     exposed = True
 
-    def GET(self, id=None, group=None, query=None):
+    def GET(self, id, group=None, query=None):
         """
         Retrieve a calculation for dataframe with hash '_hash'.
         Retrieve data frame using query 'query' and group by 'group'.
@@ -23,3 +23,4 @@ class Calculate(object):
             observations = Observation.find(dataset, query, as_df=True)
             stats = summarize_with_groups(observations)
             return json.dumps(stats)
+        return 'dataset not found'

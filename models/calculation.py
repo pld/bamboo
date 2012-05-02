@@ -1,4 +1,4 @@
-from lib.constants import DATAFRAME_ID, FORMULA, NAME
+from lib.constants import DATASET_ID, FORMULA, NAME
 from models.abstract_model import AbstractModel
 
 
@@ -9,7 +9,7 @@ class Calculation(AbstractModel):
     @classmethod
     def save(cls, dframe, formula, name, **kwargs):
         record = {
-            DATAFRAME_ID: dframe[DATAFRAME_ID],
+            DATASET_ID: dframe[DATASET_ID],
             FORMULA: formula,
             NAME: name,
         }
@@ -19,5 +19,5 @@ class Calculation(AbstractModel):
     @classmethod
     def find(cls, dataset):
         return cls.collection.find({
-            DATAFRAME_ID: dataset[DATAFRAME_ID],
+            DATASET_ID: dataset[DATASET_ID],
         })
