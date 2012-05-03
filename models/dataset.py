@@ -1,7 +1,6 @@
 import uuid
 
-from lib.constants import BAMBOO_HASH, DATASET_ID
-from lib.utils import df_to_hexdigest
+from lib.constants import DATASET_ID, DATASET_OBSERVATION_ID
 from models.abstract_model import AbstractModel
 from models.observation import Observation
 
@@ -11,27 +10,30 @@ class Dataset(AbstractModel):
     __collectionname__ = 'datasets'
 
     @classmethod
-    def find(cls, _hash):
-        return cls.collection.find({BAMBOO_HASH: _hash})
+    def find(cls, dataset_id):
+        return cls.collection.find({DATASET_ID: dataset_id})
 
     @classmethod
-    def find_one(cls, _hash):
-        return cls.collection.find_one({BAMBOO_HASH: _hash})
+    def find_one(cls, dataset_id):
+        return cls.collection.find_one({DATASET_ID: dataset_id})
 
     @classmethod
-    def find_or_create(cls, dframe, **kwargs):
-        digest = df_to_hexdigest(dframe)
-        if not cls.find(digest).count():
-            dataset = cls.save(digest)
-            Observation.save(dframe, dataset, **kwargs)
-        return digest
+    def create(cls, dframe, **kwargs):
+        dataset_id = uuid.uuid4().hex
+        dataset = cls.save(dataset_id)
+        Observation.save(dframe, dataset, **kwargs)
+        return dataset_id
 
     @classmethod
-    def save(cls, _hash):
-        record = {BAMBOO_HASH: _hash, DATASET_ID: uuid.uuid4().hex}
+    def save(cls, dataset_id, column_name=False, dataset=None):
+        """
+        Store data set for a bamboo hash and create a unique internal ID for
+        that data set.
+        """
+        record = {DATASET_ID: dataset_id, DATASET_OBSERVATION_ID: uuid.uuid4().hex}
         cls.collection.insert(record)
         return record
 
     @classmethod
-    def delete(cls, _hash):
-        cls.collection.remove({BAMBOO_HASH: _hash})
+    def delete(cls, dataset_id):
+        cls.collection.remove({DATASET_ID: dataset_id})

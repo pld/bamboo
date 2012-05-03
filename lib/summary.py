@@ -1,6 +1,8 @@
 import numpy as np
+
 from lib.constants import ALL, DATA, NAME
 from lib.utils import series_to_jsondict
+from models.observation import Observation
 
 def parse_value_counts(data):
     'Calculate and remove null from value counts'
@@ -32,3 +34,7 @@ def summarize_with_groups(dframe, group=None):
                 dframe.groupby(group).apply(summarize_df))
         stats.update(grouped_stats)
     return stats
+
+def summarize(dataset, query, group):
+    observations = Observation.find(dataset, query, as_df=True)
+    return summarize_with_groups(observations, group)

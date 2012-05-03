@@ -1,3 +1,10 @@
+Bamboo
+======
+
+
+.. image:: https://secure.travis-ci.org/modilabs/bamboo.png
+  :target: http://travis-ci.org/modilabs/bamboo
+
 Dependencies
 ------------
 
@@ -6,7 +13,7 @@ Dependencies
 
 Installation
 ============
-
+    
     ./install.sh
 
 Testing
@@ -14,20 +21,20 @@ Testing
 
     [install nose testing library]
     
-    pip install nose
+    ``pip install nose``
 
     [run tests]
 
-    nosetests
+    ``nosetests``
 
 Running
 =======
 
     [start mongodb on localhost and standard port]
 
-    python bamboo.py
+    ``python bamboo.py``
 
 Example Usage
 =============
 
-    curl -X POST -d "url=http://formhub.org/mberg/forms/good_eats/data.csv" http://localhost:8080/datasets
+    ``curl -X POST -d "url=http://formhub.org/mberg/forms/good_eats/data.csv" http://localhost:8080/datasets``

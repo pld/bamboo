@@ -1,165 +1,48 @@
 <!DOCTYPE html>
 <html>
     <head>
-        <title>Polychart Test</title>
+        <title>Summarizr -- using http://github.com/modilabs/bamboo</title>
         <link rel="stylesheet" href="bootstrap.2.0.2/css/bootstrap.min.css" type="text/css" media="screen" />
         <script src="js/polychart.standalone.0.0.2.min.js"></script>
         <script src="js/jquery-1.7.2.min.js"></script>
         <script src="bootstrap.2.0.2/js/bootstrap-tab.js"></script>
     </head>
     <body>
-        <div class="navbar">
-            <div class="navbar-inner">
-            <div class="container-fluid">
-                <a class="brand" href="#">Summarizr client for bamboo</a>
-                <div class="pull-right">
-                <!-- form id="datasource-form" class="pull-right navbar-search" title="Which file to summarize?" --!>
-                    <input id="datasource-url" type="text" name="url" size="50" />
-                    <!-- TODO: make this an <input class="btn" type="submit" ...> and parse the URL parameters --!>
-                    <button class="btn" id="datasource-change-button" > Change </button>
-                <!-- /form --!>
+      <div class="containuer-fluid" style="margin-top:50px">
+                <div class="navbar navbar-fixed-top">
+                    <div class="navbar-inner">
+                    <div class="container">
+                        <a class="brand" href="#">Summarizr client for bamboo</a>
+                        <div class="pull-right">
+                        <!-- form id="datasource-form" class="pull-right navbar-search" title="Which file to summarize?" --!>
+                            <input id="datasource-url" type="text" name="url" size="100" value="http://formhub.org/education/forms/schooling_status_format_18Nov11/data.csv"/>
+                            <!-- TODO: make this an <input class="btn" type="submit" ...> and parse the URL parameters --!>
+                            <button class="btn" id="datasource-change-button" > Change </button>
+                        <!-- /form --!>
+                        </div>
+                    </div>
+                    </div>
                 </div>
-            </div>
-            </div>
+
+        <div class="span3"> <!-- sidebar --!>
+            Group by: 
+            <select id="grouping-select"> </select> <br/>
+
+            Histograms to show:
+            
+            <select id="histogram-select" multiple="multiple" style="height:300px;"> </select> <br/>
+            
+            Side-by-side:
+            <input type="checkbox" name="side-by-side" id="side-by-side" value="yes"> </input> <br/>
         </div>
-        <div id="graphs" class="tabbale">
-            <div class="row">
-                <div class="span8">
-                    <ul id="tabs" class="nav nav-tabs"></ul>
+        <div class="span9"> <!-- body --!>
+                <div id="graphs"  class="container">
+                <ul id="tabs" class="nav nav-tabs"></ul>
+                <ul id="alt-tabs" class="row-fluid"></ul>
+                    <div id="content" class="tab-content"></div>
                 </div>
-                <div class="span4">
-                        <select id="grouping-select">
-                        </select> 
-                </div>
-            </div>
-            <div id="content" class="tab-content"></div>
         </div>
-        <script type="text/javascript">
-        var debug1;
-        $(function(){
-            var bambooUrl = 'http://localhost:8080/',
-                observationsUrl = bambooUrl + 'datasets',
-                loadPage = function(datasetURL) { 
-                    $.post(observationsUrl, { url: datasetURL}, function(bambooIdDict) {
-                        var $tabsUl = $('#tabs'),
-                            $contentDiv = $('#content'),
-                            $groupingSelect = $('#grouping-select'),
-                            $datasourceChangeButton = $('#datasource-change-button'),
-                            $datasourceUrl = $('#datasource-url');
-                            
-                            makeTitle = function (slug) {
-                                var word, i, words = slug.split('_');
-                                for(i = 0; i < words.length; i++) {
-                                  word = words[i];
-                                  words[i] = word.charAt(0).toUpperCase() + word.slice(1);
-                                }
-                                return words.join(' ');
-                            },
-                            jsonUrlFromIDAndGroup = function(id, group) {
-                                if(group) {
-                                    return bambooUrl + 'calculate?id=' + id + '&group=' + group;
-                                } else {
-                                    return bambooUrl + 'calculate?id=' + id;
-                                }
-                            },
-                            makeGraphs = function(id, group) {
-                                $.getJSON(jsonUrlFromIDAndGroup(id, group), function (datasets) {
-                                    /* CLEAR THE PAGE FIRST */
-                                    $contentDiv.empty();
-                                    $tabsUl.empty();
-                                    $groupingSelect.empty();
-                                    $groupingSelect.unbind('change');
-
-                                    /* SET UP THE CONTROLS FOR THIS PAGE */
-                                    /* Populate the select with possible grouping options; only once per datasets (at the (ALL) key) */    
-                                    _(datasets["(ALL)"]).chain()
-                                        .map(function(x) { return '<option value="' + x.name + '">' + x.name + '</option>'; })
-                                        .each(function(x) { $groupingSelect.append(x); });
-                                    if(group) {
-                                        $groupingSelect.val(group);
-                                    } else {
-                                        $groupingSelect.prepend('<option value=""> </option>');
-                                        $groupingSelect.val("");
-                                    }
-                                    $groupingSelect.change(function() {
-                                        makeGraphs(id, $(this).val());
-                                    });
-                                    
-                                    /* Enable the change button to work */
-                                    $datasourceChangeButton.click(function() {
-                                        loadPage($datasourceUrl.val());
-                                    });
-                                    
-
-                                    _.each(datasets, function(dataset, key) { 
-                                        var $tabPane,
-                                            dataElement,
-                                            data,
-                                            dataSize,
-                                            dataKey,
-                                            keyValSeparated,
-                                            $thisDiv;
-
-                                        /* One-time actions really; move out of loop ? */
-                                        if(key==="(ALL)") {
-                                       
-                                            /* TODO: HACK because anchor tags and () don't play together. */
-                                            key = "_ALL_";
-                                        }
-
-                                        /* MAKE THE TAB PANE */
-                                        $('<li />').html(
-                                              $('<a />', {
-                                                  text: key,
-                                                  'data-toggle': 'tab',
-                                                  href: '#' + key
-                                              })
-                                            ).appendTo($tabsUl);
-                                        $tabPane = $('<div />')
-                                                      .attr('id', key)
-                                                      .addClass('tab-pane')
-                                                      .appendTo($contentDiv);
-
-                                        for (dataKey in dataset) {
-                                            dataElement = dataset[dataKey];
-                                            /* TODO replace using the form schema */
-                                            dataElement.titleName = makeTitle(dataElement.name);
-
-                                            $thisDiv = $('<div />')
-                                                          .data('target', key)
-                                                          .appendTo($tabPane);
-
-                                            data = dataElement.data;
-                                            dataSize = _.size(data);
-                                            if(dataSize == 0 || dataElement.name.charAt(0)=='_') {
-                                                continue;
-                                            } else if (dataSize == 1) {
-                                              $thisDiv.text(dataElement.titleName + " : " + _.values(data)[0] + " responses: " + _.keys(data)[0]);
-                                            } else { 
-                                                keyValSeparated = {'x': _.keys(data), 'y': _.values(data)};
-                                                if (typeof (keyValSeparated.y[0]) === "number") {
-                                                    /* if number make pure histogram */
-                                                    gg.graph(keyValSeparated)
-                                                          .layer(gg.layer.bar()
-                                                          .map('x','x').map('y','y'))
-                                                          .opts({'width':'500', 'height':'400',
-                                                                 'padding-right':'90', 'title':dataElement.titleName,
-                                                                 'legend-postion':'bottom'})
-                                                          .render($thisDiv.get(0));
-                                                } 
-                                            }
-                                        };
-                            });
-                                    $('#tabs a:last').tab('show');
-                                });
-                            };
-                        makeGraphs(bambooIdDict['id']);
-                    }, 'json');
-                },
-                sampleDataSetUrl = 'http://formhub.org/education/forms/schooling_status_format_18Nov11/data.csv';
-                loadPage(sampleDataSetUrl);
-                
-        });
-        </script>
+     </div>
+     <script src="js/bar_graphs.js"> </script>
     </body>
 </html>

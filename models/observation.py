@@ -3,7 +3,7 @@ import json
 from bson import json_util
 
 from config.db import Database
-from lib.constants import DATASET_ID, SOURCE
+from lib.constants import DATASET_OBSERVATION_ID, SOURCE
 from lib.utils import df_to_mongo, mongo_to_df
 from models.abstract_model import AbstractModel
 
@@ -14,7 +14,7 @@ class Observation(AbstractModel):
 
     @classmethod
     def delete(cls, dataset):
-        cls.collection.remove({DATASET_ID: dataset[DATASET_ID]})
+        cls.collection.remove({DATASET_OBSERVATION_ID: dataset[DATASET_OBSERVATION_ID]})
 
     @classmethod
     def find(cls, dataset, query=None, as_df=False):
@@ -29,7 +29,7 @@ class Observation(AbstractModel):
                 return e.message
         else:
             query = {}
-        query[DATASET_ID] = dataset[DATASET_ID]
+        query[DATASET_OBSERVATION_ID] = dataset[DATASET_OBSERVATION_ID]
         cursor = cls.collection.find(query)
         if as_df:
             return mongo_to_df(cursor)
@@ -39,13 +39,9 @@ class Observation(AbstractModel):
     def save(cls, dframe, dataset, **kwargs):
         dframe = df_to_mongo(dframe)
         # add metadata to file
-        dataframe_id = dataset[DATASET_ID]
+        dataset_observation_id = dataset[DATASET_OBSERVATION_ID]
         url = kwargs.get('url')
-        rows = []
         for row in dframe:
-            row[DATASET_ID] = dataframe_id
-            row[SOURCE] = url
+            row[DATASET_OBSERVATION_ID] = dataset_observation_id
             # insert data into collection
             cls.collection.insert(row)
-            rows.append(row)
-        return rows

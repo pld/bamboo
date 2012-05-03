@@ -1,4 +1,7 @@
-from models import calculation
+import json
+
+from models.calculation import Calculation
+from models.dataset import Dataset
 from lib.utils import mongo_to_df, mongo_to_json
 
 
@@ -9,19 +12,21 @@ class Calculations(object):
 
     exposed = True
 
-    def POST(self, id, formula, name, query=None, constraints=None):
-        df_link = dataframe.find_one(id)
-        if df_link:
-            calculation.save(df, formula, name)
+    def POST(self, dataset_id, formula, name, query=None, constraints=None):
+        dataset = Dataset.find_one(dataset_id)
+        if dataset:
+            Calculation.save(dataset, formula, name)
+            observations = Observation.find(dataset, query, as_df=True)
+            # Create and add columns for calculation
+            Dataset.save(digest, column_name, dataset)
+            return json.dumps({'id': digest})
 
-    def GET(self, id):
-        df_link = dataframe.find_one(id)
-        if df_link:
-            # get the current dataframe for this id
-            cursor = observation.find(df_link, as_df=True)
+    def GET(self, dataset_id):
+        dataset = Dataset.find_one(dataset_id)
+        if dataset:
             dframe = mongo_to_df(cursor)
             # get the calculations
-            calculations = calculation.find(df_link)
+            calculations = Calculation.find(dataset)
             columns_to_calculate = []
             # see if all the calculations have been run
             for column in calculations:

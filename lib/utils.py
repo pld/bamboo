@@ -8,7 +8,7 @@ import numpy as np
 from bson import json_util
 from pandas import DataFrame
 
-from constants import DATASET_ID, DEFAULT_HASH_ALGORITHM, JSON_NULL,\
+from constants import DATASET_OBSERVATION_ID, DEFAULT_HASH_ALGORITHM, JSON_NULL,\
          MONGO_RESERVED_KEYS, MONGO_RESERVED_KEY_PREFIX
 
 
@@ -49,9 +49,10 @@ def mongo_decode_keys(observations):
     Decode keys that were encoded for mongo.
     """
     for observation in observations:
-        del observation[DATASET_ID]
+        del observation[DATASET_OBSERVATION_ID]
         for key, value in observation.items():
-            if key in MONGO_RESERVED_KEYS and observation.get(encode_key_for_mongo(key)):
+            if key in MONGO_RESERVED_KEYS and observation.get(
+                    encode_key_for_mongo(key)):
                 value = observation.pop(encode_key_for_mongo(key))
                 if value != 'null':
                     observation[key] = value
@@ -71,11 +72,6 @@ def series_to_jsondict(s):
 def df_to_jsondict(df):
     return [series_to_jsondict(s) for i, s in df.iterrows()]
 
-
-def df_to_hexdigest(df, algo=DEFAULT_HASH_ALGORITHM):
-    h = hashlib.new(algo)
-    h.update(df.to_string())
-    return h.hexdigest()
 
 def open_data_file(url):
     open_url = lambda d: urllib2.urlopen(d['url'])
