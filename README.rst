@@ -1,3 +1,10 @@
+Bamboo
+======
+
+
+.. image:: https://secure.travis-ci.org/modilabs/bamboo.png
+  :target: http://travis-ci.org/modilabs/bamboo
+
 Dependencies
 ------------
 
