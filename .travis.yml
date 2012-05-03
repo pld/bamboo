@@ -3,7 +3,7 @@ python:
   - "2.6"
 # command to install dependencies
 install:
-  - pip install numpy --use-mirrors
+  - BLAS=None LAPACK=None ATLAS=None pip install numpy --use-mirrors
   - pip install -r requirements.pip --use-mirrors
 # command to run tests
 script: nosetests
