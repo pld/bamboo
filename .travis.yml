@@ -1,12 +1,10 @@
 language: python
 python:
   - "2.6"
-# command to install dependencies
+before_install:
+  - sudo apt-get update
+  - sudo apt-get install gcc g77 python-dev atlas3-base-dev
 install:
-  - export BLAS=
-  - export LAPACK=
-  - export ATLAS=
   - pip install numpy --use-mirrors
   - pip install -r requirements.pip --use-mirrors
-# command to run tests
 script: nosetests
