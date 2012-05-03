@@ -18,7 +18,7 @@ class Dataset(AbstractModel):
         return cls.collection.find_one({DATASET_ID: dataset_id})
 
     @classmethod
-    def find_or_create(cls, dframe, **kwargs):
+    def create(cls, dframe, **kwargs):
         dataset_id = uuid.uuid4().hex
         dataset = cls.save(dataset_id)
         Observation.save(dframe, dataset, **kwargs)
