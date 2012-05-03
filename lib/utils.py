@@ -40,7 +40,11 @@ def mongo_to_df(cursor):
 
 def mongo_to_json(cursor):
     jsondict = df_to_jsondict(mongo_to_df(cursor))
-    return json.dumps(jsondict, default=json_util.default)
+    return dump_mongo_json(jsondict)
+
+
+def dump_mongo_json(_dict):
+    return json.dumps(_dict, default=json_util.default)
 
 
 def mongo_decode_keys(observations):
