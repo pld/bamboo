@@ -32,7 +32,7 @@ class TestObservation(TestBase):
         records = Observation.save(self.data, self.dataset)
         dframe = Observation.find(self.dataset, as_df=True)
         self.assertTrue(isinstance(dframe, DataFrame))
-        self.assertEqual(self.data, dframe)
+        self.assertEqual(self.data.reindex(columns=dframe.columns), dframe)
         columns = dframe.columns
         for key in MONGO_RESERVED_KEYS:
             self.assertFalse(encode_key_for_mongo(key) in columns)

@@ -29,8 +29,7 @@ class TestDataset(TestBase):
         dataset = Dataset.find_one(dataset_id)
         dframe = Observation.find(dataset, as_df=True)
         self.assertTrue(isinstance(dframe, DataFrame))
-        raise Exception(dframe)
-        self.assertEqual(self.data, dframe)
+        self.assertEqual(self.data.reindex(columns=dframe.columns), dframe)
 
     def test_delete(self):
         record = Dataset.save(self.dataset_id)
