@@ -1,6 +1,8 @@
 import numpy as np
+
 from lib.constants import ALL, DATA, NAME
 from lib.utils import series_to_jsondict
+from models.observation import Observation
 
 def parse_value_counts(data):
     'Calculate and remove null from value counts'
