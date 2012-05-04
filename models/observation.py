@@ -41,11 +41,7 @@ class Observation(AbstractModel):
         # add metadata to file
         dataset_observation_id = dataset[DATASET_OBSERVATION_ID]
         url = kwargs.get('url')
-        rows = []
         for row in dframe:
             row[DATASET_OBSERVATION_ID] = dataset_observation_id
-            row[SOURCE] = url
             # insert data into collection
             cls.collection.insert(row)
-            rows.append(row)
-        return rows

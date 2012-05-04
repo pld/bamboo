@@ -56,5 +56,5 @@ class Datasets(object):
             dframe = read_csv(_file, na_values=['n/a'])
         except (IOError, HTTPError):
             return # error reading file/url
-        digest = Dataset.find_or_create(dframe, url=url)
+        digest = Dataset.create(dframe, url=url)
         return json.dumps({'id': digest})

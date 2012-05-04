@@ -10,11 +10,17 @@ class TestCalculations(TestBase):
     def setUp(self):
         TestBase.setUp(self)
         self._file = 'file://tests/fixtures/good_eats.csv'
-        Datasets().POST(self._file)
+        result = json.loads(Datasets().POST(self._file))
+        self.dataset_id = result['id']
         self.controller = Calculations()
         self.formula = 'x + y'
         self.name = 'test'
 
-    def test_POST(self):
+    def test_GET(self):
         self.controller.POST(self.dataset_id, self.formula, self.name)
-        # TODO write me
+        response = self.controller.GET(self.dataset_id)
+        self.assertTrue(isinstance(json.loads(response), list))
+
+    def test_POST(self):
+        response = self.controller.POST(self.dataset_id, self.formula, self.name)
+        self.assertTrue(isinstance(json.loads(response), dict))

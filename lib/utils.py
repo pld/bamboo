@@ -40,7 +40,11 @@ def mongo_to_df(cursor):
 
 def mongo_to_json(cursor):
     jsondict = df_to_jsondict(mongo_to_df(cursor))
-    return json.dumps(jsondict, default=json_util.default)
+    return dump_mongo_json(jsondict)
+
+
+def dump_mongo_json(_dict):
+    return json.dumps(_dict, default=json_util.default)
 
 
 def mongo_decode_keys(observations):
@@ -51,7 +55,8 @@ def mongo_decode_keys(observations):
     for observation in observations:
         del observation[DATASET_OBSERVATION_ID]
         for key, value in observation.items():
-            if key in MONGO_RESERVED_KEYS and observation.get(encode_key_for_mongo(key)):
+            if key in MONGO_RESERVED_KEYS and observation.get(
+                    encode_key_for_mongo(key)):
                 value = observation.pop(encode_key_for_mongo(key))
                 if value != 'null':
                     observation[key] = value

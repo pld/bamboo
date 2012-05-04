@@ -16,23 +16,23 @@ class TestObservation(TestBase):
 
     def test_save(self):
         records = Observation.save(self.data, self.dataset)
+        cursor = Observation.find(self.dataset)
+        records = [x for x in cursor]
         self.assertTrue(isinstance(records, list))
         self.assertTrue(isinstance(records[0], dict))
         self.assertTrue('_id' in records[0].keys())
         self.assertEqual(len(records), 19)
 
     def test_find(self):
-        records = Observation.save(self.data, self.dataset)
+        Observation.save(self.data, self.dataset)
         cursor = Observation.find(self.dataset)
         self.assertTrue(isinstance(cursor, Cursor))
-        rows = [x for x in cursor]
-        self.assertEqual(records, rows)
 
     def test_find_as_df(self):
         records = Observation.save(self.data, self.dataset)
         dframe = Observation.find(self.dataset, as_df=True)
         self.assertTrue(isinstance(dframe, DataFrame))
-        self.assertEqual(DataFrame(mongo_decode_keys(records)), dframe)
+        self.assertEqual(self.data.reindex(columns=dframe.columns), dframe)
         columns = dframe.columns
         for key in MONGO_RESERVED_KEYS:
             self.assertFalse(encode_key_for_mongo(key) in columns)
