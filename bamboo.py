@@ -6,4 +6,5 @@ from controllers.root import Root
 root = Root()
 root.datasets = Datasets()
 
-cherrypy.quickstart(root, config='config/prod.conf')
+if __name__ == '__main__':
+    cherrypy.quickstart(root, config='config/prod.conf')
