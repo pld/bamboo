@@ -1,4 +1,4 @@
-var bambooUrl = 'http://localhost:8080/';
+var bambooUrl = '/';
 var observationsUrl = bambooUrl + 'datasets';
 
 /* UTILS */
