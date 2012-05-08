@@ -45,7 +45,7 @@ function makePageShell(groups, currentGroup) {
          
 /* GLUE LOGIC */
 function jsonUrlFromIDAndGroup(id, group) {
-    return bambooUrl + 'calculate?id=' + id + (group ? ('&group=' + group) : '');
+    return bambooUrl + 'datasets/' + id + '/summary' + (group ? ('?group=' + group) : '');
 }
 
 /* GRAPH BUILDING */
