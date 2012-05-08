@@ -14,7 +14,7 @@ Dependencies
 Installation
 ============
     
-    ./install.sh
+    ./bin/install.sh
 
 Testing
 =======

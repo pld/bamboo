@@ -17,26 +17,26 @@ class Datasets(object):
 
     exposed = True
 
-    def DELETE(self, id):
+    def DELETE(self, dataset_id):
         """
-        Delete observations (i.e. the dataset) with hash 'id' from mongo
+        Delete observations (i.e. the dataset) with hash 'dataset_id' from mongo
         """
-        dataset = Dataset.find_one(id)
+        dataset = Dataset.find_one(dataset_id)
         if dataset:
-            Dataset.delete(id)
+            Dataset.delete(dataset_id)
             Observation.delete(dataset)
-            return 'deleted dataset: %s' % id
+            return 'deleted dataset: %s' % dataset_id
         return 'id not found'
 
-    def GET(self, id, summary=False, query=None, group=None):
+    def GET(self, dataset_id, summary=False, query=None, group=None):
         """
-        Return data set for hash 'id' in format 'format'.
+        Return data set for hash 'dataset_id' in format 'format'.
         Execute query 'query' in mongo if passed.
         If summary is passed return summary statistics for data set.
         If group is passed group the summary, if summary is false group is
         ignored.
         """
-        dataset = Dataset.find_one(id)
+        dataset = Dataset.find_one(dataset_id)
         if dataset:
             if summary:
                 return json.dumps(summarize(dataset, query, group))
@@ -56,5 +56,5 @@ class Datasets(object):
             dframe = read_csv(_file, na_values=['n/a'])
         except (IOError, HTTPError):
             return # error reading file/url
-        digest = Dataset.create(dframe, url=url)
-        return json.dumps({'id': digest})
+        dataset_id = Dataset.create(dframe, url=url)
+        return json.dumps({'id': dataset_id})

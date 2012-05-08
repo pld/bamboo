@@ -19,3 +19,6 @@ MONGO_RESERVED_KEY_PREFIX = 'MONGO_RESERVED_KEY'
 ALL = '(ALL)'
 DATA = 'data'
 NAME = 'name'
+
+# batch size for bulk inserts
+DB_BATCH_SIZE = 1000

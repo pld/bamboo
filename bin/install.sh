@@ -1,3 +1,4 @@
+cd ..
 mkdir -p env
 virtualenv --no-site-packages env
 source env/bin/activate

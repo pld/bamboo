@@ -3,7 +3,7 @@ import json
 from bson import json_util
 
 from config.db import Database
-from lib.constants import DATASET_OBSERVATION_ID, SOURCE
+from lib.constants import DATASET_OBSERVATION_ID, SOURCE, DB_BATCH_SIZE
 from lib.utils import df_to_mongo, mongo_to_df
 from models.abstract_model import AbstractModel
 
@@ -37,11 +37,16 @@ class Observation(AbstractModel):
 
     @classmethod
     def save(cls, dframe, dataset, **kwargs):
-        dframe = df_to_mongo(dframe)
+        observations = df_to_mongo(dframe)
         # add metadata to file
         dataset_observation_id = dataset[DATASET_OBSERVATION_ID]
         url = kwargs.get('url')
-        for row in dframe:
+        rows = []
+        for row in observations:
             row[DATASET_OBSERVATION_ID] = dataset_observation_id
-            # insert data into collection
-            cls.collection.insert(row)
+            rows.append(row)
+            if len(rows) > DB_BATCH_SIZE:
+                # insert data into collection
+                cls.collection.insert(rows)
+                rows = []
+        cls.collection.insert(rows)

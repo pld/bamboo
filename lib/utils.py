@@ -2,6 +2,7 @@ import json
 import hashlib
 from math import isnan
 import re
+import time
 import urllib2
 
 import numpy as np
@@ -25,13 +26,15 @@ def get_json_value(v):
 
 
 def df_to_mongo(df):
-    df = df_to_jsondict(df)
-    for e in df:
-        for k, v in e.items():
-            if k in MONGO_RESERVED_KEYS:
-                e[encode_key_for_mongo(k)] = v
-                del e[k]
-    return df
+    return [
+        series if series is None else dict(
+            [
+                (encode_key_for_mongo(key) if key in MONGO_RESERVED_KEYS else
+                        key, get_json_value(value))
+                for key, value in series.iteritems()
+            ])
+        for idx, series in df.iterrows()
+    ]
 
 
 def mongo_to_df(cursor):
@@ -99,3 +102,20 @@ class classproperty(property):
 
     def __get__(self, cls, owner):
         return self.fget.__get__(None, owner)()
+
+
+def print_time(func):
+     """
+     @print_time
+
+     Put this decorator around a function to see how many seconds each
+     call of this function takes to run.
+     """
+     def wrapped_func(*args, **kwargs):
+         start = time.time()
+         result = func(*args, **kwargs)
+         end = time.time()
+         seconds = end - start
+         print "SECONDS:", seconds, func.__name__, kwargs
+         return result
+     return wrapped_func
