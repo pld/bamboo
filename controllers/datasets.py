@@ -1,5 +1,4 @@
 import json
-from urllib2 import HTTPError
 
 from lib.utils import mongo_to_json
 from lib.io import create_dataset_from_url, open_data_file

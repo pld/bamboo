@@ -1,9 +1,32 @@
 import re
 import urllib2
+import uuid
+import threading
 
 from pandas import read_csv
 
+from lib.constants import DATASET_ID
 from models.dataset import Dataset
+from models.observation import Observation
+
+
+class DatasetImporter(threading.Thread):
+    """
+    Thread for reading a URL and saving the corresponding dataset.
+    """
+    def __init__(self, url, _file, dataset):
+        self._url = url
+        self._file = _file
+        self._dataset = dataset
+        threading.Thread.__init__(self)
+
+    def run(self):
+        try:
+            dframe = read_csv(self._file, na_values=['n/a'])
+            Observation.save(dframe, self._dataset, url=self._url)
+        except (IOError, urllib2.HTTPError):
+            # error reading file/url, delete dataset
+            Dataset.delete(self._dataset[DATASET_ID])
 
 
 def open_data_file(url):
@@ -27,15 +50,15 @@ def create_dataset_from_url(url):
     """
     Load a URL, read from a CSV, create a dataset and return the unique ID.
     """
-    _file = open_data_file(url)
 
-    # reading large csvs leads to poor memory allocation
-    # run in subprocess
+    _file = open_data_file(url)
     if not _file:
         # could not get a file handle
-        return
-    try:
-        dframe = read_csv(_file, na_values=['n/a'])
-    except (IOError, HTTPError):
-        return # error reading file/url
-    return Dataset.create(dframe, url=url)
+        return 'could not get a filehandle'
+
+    dataset_id = uuid.uuid4().hex
+    dataset = Dataset.create(dataset_id)
+    dataset_importer = DatasetImporter(url, _file, dataset)
+    dataset_importer.start()
+
+    return dataset_id
