@@ -4,7 +4,7 @@ import uuid
 from pandas import read_csv
 
 from config.db import Database
-from lib.utils import open_data_file
+from lib.io import open_data_file
 
 
 class TestBase(unittest.TestCase):

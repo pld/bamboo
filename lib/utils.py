@@ -1,9 +1,7 @@
 import json
 import hashlib
 from math import isnan
-import re
 import time
-import urllib2
 
 import numpy as np
 from bson import json_util
@@ -79,23 +77,6 @@ def series_to_jsondict(s):
 def df_to_jsondict(df):
     return [series_to_jsondict(s) for i, s in df.iterrows()]
 
-
-def open_data_file(url):
-    open_url = lambda d: urllib2.urlopen(d['url'])
-    protocols = {
-        'http':  open_url,
-        'https': open_url,
-        'file':  lambda d: d['path'],
-    }
-    regex = re.compile(
-        '^(?P<url>(?P<protocol>%s):\/\/(?P<path>.+))$' \
-        % '|'.join(protocols.keys())
-    )
-    match = re.match(regex, url)
-    if match:
-        args = match.groupdict()
-        return protocols[args['protocol']](args)
-    return None
 
 
 class classproperty(property):

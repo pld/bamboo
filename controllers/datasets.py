@@ -3,7 +3,8 @@ from urllib2 import HTTPError
 
 from pandas import read_csv
 
-from lib.utils import mongo_to_json, open_data_file
+from lib.utils import mongo_to_json
+from lib.io import open_data_file
 from lib.summary import summarize
 from models.dataset import Dataset
 from models.observation import Observation
