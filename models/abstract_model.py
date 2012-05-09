@@ -1,5 +1,5 @@
 from config.db import Database
-from lib.utils import classproperty
+from lib.decorators import classproperty
 
 
 class AbstractModel(object):
