@@ -16,6 +16,13 @@ Installation
     
     ./bin/install.sh
 
+Running
+=======
+
+    [start mongodb on localhost and standard port]
+
+    ``python bamboo.py``
+
 Testing
 =======
 
@@ -27,12 +34,16 @@ Testing
 
     ``nosetests``
 
-Running
-=======
+Contributing Code
+=================
 
-    [start mongodb on localhost and standard port]
+To work on the code:
 
-    ``python bamboo.py``
+1. fork this github project
+2. add tests for your new feature
+3. add the code for your new feature
+4. ensure all existing tests and your new tests are passing
+5. submit a pull request
 
 Example Usage
 =============
