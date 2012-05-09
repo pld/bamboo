@@ -14,8 +14,8 @@ class DatasetImporter(threading.Thread):
     """
     Thread for reading a URL and saving the corresponding dataset.
     """
-    def __init__(self, url, _file, dataset):
-        self._url = url
+
+    def __init__(self, _file, dataset):
         self._file = _file
         self._dataset = dataset
         threading.Thread.__init__(self)
@@ -23,7 +23,7 @@ class DatasetImporter(threading.Thread):
     def run(self):
         try:
             dframe = read_csv(self._file, na_values=['n/a'])
-            Observation.save(dframe, self._dataset, url=self._url)
+            Observation.save(dframe, self._dataset)
         except (IOError, urllib2.HTTPError):
             # error reading file/url, delete dataset
             Dataset.delete(self._dataset[DATASET_ID])
@@ -58,7 +58,7 @@ def create_dataset_from_url(url):
 
     dataset_id = uuid.uuid4().hex
     dataset = Dataset.create(dataset_id)
-    dataset_importer = DatasetImporter(url, _file, dataset)
+    dataset_importer = DatasetImporter(_file, dataset)
     dataset_importer.start()
 
     return dataset_id

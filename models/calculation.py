@@ -1,4 +1,5 @@
-from lib.constants import DATASET_ID, FORMULA, NAME
+from lib.calculator import Calculator
+from lib.constants import DATASET_ID
 from models.abstract_model import AbstractModel
 
 
@@ -6,15 +7,18 @@ class Calculation(AbstractModel):
 
     __collectionname__ = 'calculations'
 
+    FORMULA = 'formula'
+    NAME = 'name'
+
     @classmethod
     def save(cls, dataset, formula, name, **kwargs):
         record = {
             DATASET_ID: dataset[DATASET_ID],
-            FORMULA: formula,
-            NAME: name,
+            cls.FORMULA: formula,
+            cls.NAME: name,
         }
         cls.collection.insert(record)
-        cls._calculate(record, dataset[DATASET_ID])
+        cls._calculate(record, dataset)
         return record
 
     @classmethod
@@ -24,7 +28,6 @@ class Calculation(AbstractModel):
         })
 
     @classmethod
-    def _calculate(cls, record, dataset_id):
-        'Calculate new calulculation in the background'
-        # TODO: write me
-        pass
+    def _calculate(cls, record, dataset):
+        calculator = Calculator(record, dataset, cls.FORMULA, cls.NAME)
+        calculator.start()
