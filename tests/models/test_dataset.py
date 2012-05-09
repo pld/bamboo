@@ -24,12 +24,8 @@ class TestDataset(TestBase):
         self.assertEqual(record, Dataset.find_one(self.dataset_id))
 
     def test_create(self):
-        dataset_id = Dataset.create(self.data)
-        self.assertTrue(isinstance(dataset_id, basestring))
-        dataset = Dataset.find_one(dataset_id)
-        dframe = Observation.find(dataset, as_df=True)
-        self.assertTrue(isinstance(dframe, DataFrame))
-        self.assertEqual(self.data.reindex(columns=dframe.columns), dframe)
+        dataset = Dataset.create(self.dataset_id)
+        self.assertTrue(isinstance(dataset, dict))
 
     def test_delete(self):
         record = Dataset.save(self.dataset_id)
