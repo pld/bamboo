@@ -1,10 +1,8 @@
 import json
 from urllib2 import HTTPError
 
-from pandas import read_csv
-
 from lib.utils import mongo_to_json
-from lib.io import open_data_file
+from lib.io import create_dataset_from_url, open_data_file
 from lib.summary import summarize
 from models.dataset import Dataset
 from models.observation import Observation
@@ -49,13 +47,4 @@ class Datasets(object):
         Read data from URL 'url'.
         If URL is not provided and data is provided, read posted data 'data'.
         """
-        _file = open_data_file(url)
-        if not _file:
-            # could not get a file handle
-            return
-        try:
-            dframe = read_csv(_file, na_values=['n/a'])
-        except (IOError, HTTPError):
-            return # error reading file/url
-        dataset_id = Dataset.create(dframe, url=url)
-        return json.dumps({'id': dataset_id})
+        return json.dumps({'id': create_dataset_from_url(url)})
