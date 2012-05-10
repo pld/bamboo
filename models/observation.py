@@ -52,4 +52,5 @@ class Observation(AbstractModel):
 
     @classmethod
     def update(cls, dframe, dataset):
-        pass
+        cls.delete(dataset)
+        cls.save(dframe, dataset)

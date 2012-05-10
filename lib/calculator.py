@@ -1,26 +1,29 @@
-import threading
+from pymongo.objectid import ObjectId
 
-import pandas
-
+from lib.constants import DATASET_ID
+from models.calculation import Calculation
+from models.dataset import Dataset
 from models.observation import Observation
 
 
-class Calculator(threading.Thread):
+class Calculator(object):
     """
-    Thread for calculating new columns.
+    For calculating new columns.
     """
 
-    def __init__(self, calculation, dataset, formula, name):
-        self._calculation = calculation
-        self._dataset = dataset
-        self._formula = formula
-        self._name = name
-        threading.Thread.__init__(self)
+    def run(self, calculation_id):
+        """
+        Get necessary data given a calculation ID, execute calculation formula,
+        store results in dataset the calculation refers to.
+        """
+        calculation = Calculation.collection.find_one({
+            '_id': ObjectId(calculation_id)
+        })
+        dataset = Dataset.find_one(calculation[DATASET_ID])
+        dframe = Observation.find(dataset, as_df=True)
 
-    def run(self):
-        dframe = Observation.find(self._dataset, as_df=True)
-        func = lambda x: self._calculation[self._formula]
+        func = lambda x: calculation[Calculation.FORMULA]
+
         new_column = dframe.apply(func, axis=1)
-        new_column.name = self._calculation[self._name]
-        dframe.join(new_column)
-        Observation.update(dframe, self._dataset)
+        new_column.name = calculation[Calculation.NAME]
+        Observation.update(dframe.join(new_column), dataset)

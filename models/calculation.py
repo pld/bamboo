@@ -1,4 +1,4 @@
-from lib.calculator import Calculator
+from lib.calculator_client import CalculatorClient
 from lib.constants import DATASET_ID
 from models.abstract_model import AbstractModel
 
@@ -6,9 +6,11 @@ from models.abstract_model import AbstractModel
 class Calculation(AbstractModel):
 
     __collectionname__ = 'calculations'
+    calculator_client = CalculatorClient()
 
     FORMULA = 'formula'
     NAME = 'name'
+
 
     @classmethod
     def save(cls, dataset, formula, name, **kwargs):
@@ -17,8 +19,9 @@ class Calculation(AbstractModel):
             cls.FORMULA: formula,
             cls.NAME: name,
         }
-        cls.collection.insert(record)
-        cls._calculate(record, dataset)
+        calculation_id = str(cls.collection.insert(record))
+        # call remote calculate and pass calculation id
+        cls.calculator_client.send(calculation_id)
         return record
 
     @classmethod
@@ -26,8 +29,3 @@ class Calculation(AbstractModel):
         return cls.collection.find({
             DATASET_ID: dataset[DATASET_ID],
         })
-
-    @classmethod
-    def _calculate(cls, record, dataset):
-        calculator = Calculator(record, dataset, cls.FORMULA, cls.NAME)
-        calculator.start()

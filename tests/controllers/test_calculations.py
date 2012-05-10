@@ -3,12 +3,16 @@ import json
 from controllers.calculations import Calculations
 from controllers.datasets import Datasets
 from lib.constants import ALL
+from models.calculation import Calculation
 from tests.test_base import TestBase
 
 class TestCalculations(TestBase):
 
     def setUp(self):
         TestBase.setUp(self)
+        self.setup_client()
+        Calculation.calculator_client = self.proto
+
         self._file = 'file://tests/fixtures/good_eats.csv'
         result = json.loads(Datasets().POST(self._file))
         self.dataset_id = result['id']
@@ -22,5 +26,6 @@ class TestCalculations(TestBase):
         self.assertTrue(isinstance(json.loads(response), list))
 
     def test_POST(self):
-        response = self.controller.POST(self.dataset_id, self.formula, self.name)
+        response = self.controller.POST(self.dataset_id, self.formula,
+                self.name)
         self.assertTrue(isinstance(json.loads(response), dict))

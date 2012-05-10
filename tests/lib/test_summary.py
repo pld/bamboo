@@ -1,5 +1,5 @@
-from tests.test_base import TestBase
 from lib.summary import summarize_df
+from tests.test_base import TestBase
 
 
 class TestSummary(TestBase):
