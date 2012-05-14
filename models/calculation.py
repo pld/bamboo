@@ -1,4 +1,5 @@
-from lib.calculator_client import CalculatorClient
+#from lib.calculator_client import CalculatorClient
+from lib.calculator import Calculator
 from lib.constants import DATASET_ID
 from models.abstract_model import AbstractModel
 
@@ -6,7 +7,7 @@ from models.abstract_model import AbstractModel
 class Calculation(AbstractModel):
 
     __collectionname__ = 'calculations'
-    calculator_client = CalculatorClient()
+    calculator = Calculator()
 
     FORMULA = 'formula'
     NAME = 'name'
@@ -19,9 +20,9 @@ class Calculation(AbstractModel):
             cls.FORMULA: formula,
             cls.NAME: name,
         }
-        calculation_id = str(cls.collection.insert(record))
+        cls.collection.insert(record)
         # call remote calculate and pass calculation id
-        cls.calculator_client.send(calculation_id)
+        cls.calculator.run.delay(dataset, formula, name)
         return record
 
     @classmethod

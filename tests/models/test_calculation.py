@@ -9,11 +9,8 @@ class TestCalculation(TestBase):
 
     def setUp(self):
         TestBase.setUp(self)
-        self.setup_client()
-        Calculation.calculator_client = self.proto
         self.dataset = Dataset.save(self.dataset_id)
-        self.formula = 'x + y'
-        self.name = 'test'
+        self._load_calculation()
 
     def test_save(self):
         record = Calculation.save(self.dataset, self.formula, self.name)

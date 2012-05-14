@@ -16,4 +16,3 @@ class AbstractModel(object):
        if not cls.__collection__:
             cls.__collection__ = AbstractModel.set_collection(cls.__collectionname__)
        return cls.__collection__
-

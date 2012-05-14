@@ -54,3 +54,4 @@ class Observation(AbstractModel):
     def update(cls, dframe, dataset):
         cls.delete(dataset)
         cls.save(dframe, dataset)
+        return cls.find(dataset, as_df=True)

@@ -2,7 +2,6 @@ import json
 
 from controllers.calculations import Calculations
 from controllers.datasets import Datasets
-from lib.constants import ALL
 from models.calculation import Calculation
 from tests.test_base import TestBase
 
@@ -10,8 +9,6 @@ class TestCalculations(TestBase):
 
     def setUp(self):
         TestBase.setUp(self)
-        self.setup_client()
-        Calculation.calculator_client = self.proto
 
         self._file = 'file://tests/fixtures/good_eats.csv'
         result = json.loads(Datasets().POST(self._file))
