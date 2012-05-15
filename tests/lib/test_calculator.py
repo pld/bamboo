@@ -18,11 +18,11 @@ class TestCalculator(TestBase):
         dframe = Observation.find(self.dataset, as_df=True)
         task = calculator.run.delay(self.dataset, dframe,
                 self.formula, self.name)
-        dframe = task.get()
+        #dframe = task.get()
         self.assertTrue(task.ready())
         self.assertTrue(task.successful())
         # TODO test result of calculation!
-        #dframe = Observation.find(self.dataset, as_df=True)
+        dframe = Observation.find(self.dataset, as_df=True)
         self.assertTrue(self.name in dframe.columns)
         for key, value in dframe[self.name].iteritems():
             self.assertEqual(value, self.formula)

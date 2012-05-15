@@ -1,4 +1,3 @@
-from subprocess import Popen, PIPE
 import unittest
 import uuid
 
@@ -6,11 +5,13 @@ from pandas import read_csv
 
 from config.db import Database
 from lib.io import open_data_file
+from tests.celeryd import CeleryDaemon
 
 
 class TestBase(unittest.TestCase):
 
     TEST_DATABASE_NAME = 'bamboo_test'
+    CELERYD_PID_FILE = '/tmp/celerydd.pid'
 
     def setUp(self):
         self._drop_database()
@@ -29,11 +30,11 @@ class TestBase(unittest.TestCase):
         Database.connection().drop_database(self.TEST_DATABASE_NAME)
 
     def _start_celery(self):
-        cmd = 'celeryd --config=config.celeryconfig_test --loglevel=CRITICAL'
-        self.celery = Popen(cmd, shell=True, stdin=PIPE)
+        self.celeryd = CeleryDaemon('config.celeryconfig_test', self.CELERYD_PID_FILE)
+        self.celeryd.start()
 
     def _stop_celery(self):
-        self.celery.terminate()
+        self.celeryd.stop()
 
     def _load_test_data(self):
         f = open_data_file('file://tests/fixtures/good_eats.csv')
