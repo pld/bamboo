@@ -1,5 +1,6 @@
 from lib.calculator import Calculator
 from lib.constants import DATASET_ID
+from lib.tasks.calculator import calculate_column
 from models.abstract_model import AbstractModel
 from models.observation import Observation
 
@@ -23,7 +24,7 @@ class Calculation(AbstractModel):
         cls.collection.insert(record)
         # call remote calculate and pass calculation id
         dframe = Observation.find(dataset, as_df=True)
-        cls.calculator.run.delay(dataset, dframe, formula, name)
+        calculate_column.delay(dataset, dframe, formula, name)
         return record
 
     @classmethod
