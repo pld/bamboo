@@ -1,4 +1,3 @@
-from subprocess import Popen
 import unittest
 import uuid
 
@@ -15,24 +14,16 @@ class TestBase(unittest.TestCase):
     def setUp(self):
         self._drop_database()
         self._create_database()
-        #self._start_celery()
         self._load_test_data()
 
     def tearDown(self):
         self._drop_database()
-        #self._stop_celery()
 
     def _create_database(self):
         Database.db(self.TEST_DATABASE_NAME)
 
     def _drop_database(self):
         Database.connection().drop_database(self.TEST_DATABASE_NAME)
-
-    def _start_celery(self):
-        Popen(['python', './tests/celeryd.py', 'start'])
-
-    def _stop_celery(self):
-        Popen(['python', './tests/celeryd.py', 'stop'])
 
     def _load_test_data(self):
         f = open_data_file('file://tests/fixtures/good_eats.csv')
