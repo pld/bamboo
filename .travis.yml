@@ -10,3 +10,6 @@ install:
 script: nosetests
 notifications:
   irc: "irc.freenode.org#modilabs"
+branches:
+  only:
+    - master

@@ -6,23 +6,23 @@ import numpy as np
 from bson import json_util
 from pandas import DataFrame
 
-from constants import DATASET_OBSERVATION_ID, DEFAULT_HASH_ALGORITHM, JSON_NULL,\
-         MONGO_RESERVED_KEYS, MONGO_RESERVED_KEY_PREFIX
+from constants import DATASET_OBSERVATION_ID, DEFAULT_HASH_ALGORITHM,\
+         JSON_NULL, MONGO_RESERVED_KEYS, MONGO_RESERVED_KEY_PREFIX
 
 
-def is_float_nan(n):
-    return isinstance(n, float) and isnan(n)
+def is_float_nan(num):
+    return isinstance(num, float) and isnan(num)
 
 
-def get_json_value(v):
-    if is_float_nan(v):
+def get_json_value(value):
+    if is_float_nan(value):
         return JSON_NULL
-    if isinstance(v, np.int):
-        return int(v)
-    return v
+    if isinstance(value, np.int):
+        return int(value)
+    return value
 
 
-def df_to_mongo(df):
+def df_to_mongo(dframe):
     return [
         series if series is None else dict(
             [
@@ -30,12 +30,12 @@ def df_to_mongo(df):
                         key, get_json_value(value))
                 for key, value in series.iteritems()
             ])
-        for idx, series in df.iterrows()
+        for idx, series in dframe.iterrows()
     ]
 
 
 def mongo_to_df(cursor):
-    return DataFrame(mongo_decode_keys([x for x in cursor]))
+    return DataFrame(mongo_decode_keys([row for row in cursor]))
 
 
 def mongo_to_json(cursor):
@@ -65,13 +65,16 @@ def mongo_decode_keys(observations):
     return observations
 
 
-def encode_key_for_mongo(k):
-    return '%s%s' % (MONGO_RESERVED_KEY_PREFIX, k)
+def encode_key_for_mongo(key):
+    return '%s%s' % (MONGO_RESERVED_KEY_PREFIX, key)
 
 
-def series_to_jsondict(s):
-    return s if s is None else dict([(k, get_json_value(v)) for k, v in s.iteritems()])
+def series_to_jsondict(series):
+    return series if series is None else dict([
+        (key, get_json_value(value))
+        for key, value in series.iteritems()
+    ])
 
 
-def df_to_jsondict(df):
-    return [series_to_jsondict(s) for i, s in df.iterrows()]
+def df_to_jsondict(dframe):
+    return [series_to_jsondict(series) for idx, series in dframe.iterrows()]

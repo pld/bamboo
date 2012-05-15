@@ -9,6 +9,8 @@ from lib.io import open_data_file
 
 class TestBase(unittest.TestCase):
 
+    TEST_DATABASE_NAME = 'bamboo_test'
+
     def setUp(self):
         self._drop_database()
         self._create_database()
@@ -18,12 +20,16 @@ class TestBase(unittest.TestCase):
         self._drop_database()
 
     def _create_database(self):
-        Database.db('bamboo_test')
+        Database.db(self.TEST_DATABASE_NAME)
 
     def _drop_database(self):
-        Database.connection().drop_database('bamboo_test')
+        Database.connection().drop_database(self.TEST_DATABASE_NAME)
 
     def _load_test_data(self):
         f = open_data_file('file://tests/fixtures/good_eats.csv')
-        self.data = read_csv(f)#, na_values=['n/a'])
+        self.data = read_csv(f, na_values=['n/a'])
         self.dataset_id = uuid.uuid4().hex
+
+    def _load_calculation(self):
+        self.formula = 'x + y'
+        self.name = 'test'

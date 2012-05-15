@@ -10,8 +10,7 @@ class TestCalculation(TestBase):
     def setUp(self):
         TestBase.setUp(self)
         self.dataset = Dataset.save(self.dataset_id)
-        self.formula = 'x + y'
-        self.name = 'test'
+        self._load_calculation()
 
     def test_save(self):
         record = Calculation.save(self.dataset, self.formula, self.name)

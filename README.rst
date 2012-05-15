@@ -26,13 +26,13 @@ Running
 Testing
 =======
 
-    [install nose testing library]
+    [install nose testing requirements]
     
-    ``pip install nose``
+    ``pip install -r requirements-test.pip``
 
     [run tests]
 
-    ``nosetests``
+    ``nosetests --with-progressive --with-cov``
 
 Contributing Code
 =================

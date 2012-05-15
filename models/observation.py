@@ -36,11 +36,10 @@ class Observation(AbstractModel):
         return cursor
 
     @classmethod
-    def save(cls, dframe, dataset, **kwargs):
+    def save(cls, dframe, dataset):
         observations = df_to_mongo(dframe)
         # add metadata to file
         dataset_observation_id = dataset[DATASET_OBSERVATION_ID]
-        url = kwargs.get('url')
         rows = []
         for row in observations:
             row[DATASET_OBSERVATION_ID] = dataset_observation_id
@@ -50,3 +49,9 @@ class Observation(AbstractModel):
                 cls.collection.insert(rows)
                 rows = []
         cls.collection.insert(rows)
+
+    @classmethod
+    def update(cls, dframe, dataset):
+        cls.delete(dataset)
+        cls.save(dframe, dataset)
+        return cls.find(dataset, as_df=True)
