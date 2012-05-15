@@ -1,6 +1,7 @@
 /*.csv
 *.pyc
 *~
+.coverage
 .noseids
 
 # a place for a virtualenv

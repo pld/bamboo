@@ -5,6 +5,7 @@ import time
 from subprocess import Popen
 
 from daemon import Daemon
+import celeryconfig_test
 
 
 class CeleryDaemon(Daemon):
@@ -14,19 +15,20 @@ class CeleryDaemon(Daemon):
 
     celeryd_pf = '/tmp/celeryd.pid'
 
-    def __init__(self, celeryconfig, *args, **kwargs):
+    def __init__(self, celeryconfig, cwd, *args, **kwargs):
         self.celery = None
+        self.cwd = cwd
         self.celeryconfig = celeryconfig
         Daemon.__init__(self, *args, **kwargs)
 
     def run(self):
         args = [
             'celeryd',
-            '--config=%s' % self.celeryconfig',
-            '--loglevel=CRITICAL',
+            '--config=%s' % self.celeryconfig,
+            '--loglevel=INFO',
             '--pidfile=%s' % self.celeryd_pf,
         ]
-        Popen(args)
+        Popen(args, cwd=self.cwd)
         while True:
             time.sleep(1)
 
@@ -45,23 +47,24 @@ class CeleryDaemon(Daemon):
 
 if __name__ == '__main__':
     logfile = '/tmp/celerydd.log'
-	celeryd = CeleryDaemon(
-        'config.celeryconfig',
+    celeryd = CeleryDaemon(
+        'tests.celeryconfig_test',
+        os.getcwd(),
         '/tmp/celerydd.pid',
         stdout=logfile,
         stderr=logfile
     )
-	if len(sys.argv) == 2:
-		if 'start' == sys.argv[1]:
-			celeryd.start()
-		elif 'stop' == sys.argv[1]:
-			celeryd.stop()
-		elif 'restart' == sys.argv[1]:
-			celeryd.restart()
-		else:
-			print "Unknown command"
-			sys.exit(2)
-		sys.exit(0)
-	else:
-		print "usage: %s start|stop|restart" % sys.argv[0]
-		sys.exit(2)
+    if len(sys.argv) == 2:
+        if 'start' == sys.argv[1]:
+            celeryd.start()
+        elif 'stop' == sys.argv[1]:
+            celeryd.stop()
+        elif 'restart' == sys.argv[1]:
+            celeryd.restart()
+        else:
+            print "Unknown command"
+            sys.exit(2)
+        sys.exit(0)
+    else:
+        print "usage: %s start|stop|restart" % sys.argv[0]
+        sys.exit(2)
