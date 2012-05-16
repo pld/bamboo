@@ -1,7 +1,7 @@
 import copy
 
 from pyparsing import alphanums, nums, Word, OneOrMore, ZeroOrMore,\
-        ParseException, Literal
+        ParseException, Literal, Optional
 
 from lib.exceptions import ParseError
 
@@ -24,9 +24,9 @@ class Parser(object):
     def BNF(self):
         """
         addop       :: '+' | '-'
-        integer     :: '0'..'9'+
+        real        :: \d+(.\d+)
         variable    :: string
-        term        :: integer | variable
+        term        :: real | variable
         expression  :: term [ addop term ]*
         """
         if self.bnf:
@@ -34,11 +34,12 @@ class Parser(object):
 
         plus = Literal('+')
         minus = Literal('-')
+        point = Literal('.')
         addop = plus | minus
 
-        integer = OneOrMore(nums)
+        real = OneOrMore(nums) + Optional(point + OneOrMore(nums))
         variable = Word(alphanums + '_').setParseAction(self.push_expr)
-        term = integer | variable
+        term = real | variable
 
         expression = term + ZeroOrMore( (addop +
                     term).setParseAction(self.push_expr) )
@@ -56,17 +57,31 @@ class Parser(object):
 
         def formula_function(row, expr_stack):
             expr_stack = copy.copy(expr_stack)
-            # TODO somehow don't declare this on each call
+            # TODO don't declare this on each call
             ops = {
-                '+': lambda x, y: x + y,
-                '-': lambda x, y: x - y,
+                '+': lambda x, y: float(x) + float(y),
+                '-': lambda x, y: float(x) - float(y),
             }
             term = expr_stack.pop()
+
             if term in '+-':
                 term2 = formula_function(row, expr_stack)
+                expr_stack.pop()
                 term1 = formula_function(row, expr_stack)
-                return ops[term](term1, term2)
-            elif term.isdigit():
+                expr_stack.pop()
+                try:
+                    return ops[term](term1, term2)
+                except ValueError:
+                    return 'null'
+
+            # faster check for float
+            is_float = False
+            try:
+                float(term)
+                is_float = True
+            except ValueError:
+                pass
+            if is_float:
                 return term
             else:
                 # otherwise it is a variable

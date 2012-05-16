@@ -14,19 +14,23 @@ class TestCalculator(TestBase):
         self.calculations = [
             'rating',
             'gps',
+            'amount + gps_alt',
         ]
 
-    def test_calculator(self):
+    def _test_calculator(self, delay=True):
         dframe = Observation.find(self.dataset, as_df=True)
 
         for idx, formula in enumerate(self.calculations):
             name = 'test-%s' % idx
-            task = calculate_column.delay(self.dataset, dframe,
-                    formula, name)
-
-            # test that task has completed
-            self.assertTrue(task.ready())
-            self.assertTrue(task.successful())
+            if delay:
+                task = calculate_column.delay(self.dataset, dframe,
+                        formula, name)
+                # test that task has completed
+                self.assertTrue(task.ready())
+                self.assertTrue(task.successful())
+            else:
+                task = calculate_column(self.dataset, dframe,
+                        formula, name)
 
             # test that updated dataframe persisted
             dframe = Observation.find(self.dataset, as_df=True)
@@ -34,4 +38,13 @@ class TestCalculator(TestBase):
 
             # test result of calculation
             for idx, row in dframe.iterrows():
-                self.assertEqual(row[name], row[formula])
+                try:
+                    self.assertAlmostEqual(float(row[name]), float(row[formula]))
+                except ValueError:
+                    self.assertEqual(row[name], row[formula])
+
+    def test_calculator_with_delay(self):
+        self._test_calculator()
+
+    def test_calculator_without_delay(self):
+        self._test_calculator(delay=False)
