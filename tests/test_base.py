@@ -31,5 +31,5 @@ class TestBase(unittest.TestCase):
         self.dataset_id = uuid.uuid4().hex
 
     def _load_calculation(self):
-        self.formula = 'x + y'
+        self.formula = 'rating'
         self.name = 'test'

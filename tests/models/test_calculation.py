@@ -17,6 +17,11 @@ class TestCalculation(TestBase):
         self.assertTrue(isinstance(record, dict))
         self.assertTrue('_id' in record.keys())
 
+    def test_save_improper_formula(self):
+        record = Calculation.save(self.dataset, 'NON-EXISTENT-COLUMN',
+                self.name)
+        self.assertTrue(record, basestring)
+
     def test_find(self):
         record = Calculation.save(self.dataset, self.formula, self.name)
         cursor = Calculation.find(self.dataset)

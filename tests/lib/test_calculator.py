@@ -17,10 +17,15 @@ class TestCalculator(TestBase):
         dframe = Observation.find(self.dataset, as_df=True)
         task = calculate_column.delay(self.dataset, dframe,
                 self.formula, self.name)
+
+        # test that task has completed
         self.assertTrue(task.ready())
         self.assertTrue(task.successful())
+
+        # test that updated dataframe persisted
         dframe = Observation.find(self.dataset, as_df=True)
         self.assertTrue(self.name in dframe.columns)
-        for key, value in dframe[self.name].iteritems():
-            self.assertEqual(value, self.formula)
-        # TODO test result of calculation
+
+        # test result of calculation
+        for idx, row in dframe.iterrows():
+            self.assertEqual(row[self.name], row[self.formula])

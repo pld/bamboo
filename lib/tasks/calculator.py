@@ -1,5 +1,6 @@
 from celery.task import task
 
+from lib.parser import parse_formula
 from models.observation import Observation
 
 
@@ -10,8 +11,9 @@ def calculate_column(dataset, dframe, formula, name):
     Get necessary data given a calculation ID, execute calculation formula,
     store results in dataset the calculation refers to.
     """
-    func = lambda x: formula
+    # parse formula into function and variables
+    func, var_stack = parse_formula(formula)
 
-    new_column = dframe.apply(func, axis=1)
+    new_column = dframe.apply(func, axis=1, var_stack=var_stack)
     new_column.name = name
     return Observation.update(dframe.join(new_column), dataset)
