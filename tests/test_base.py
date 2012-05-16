@@ -29,7 +29,3 @@ class TestBase(unittest.TestCase):
         f = open_data_file('file://tests/fixtures/good_eats.csv')
         self.data = read_csv(f, na_values=['n/a'])
         self.dataset_id = uuid.uuid4().hex
-
-    def _load_calculation(self):
-        self.formula = 'rating'
-        self.name = 'test'

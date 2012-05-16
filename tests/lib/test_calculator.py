@@ -11,21 +11,27 @@ class TestCalculator(TestBase):
         TestBase.setUp(self)
         self.dataset = Dataset.save(self.dataset_id)
         Observation.save(self.data, self.dataset)
-        self._load_calculation()
+        self.calculations = [
+            'rating',
+            'gps',
+        ]
 
     def test_calculator(self):
         dframe = Observation.find(self.dataset, as_df=True)
-        task = calculate_column.delay(self.dataset, dframe,
-                self.formula, self.name)
 
-        # test that task has completed
-        self.assertTrue(task.ready())
-        self.assertTrue(task.successful())
+        for idx, formula in enumerate(self.calculations):
+            name = 'test-%s' % idx
+            task = calculate_column.delay(self.dataset, dframe,
+                    formula, name)
 
-        # test that updated dataframe persisted
-        dframe = Observation.find(self.dataset, as_df=True)
-        self.assertTrue(self.name in dframe.columns)
+            # test that task has completed
+            self.assertTrue(task.ready())
+            self.assertTrue(task.successful())
 
-        # test result of calculation
-        for idx, row in dframe.iterrows():
-            self.assertEqual(row[self.name], row[self.formula])
+            # test that updated dataframe persisted
+            dframe = Observation.find(self.dataset, as_df=True)
+            self.assertTrue(name in dframe.columns)
+
+            # test result of calculation
+            for idx, row in dframe.iterrows():
+                self.assertEqual(row[name], row[formula])

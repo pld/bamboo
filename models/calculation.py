@@ -1,6 +1,6 @@
 from lib.constants import DATASET_ID
 from lib.exceptions import ParseError
-from lib.parser import parse_formula
+from lib.parser import Parser
 from lib.tasks.calculator import calculate_column
 from models.abstract_model import AbstractModel
 from models.observation import Observation
@@ -9,6 +9,7 @@ from models.observation import Observation
 class Calculation(AbstractModel):
 
     __collectionname__ = 'calculations'
+    parser = Parser()
 
     FORMULA = 'formula'
     NAME = 'name'
@@ -22,10 +23,10 @@ class Calculation(AbstractModel):
         """
         try:
             # ensure that the formula is parsable
-            parse_formula(formula)
-        except ParseError:
+            cls.parser.parse_formula(formula)
+        except ParseError, err:
             # do not save record, return error
-            return 'parse error: bad formula'
+            return err
 
         record = {
             DATASET_ID: dataset[DATASET_ID],
