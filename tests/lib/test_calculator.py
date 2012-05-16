@@ -1,6 +1,6 @@
 from tests.test_base import TestBase
 
-from lib.calculator import Calculator
+from lib.tasks.calculator import calculate_column
 from models.dataset import Dataset
 from models.observation import Observation
 
@@ -15,8 +15,7 @@ class TestCalculator(TestBase):
 
     def test_calculator(self):
         dframe = Observation.find(self.dataset, as_df=True)
-        calculator = Calculator()
-        task = calculator.run.delay(self.dataset, dframe,
+        task = calculate_column.delay(self.dataset, dframe,
                 self.formula, self.name)
         self.assertTrue(task.ready())
         self.assertTrue(task.successful())
@@ -24,4 +23,4 @@ class TestCalculator(TestBase):
         self.assertTrue(self.name in dframe.columns)
         for key, value in dframe[self.name].iteritems():
             self.assertEqual(value, self.formula)
-        # TODO test result of calculation!
+        # TODO test result of calculation

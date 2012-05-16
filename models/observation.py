@@ -37,6 +37,10 @@ class Observation(AbstractModel):
 
     @classmethod
     def save(cls, dframe, dataset):
+        """
+        Convert dframe to mongo format, iterate through rows adding ids,
+        insert chunk by chunk.
+        """
         observations = df_to_mongo(dframe)
         # add metadata to file
         dataset_observation_id = dataset[DATASET_OBSERVATION_ID]

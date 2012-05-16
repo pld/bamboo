@@ -1,4 +1,3 @@
-from lib.calculator import Calculator
 from lib.constants import DATASET_ID
 from lib.tasks.calculator import calculate_column
 from models.abstract_model import AbstractModel
@@ -8,7 +7,6 @@ from models.observation import Observation
 class Calculation(AbstractModel):
 
     __collectionname__ = 'calculations'
-    calculator = Calculator()
 
     FORMULA = 'formula'
     NAME = 'name'
