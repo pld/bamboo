@@ -1,10 +1,13 @@
 import json
 
 from controllers.datasets import Datasets
-from tests.decorators import requires_internet
+from lib.constants import ALL
+from lib.decorators import requires_internet
 from tests.test_base import TestBase
 
 class TestDatasets(TestBase):
+
+    ID_NOT_FOUND = 'id not found'
 
     def setUp(self):
         TestBase.setUp(self)
@@ -33,30 +36,57 @@ class TestDatasets(TestBase):
         self.assertTrue(isinstance(results[0], dict))
         self.assertEqual(len(results), 19)
 
+    def test_GET_bad_id(self):
+        results = self.controller.GET(self.dataset_id)
+        self.assertEqual(results, self.ID_NOT_FOUND)
+
     def test_GET_with_query(self):
         self._post_file()
         # (sic)
-        results = json.loads(self.controller.GET(self.dataset_id, query='{"rating": "delectible"}'))
+        results = json.loads(self.controller.GET(self.dataset_id,
+                    query='{"rating": "delectible"}'))
         self.assertTrue(isinstance(results, list))
         self.assertTrue(isinstance(results[0], dict))
         self.assertEqual(len(results), 11)
 
     def test_GET_summary(self):
-        # TODO write me
-        pass
+        self._post_file()
+        results = json.loads(self.controller.GET(self.dataset_id, summary=True))
+        self.assertTrue(isinstance(results, dict))
+        self.assertTrue(isinstance(results[ALL], list))
+        self.assertEqual(len(results[ALL]), 14)
 
     def test_GET_summary_with_query(self):
-        # TODO write me
-        pass
+        self._post_file()
+        # (sic)
+        results = json.loads(self.controller.GET(self.dataset_id, summary=True,
+                    query='{"rating": "delectible"}'))
+        self.assertTrue(isinstance(results, dict))
+        self.assertTrue(isinstance(results[ALL], list))
+        self.assertEqual(len(results[ALL]), 14)
 
     def test_GET_summary_with_group(self):
-        # TODO write me
-        pass
+        self._post_file()
+        # (sic)
+        results = json.loads(self.controller.GET(self.dataset_id, summary=True,
+                    group='rating'))
+        self.assertTrue(isinstance(results, dict))
+        self.assertTrue(isinstance(results[ALL], list))
+        self.assertEqual(len(results[ALL]), 14)
 
     def test_GET_summary_with_group_and_query(self):
-        # TODO write me
-        pass
+        self._post_file()
+        results = json.loads(self.controller.GET(self.dataset_id, summary=True,
+                    group='rating', query='{"rating": "delectible"}'))
+        self.assertTrue(isinstance(results, dict))
+        self.assertTrue(isinstance(results[ALL], list))
+        self.assertEqual(len(results[ALL]), 14)
 
     def test_DELETE(self):
-        result = json.loads(self.controller.POST(self.url))
-        self.controller.DELETE(result['id'])
+        self._post_file()
+        result = self.controller.DELETE(self.dataset_id)
+        self.assertEqual(result, 'deleted dataset: %s' % self.dataset_id)
+
+    def test_DELETE_bad_id(self):
+        result = self.controller.DELETE(self.dataset_id)
+        self.assertEqual(result, self.ID_NOT_FOUND)
