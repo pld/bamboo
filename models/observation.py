@@ -4,7 +4,7 @@ from bson import json_util
 
 from config.db import Database
 from lib.constants import DATASET_OBSERVATION_ID, SOURCE, DB_BATCH_SIZE
-from lib.utils import df_to_mongo, mongo_to_df
+from lib.mongo import df_to_mongo, mongo_to_df
 from models.abstract_model import AbstractModel
 
 
@@ -14,7 +14,9 @@ class Observation(AbstractModel):
 
     @classmethod
     def delete(cls, dataset):
-        cls.collection.remove({DATASET_OBSERVATION_ID: dataset[DATASET_OBSERVATION_ID]})
+        cls.collection.remove({
+            DATASET_OBSERVATION_ID: dataset[DATASET_OBSERVATION_ID]
+        })
 
     @classmethod
     def find(cls, dataset, query=None, as_df=False):
@@ -30,6 +32,7 @@ class Observation(AbstractModel):
         else:
             query = {}
         query[DATASET_OBSERVATION_ID] = dataset[DATASET_OBSERVATION_ID]
+        # TODO encode query for mongo
         cursor = cls.collection.find(query)
         if as_df:
             return mongo_to_df(cursor)

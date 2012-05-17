@@ -54,7 +54,7 @@ class TestDatasets(TestBase):
         results = json.loads(self.controller.GET(self.dataset_id, summary=True))
         self.assertTrue(isinstance(results, dict))
         self.assertTrue(isinstance(results[ALL], list))
-        self.assertEqual(len(results[ALL]), 14)
+        self.assertEqual(len(results[ALL]), 17)
 
     def test_GET_summary_with_query(self):
         self._post_file()
@@ -63,7 +63,7 @@ class TestDatasets(TestBase):
                     query='{"rating": "delectible"}'))
         self.assertTrue(isinstance(results, dict))
         self.assertTrue(isinstance(results[ALL], list))
-        self.assertEqual(len(results[ALL]), 14)
+        self.assertEqual(len(results[ALL]), 17)
 
     def test_GET_summary_with_group(self):
         self._post_file()
@@ -72,7 +72,7 @@ class TestDatasets(TestBase):
                     group='rating'))
         self.assertTrue(isinstance(results, dict))
         self.assertTrue(isinstance(results[ALL], list))
-        self.assertEqual(len(results[ALL]), 14)
+        self.assertEqual(len(results[ALL]), 17)
 
     def test_GET_summary_with_group_and_query(self):
         self._post_file()
@@ -80,7 +80,7 @@ class TestDatasets(TestBase):
                     group='rating', query='{"rating": "delectible"}'))
         self.assertTrue(isinstance(results, dict))
         self.assertTrue(isinstance(results[ALL], list))
-        self.assertEqual(len(results[ALL]), 14)
+        self.assertEqual(len(results[ALL]), 17)
 
     def test_DELETE(self):
         self._post_file()

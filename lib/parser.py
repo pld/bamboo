@@ -1,6 +1,6 @@
 import copy
 
-from pyparsing import alphanums, nums, Word, OneOrMore, ZeroOrMore,\
+from pyparsing import alphanums, Combine, nums, Word, OneOrMore, ZeroOrMore,\
         ParseException, Literal, Optional
 
 from lib.exceptions import ParseError
@@ -15,10 +15,8 @@ class Parser(object):
     def __init__(self):
         self.bnf = self.BNF()
 
-    def push_var(self, string, loc, toks):
-        self.var_stack.append(toks[0])
-
     def push_expr(self, string, loc, toks):
+        print toks
         self.expr_stack.append(toks[0])
 
     def BNF(self):
@@ -37,7 +35,8 @@ class Parser(object):
         point = Literal('.')
         addop = plus | minus
 
-        real = OneOrMore(nums) + Optional(point + OneOrMore(nums))
+        real = Combine(OneOrMore(nums) + Optional(point +
+                    OneOrMore(nums))).setParseAction(self.push_expr)
         variable = Word(alphanums + '_').setParseAction(self.push_expr)
         term = real | variable
 

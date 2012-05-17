@@ -5,7 +5,7 @@ from tests.test_base import TestBase
 from models.dataset import Dataset
 from models.observation import Observation
 from lib.constants import DATASET_ID
-from lib.utils import mongo_decode_keys
+from lib.mongo import mongo_decode_keys
 
 
 class TestDataset(TestBase):
