@@ -15,8 +15,7 @@ class Parser(object):
     def __init__(self):
         self.bnf = self.BNF()
 
-    def push_expr(self, string, loc, toks):
-        print toks
+    def _push_expr(self, string, loc, toks):
         self.expr_stack.append(toks[0])
 
     def BNF(self):
@@ -36,14 +35,14 @@ class Parser(object):
         addop = plus | minus
 
         real = Combine(OneOrMore(nums) + Optional(point +
-                    OneOrMore(nums))).setParseAction(self.push_expr)
-        variable = Word(alphanums + '_').setParseAction(self.push_expr)
+                    OneOrMore(nums))).setParseAction(self._push_expr)
+        variable = Word(alphanums + '_').setParseAction(self._push_expr)
         term = real | variable
 
-        expression = term + ZeroOrMore( (addop +
-                    term).setParseAction(self.push_expr) )
+        self.bnf  = term + ZeroOrMore( (addop +
+                    term).setParseAction(self._push_expr) )
 
-        return expression
+        return self.bnf
 
     def parse_formula(self, input_str):
         self.var_stack = []

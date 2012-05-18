@@ -23,6 +23,11 @@ class TestCalculation(TestBase):
                 self.name)
         self.assertTrue(record, basestring)
 
+    def test_save_unparsable_formula(self):
+        record = Calculation.save(self.dataset, '=NON-EXISTENT-COLUMN',
+                self.name)
+        self.assertTrue(record, basestring)
+
     def test_find(self):
         record = Calculation.save(self.dataset, self.formula, self.name)
         cursor = Calculation.find(self.dataset)
