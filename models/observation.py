@@ -52,7 +52,8 @@ class Observation(AbstractModel):
                 # insert data into collection
                 cls.collection.insert(rows)
                 rows = []
-        cls.collection.insert(rows)
+        if len(rows):
+            cls.collection.insert(rows)
 
     @classmethod
     def update(cls, dframe, dataset):
