@@ -19,6 +19,9 @@ class TestCalculator(TestBase):
             'amount - gps_alt',
             'amount + 5',
             'amount - gps_alt + 2.5',
+            'amount * gps_alt',
+            'amount / gps_alt',
+            'amount * gps_alt / 2.5',
         ]
 
     def _test_calculator(self, delay=True):

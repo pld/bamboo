@@ -1,4 +1,7 @@
+# future must be first
+from __future__ import division
 import copy
+import operator
 
 from pyparsing import alphanums, nums, Combine, Literal, OneOrMore, Optional,\
          ParseException, Regex, Word, ZeroOrMore
@@ -21,24 +24,28 @@ class Parser(object):
     def BNF(self):
         """
         addop       :: '+' | '-'
+        multop      :: '*' | '/'
         real        :: \d+(.\d+)
         variable    :: string
         term        :: real | variable
-        expression  :: term [ addop term ]*
+        expression  :: term [ addop | multop term ]*
         """
         if self.bnf:
             return self.bnf
 
         plus = Literal('+')
         minus = Literal('-')
-        point = Literal('.')
+        mult = Literal('*')
+        div = Literal('/')
+
         addop = plus | minus
+        multop = mult | div
 
         real = Regex(r'\d+(.\d+)').setParseAction(self._push_expr)
         variable = Word(alphanums + '_').setParseAction(self._push_expr)
         term = real | variable
 
-        self.bnf  = term + ZeroOrMore( (addop +
+        self.bnf  = term + ZeroOrMore( ((addop | multop) +
                     term).setParseAction(self._push_expr) )
 
         return self.bnf
@@ -56,19 +63,21 @@ class Parser(object):
             expr_stack = copy.copy(expr_stack)
             # TODO don't declare this on each call
             ops = {
-                '+': lambda x, y: float(x) + float(y),
-                '-': lambda x, y: float(x) - float(y),
+                '+': operator.add,
+                '-': operator.sub,
+                '*': operator.mul,
+                '/': operator.div,
             }
             term = expr_stack.pop()
 
-            if term in '+-':
+            if term in ops.keys():
                 term2 = formula_function(row, expr_stack)
                 expr_stack.pop()
                 term1 = formula_function(row, expr_stack)
                 expr_stack.pop()
                 try:
-                    return ops[term](term1, term2)
-                except ValueError:
+                    return ops[term](float(term1), float(term2))
+                except (ValueError, ZeroDivisionError):
                     return 'null'
 
             # faster check for float

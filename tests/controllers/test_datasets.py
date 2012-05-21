@@ -18,6 +18,11 @@ class TestDatasets(TestBase):
     def _post_file(self):
         self.dataset_id = json.loads(self.controller.POST(self._file))['id']
 
+    def _test_results(self, results):
+        self.assertTrue(isinstance(results, dict))
+        self.assertTrue(isinstance(results[ALL], list))
+        self.assertEqual(len(results[ALL]), 20)
+
     def test_POST_file(self):
         result = json.loads(self.controller.POST(self._file))
         self.assertTrue(isinstance(result, dict))
@@ -52,35 +57,27 @@ class TestDatasets(TestBase):
     def test_GET_summary(self):
         self._post_file()
         results = json.loads(self.controller.GET(self.dataset_id, summary=True))
-        self.assertTrue(isinstance(results, dict))
-        self.assertTrue(isinstance(results[ALL], list))
-        self.assertEqual(len(results[ALL]), 17)
+        self._test_results(results)
 
     def test_GET_summary_with_query(self):
         self._post_file()
         # (sic)
         results = json.loads(self.controller.GET(self.dataset_id, summary=True,
                     query='{"rating": "delectible"}'))
-        self.assertTrue(isinstance(results, dict))
-        self.assertTrue(isinstance(results[ALL], list))
-        self.assertEqual(len(results[ALL]), 17)
+        self._test_results(results)
 
     def test_GET_summary_with_group(self):
         self._post_file()
         # (sic)
         results = json.loads(self.controller.GET(self.dataset_id, summary=True,
                     group='rating'))
-        self.assertTrue(isinstance(results, dict))
-        self.assertTrue(isinstance(results[ALL], list))
-        self.assertEqual(len(results[ALL]), 17)
+        self._test_results(results)
 
     def test_GET_summary_with_group_and_query(self):
         self._post_file()
         results = json.loads(self.controller.GET(self.dataset_id, summary=True,
                     group='rating', query='{"rating": "delectible"}'))
-        self.assertTrue(isinstance(results, dict))
-        self.assertTrue(isinstance(results[ALL], list))
-        self.assertEqual(len(results[ALL]), 17)
+        self._test_results(results)
 
     def test_DELETE(self):
         self._post_file()
