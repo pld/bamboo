@@ -1,7 +1,7 @@
 import copy
 
-from pyparsing import alphanums, nums, Word, OneOrMore, ZeroOrMore,\
-        ParseException, Literal, Optional
+from pyparsing import alphanums, nums, Combine, Literal, OneOrMore, Optional,\
+         ParseException, Regex, Word, ZeroOrMore
 
 from lib.exceptions import ParseError
 
@@ -34,7 +34,7 @@ class Parser(object):
         point = Literal('.')
         addop = plus | minus
 
-        real = OneOrMore(nums) + Optional(point + OneOrMore(nums))
+        real = Regex(r'\d+(.\d+)').setParseAction(self._push_expr)
         variable = Word(alphanums + '_').setParseAction(self._push_expr)
         term = real | variable
 

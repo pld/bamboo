@@ -3,6 +3,7 @@ from tests.test_base import TestBase
 from lib.tasks.calculator import calculate_column
 from models.dataset import Dataset
 from models.observation import Observation
+from lib.mongo import _encode_for_mongo
 
 
 class TestCalculator(TestBase):
@@ -15,6 +16,9 @@ class TestCalculator(TestBase):
             'rating',
             'gps',
             'amount + gps_alt',
+            'amount - gps_alt',
+            'amount + 5',
+            'amount - gps_alt + 2.5',
         ]
 
     def _test_calculator(self, delay=True):
@@ -38,8 +42,10 @@ class TestCalculator(TestBase):
 
             # test result of calculation
             for idx, row in dframe.iterrows():
+                formula = _encode_for_mongo(formula)
                 try:
-                    self.assertAlmostEqual(float(row[name]), float(row[formula]))
+                    self.assertAlmostEqual(float(row[name]),
+                            float(row[formula]))
                 except ValueError:
                     self.assertEqual(row[name], row[formula])
 

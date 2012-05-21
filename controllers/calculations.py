@@ -2,7 +2,7 @@ import json
 
 from models.calculation import Calculation
 from models.dataset import Dataset
-from lib.utils import dump_mongo_json
+from lib.mongo import dump_mongo_json
 
 
 class Calculations(object):

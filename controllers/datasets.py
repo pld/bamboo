@@ -1,6 +1,6 @@
 import json
 
-from lib.utils import mongo_to_json
+from lib.mongo import mongo_to_json
 from lib.io import create_dataset_from_url, open_data_file
 from lib.summary import summarize
 from models.dataset import Dataset

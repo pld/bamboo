@@ -2,8 +2,8 @@ from pandas import DataFrame, read_csv
 from pymongo.cursor import Cursor
 
 from lib.constants import MONGO_RESERVED_KEYS
+from lib.mongo import _prefix_mongo_reserved_key, mongo_decode_keys
 from lib.io import open_data_file
-from lib.utils import encode_key_for_mongo, mongo_decode_keys
 from models.dataset import Dataset
 from models.observation import Observation
 from tests.test_base import TestBase
@@ -46,7 +46,7 @@ class TestObservation(TestBase):
         self.assertEqual(self.data.reindex(columns=dframe.columns), dframe)
         columns = dframe.columns
         for key in MONGO_RESERVED_KEYS:
-            self.assertFalse(encode_key_for_mongo(key) in columns)
+            self.assertFalse(_prefix_mongo_reserved_key(key) in columns)
 
     def test_find_with_query(self):
         Observation.save(self.data, self.dataset)
