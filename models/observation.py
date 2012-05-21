@@ -28,7 +28,7 @@ class Observation(AbstractModel):
             try:
                 query = json.loads(query, object_hook=json_util.object_hook)
             except ValueError, e:
-                return e.message
+                return e.__str__()
         else:
             query = {}
         query[DATASET_OBSERVATION_ID] = dataset[DATASET_OBSERVATION_ID]
