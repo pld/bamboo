@@ -2,7 +2,7 @@ Bamboo
 ======
 
 
-.. image:: https://secure.travis-ci.org/modilabs/bamboo.png
+.. image:: https://secure.travis-ci.org/modilabs/bamboo.png?branch=master
   :target: http://travis-ci.org/modilabs/bamboo
 
 Dependencies
