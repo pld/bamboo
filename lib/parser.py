@@ -1,6 +1,7 @@
 # future must be first
 from __future__ import division
 import copy
+import numpy as np
 import operator
 
 from pyparsing import alphanums, nums, Combine, Forward, Literal, OneOrMore,\
@@ -19,6 +20,12 @@ class Parser(object):
         '-': operator.sub,
         '*': operator.mul,
         '/': operator.div,
+        '^': operator.__pow__,
+        '=': operator.eq,
+        '<': operator.lt,
+        '>': operator.gt,
+        '<=': operator.le,
+        '>=': operator.ge,
     }
 
     def __init__(self):
@@ -32,12 +39,14 @@ class Parser(object):
         addop       :: '+' | '-'
         multop      :: '*' | '/'
         expop       :: '^'
+        compop      :: '=' | '<' | '>' | '<=' | '>='
         real        :: \d+(.\d+)
         variable    :: string
-        atom        :: real | variable | '(' expr ')'
+        atom        :: real | variable | '(' equation ')'
         factor      :: atom [ expop factor]*
         term        :: factor [ multop factor ]*
         expr        :: term [ addop term ]*
+        equation    :: expr [compop expr]*
         """
         if self.bnf:
             return self.bnf
@@ -48,31 +57,39 @@ class Parser(object):
         mult = Literal('*')
         div = Literal('/')
         expop = Literal('^')
+        eq = Literal('=')
+        lt = Literal('<')
+        gt = Literal('>')
+        lte = Literal('<=')
+        gte = Literal('>=')
         lpar = Literal('(').suppress()
         rpar = Literal(')').suppress()
 
         # define operations
         addop = plus | minus
         multop = mult | div
+        compop = eq | lt | gt | lte | gte
 
         # define singular expressions
         real = Regex(r'\d+(.\d+)')
         variable = Word(alphanums + '_')
 
         # define compound expressions
-        expr = Forward()
+        equation = Forward()
         atom = ((real | variable).setParseAction(self._push_expr) | \
-                    (lpar + expr.suppress() + rpar))
+                    (lpar + equation.suppress() + rpar))
         factor = Forward()
         factor << atom + ZeroOrMore((expop +
                     factor).setParseAction(self._push_expr))
         term = factor + ZeroOrMore((multop +
                     factor).setParseAction(self._push_expr))
-        expr << term + ZeroOrMore((addop +
+        expr = term + ZeroOrMore((addop +
                     term).setParseAction(self._push_expr))
+        equation << expr + ZeroOrMore((compop +
+                    expr).setParseAction(self._push_expr))
 
         # top level bnf
-        self.bnf = expr
+        self.bnf = equation
 
         return self.bnf
 
@@ -101,13 +118,14 @@ class Parser(object):
                 term2 = formula_function(row, parser)
                 term1 = formula_function(row, parser)
                 try:
-                    return ops[term](float(term1), float(term2))
+                    result = ops[term](np.float64(term1), np.float64(term2))
+                    return np.nan if np.isinf(result) else result
                 except (ValueError, ZeroDivisionError):
-                    return 'null'
+                    return np.nan
 
             # float or variable (faster check)
             try:
-                float(term)
+                np.float64(term)
                 return term
             except ValueError:
                 return row[term]

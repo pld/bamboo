@@ -27,5 +27,5 @@ class TestBase(unittest.TestCase):
 
     def _load_test_data(self):
         f = open_data_file('file://tests/fixtures/good_eats.csv')
-        self.data = read_csv(f, na_values=['n/a'])
+        self.data = read_csv(f)
         self.dataset_id = uuid.uuid4().hex
