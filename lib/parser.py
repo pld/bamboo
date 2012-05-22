@@ -3,8 +3,8 @@ from __future__ import division
 import copy
 import operator
 
-from pyparsing import alphanums, nums, Combine, Literal, OneOrMore, Optional,\
-         ParseException, Regex, Word, ZeroOrMore
+from pyparsing import alphanums, nums, Combine, Forward, Literal, OneOrMore,\
+         Optional, ParseException, Regex, Word, ZeroOrMore
 
 from lib.exceptions import ParseError
 
@@ -14,6 +14,12 @@ class Parser(object):
     bnf = None
     expr_stack = []
     var_stack = []
+    operations = {
+        '+': operator.add,
+        '-': operator.sub,
+        '*': operator.mul,
+        '/': operator.div,
+    }
 
     def __init__(self):
         self.bnf = self.BNF()
@@ -25,28 +31,48 @@ class Parser(object):
         """
         addop       :: '+' | '-'
         multop      :: '*' | '/'
+        expop       :: '^'
         real        :: \d+(.\d+)
         variable    :: string
-        term        :: real | variable
-        expression  :: term [ addop | multop term ]*
+        atom        :: real | variable | '(' expr ')'
+        factor      :: atom [ expop factor]*
+        term        :: factor [ multop factor ]*
+        expr        :: term [ addop term ]*
         """
         if self.bnf:
             return self.bnf
 
+        # define literals
         plus = Literal('+')
         minus = Literal('-')
         mult = Literal('*')
         div = Literal('/')
+        expop = Literal('^')
+        lpar = Literal('(').suppress()
+        rpar = Literal(')').suppress()
 
+        # define operations
         addop = plus | minus
         multop = mult | div
 
-        real = Regex(r'\d+(.\d+)').setParseAction(self._push_expr)
-        variable = Word(alphanums + '_').setParseAction(self._push_expr)
-        term = real | variable
+        # define singular expressions
+        real = Regex(r'\d+(.\d+)')
+        variable = Word(alphanums + '_')
 
-        self.bnf  = term + ZeroOrMore( ((addop | multop) +
-                    term).setParseAction(self._push_expr) )
+        # define compound expressions
+        expr = Forward()
+        atom = ((real | variable).setParseAction(self._push_expr) | \
+                    (lpar + expr.suppress() + rpar))
+        factor = Forward()
+        factor << atom + ZeroOrMore((expop +
+                    factor).setParseAction(self._push_expr))
+        term = factor + ZeroOrMore((multop +
+                    factor).setParseAction(self._push_expr))
+        expr << term + ZeroOrMore((addop +
+                    term).setParseAction(self._push_expr))
+
+        # top level bnf
+        self.bnf = expr
 
         return self.bnf
 
@@ -59,38 +85,32 @@ class Parser(object):
         except ParseException, err:
             raise ParseError('Parse Failure: %s' % err)
 
-        def formula_function(row, expr_stack):
-            expr_stack = copy.copy(expr_stack)
-            # TODO don't declare this on each call
-            ops = {
-                '+': operator.add,
-                '-': operator.sub,
-                '*': operator.mul,
-                '/': operator.div,
-            }
-            term = expr_stack.pop()
+        def formula_function(row, parser):
+            """
+            Row-wise function to calculate formula result.
+            """
+            ops = parser.operations
 
+            if not len(parser.expr_stack):
+                parser.expr_stack = copy.copy(parser.original_expr_stack)
+
+            term = parser.expr_stack.pop()
+
+            # operation
             if term in ops.keys():
-                term2 = formula_function(row, expr_stack)
-                expr_stack.pop()
-                term1 = formula_function(row, expr_stack)
-                expr_stack.pop()
+                term2 = formula_function(row, parser)
+                term1 = formula_function(row, parser)
                 try:
                     return ops[term](float(term1), float(term2))
                 except (ValueError, ZeroDivisionError):
                     return 'null'
 
-            # faster check for float
-            is_float = False
+            # float or variable (faster check)
             try:
                 float(term)
-                is_float = True
-            except ValueError:
-                pass
-            if is_float:
                 return term
-            else:
-                # otherwise it is a variable
+            except ValueError:
                 return row[term]
 
-        return [formula_function, self.expr_stack]
+        self.original_expr_stack = copy.copy(self.expr_stack)
+        return formula_function

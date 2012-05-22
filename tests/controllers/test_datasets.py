@@ -7,6 +7,7 @@ from tests.test_base import TestBase
 
 class TestDatasets(TestBase):
 
+    NUM_COLS = 22
     ID_NOT_FOUND = 'id not found'
 
     def setUp(self):
@@ -21,7 +22,7 @@ class TestDatasets(TestBase):
     def _test_results(self, results):
         self.assertTrue(isinstance(results, dict))
         self.assertTrue(isinstance(results[ALL], list))
-        self.assertEqual(len(results[ALL]), 20)
+        self.assertEqual(len(results[ALL]), self.NUM_COLS)
 
     def test_POST_file(self):
         result = json.loads(self.controller.POST(self._file))

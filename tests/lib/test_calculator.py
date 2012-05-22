@@ -1,3 +1,5 @@
+from numpy import float64
+
 from tests.test_base import TestBase
 
 from lib.tasks.calculator import calculate_column
@@ -22,7 +24,10 @@ class TestCalculator(TestBase):
             'amount * gps_alt',
             'amount / gps_alt',
             'amount * gps_alt / 2.5',
+            'amount + gps_alt * gps_precision',
+            '(amount + gps_alt) * gps_precision',
         ]
+        self.places = 6
 
     def _test_calculator(self, delay=True):
         dframe = Observation.find(self.dataset, as_df=True)
@@ -47,8 +52,8 @@ class TestCalculator(TestBase):
             for idx, row in dframe.iterrows():
                 formula = _encode_for_mongo(formula)
                 try:
-                    self.assertAlmostEqual(float(row[name]),
-                            float(row[formula]))
+                    self.assertAlmostEqual(float64(row[name]),
+                            float64(row[formula]), places=self.places)
                 except ValueError:
                     self.assertEqual(row[name], row[formula])
 
