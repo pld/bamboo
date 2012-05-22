@@ -4,8 +4,8 @@ import copy
 import numpy as np
 import operator
 
-from pyparsing import alphanums, nums, Combine, Forward, Literal, OneOrMore,\
-         Optional, ParseException, Regex, Word, ZeroOrMore
+from pyparsing import alphanums, nums, CaselessLiteral, Combine, Forward,\
+         Literal, OneOrMore, Optional, ParseException, Regex, Word, ZeroOrMore
 
 from lib.exceptions import ParseError
 
@@ -14,19 +14,24 @@ class Parser(object):
 
     bnf = None
     expr_stack = []
-    var_stack = []
-    operations = {
+    binary_operations = {
         '+': operator.add,
         '-': operator.sub,
         '*': operator.mul,
         '/': operator.div,
-        '^': operator.__pow__,
         '=': operator.eq,
         '<': operator.lt,
         '>': operator.gt,
         '<=': operator.le,
         '>=': operator.ge,
+        'and': operator.__and__,
+        'or': operator.__or__,
     }
+    unary_operations = {
+        '^': operator.__pow__,
+        'not': operator.__not__,
+    }
+    operations = dict(binary_operations.items() + unary_operations.items())
 
     def __init__(self):
         self.bnf = self.BNF()
@@ -36,17 +41,25 @@ class Parser(object):
 
     def BNF(self):
         """
+        Backus-Naur Form of formula language:
+
         addop       :: '+' | '-'
         multop      :: '*' | '/'
         expop       :: '^'
         compop      :: '=' | '<' | '>' | '<=' | '>='
+        notop       :: 'not'
+        andop       :: 'and'
+        orop        :: 'or'
         real        :: \d+(.\d+)
         variable    :: string
-        atom        :: real | variable | '(' equation ')'
+        atom        :: real | variable | '(' disj ')'
         factor      :: atom [ expop factor]*
         term        :: factor [ multop factor ]*
         expr        :: term [ addop term ]*
         equation    :: expr [compop expr]*
+        neg         :: [notop]* equation
+        conj        :: neg [andop neg]*
+        disj        :: conj [orop conj]*
         """
         if self.bnf:
             return self.bnf
@@ -62,6 +75,9 @@ class Parser(object):
         gt = Literal('>')
         lte = Literal('<=')
         gte = Literal('>=')
+        notop = CaselessLiteral('not')
+        andop = CaselessLiteral('and')
+        orop = CaselessLiteral('or')
         lpar = Literal('(').suppress()
         rpar = Literal(')').suppress()
 
@@ -75,9 +91,9 @@ class Parser(object):
         variable = Word(alphanums + '_')
 
         # define compound expressions
-        equation = Forward()
+        disj = Forward()
         atom = ((real | variable).setParseAction(self._push_expr) | \
-                    (lpar + equation.suppress() + rpar))
+                    (lpar + disj.suppress() + rpar))
         factor = Forward()
         factor << atom + ZeroOrMore((expop +
                     factor).setParseAction(self._push_expr))
@@ -85,40 +101,53 @@ class Parser(object):
                     factor).setParseAction(self._push_expr))
         expr = term + ZeroOrMore((addop +
                     term).setParseAction(self._push_expr))
-        equation << expr + ZeroOrMore((compop +
+        equation = expr + ZeroOrMore((compop +
                     expr).setParseAction(self._push_expr))
+        neg = ZeroOrMore(notop.setParseAction(self._push_expr)) + equation
+        conj = neg + ZeroOrMore((andop +
+                    neg).setParseAction(self._push_expr))
+        disj << conj + ZeroOrMore((orop +
+                    conj).setParseAction(self._push_expr))
 
         # top level bnf
-        self.bnf = equation
+        self.bnf = disj
 
         return self.bnf
 
     def parse_formula(self, input_str):
-        self.var_stack = []
+        """
+        Parse formula, create expression stack and generate function to evaluate
+        rows. Returns the function.
+        """
         self.expr_stack = []
 
         try:
             parse_output = self.bnf.parseString(input_str)
         except ParseException, err:
-            raise ParseError('Parse Failure: %s' % err)
+            raise ParseError('Parse Failure for string "%s": %s' % (input_str,
+                        err))
 
         def formula_function(row, parser):
             """
             Row-wise function to calculate formula result.
             """
-            ops = parser.operations
-
             if not len(parser.expr_stack):
                 parser.expr_stack = copy.copy(parser.original_expr_stack)
 
             term = parser.expr_stack.pop()
 
-            # operation
-            if term in ops.keys():
-                term2 = formula_function(row, parser)
-                term1 = formula_function(row, parser)
+            # operations
+            if term in parser.operations.keys():
+                op = parser.operations[term]
+                args = [formula_function(row, parser)]
+
+                # if binary operation get the second argument
+                if term in parser.binary_operations.keys():
+                    args.append(formula_function(row, parser))
+                    args.reverse()
+
                 try:
-                    result = ops[term](np.float64(term1), np.float64(term2))
+                    result = op(*[np.float64(arg) for arg in args])
                     return np.nan if np.isinf(result) else result
                 except (ValueError, ZeroDivisionError):
                     return np.nan

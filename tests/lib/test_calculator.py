@@ -29,6 +29,14 @@ class TestCalculator(TestBase):
             'amount = 2',
             '10 < amount',
             '10 < amount + gps_alt',
+            'not amount = 2',
+            'not(amount = 2)',
+            'amount = 2 and 10 < amount',
+            'amount = 2 or 10 < amount',
+            'not not amount = 2 or 10 < amount',
+            'not amount = 2 or 10 < amount',
+            '(not amount = 2) or 10 < amount',
+            'not (amount = 2 or 10 < amount)',
         ]
         self.places = 6
 
