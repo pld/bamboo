@@ -1,5 +1,3 @@
-import urllib2
-
 from celery.task import task
 from pandas import read_csv
 
@@ -14,9 +12,5 @@ def import_dataset(_file, dataset):
     For reading a URL and saving the corresponding dataset.
     """
 
-    try:
-        dframe = read_csv(_file, na_values=['n/a'])
-        Observation.save(dframe, dataset)
-    except (IOError, urllib2.HTTPError):
-        # error reading file/url, delete dataset
-        Dataset.delete(dataset[DATASET_ID])
+    dframe = read_csv(_file, na_values=['n/a'])
+    Observation.save(dframe, dataset)

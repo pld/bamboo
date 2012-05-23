@@ -46,4 +46,4 @@ class Datasets(object):
         Read data from URL 'url'.
         If URL is not provided and data is provided, read posted data 'data'.
         """
-        return json.dumps({'id': create_dataset_from_url(url)})
+        return json.dumps(create_dataset_from_url(url))

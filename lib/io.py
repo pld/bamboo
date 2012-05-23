@@ -33,13 +33,20 @@ def create_dataset_from_url(url):
     Load a URL, read from a CSV, create a dataset and return the unique ID.
     """
 
-    _file = open_data_file(url)
+    _file = None
+
+    try:
+        _file = open_data_file(url)
+    except (IOError, urllib2.HTTPError):
+        # error reading file/url, return
+        pass
+
     if not _file:
         # could not get a file handle
-        return 'could not get a filehandle'
+        return {'error': 'could not get a filehandle for: %s' % url}
 
     dataset_id = uuid.uuid4().hex
     dataset = Dataset.create(dataset_id)
     import_dataset(_file, dataset)
 
-    return dataset_id
+    return {'id': dataset_id}

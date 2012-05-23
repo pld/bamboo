@@ -35,6 +35,11 @@ class TestDatasets(TestBase):
         self.assertTrue(isinstance(result, dict))
         self.assertTrue('id' in result)
 
+    def test_POST_bad_url(self):
+        result = json.loads(self.controller.POST('http://noformhub.org/'))
+        self.assertTrue(isinstance(result, dict))
+        self.assertTrue('error' in result)
+
     def test_GET(self):
         self._post_file()
         results = json.loads(self.controller.GET(self.dataset_id))
