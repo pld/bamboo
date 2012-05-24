@@ -13,7 +13,7 @@ class TestParser(TestBase):
 
     def _check_func(self, parse_result):
         func = parse_result
-        self.assertEqual(func.func_name, 'formula_function')
+        self.assertEqual(func.func_name, '_eval')
         return parse_result
 
     def test_parse_formula(self):
@@ -32,4 +32,4 @@ class TestParser(TestBase):
         self.assertEqual(func(self.row, self.parser), 2)
 
     def test_parse_formula_bad_formula(self):
-        self.assertRaises(ParseError, self.parser.parse_formula, '=BAD +++ FORMULA')
+        self.assertRaises(ParseError, self.parser.parse_formula, '=BAD +++ FOR')
