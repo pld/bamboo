@@ -26,10 +26,10 @@ def print_time(func):
      return wrapped_func
 
 
-def requires_internet(f):
+def requires_internet(f, url='http://74.125.113.99'):
     @wraps(f)
     def wrapper(*args, **kwargs):
-        if not _internet_on():
+        if not _internet_on(url):
             raise AssertionError('This test requires an internet connection to run/pass.')
         return f(*args, **kwargs)
     return wrapper
@@ -44,5 +44,5 @@ def _check_url(url, timeout=1):
     return False
 
 
-def _internet_on(url='http://74.125.113.99'):
+def _internet_on(url):
     return _check_url(url)
