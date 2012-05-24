@@ -13,8 +13,9 @@ def calculate_column(dataset, dframe, formula, name):
     """
     # parse formula into function and variables
     parser = Parser()
-    func, expr_stack = parser.parse_formula(formula)
+    func = parser.parse_formula(formula)
 
-    new_column = dframe.apply(func, axis=1, args=(expr_stack, ))
+    new_column = dframe.apply(func, axis=1, args=(parser, ))
     new_column.name = name
+    #print new_column
     return Observation.update(dframe.join(new_column), dataset)
