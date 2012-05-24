@@ -21,12 +21,21 @@ class Calculation(AbstractModel):
         Attempt to parse formula, then save formula, and add a task to calculate
         formula.
         """
+
+        dframe = Observation.find(dataset, as_df=True)
+
+        # attempt to get a row from the dataframe
         try:
-            # ensure that the formula is parsable
-            cls.parser.parse_formula(formula)
+            row = dframe.irow(0)
+        except IndexError, err:
+            row = {}
+
+        # ensure that the formula is parsable
+        try:
+            cls.parser.validate_formula(formula, row)
         except ParseError, err:
             # do not save record, return error
-            return err
+            return {'error': err}
 
         record = {
             DATASET_ID: dataset[DATASET_ID],
@@ -36,7 +45,6 @@ class Calculation(AbstractModel):
         cls.collection.insert(record)
 
         # call remote calculate and pass calculation id
-        dframe = Observation.find(dataset, as_df=True)
         calculate_column.delay(dataset, dframe, formula, name)
         return record
 

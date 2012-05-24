@@ -51,7 +51,7 @@ class Parser(object):
         not_op = CaselessLiteral('not')
         and_op = CaselessLiteral('and')
         or_op = CaselessLiteral('or')
-        comparison_op = oneOf("< <= > >= != =")
+        comparison_op = oneOf('< <= > >= != =')
 
         # operands
         integer = Word(nums)
@@ -84,6 +84,10 @@ class Parser(object):
         return self.bnf
 
     def parse_formula(self, input_str):
+        """
+        Parse formula and return evaluation function.
+        """
+
         try:
             self.parsed_expr = self.bnf.parseString(input_str)[0]
         except ParseException, err:
@@ -94,3 +98,11 @@ class Parser(object):
             return parser.parsed_expr._eval(row)
 
         return _eval
+
+    def validate_formula(self, formula, row):
+        # check valid formula
+        _eval = self.parse_formula(formula)
+        try:
+            _eval(row, self)
+        except KeyError, err:
+            raise ParseError('Missing column "%s": %s' % (1, err))

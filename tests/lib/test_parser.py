@@ -32,4 +32,12 @@ class TestParser(TestBase):
         self.assertEqual(func(self.row, self.parser), 2)
 
     def test_parse_formula_bad_formula(self):
-        self.assertRaises(ParseError, self.parser.parse_formula, '=BAD +++ FOR')
+        bad_formulas = [
+            '=BAD +++ FOR',
+            #'2 +>+ 1',
+            #'1 ** 2',
+        ]
+
+        for bad_formula in bad_formulas:
+            self.assertRaises(ParseError, self.parser.parse_formula,
+                    bad_formula)

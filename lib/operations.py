@@ -5,23 +5,32 @@ import operator
 import numpy as np
 
 
-def operator_operands(tokenlist):
-    "generator to extract operators and operands in pairs"
-    it = iter(tokenlist)
-    while 1:
-        try:
-            yield (it.next(), it.next())
-        except StopIteration:
-            break
-
-
-class EvalConstant(object):
+class EvalTerm(object):
     """
-    Class to evaluate a parsed constant or variable
+    Base class for evaluation
     """
 
     def __init__(self, tokens):
         self.value = tokens[0]
+
+    def operator_operands(self, tokenlist):
+        "generator to extract operators and operands in pairs"
+        it = iter(tokenlist)
+        while 1:
+            try:
+                yield (it.next(), it.next())
+            except StopIteration:
+                break
+
+    def operation(self, op, result, val):
+        return self.operations[op](result, val)
+
+
+
+class EvalConstant(EvalTerm):
+    """
+    Class to evaluate a parsed constant or variable
+    """
 
     def _eval(self, row):
         try:
@@ -31,7 +40,7 @@ class EvalConstant(object):
             return row[self.value]
 
 
-class EvalSignOp(object):
+class EvalSignOp(EvalTerm):
     """
     Class to evaluate expressions with a leading + or - sign
     """
@@ -44,7 +53,7 @@ class EvalSignOp(object):
         return mult * self.value._eval(row)
 
 
-class EvalBinaryArithOp(object):
+class EvalBinaryArithOp(EvalTerm):
     """
     Class for evaluating binary arithmetic operations
     """
@@ -57,23 +66,17 @@ class EvalBinaryArithOp(object):
         '^': operator.__pow__,
     }
 
-    def __init__(self, tokens):
-        self.value = tokens[0]
-
     def _eval(self, row):
         try:
             result = np.float64(self.value[0]._eval(row))
-            for op, val in operator_operands(self.value[1:]):
-                    val = np.float64(val._eval(row))
-                    result = self.operation(op, result, val)
-                    if np.isinf(result):
-                        return np.nan
+            for op, val in self.operator_operands(self.value[1:]):
+                val = np.float64(val._eval(row))
+                result = self.operation(op, result, val)
+                if np.isinf(result):
+                    return np.nan
         except (ValueError, ZeroDivisionError):
             return np.nan
         return result
-
-    def operation(self, op, result, val):
-        return self.operations[op](result, val)
 
 
 class EvalMultOp(EvalBinaryArithOp):
@@ -97,7 +100,7 @@ class EvalExpOp(EvalBinaryArithOp):
     pass
 
 
-class EvalComparisonOp(object):
+class EvalComparisonOp(EvalTerm):
     """
     Class to evaluate comparison expressions
     """
@@ -111,12 +114,9 @@ class EvalComparisonOp(object):
         "=" : lambda a,b : a == b,
     }
 
-    def __init__(self, tokens):
-        self.value = tokens[0]
-
     def _eval(self, row):
         val1 = np.float64(self.value[0]._eval(row))
-        for op, val in operator_operands(self.value[1:]):
+        for op, val in self.operator_operands(self.value[1:]):
             fn = EvalComparisonOp.opMap[op]
             val2 = np.float64(val._eval(row))
             if not fn(val1, val2):
@@ -127,7 +127,7 @@ class EvalComparisonOp(object):
         return False
 
 
-class EvalNotOp(object):
+class EvalNotOp(EvalTerm):
     """
     Class to evaluate not expressions
     """
@@ -139,7 +139,7 @@ class EvalNotOp(object):
         return not self.value._eval(row)
 
 
-class EvalBinaryBooleanOp(object):
+class EvalBinaryBooleanOp(EvalTerm):
     """
     Class for evaluating binary boolean operations
     """
@@ -149,18 +149,12 @@ class EvalBinaryBooleanOp(object):
         'or': lambda p, q: p or q,
     }
 
-    def __init__(self, tokens):
-        self.value = tokens[0]
-
     def _eval(self, row):
         result = np.bool_(self.value[0]._eval(row))
-        for op, val in operator_operands(self.value[1:]):
+        for op, val in self.operator_operands(self.value[1:]):
                 val = np.bool_(val._eval(row))
                 result = self.operation(op, result, val)
         return result
-
-    def operation(self, op, result, val):
-        return self.operations[op](result, val)
 
 
 class EvalAndOp(EvalBinaryBooleanOp):
