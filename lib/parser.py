@@ -29,14 +29,48 @@ class EvalConstant(object):
         self.value = tokens[0]
 
     def _eval(self, row):
-        # float or variable (faster check)
         try:
             np.float64(self.value)
-            #print "returning constant: %s" % self.value
             return self.value
         except ValueError:
-            #print "returning variable '%s': %s" % (self.value, row[self.value])
             return row[self.value]
+
+
+class EvalSignOp(object):
+    """
+    Class to evaluate expressions with a leading + or - sign
+    """
+
+    def __init__(self, tokens):
+        self.sign, self.value = tokens[0]
+
+    def _eval(self, row):
+        mult = {'+':1, '-':-1}[self.sign]
+        return mult * self.value._eval(row)
+
+
+class EvalExpOp(object):
+    """
+    Class to evaluate exponentiation expressions
+    """
+
+    def __init__(self, tokens):
+        self.value = tokens[0]
+
+    def _eval(self, row):
+        _exp = self.value[0]._eval(row)
+        for op, val in operator_operands(self.value[1:]):
+            try:
+                #print 'performing: %s %s ...' % (_sum, op)
+                _exp **= np.float64(val._eval(row))
+                #print "returning prod: %s" % _sum
+                if np.isinf(_exp):
+                    return np.nan
+            except (ValueError, ZeroDivisionError):
+                #print "returning error: %s" % np.nan
+                return np.nan
+        #print "returning prod: %s" % np.nan
+        return _exp
 
 
 class EvalMultOp(object):
@@ -48,23 +82,18 @@ class EvalMultOp(object):
         self.value = tokens[0]
 
     def _eval(self, row):
-        _sum = self.value[0]._eval(row)
-        #print 'iterating over: %s' % self.value[1:]
-        for op, val in operator_operands(self.value[1:]):
-            try:
-                #print 'performing: %s %s ...' % (_sum, op)
-                if op == '*':
-                    _sum *= np.float64(val._eval(row))
-                if op == '/':
-                    _sum /= np.float64(val._eval(row))
-                #print "returning prod: %s" % _sum
-                if np.isinf(_sum):
-                    return np.nan
-            except (ValueError, ZeroDivisionError):
-                #print "returning error: %s" % np.nan
-                return np.nan
-        #print "returning prod: %s" % np.nan
-        return _sum
+        try:
+            _mult = np.float64(self.value[0]._eval(row))
+            for op, val in operator_operands(self.value[1:]):
+                    if op == '*':
+                        _mult *= np.float64(val._eval(row))
+                    if op == '/':
+                        _mult /= np.float64(val._eval(row))
+                    if np.isinf(_mult):
+                        return np.nan
+        except (ValueError, ZeroDivisionError):
+            return np.nan
+        return _mult
 
 
 class EvalPlusOp(object):
@@ -76,27 +105,25 @@ class EvalPlusOp(object):
         self.value = tokens[0]
 
     def _eval(self, row):
-        _sum = self.value[0]._eval(row)
-        #print 'iterating over: %s' % self.value[1:]
-        for op, val in operator_operands(self.value[1:]):
-            try:
-                #print 'performing: %s %s ...' % (_sum, op)
-                if op == '+':
-                    _sum += np.float64(val._eval(row))
-                if op == '-':
-                    _sum -= np.float64(val._eval(row))
-                #print "returning sum: %s" % _sum
-                if np.isinf(_sum):
-                    return np.nan
-            except (ValueError, ZeroDivisionError):
-                #print "returning error: %s" % np.nan
-                return np.nan
-        #print "returning sum: %s" % np.nan
+        try:
+            _sum = np.float64(self.value[0]._eval(row))
+            for op, val in operator_operands(self.value[1:]):
+                    if op == '+':
+                        _sum += np.float64(val._eval(row))
+                    if op == '-':
+                        _sum -= np.float64(val._eval(row))
+                    if np.isinf(_sum):
+                        return np.nan
+        except (ValueError, ZeroDivisionError):
+            return np.nan
         return _sum
 
 
 class EvalComparisonOp(object):
-    "Class to evaluate comparison expressions"
+    """
+    Class to evaluate comparison expressions
+    """
+
     opMap = {
         "<" : lambda a,b : a < b,
         "<=" : lambda a,b : a <= b,
@@ -104,14 +131,8 @@ class EvalComparisonOp(object):
         ">=" : lambda a,b : a >= b,
         "!=" : lambda a,b : a != b,
         "=" : lambda a,b : a == b,
-        "LT" : lambda a,b : a < b,
-        "LE" : lambda a,b : a <= b,
-        "GT" : lambda a,b : a > b,
-        "GE" : lambda a,b : a >= b,
-        "NE" : lambda a,b : a != b,
-        "EQ" : lambda a,b : a == b,
-        "<>" : lambda a,b : a != b,
-        }
+    }
+
     def __init__(self, tokens):
         self.value = tokens[0]
 
@@ -120,8 +141,6 @@ class EvalComparisonOp(object):
         for op, val in operator_operands(self.value[1:]):
             fn = EvalComparisonOp.opMap[op]
             val2 = np.float64(val._eval(row))
-            print 'calculated val1: %s' % val1
-            print 'calculated val2: %s' % val2
             if not fn(val1, val2):
                 break
             val1 = val2
@@ -130,7 +149,52 @@ class EvalComparisonOp(object):
         return False
 
 
+class EvalNotOp(object):
+    """
+    Class to evaluate not expressions
+    """
+
+    def __init__(self, tokens):
+        self.value = tokens[0][1]
+
+    def _eval(self, row):
+        return not self.value._eval(row)
+
+
+class EvalAndOp(object):
+    """
+    Class to evaluate and expressions
+    """
+
+    def __init__(self, tokens):
+        self.value = tokens[0]
+
+    def _eval(self, row):
+        _conj = np.bool_(self.value[0]._eval(row))
+        for op, val in operator_operands(self.value[1:]):
+            _conj = _conj and np.bool_(val._eval(row))
+        return _conj
+
+
+class EvalOrOp(object):
+    """
+    Class to evaluate or expressions
+    """
+
+    def __init__(self, tokens):
+        self.value = tokens[0]
+
+    def _eval(self, row):
+        _disj = np.bool_(self.value[0]._eval(row))
+        for op, val in operator_operands(self.value[1:]):
+            _disj = _disj or np.bool_(val._eval(row))
+        return _disj
+
+
 class Parser(object):
+    """
+    Class for parsing and evaluating formula.
+    """
 
     bnf = None
     reserved_words = ['and', 'or', 'not']
@@ -164,15 +228,13 @@ class Parser(object):
             return self.bnf
 
         # define literals
-        expop = Literal('^')
-        signop = oneOf('+ -')
-        multop = oneOf('* /')
-        plusop = oneOf('+ -')
-#        notop = CaselessLiteral('not')
-#        andop = CaselessLiteral('and')
-#        orop = CaselessLiteral('or')
-#        lpar = Literal('(').suppress()
-#        rpar = Literal(')').suppress()
+        exp_op = Literal('^')
+        sign_op = oneOf('+ -')
+        mult_op = oneOf('* /')
+        plus_op = oneOf('+ -')
+        not_op = CaselessLiteral('not')
+        and_op = CaselessLiteral('and')
+        or_op = CaselessLiteral('or')
 
         integer = Word(nums)
         real = Combine(Word(nums) + '.' + Word(nums))
@@ -183,26 +245,31 @@ class Parser(object):
 
         # define compound expressions
         arith_expr = operatorPrecedence(operand, [
-            #("^", 2, opAssoc.RIGHT, self._eval_expop),
-            #(signop, 1, opAssoc.RIGHT),
-            (multop, 2, opAssoc.LEFT, EvalMultOp),
-            (plusop, 2, opAssoc.LEFT, EvalPlusOp),
+            (exp_op, 2, opAssoc.RIGHT, EvalExpOp),
+            (sign_op, 1, opAssoc.RIGHT, EvalSignOp),
+            (mult_op, 2, opAssoc.LEFT, EvalMultOp),
+            (plus_op, 2, opAssoc.LEFT, EvalPlusOp),
         ])
 
-        comparisonop = oneOf("< <= > >= != = <> LT GT LE GE EQ NE")
+        comparison_op = oneOf("< <= > >= != =")
         comp_expr = operatorPrecedence(arith_expr, [
-            (comparisonop, 2, opAssoc.LEFT, EvalComparisonOp),
+            (comparison_op, 2, opAssoc.LEFT, EvalComparisonOp),
+        ])
+
+        prop_expr = operatorPrecedence(comp_expr, [
+            (not_op, 1, opAssoc.RIGHT, EvalNotOp),
+            (and_op, 2, opAssoc.LEFT, EvalAndOp),
+            (or_op, 2, opAssoc.LEFT, EvalOrOp),
         ])
 
         # top level bnf
-        self.bnf = comp_expr
+        self.bnf = prop_expr
 
         return self.bnf
 
     def parse_formula(self, input_str):
         try:
             self.parsed_expr = self.bnf.parseString(input_str)[0]
-            print 'self.parsed_expr %s' % self.parsed_expr
         except ParseException, err:
             raise ParseError('Parse Failure for string "%s": %s' % (input_str,
                         err))

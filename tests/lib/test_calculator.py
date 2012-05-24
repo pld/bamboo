@@ -29,16 +29,20 @@ class TestCalculator(TestBase):
             'amount = 2',
             '10 < amount',
             '10 < amount + gps_alt',
-#            'not amount = 2',
-#            'not(amount = 2)',
-#            'amount = 2 and 10 < amount',
-#            'amount = 2 or 10 < amount',
-#            'not not amount = 2 or 10 < amount',
-#            'not amount = 2 or 10 < amount',
-#            '(not amount = 2) or 10 < amount',
-#            'not (amount = 2 or 10 < amount)',
+            'not amount = 2',
+            'not(amount = 2)',
+            'amount = 2 and 10 < amount',
+            'amount = 2 or 10 < amount',
+            'not not amount = 2 or 10 < amount',
+            'not amount = 2 or 10 < amount',
+            '(not amount = 2) or 10 < amount',
+            'not(amount = 2 or 10 < amount)',
+            'amount ^ 3',
+            '(amount + gps_alt) ^ 2 + 100',
+            '-amount',
+            '-amount < gps_alt - 100',
         ]
-        self.places = 6
+        self.places = 5
 
     def _equal_msg(self, calculated, stored, formula):
         return '(calculated) %s != (stored) %s (within %s places), formula: %s'\
@@ -71,10 +75,6 @@ class TestCalculator(TestBase):
                             float64(row[formula]), formula)
                     self.assertAlmostEqual(float64(row[name]),
                             float64(row[formula]), self.places, msg)
-#                    msg = self._equal_msg(row[name],
-#                            row[formula], formula)
-#                    self.assertEqual(row[name],
-#                            row[formula], msg)
                 except ValueError:
                     msg = self._equal_msg(row[name], row[formula], formula)
                     self.assertEqual(row[name], row[formula], msg)
