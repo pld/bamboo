@@ -7,7 +7,7 @@ from tests.test_base import TestBase
 
 class TestDatasets(TestBase):
 
-    NUM_COLS = 25
+    NUM_COLS = 26
     ID_NOT_FOUND = 'id not found'
 
     def setUp(self):

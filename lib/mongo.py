@@ -30,10 +30,6 @@ def _dict_for_mongo(d):
     Ensure keys do not begin with '$' or contain a '.'
     """
     for key, value in d.items():
-        if type(value) == list:
-            value = [dict_for_mongo(e) if type(e) == dict else e for e in value]
-        if type(value) == dict:
-            value = dict_for_mongo(value)
         if _is_invalid_for_mongo(key):
             del d[key]
             d[_encode_for_mongo(key)] = value
