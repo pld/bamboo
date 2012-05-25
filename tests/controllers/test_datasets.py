@@ -8,7 +8,6 @@ from tests.test_base import TestBase
 class TestDatasets(TestBase):
 
     NUM_COLS = 26
-    ID_NOT_FOUND = 'id not found'
 
     def setUp(self):
         TestBase.setUp(self)
@@ -49,7 +48,7 @@ class TestDatasets(TestBase):
 
     def test_GET_bad_id(self):
         results = self.controller.GET(self.dataset_id)
-        self.assertEqual(results, self.ID_NOT_FOUND)
+        self.assertTrue('error' in results)
 
     def test_GET_with_query(self):
         self._post_file()
@@ -88,8 +87,9 @@ class TestDatasets(TestBase):
     def test_DELETE(self):
         self._post_file()
         result = self.controller.DELETE(self.dataset_id)
-        self.assertEqual(result, 'deleted dataset: %s' % self.dataset_id)
+        self.assertTrue('success' in result)
+        self.assertEqual(result['success'], 'deleted dataset: %s' % self.dataset_id)
 
     def test_DELETE_bad_id(self):
         result = self.controller.DELETE(self.dataset_id)
-        self.assertEqual(result, self.ID_NOT_FOUND)
+        self.assertTrue('error' in result)

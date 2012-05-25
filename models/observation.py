@@ -4,6 +4,7 @@ from bson import json_util
 
 from config.db import Database
 from lib.constants import DATASET_OBSERVATION_ID, SOURCE, DB_BATCH_SIZE
+from lib.exceptions import JSONError
 from lib.mongo import df_to_mongo, mongo_to_df
 from models.abstract_model import AbstractModel
 
@@ -19,7 +20,7 @@ class Observation(AbstractModel):
         })
 
     @classmethod
-    def find(cls, dataset, query=None, as_df=False):
+    def find(cls, dataset, query='{}', select=None, as_df=False):
         """
         Try to parse query if exists, then get all rows for ID matching query,
         or if no query all.  Decode rows from mongo and return.
@@ -28,12 +29,18 @@ class Observation(AbstractModel):
             try:
                 query = json.loads(query, object_hook=json_util.object_hook)
             except ValueError, e:
-                return e.__str__()
-        else:
-            query = {}
+                raise JSONError('cannot decode query: %s' % e.__str__())
+
+        if select:
+            try:
+                select = json.loads(select, object_hook=json_util.object_hook)
+            except ValueError, e:
+                raise JSONError('cannot decode select: %s' % e.__str__())
+
         query[DATASET_OBSERVATION_ID] = dataset[DATASET_OBSERVATION_ID]
         # TODO encode query for mongo
-        cursor = cls.collection.find(query)
+        cursor = cls.collection.find(query, select)
+
         if as_df:
             return mongo_to_df(cursor)
         return cursor

@@ -7,9 +7,6 @@ from lib.mongo import dump_mongo_json
 
 class Calculations(object):
 
-    def __init__(self):
-        pass
-
     exposed = True
 
     def POST(self, dataset_id, formula, name, query=None, constraints=None):

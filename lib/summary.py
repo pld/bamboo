@@ -35,6 +35,6 @@ def summarize_with_groups(dframe, group=None):
         stats.update(grouped_stats)
     return stats
 
-def summarize(dataset, query, group):
-    observations = Observation.find(dataset, query, as_df=True)
+def summarize(dataset, query, select, group):
+    observations = Observation.find(dataset, query, select, as_df=True)
     return summarize_with_groups(observations, group)
