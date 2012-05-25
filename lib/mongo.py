@@ -74,7 +74,8 @@ def mongo_decode_keys(observations):
     Decode keys that were encoded for mongo.
     """
     for observation in observations:
-        del observation[DATASET_OBSERVATION_ID]
+        observation.pop(DATASET_OBSERVATION_ID, None)
+
         for key, value in observation.items():
             if key in MONGO_RESERVED_KEYS and observation.get(
                     _prefix_mongo_reserved_key(key)):
@@ -82,5 +83,5 @@ def mongo_decode_keys(observations):
                 if value != 'null':
                     observation[key] = value
                 else:
-                    del observation[key]
+                    observation.pop(key, None)
     return observations

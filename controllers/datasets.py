@@ -18,11 +18,13 @@ class Datasets(object):
         Delete observations (i.e. the dataset) with hash 'dataset_id' from mongo
         """
         dataset = Dataset.find_one(dataset_id)
+        result = None
+
         if dataset:
             Dataset.delete(dataset_id)
             Observation.delete(dataset)
-            return {'success': 'deleted dataset: %s' % dataset_id}
-        return {'error': 'id not found'}
+            result = {'success': 'deleted dataset: %s' % dataset_id}
+        return json.dumps(result or {'error': 'id not found'})
 
     def GET(self, dataset_id, summary=False, query='{}', select=None,
             group=None):
@@ -34,15 +36,18 @@ class Datasets(object):
         ignored.
         """
         dataset = Dataset.find_one(dataset_id)
+        result = None
+
         try:
             if dataset:
                 if summary:
-                    return json.dumps(summarize(dataset, query, select, group))
-                return mongo_to_json(Observation.find(dataset, query, select))
+                    result = summarize(dataset, query, select, group)
+                else:
+                    return mongo_to_json(Observation.find(dataset, query, select))
         except JSONError, e:
-            return {'error': e.__str__()}
+            result = {'error': e.__str__()}
 
-        return {'error': 'id not found'}
+        return json.dumps(result or {'error': 'id not found'})
 
     def POST(self, url=None):
         """

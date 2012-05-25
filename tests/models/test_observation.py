@@ -59,6 +59,27 @@ class TestObservation(TestBase):
         self.assertRaises(JSONError, Observation.find, self.dataset,
                 '{rating: "delectible"}')
 
+    def test_find_with_select(self):
+        Observation.save(self.data, self.dataset)
+        cursor = Observation.find(self.dataset, select='{"rating": 1}')
+        self.assertTrue(isinstance(cursor, Cursor))
+        results = [row for row in cursor]
+        self.assertEquals(sorted(results[0].keys()), ['_id', 'rating'])
+
+
+    def test_find_with_bad_select(self):
+        Observation.save(self.data, self.dataset)
+        self.assertRaises(JSONError, Observation.find, self.dataset,
+                select='{rating: 1}')
+
+    def test_find_with_select_and_query(self):
+        Observation.save(self.data, self.dataset)
+        cursor = Observation.find(self.dataset, '{"rating": "delectible"}',
+                '{"rating": 1}')
+        self.assertTrue(isinstance(cursor, Cursor))
+        results = [row for row in cursor]
+        self.assertEquals(sorted(results[0].keys()), ['_id', 'rating'])
+
     def test_delete(self):
         Observation.save(self.data, self.dataset)
         records = [x for x in Observation.find(self.dataset)]
