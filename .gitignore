@@ -5,7 +5,7 @@
 .noseids
 
 # built docs
-doc/_build
+docs/_build
 
 # a place for a virtualenv
 env
