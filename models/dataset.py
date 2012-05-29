@@ -21,10 +21,9 @@ class Dataset(AbstractModel):
         return cls.save(dataset_id)
 
     @classmethod
-    def save(cls, dataset_id, column_name=False, dataset=None):
+    def save(cls, dataset_id):
         """
-        Store data set for a bamboo hash and create a unique internal ID for
-        that data set.
+        Store dataset with *dataset_id* as the unique internal ID.
         """
         record = {
             DATASET_ID: dataset_id,
@@ -35,4 +34,7 @@ class Dataset(AbstractModel):
 
     @classmethod
     def delete(cls, dataset_id):
+        """
+        Delete dataset with *dataset_id*
+        """
         cls.collection.remove({DATASET_ID: dataset_id})

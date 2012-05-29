@@ -15,6 +15,9 @@ class Observation(AbstractModel):
 
     @classmethod
     def delete(cls, dataset):
+        """
+        Delete the observations for *dataset*.
+        """
         cls.collection.remove({
             DATASET_OBSERVATION_ID: dataset[DATASET_OBSERVATION_ID]
         })
@@ -67,6 +70,10 @@ class Observation(AbstractModel):
 
     @classmethod
     def update(cls, dframe, dataset):
+        """
+        Update *dataset* by overwriting all observations with the given
+        *dframe*.
+        """
         cls.delete(dataset)
         cls.save(dframe, dataset)
         return cls.find(dataset, as_df=True)

@@ -11,7 +11,10 @@ Contents:
 .. toctree::
    :maxdepth: 2
 
-
+   config
+   controllers
+   models
+   lib
 
 Indices and tables
 ==================
