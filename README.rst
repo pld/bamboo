@@ -37,7 +37,7 @@ Testing
 Building Documentation
 ======================
 
-    pip install sphinx
+    pip install -r requirements-docs.pip
     cd doc
     make html
 
