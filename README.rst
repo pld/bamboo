@@ -34,6 +34,13 @@ Testing
 
     ``nosetests --with-progressive --with-cov``
 
+Building Documentation
+======================
+
+    pip install sphinx
+    cd doc
+    make html
+
 Contributing Code
 =================
 
