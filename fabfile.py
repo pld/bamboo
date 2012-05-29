@@ -24,7 +24,7 @@ def _run_in_virtualenv(command):
 def _check_key_filename(deployment_name):
     if DEPLOYMENTS[deployment_name].has_key('key_filename') and \
         not os.path.exists(DEPLOYMENTS[deployment_name]['key_filename']):
-        print "Cannot find required permissions file: %s" % \
+        print 'Cannot find required permissions file: %s' % \
             DEPLOYMENTS[deployment_name]['key_filename']
         return False
     return True
@@ -44,6 +44,6 @@ def deploy(deployment_name):
 
     # update code and dependencies
     with cd(env.code_src):
-        run("git pull origin %(branch)s" % env)
+        run('git pull origin %(branch)s' % env)
         run('find . -name "*.pyc" -exec rm -rf {} \;')
-    _run_in_virtualenv("pip install -r %s" % env.pip_requirements_file)
+    _run_in_virtualenv('pip install -r %s' % env.pip_requirements_file)
