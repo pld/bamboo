@@ -22,23 +22,27 @@ class Parser(object):
         """
         Backus-Naur Form of formula language:
 
-        addop       :: '+' | '-'
-        multop      :: '*' | '/'
-        expop       :: '^'
-        compop      :: '=' | '<' | '>' | '<=' | '>='
-        notop       :: 'not'
-        andop       :: 'and'
-        orop        :: 'or'
-        real        :: \d+(.\d+)
-        variable    :: string
-        atom        :: real | variable | '(' disj ')'
-        factor      :: atom [ expop factor]*
-        term        :: factor [ multop factor ]*
-        expr        :: term [ addop term ]*
-        equation    :: expr [compop expr]*
-        neg         :: [notop]* equation
-        conj        :: neg [andop neg]*
-        disj        :: conj [orop conj]*
+        =========   ==========
+        Operation   Expression
+        =========   ==========
+        addop       '+' | '-'
+        multop      '*' | '/'
+        expop       '^'
+        compop      '=' | '<' | '>' | '<=' | '>='
+        notop       'not'
+        andop       'and'
+        orop        'or'
+        real        \d+(.\d+)
+        variable    string
+        atom        real | variable | [notop]* '(' disj ')'
+        factor      atom [ expop factor]*
+        term        factor [ multop factor ]*
+        expr        term [ addop term ]*
+        equation    expr [compop expr]*
+        neg         [notop]* equation
+        conj        neg [andop neg]*
+        disj        conj [orop conj]*
+        =========   ==========
         """
         if self.bnf:
             return self.bnf
