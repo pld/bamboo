@@ -50,6 +50,9 @@ class Calculation(AbstractModel):
 
     @classmethod
     def find(cls, dataset):
+        """
+        Return the calculations for given *dataset*.
+        """
         return cls.collection.find({
             DATASET_ID: dataset[DATASET_ID],
         })
