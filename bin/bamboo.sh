@@ -4,13 +4,15 @@
 PATH=/sbin:/usr/sbin:/bin:/usr/bin
 DESC="bamboo server"
 NAME=bamboo
-PIDFILE=/var/www/bamboo/shared/pids/$NAME.pid
-SCRIPTNAME=/var/www/bamboo/current/bin/$NAME.sh
-DAEMON=/home/bamboo/.virtualenvs/bamboo/bin/cherryd
-DAEMON_ARGS="-i bamboo -c /var/www/bamboo/current/config/prod.conf -p $PIDFILE -d"
+PROJECT_DIR=/var/www/bamboo
+VENV_DIR=/home/bamboo/.virtualenvs/bamboo/bin
+PIDFILE=$PROJECT_DIR/shared/pids/$NAME.pid
+SCRIPTNAME=$PROJECT_DIR/current/bin/$NAME.sh
+DAEMON=$VENV_DIR/cherryd
+DAEMON_ARGS="-i bamboo -c $PROJECT_DIR/current/config/prod.conf -p $PIDFILE -d"
 
 # load the virtualenv
-. /home/bamboo/.virtualenvs/bamboo/bin/activate
+. $VENV_DIR/activate
 
 # Exit if the package is not installed
 [ -x "$DAEMON" ] || exit 0
@@ -74,7 +76,6 @@ case "$1" in
 	esac
 	;;
   *)
-	#echo "Usage: $SCRIPTNAME {start|stop|restart|reload|force-reload}" >&2
 	echo "Usage: $SCRIPTNAME {start|stop|status|restart|force-reload}" >&2
 	exit 3
 	;;
