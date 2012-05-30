@@ -1,5 +1,6 @@
 #!/bin/bash
 
+# set defaults
 DATAPATH=$1
 : ${DATAPATH:='tests/fixtures/good_eats.csv'}
 GROUPBY=$2
