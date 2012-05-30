@@ -18,7 +18,8 @@ DEPLOYMENTS = {
 
 
 def _run_in_virtualenv(command):
-    run('source ~/.virtualenvs/%s/bin/activate && %s' % (env.virtual_env, command))
+    run('source ~/.virtualenvs/%s/bin/activate && %s' % (env.virtual_env,
+                command))
 
 
 def _check_key_filename(deployment_name):
