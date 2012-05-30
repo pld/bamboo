@@ -42,8 +42,14 @@ def _setup_env(deployment_name):
 def deploy(deployment_name):
     _setup_env(deployment_name)
 
-    # update code and dependencies
+    # update code
     with cd(env.code_src):
         run('git pull origin %(branch)s' % env)
         run('find . -name "*.pyc" -exec rm -rf {} \;')
+
+    # install dependencies
     _run_in_virtualenv('pip install -r %s' % env.pip_requirements_file)
+
+    # restart the server
+    with cd(env.code_src):
+        _run_in_virtualenv('./bin/bamboo.sh restart')
