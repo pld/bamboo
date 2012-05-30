@@ -30,12 +30,14 @@ do_start()
 #
 do_stop()
 {
-    if [ -e $PIDFILE ]; then
+    if [ -e $PIDFILE ]
+    then
         PID=`cat $PIDFILE`
-        if ! kill $PID > /dev/null 2>&1; then
+        if ! kill $PID > /dev/null 2>&1
+        then
             echo "Could not send SIGTERM to process $PID" >&2
         fi
-        rm $PIDFILE
+        rm -f $PIDFILE
     fi
 }
 
