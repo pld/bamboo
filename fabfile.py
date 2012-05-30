@@ -10,7 +10,7 @@ DEPLOYMENTS = {
         'virtual_env':  'bamboo',
         'repo_name':    'current',
         'project':      'bamboo',
-        'docs':         'doc',
+        'docs':         'docs',
         'branch':       'master',
         'key_filename': os.path.expanduser('~/.ssh/modilabs.pem'),
     }
@@ -36,7 +36,7 @@ def _setup_env(deployment_name):
     if not _check_key_filename(deployment_name): sys.exit(1)
     env.project_directory = os.path.join(env.home, env.project)
     env.code_src = os.path.join(env.project_directory, env.repo_name)
-    env.doc_src = os.path.join(env.project_directory, env.docs)
+    env.doc_src = os.path.join(env.project_directory, env.repo_name, env.docs)
     env.pip_requirements_file = os.path.join(env.code_src, 'requirements.pip')
 
 
@@ -47,6 +47,10 @@ def deploy(deployment_name):
     with cd(env.code_src):
         run('git pull origin %(branch)s' % env)
         run('find . -name "*.pyc" -exec rm -rf {} \;')
+
+    # update docs
+    with cd(env.doc_src):
+        _run_in_virtualenv('make html')
 
     # install dependencies
     _run_in_virtualenv('pip install -r %s' % env.pip_requirements_file)
