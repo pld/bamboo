@@ -40,7 +40,7 @@ Documentation
 Viewing Documentation
 ^^^^^^^^^^^^^^^^^^^^^
 
-    The latest docs are available at http://readthedocs.org/docs/bamboo/en/latest/
+    The latest docs are available at http://bamboo.modilabs.org/
     
 Building Documentation
 ^^^^^^^^^^^^^^^^^^^^^^
