@@ -6,11 +6,14 @@
 Welcome to bamboo's documentation!
 ==================================
 
+Bamboo is a data analysis web service.  Bamboo is `open source <https://github.com/modilabs/bamboo>`_ software.
+
 Contents:
 
 .. toctree::
    :maxdepth: 2
 
+   basic_commands
    config
    controllers
    models
