@@ -1,6 +1,9 @@
-class Root(object):
+from cherrypy import HTTPRedirect
 
+
+class Root(object):
+    pass
     exposed = True
 
     def GET(self):
-        return 'Ohai World!'
+        raise HTTPRedirect('/index.html')
