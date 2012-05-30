@@ -40,6 +40,15 @@ class EvalConstant(EvalTerm):
             return row[self.value]
 
 
+class EvalString(EvalTerm):
+    """
+    Class to evaluate a parsed string.
+    """
+
+    def _eval(self, row):
+        return self.value
+
+
 class EvalSignOp(EvalTerm):
     """
     Class to evaluate expressions with a leading + or - sign
@@ -169,3 +178,16 @@ class EvalOrOp(EvalBinaryBooleanOp):
     Class to distinguish precedence of or expressions
     """
     pass
+
+
+class EvalInOp(EvalTerm):
+    """
+    Class to eval in expressions.
+    """
+
+    def _eval(self, row):
+        val_to_test = str(self.value[0]._eval(row))
+        val_list = []
+        for op, val in self.operator_operands(self.value[1:]):
+            val_list.append(val._eval(row))
+        return val_to_test in val_list

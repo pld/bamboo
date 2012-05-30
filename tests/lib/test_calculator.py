@@ -41,6 +41,9 @@ class TestCalculator(TestBase):
             '(amount + gps_alt) ^ 2 + 100',
             '-amount',
             '-amount < gps_alt - 100',
+            'rating in ["delectible"]',
+            'risk_factor in ["low_risk"]',
+            'amount in ["9.0", "2.0", "20.0"]',
         ]
         self.places = 5
 
@@ -52,6 +55,7 @@ class TestCalculator(TestBase):
         dframe = Observation.find(self.dataset, as_df=True)
 
         for idx, formula in enumerate(self.calculations):
+            print 'formula: %s' % formula
             name = 'test-%s' % idx
             if delay:
                 task = calculate_column.delay(self.dataset, dframe,
