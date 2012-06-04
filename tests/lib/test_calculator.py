@@ -1,4 +1,4 @@
-from numpy import float64
+import numpy as np
 
 from tests.test_base import TestBase
 
@@ -49,8 +49,9 @@ class TestCalculator(TestBase):
         self.places = 5
 
     def _equal_msg(self, calculated, stored, formula):
-        return '(calculated) %s != (stored) %s (within %s places), formula: %s'\
-                % (calculated, stored, self.places, formula)
+        return '(calculated %s) %s != (stored %s) %s (within %s places), formula: %s'\
+                % (type(calculated), calculated, type(stored), stored,
+                        self.places, formula)
 
     def _test_calculator(self, delay=True):
         dframe = Observation.find(self.dataset, as_df=True)
@@ -75,10 +76,13 @@ class TestCalculator(TestBase):
             for idx, row in dframe.iterrows():
                 formula = _encode_for_mongo(formula)
                 try:
-                    msg = self._equal_msg(float64(row[name]),
-                            float64(row[formula]), formula)
-                    self.assertAlmostEqual(float64(row[name]),
-                            float64(row[formula]), self.places, msg)
+                    result = np.float64(row[name])
+                    stored = np.float64(row[formula])
+                    # np.nan != np.nan, continue if we have two nan values
+                    if np.isnan(result) and np.isnan(stored):
+                        continue
+                    msg = self._equal_msg(result, stored, formula)
+                    self.assertAlmostEqual(result, stored, self.places, msg)
                 except ValueError:
                     msg = self._equal_msg(row[name], row[formula], formula)
                     self.assertEqual(row[name], row[formula], msg)

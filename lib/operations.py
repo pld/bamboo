@@ -76,15 +76,12 @@ class EvalBinaryArithOp(EvalTerm):
     }
 
     def _eval(self, row):
-        try:
-            result = np.float64(self.value[0]._eval(row))
-            for op, val in self.operator_operands(self.value[1:]):
-                val = np.float64(val._eval(row))
-                result = self.operation(op, result, val)
-                if np.isinf(result):
-                    return np.nan
-        except (ValueError, ZeroDivisionError):
-            return np.nan
+        result = np.float64(self.value[0]._eval(row))
+        for op, val in self.operator_operands(self.value[1:]):
+            val = np.float64(val._eval(row))
+            result = self.operation(op, result, val)
+            if np.isinf(result):
+                return np.nan
         return result
 
 

@@ -9,7 +9,7 @@ BAMBOO_RESERVED_KEY_PREFIX = 'BAMBOO_RESERVED_KEY_'
 DATASET_ID = BAMBOO_RESERVED_KEY_PREFIX + 'dataset_id'
 DATASET_OBSERVATION_ID = BAMBOO_RESERVED_KEY_PREFIX + 'dataset_observation_id'
 FORMULA = 'formula'
-SOURCE = '_source'
+STATS = '_stats'
 
 # special MongoDB keys
 MONGO_RESERVED_KEYS = ['_id']

@@ -35,6 +35,13 @@ class Dataset(AbstractModel):
     @classmethod
     def delete(cls, dataset_id):
         """
-        Delete dataset with *dataset_id*
+        Delete dataset with *dataset_id*.
         """
         cls.collection.remove({DATASET_ID: dataset_id})
+
+    @classmethod
+    def update(cls, dataset, _dict):
+        """
+        Update dataset *dataset* with *_dict*.
+        """
+        cls.collection.update(dataset, dict(dataset.items() + _dict.items()))
