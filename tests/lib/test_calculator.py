@@ -44,6 +44,7 @@ class TestCalculator(TestBase):
             'rating in ["delectible"]',
             'risk_factor in ["low_risk"]',
             'amount in ["9.0", "2.0", "20.0"]',
+            '(risk_factor in ["low_risk"]) and (amount in ["9.0", "20.0"])',
         ]
         self.places = 5
 
