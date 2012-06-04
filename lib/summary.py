@@ -49,5 +49,5 @@ def summarize(dataset, query, select, group):
     # if not saved stats, create and save
     if not stats or not stats.get(group):
         stats = summarize_with_groups(observations, stats, group)
-        Dataset.update(dataset, stats)
+        Dataset.update(dataset, {STATS: stats})
     return stats

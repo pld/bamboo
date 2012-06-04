@@ -34,3 +34,11 @@ class TestDataset(TestBase):
         Dataset.delete(self.dataset_id)
         records = [x for x in Dataset.find(self.dataset_id)]
         self.assertEqual(records, [])
+
+    def test_update(self):
+        dataset = Dataset.create(self.dataset_id)
+        self.assertFalse('field' in dataset)
+        Dataset.update(dataset, {'field': {'key': 'value'}})
+        dataset = Dataset.find_one(self.dataset_id)
+        self.assertTrue('field' in dataset)
+        self.assertEqual(dataset['field'], {'key': 'value'})

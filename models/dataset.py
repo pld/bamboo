@@ -1,6 +1,6 @@
 import uuid
 
-from lib.constants import DATASET_ID, DATASET_OBSERVATION_ID, STATS
+from lib.constants import DATASET_ID, DATASET_OBSERVATION_ID
 from models.abstract_model import AbstractModel
 
 
@@ -35,10 +35,13 @@ class Dataset(AbstractModel):
     @classmethod
     def delete(cls, dataset_id):
         """
-        Delete dataset with *dataset_id*
+        Delete dataset with *dataset_id*.
         """
         cls.collection.remove({DATASET_ID: dataset_id})
 
     @classmethod
-    def update(cls, dataset, stats):
-        cls.collection.update(dataset, {'$set': {STATS: stats}})
+    def update(cls, dataset, _dict):
+        """
+        Update dataset *dataset* with *_dict*.
+        """
+        cls.collection.update(dataset, dict(dataset.items() + _dict.items()))
