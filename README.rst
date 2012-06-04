@@ -47,7 +47,7 @@ Building Documentation
 
     ``pip install -r requirements-docs.pip``
 
-    ``cd doc``
+    ``cd docs``
 
     ``make html``
 
