@@ -10,7 +10,6 @@ def open_data_file(url):
     """
     Handle url and file handles
     """
-
     open_url = lambda d: urllib2.urlopen(d['url'])
     protocols = {
         'http':  open_url,
@@ -32,7 +31,6 @@ def create_dataset_from_url(url):
     """
     Load a URL, read from a CSV, create a dataset and return the unique ID.
     """
-
     _file = None
 
     try:

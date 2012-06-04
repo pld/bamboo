@@ -11,6 +11,5 @@ def import_dataset(_file, dataset):
     """
     For reading a URL and saving the corresponding dataset.
     """
-
-    dframe = read_csv(_file, na_values=['n/a'])
+    dframe = read_csv(_file)
     Observation.save(dframe, dataset)

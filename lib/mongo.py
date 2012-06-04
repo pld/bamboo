@@ -1,5 +1,6 @@
 from base64 import b64encode
 import json
+import numpy as np
 import re
 
 from bson import json_util
@@ -80,8 +81,7 @@ def mongo_decode_keys(observations):
             if key in MONGO_RESERVED_KEYS and observation.get(
                     _prefix_mongo_reserved_key(key)):
                 value = observation.pop(_prefix_mongo_reserved_key(key))
-                if value != 'null':
-                    observation[key] = value
-                else:
-                    observation.pop(key, None)
+                observation[key] = value
+            elif value == 'null':
+                observation[key] = np.nan
     return observations

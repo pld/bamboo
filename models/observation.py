@@ -3,7 +3,7 @@ import json
 from bson import json_util
 
 from config.db import Database
-from lib.constants import DATASET_OBSERVATION_ID, SOURCE, DB_BATCH_SIZE
+from lib.constants import DATASET_OBSERVATION_ID, DB_BATCH_SIZE
 from lib.exceptions import JSONError
 from lib.mongo import df_to_mongo, mongo_to_df
 from models.abstract_model import AbstractModel
