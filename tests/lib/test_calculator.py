@@ -56,7 +56,6 @@ class TestCalculator(TestBase):
         dframe = Observation.find(self.dataset, as_df=True)
 
         for idx, formula in enumerate(self.calculations):
-            print 'formula: %s' % formula
             name = 'test-%s' % idx
             if delay:
                 task = calculate_column.delay(self.dataset, dframe,
