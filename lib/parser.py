@@ -4,7 +4,8 @@ from pyparsing import alphanums, nums, oneOf, opAssoc, operatorPrecedence,\
 
 from lib.exceptions import ParseError
 from lib.operations import EvalAndOp, EvalComparisonOp, EvalConstant,\
-         EvalExpOp, EvalMultOp, EvalNotOp, EvalOrOp, EvalPlusOp, EvalSignOp
+         EvalExpOp, EvalInOp, EvalMultOp, EvalNotOp, EvalOrOp, EvalPlusOp,\
+         EvalSignOp, EvalString
 
 
 class Parser(object):
@@ -34,6 +35,7 @@ class Parser(object):
         orop        'or'
         real        \d+(.\d+)
         variable    string
+        in          variable in '[' "variable"[, "variable"]* ']'
         atom        real | variable | [notop]* '(' disj ')'
         factor      atom [ expop factor]*
         term        factor [ multop factor ]*
@@ -47,7 +49,7 @@ class Parser(object):
         if self.bnf:
             return self.bnf
 
-        # literals
+        # literal operators
         exp_op = Literal('^')
         sign_op = oneOf('+ -')
         mult_op = oneOf('* /')
@@ -55,17 +57,29 @@ class Parser(object):
         not_op = CaselessLiteral('not')
         and_op = CaselessLiteral('and')
         or_op = CaselessLiteral('or')
+        in_op = CaselessLiteral('in')
         comparison_op = oneOf('< <= > >= != =')
+
+        # literal syntactic
+        open_bracket = Literal('[').suppress()
+        close_bracket = Literal(']').suppress()
+        comma = Literal(',')
+        dquote = Literal('"').suppress()
 
         # operands
         integer = Word(nums)
         real = Combine(Word(nums) + '.' + Word(nums))
         reserved_words = MatchFirst(map(Keyword, self.reserved_words))
         variable = ~reserved_words + Word(alphanums + '_')
+        string = (dquote + (real | integer | variable) + dquote).setParseAction(
+                EvalString)
         operand = real | integer | variable
         operand.setParseAction(EvalConstant)
 
-        # compound expressions
+        # expressions
+        in_list = open_bracket + string +\
+                ZeroOrMore(comma + string) + close_bracket
+
         arith_expr = operatorPrecedence(operand, [
             (exp_op, 2, opAssoc.RIGHT, EvalExpOp),
             (sign_op, 1, opAssoc.RIGHT, EvalSignOp),
@@ -76,7 +90,9 @@ class Parser(object):
         comp_expr = operatorPrecedence(arith_expr, [
             (comparison_op, 2, opAssoc.LEFT, EvalComparisonOp),
         ])
-        prop_expr = operatorPrecedence(comp_expr, [
+
+        prop_expr = operatorPrecedence(comp_expr | in_list, [
+            (in_op, 2, opAssoc.RIGHT, EvalInOp),
             (not_op, 1, opAssoc.RIGHT, EvalNotOp),
             (and_op, 2, opAssoc.LEFT, EvalAndOp),
             (or_op, 2, opAssoc.LEFT, EvalOrOp),
