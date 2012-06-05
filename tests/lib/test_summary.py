@@ -1,5 +1,6 @@
 from lib.constants import STATS
-from lib.summary import summarize, summarize_df
+from lib.summary import summarize_df
+from lib.tasks.summarize import summarize
 from models.dataset import Dataset
 from models.observation import Observation
 from tests.test_base import TestBase
@@ -17,11 +18,24 @@ class TestSummary(TestBase):
             elif name == 'amount':
                 self.assertEqual(data['count'], 19.0)
 
-    def test_summarize(self):
+    def _test_summarize(self, delay=False):
         dataset = Dataset.save(self.dataset_id)
         Observation.save(self.data, dataset)
         self.assertFalse(STATS in dataset)
-        stats = summarize(dataset, {}, None, None)
+        stats = None
+        if delay:
+            task = summarize.delay(dataset, {}, None, None)
+            self.assertTrue(task.ready())
+            self.assertTrue(task.successful())
+        else:
+            stats = summarize(dataset, {}, None, None)
         dataset = Dataset.find_one(self.dataset_id)
         self.assertTrue(STATS in dataset)
-        self.assertEqual(stats, dataset[STATS])
+        if stats:
+            self.assertEqual(stats, dataset[STATS])
+
+    def test_summarize(self):
+        self._test_summarize()
+
+    def test_summarize_delay(self):
+        self._test_summarize(delay=True)

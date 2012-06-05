@@ -3,7 +3,7 @@ import json
 from lib.exceptions import JSONError
 from lib.mongo import mongo_to_json
 from lib.io import create_dataset_from_url, open_data_file
-from lib.summary import summarize
+from lib.tasks.summarize import summarize
 from models.dataset import Dataset
 from models.observation import Observation
 
@@ -15,7 +15,7 @@ class Datasets(object):
 
     def DELETE(self, dataset_id):
         """
-        Delete observations (i.e. the dataset) with hash 'dataset_id' from mongo
+        Delete observations (i.e. the dataset) with hash *dataset_id* from mongo
         """
         dataset = Dataset.find_one(dataset_id)
         result = None
@@ -29,8 +29,8 @@ class Datasets(object):
     def GET(self, dataset_id, summary=False, query='{}', select=None,
             group=None):
         """
-        Return data set for hash 'dataset_id' in format 'format'.
-        Execute query 'query' in mongo if passed.
+        Return data set for hash *dataset_id*.
+        Execute query *query* in mongo if passed.
         If summary is passed return summary statistics for data set.
         If group is passed group the summary, if summary is false group is
         ignored.
@@ -43,7 +43,8 @@ class Datasets(object):
                 if summary:
                     result = summarize(dataset, query, select, group)
                 else:
-                    return mongo_to_json(Observation.find(dataset, query, select))
+                    return mongo_to_json(Observation.find(dataset, query,
+                                select))
         except JSONError, e:
             result = {'error': e.__str__()}
 
@@ -51,7 +52,7 @@ class Datasets(object):
 
     def POST(self, url=None):
         """
-        Read data from URL 'url'.
-        If URL is not provided and data is provided, read posted data 'data'.
+        Read data from URL *url*.
+        If URL is not provided and data is provided, read posted data *data*.
         """
         return json.dumps(create_dataset_from_url(url))
