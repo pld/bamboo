@@ -31,13 +31,13 @@ class TestObservation(TestBase):
 
     def test_save(self):
         records = self._save_records()
-        records = Observation.save(self.test_data['good_eats.csv'],
-                self.dataset)
         self.assertEqual(len(records), 19)
 
     def test_save_over_bulk(self):
-        records = Observation.save(self.test_data['good_eats_large.csv'],
+        Observation.save(self.test_data['good_eats_large.csv'],
                 self.dataset)
+        cursor = Observation.find(self.dataset)
+        records = [x for x in cursor]
         self.assertEqual(len(records), 1001)
 
     def test_find(self):

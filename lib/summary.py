@@ -1,6 +1,6 @@
 import numpy as np
 
-from lib.constants import ALL, DATA, NAME
+from lib.constants import ALL, DATA, MONGO_RESERVED_KEYS, NAME
 from lib.utils import series_to_jsondict
 
 
@@ -25,7 +25,7 @@ def summarize_df(dframe):
     return [{
                 NAME: col,
                 DATA: series_to_jsondict(summarize_series(dtypes[col], data))
-    } for col, data in dframe.iteritems()]
+    } for col, data in dframe.iteritems() if not col in MONGO_RESERVED_KEYS]
 
 
 def summarize_with_groups(dframe, stats, group=None):

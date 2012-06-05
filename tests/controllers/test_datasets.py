@@ -7,7 +7,7 @@ from tests.test_base import TestBase
 
 class TestDatasets(TestBase):
 
-    NUM_COLS = 44
+    NUM_COLS = 43
 
     def setUp(self):
         TestBase.setUp(self)
