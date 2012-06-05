@@ -1,8 +1,9 @@
-from lib.constants import DATASET_ID
+from lib.constants import ALL, DATASET_ID, STATS
 from lib.exceptions import ParseError
 from lib.parser import Parser
 from lib.tasks.calculator import calculate_column
 from models.abstract_model import AbstractModel
+from models.dataset import Dataset
 from models.observation import Observation
 
 
@@ -43,6 +44,13 @@ class Calculation(AbstractModel):
             cls.NAME: name,
         }
         cls.collection.insert(record)
+
+        # invalidate summary ALL since we have a new column
+        stats = dataset.get(STATS)
+        if stats:
+            del stats[ALL]
+            del dataset[STATS]
+            Dataset.update(dataset, {STATS: stats})
 
         # call remote calculate and pass calculation id
         calculate_column.delay(dataset, dframe, formula, name)
