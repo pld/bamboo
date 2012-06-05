@@ -10,14 +10,14 @@ class TestCalculation(TestBase):
 
     def setUp(self):
         TestBase.setUp(self)
-        self.dataset = Dataset.save(self.dataset_id)
+        self.dataset = Dataset.save(self.test_dataset_ids['good_eats.csv'])
         self.formula = 'rating'
         self.name = 'test'
 
     def _save_observations_and_calculation(self, formula=None):
         if not formula:
             formula = self.formula
-        Observation.save(self.data, self.dataset)
+        Observation.save(self.test_data['good_eats.csv'], self.dataset)
         return Calculation.save(self.dataset, formula, self.name)
 
     def test_save(self):
