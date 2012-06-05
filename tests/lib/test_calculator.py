@@ -12,8 +12,8 @@ class TestCalculator(TestBase):
 
     def setUp(self):
         TestBase.setUp(self)
-        self.dataset = Dataset.save(self.dataset_id)
-        Observation.save(self.data, self.dataset)
+        self.dataset = Dataset.save(self.test_dataset_ids['good_eats.csv'])
+        Observation.save(self.test_data['good_eats.csv'], self.dataset)
         self.calculations = [
             'rating',
             'gps',

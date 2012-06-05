@@ -11,34 +11,42 @@ from lib.mongo import mongo_decode_keys
 class TestDataset(TestBase):
 
     def test_save(self):
-        record = Dataset.save(self.dataset_id)
-        self.assertTrue(isinstance(record, dict))
-        self.assertTrue('_id' in record.keys())
+        for dataset_name in self.TEST_DATASETS:
+            record = Dataset.save(self.test_dataset_ids[dataset_name])
+            self.assertTrue(isinstance(record, dict))
+            self.assertTrue('_id' in record.keys())
 
     def test_find(self):
-        record = Dataset.save(self.dataset_id)
-        cursor = Dataset.find(self.dataset_id)
-        rows = [x for x in cursor]
-        self.assertTrue(isinstance(cursor, Cursor))
-        self.assertEqual(record, rows[0])
-        self.assertEqual(record, Dataset.find_one(self.dataset_id))
+        for dataset_name in self.TEST_DATASETS:
+            record = Dataset.save(self.test_dataset_ids[dataset_name])
+            cursor = Dataset.find(self.test_dataset_ids[dataset_name])
+            rows = [x for x in cursor]
+            self.assertTrue(isinstance(cursor, Cursor))
+            self.assertEqual(record, rows[0])
+            self.assertEqual(record, Dataset.find_one(
+                        self.test_dataset_ids[dataset_name]))
 
     def test_create(self):
-        dataset = Dataset.create(self.dataset_id)
-        self.assertTrue(isinstance(dataset, dict))
+        for dataset_name in self.TEST_DATASETS:
+            dataset = Dataset.create(self.test_dataset_ids[dataset_name])
+            self.assertTrue(isinstance(dataset, dict))
 
     def test_delete(self):
-        record = Dataset.save(self.dataset_id)
-        records = [x for x in Dataset.find(self.dataset_id)]
-        self.assertNotEqual(records, [])
-        Dataset.delete(self.dataset_id)
-        records = [x for x in Dataset.find(self.dataset_id)]
-        self.assertEqual(records, [])
+        for dataset_name in self.TEST_DATASETS:
+            record = Dataset.save(self.test_dataset_ids[dataset_name])
+            records = [x for x in \
+                    Dataset.find(self.test_dataset_ids[dataset_name])]
+            self.assertNotEqual(records, [])
+            Dataset.delete(self.test_dataset_ids[dataset_name])
+            records = [x for x in
+                    Dataset.find(self.test_dataset_ids[dataset_name])]
+            self.assertEqual(records, [])
 
     def test_update(self):
-        dataset = Dataset.create(self.dataset_id)
-        self.assertFalse('field' in dataset)
-        Dataset.update(dataset, {'field': {'key': 'value'}})
-        dataset = Dataset.find_one(self.dataset_id)
-        self.assertTrue('field' in dataset)
-        self.assertEqual(dataset['field'], {'key': 'value'})
+        for dataset_name in self.TEST_DATASETS:
+            dataset = Dataset.create(self.test_dataset_ids[dataset_name])
+            self.assertFalse('field' in dataset)
+            Dataset.update(dataset, {'field': {'key': 'value'}})
+            dataset = Dataset.find_one(self.test_dataset_ids[dataset_name])
+            self.assertTrue('field' in dataset)
+            self.assertEqual(dataset['field'], {'key': 'value'})

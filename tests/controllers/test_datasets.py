@@ -59,8 +59,9 @@ class TestDatasets(TestBase):
         self.assertEqual(len(results), 19)
 
     def test_GET_bad_id(self):
-        results = self.controller.GET(self.dataset_id)
-        self.assertTrue('error' in results)
+        for dataset_name in self.TEST_DATASETS:
+            results = self.controller.GET(self.test_dataset_ids[dataset_name])
+            self.assertTrue('error' in results)
 
     def test_GET_with_query(self):
         # (sic)
@@ -108,8 +109,11 @@ class TestDatasets(TestBase):
         self._post_file()
         result = json.loads(self.controller.DELETE(self.dataset_id))
         self.assertTrue('success' in result)
-        self.assertEqual(result['success'], 'deleted dataset: %s' % self.dataset_id)
+        self.assertEqual(result['success'], 'deleted dataset: %s' % \
+                self.dataset_id)
 
     def test_DELETE_bad_id(self):
-        result = json.loads(self.controller.DELETE(self.dataset_id))
-        self.assertTrue('error' in result)
+        for dataset_name in self.TEST_DATASETS:
+            result = json.loads(self.controller.DELETE(
+                        self.test_dataset_ids[dataset_name]))
+            self.assertTrue('error' in result)

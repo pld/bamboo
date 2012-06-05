@@ -14,10 +14,11 @@ class TestObservation(TestBase):
 
     def setUp(self):
         TestBase.setUp(self)
-        self.dataset = Dataset.save(self.dataset_id)
+        self.dataset = Dataset.save(self.test_dataset_ids['good_eats.csv'])
 
     def _save_records(self):
-        records = Observation.save(self.data, self.dataset)
+        records = Observation.save(self.test_data['good_eats.csv'],
+                self.dataset)
         cursor = Observation.find(self.dataset)
         records = [x for x in cursor]
         self.assertTrue(isinstance(records, list))
@@ -25,42 +26,48 @@ class TestObservation(TestBase):
         self.assertTrue('_id' in records[0].keys())
         return records
 
+    def _save_observations(self):
+        return Observation.save(self.test_data['good_eats.csv'], self.dataset)
+
     def test_save(self):
         records = self._save_records()
+        records = Observation.save(self.test_data['good_eats.csv'],
+                self.dataset)
         self.assertEqual(len(records), 19)
 
     def test_save_over_bulk(self):
-        f = open_data_file('file://tests/fixtures/good_eats_large.csv')
-        self.data = read_csv(f, na_values=['n/a'])
-        records = self._save_records()
+        records = Observation.save(self.test_data['good_eats_large.csv'],
+                self.dataset)
         self.assertEqual(len(records), 1001)
 
     def test_find(self):
-        Observation.save(self.data, self.dataset)
+        self._save_observations()
         cursor = Observation.find(self.dataset)
         self.assertTrue(isinstance(cursor, Cursor))
 
     def test_find_as_df(self):
-        records = Observation.save(self.data, self.dataset)
+        self._save_observations()
+        records = [x for x in Observation.find(self.dataset)]
         dframe = Observation.find(self.dataset, as_df=True)
         self.assertTrue(isinstance(dframe, DataFrame))
-        self.assertEqual(self.data.reindex(columns=dframe.columns), dframe)
+        self.assertEqual(self.test_data['good_eats.csv'].reindex(
+                    columns=dframe.columns), dframe)
         columns = dframe.columns
         for key in MONGO_RESERVED_KEYS:
             self.assertFalse(_prefix_mongo_reserved_key(key) in columns)
 
     def test_find_with_query(self):
-        Observation.save(self.data, self.dataset)
+        self._save_observations()
         cursor = Observation.find(self.dataset, '{"rating": "delectible"}')
         self.assertTrue(isinstance(cursor, Cursor))
 
     def test_find_with_bad_query_json(self):
-        Observation.save(self.data, self.dataset)
+        self._save_observations()
         self.assertRaises(JSONError, Observation.find, self.dataset,
                 '{rating: "delectible"}')
 
     def test_find_with_select(self):
-        Observation.save(self.data, self.dataset)
+        self._save_observations()
         cursor = Observation.find(self.dataset, select='{"rating": 1}')
         self.assertTrue(isinstance(cursor, Cursor))
         results = [row for row in cursor]
@@ -68,12 +75,12 @@ class TestObservation(TestBase):
 
 
     def test_find_with_bad_select(self):
-        Observation.save(self.data, self.dataset)
+        self._save_observations()
         self.assertRaises(JSONError, Observation.find, self.dataset,
                 select='{rating: 1}')
 
     def test_find_with_select_and_query(self):
-        Observation.save(self.data, self.dataset)
+        self._save_observations()
         cursor = Observation.find(self.dataset, '{"rating": "delectible"}',
                 '{"rating": 1}')
         self.assertTrue(isinstance(cursor, Cursor))
@@ -81,7 +88,7 @@ class TestObservation(TestBase):
         self.assertEquals(sorted(results[0].keys()), ['_id', 'rating'])
 
     def test_delete(self):
-        Observation.save(self.data, self.dataset)
+        self._save_observations()
         records = [x for x in Observation.find(self.dataset)]
         self.assertNotEqual(records, [])
         Observation.delete(self.dataset)
