@@ -15,7 +15,7 @@ def open_data_file(url):
     protocols = {
         'http':  open_url,
         'https': open_url,
-        #'file':  lambda d: d['path'],
+        'file':  lambda d: d['path'],
     }
     regex = re.compile(
         '^(?P<url>(?P<protocol>%s):\/\/(?P<path>.+))$' \
