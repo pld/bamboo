@@ -1,4 +1,5 @@
 import re
+import tempfile
 import urllib2
 import uuid
 
@@ -27,6 +28,16 @@ def open_data_file(url):
     return None
 
 
+def read_uploaded_file(_file, chunk_size=8192):
+    data = ''
+    while True:
+        chunk = _file.file.read(chunk_size)
+        if not chunk:
+            break
+        data += chunk
+    return data
+
+
 def create_dataset_from_url(url):
     """
     Load a URL, read from a CSV, create a dataset and return the unique ID.
@@ -46,5 +57,21 @@ def create_dataset_from_url(url):
     dataset_id = uuid.uuid4().hex
     dataset = Dataset.create(dataset_id)
     import_dataset(_file, dataset)
+
+    return {'id': dataset_id}
+
+
+def create_dataset_from_csv(csv_file):
+    """
+    Create a dataset from the uploaded .csv file.
+    """
+    dataset_id = uuid.uuid4().hex
+    dataset = Dataset.create(dataset_id)
+
+    # need to write out to a named tempfile in order
+    # to get a handle in order for pandas read_csv
+    with tempfile.NamedTemporaryFile() as tmpfile:
+        tmpfile.write(read_uploaded_file(csv_file))
+        import_dataset(tmpfile.name, dataset)
 
     return {'id': dataset_id}

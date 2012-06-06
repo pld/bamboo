@@ -2,7 +2,8 @@ import json
 
 from lib.exceptions import JSONError
 from lib.mongo import mongo_to_json
-from lib.io import create_dataset_from_url, open_data_file
+from lib.io import create_dataset_from_url, create_dataset_from_csv, \
+         open_data_file
 from lib.tasks.summarize import summarize
 from models.dataset import Dataset
 from models.observation import Observation
@@ -50,9 +51,11 @@ class Datasets(object):
 
         return json.dumps(result or {'error': 'id not found'})
 
-    def POST(self, url=None):
+    def POST(self, url=None, csv_file=None):
         """
         Read data from URL *url*.
         If URL is not provided and data is provided, read posted data *data*.
         """
-        return json.dumps(create_dataset_from_url(url))
+        if not csv_file:
+            return json.dumps(create_dataset_from_url(url))
+        return json.dumps(create_dataset_from_csv(csv_file))
