@@ -98,6 +98,9 @@ class TestDatasets(TestBase):
         results = self.controller.GET(self.dataset_id, summary=True,
                     group='rating')
         self._test_results(results)
+        results = self.controller.GET(self.dataset_id, summary=True,
+                    group='amount')
+        self._test_results(results)
 
     def test_GET_summary_with_group_and_query(self):
         self._post_file()
