@@ -1,10 +1,9 @@
-import json
-
 from lib.exceptions import JSONError
 from lib.mongo import mongo_to_json
 from lib.io import create_dataset_from_url, create_dataset_from_csv, \
          open_data_file
 from lib.tasks.summarize import summarize
+from lib.utils import dump_or_error
 from models.dataset import Dataset
 from models.observation import Observation
 
@@ -25,7 +24,7 @@ class Datasets(object):
             Dataset.delete(dataset_id)
             Observation.delete(dataset)
             result = {'success': 'deleted dataset: %s' % dataset_id}
-        return json.dumps(result or {'error': 'id not found'})
+        return dump_or_error(result, 'id not found')
 
     def GET(self, dataset_id, summary=False, query='{}', select=None,
             group=None):
@@ -49,13 +48,20 @@ class Datasets(object):
         except JSONError, e:
             result = {'error': e.__str__()}
 
-        return json.dumps(result or {'error': 'id not found'})
+        return dump_or_error(result, 'id not found')
 
     def POST(self, url=None, csv_file=None):
         """
-        Read data from URL *url*.
-        If URL is not provided and data is provided, read posted data *data*.
+        If *url* is provided read data from URL *url*.
+        If *csv_file* is provided read data from *csv_file*.
+        Otherwise return an error message.
         """
-        if not csv_file:
-            return json.dumps(create_dataset_from_url(url))
-        return json.dumps(create_dataset_from_csv(csv_file))
+        result = None
+
+        if url:
+            result = create_dataset_from_url(url)
+
+        if csv_file:
+            result = create_dataset_from_csv(csv_file)
+
+        return dump_or_error(result, 'url or csv_file required')

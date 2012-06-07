@@ -11,12 +11,13 @@ class TestDatasets(TestBase):
 
     def setUp(self):
         TestBase.setUp(self)
-        self._file = 'file://tests/fixtures/good_eats.csv'
+        self._file_path = 'tests/fixtures/good_eats.csv'
+        self._file_uri = 'file://%s' % self._file_path
         self.url = 'http://formhub.org/mberg/forms/good_eats/data.csv'
         self.controller = Datasets()
 
     def _post_file(self):
-        self.dataset_id = json.loads(self.controller.POST(self._file))['id']
+        self.dataset_id = json.loads(self.controller.POST(self._file_uri))['id']
 
     def _test_results(self, results):
         results = json.loads(results)
@@ -36,7 +37,13 @@ class TestDatasets(TestBase):
             self.assertEqual(len(results), 11)
 
     def test_POST_file(self):
-        result = json.loads(self.controller.POST(self._file))
+        _file = open(self._file_path, 'r')
+        result = json.loads(self.controller.POST(csv_file=_file.read()))
+        self.assertTrue(isinstance(result, dict))
+        self.assertTrue('id' in result)
+
+    def test_POST_file_as_url(self):
+        result = json.loads(self.controller.POST(self._file_uri))
         self.assertTrue(isinstance(result, dict))
         self.assertTrue('id' in result)
 

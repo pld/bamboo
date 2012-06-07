@@ -4,17 +4,19 @@ Basic Commands
 Storing data in Bamboo
 ----------------------
 
-store a URL in Bamboo:
+upload data from a URL to Bamboo:
 ^^^^^^^^^^^^^^^^^^^^^^
 
 ``curl -X POST -d "url=http://formhub.org/mberg/forms/good_eats/data.csv" http://localhost:8080/datasets``
 
-store a local file in Bamboo:
+upload data from a file to Bamboo:
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-given ``data.csv`` is in ``.``
+given the file ``/home/modilabs/good_eats.csv`` exists locally on your
+filesystem
 
-``curl -X POST -d "url=file://data.csv" http://localhost:8080/datasets``
+``curl -X POST -F csv_file=@/home/modilabs/good_eats.csv http://localhost:8080/datasets``
+
 
 Retrieve data 
 -------------

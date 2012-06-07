@@ -30,11 +30,8 @@ def open_data_file(url):
 
 def read_uploaded_file(_file, chunk_size=8192):
     data = ''
-    while True:
-        chunk = _file.file.read(chunk_size)
-        if not chunk:
-            break
-        data += chunk
+    for line in _file.file.xreadlines():
+        data += line
     return data
 
 

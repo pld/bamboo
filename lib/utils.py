@@ -1,3 +1,4 @@
+import json
 from math import isnan
 
 import numpy as np
@@ -26,3 +27,7 @@ def series_to_jsondict(series):
 
 def df_to_jsondict(dframe):
     return [series_to_jsondict(series) for idx, series in dframe.iterrows()]
+
+
+def dump_or_error(data, error_message):
+    return json.dumps(data or {'error': error_message})
