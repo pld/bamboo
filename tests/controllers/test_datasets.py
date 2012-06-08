@@ -94,7 +94,6 @@ class TestDatasets(TestBase):
 
     def test_GET_summary_with_group(self):
         self._post_file()
-        # (sic)
         results = self.controller.GET(self.dataset_id, summary=True,
                     group='rating')
         self._test_results(results)
