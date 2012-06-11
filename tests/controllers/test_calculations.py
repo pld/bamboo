@@ -3,6 +3,7 @@ import json
 from controllers.calculations import Calculations
 from controllers.datasets import Datasets
 from lib.constants import ALL, STATS
+from lib.io import create_dataset_from_url
 from models.calculation import Calculation
 from models.dataset import Dataset
 from tests.test_base import TestBase
@@ -13,8 +14,8 @@ class TestCalculations(TestBase):
         TestBase.setUp(self)
 
         self._file = 'file://tests/fixtures/good_eats.csv'
-        result = json.loads(Datasets().POST(self._file))
-        self.dataset_id = result['id']
+        self.dataset_id = create_dataset_from_url(self._file,
+                allow_local_file=True)['id']
         self.controller = Calculations()
         self.formula = 'amount + gps_alt'
         self.name = 'test'

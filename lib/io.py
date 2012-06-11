@@ -7,7 +7,7 @@ from lib.tasks.import_dataset import import_dataset
 from models.dataset import Dataset
 
 
-def open_data_file(url):
+def open_data_file(url, allow_local_file=False):
     """
     Handle url and file handles
     """
@@ -15,8 +15,10 @@ def open_data_file(url):
     protocols = {
         'http':  open_url,
         'https': open_url,
-        'file':  lambda d: d['path'],
     }
+    if allow_local_file:
+        protocols.update({'file':  lambda d: d['path']})
+
     regex = re.compile(
         '^(?P<url>(?P<protocol>%s):\/\/(?P<path>.+))$' \
         % '|'.join(protocols.keys())
@@ -35,14 +37,14 @@ def read_uploaded_file(_file, chunk_size=8192):
     return data
 
 
-def create_dataset_from_url(url):
+def create_dataset_from_url(url, allow_local_file=False):
     """
     Load a URL, read from a CSV, create a dataset and return the unique ID.
     """
     _file = None
 
     try:
-        _file = open_data_file(url)
+        _file = open_data_file(url, allow_local_file)
     except (IOError, urllib2.HTTPError):
         # error reading file/url, return
         pass

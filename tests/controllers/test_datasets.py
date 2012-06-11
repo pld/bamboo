@@ -3,6 +3,7 @@ import json
 from controllers.datasets import Datasets
 from lib.constants import ALL
 from lib.decorators import requires_internet
+from lib.io import create_dataset_from_url
 from tests.test_base import TestBase
 
 class TestDatasets(TestBase):
@@ -17,7 +18,8 @@ class TestDatasets(TestBase):
         self.controller = Datasets()
 
     def _post_file(self):
-        self.dataset_id = json.loads(self.controller.POST(self._file_uri))['id']
+        self.dataset_id = create_dataset_from_url(self._file_uri,
+                allow_local_file=True)['id']
 
     def _test_results(self, results):
         results = json.loads(results)
@@ -42,10 +44,10 @@ class TestDatasets(TestBase):
         self.assertTrue(isinstance(result, dict))
         self.assertTrue('id' in result)
 
-    def test_POST_file_as_url(self):
+    def test_POST_file_as_url_filure(self):
         result = json.loads(self.controller.POST(self._file_uri))
         self.assertTrue(isinstance(result, dict))
-        self.assertTrue('id' in result)
+        self.assertTrue('error' in result)
 
     @requires_internet
     def test_POST_url(self):

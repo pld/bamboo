@@ -1,7 +1,6 @@
 from lib.exceptions import JSONError
 from lib.mongo import mongo_to_json
-from lib.io import create_dataset_from_url, create_dataset_from_csv, \
-         open_data_file
+from lib.io import create_dataset_from_url, create_dataset_from_csv
 from lib.tasks.summarize import summarize
 from lib.utils import dump_or_error
 from models.dataset import Dataset

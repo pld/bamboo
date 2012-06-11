@@ -4,7 +4,6 @@ from pymongo.cursor import Cursor
 from lib.constants import MONGO_RESERVED_KEYS
 from lib.exceptions import JSONError
 from lib.mongo import _prefix_mongo_reserved_key, mongo_decode_keys
-from lib.io import open_data_file
 from models.dataset import Dataset
 from models.observation import Observation
 from tests.test_base import TestBase
