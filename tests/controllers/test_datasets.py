@@ -5,6 +5,7 @@ from lib.constants import ALL
 from lib.decorators import requires_internet
 from lib.io import create_dataset_from_url
 from tests.test_base import TestBase
+from tests.mock import MockUploadedFile
 
 class TestDatasets(TestBase):
 
@@ -40,11 +41,12 @@ class TestDatasets(TestBase):
 
     def test_POST_file(self):
         _file = open(self._file_path, 'r')
-        result = json.loads(self.controller.POST(csv_file=_file.read()))
+        mock_uploaded_file = MockUploadedFile(_file)
+        result = json.loads(self.controller.POST(csv_file=mock_uploaded_file))
         self.assertTrue(isinstance(result, dict))
         self.assertTrue('id' in result)
 
-    def test_POST_file_as_url_filure(self):
+    def test_POST_file_as_url_failure(self):
         result = json.loads(self.controller.POST(self._file_uri))
         self.assertTrue(isinstance(result, dict))
         self.assertTrue('error' in result)
