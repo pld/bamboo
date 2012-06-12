@@ -27,6 +27,7 @@ class TestDatasets(TestBase):
         self.assertTrue(isinstance(results, dict))
         self.assertTrue(isinstance(results[ALL], list))
         self.assertEqual(len(results[ALL]), self.NUM_COLS)
+        return results
 
     def _test_get_with_query_or_select(self, query='{}', select=None):
         self._post_file()
@@ -105,12 +106,20 @@ class TestDatasets(TestBase):
 
     def test_GET_summary_with_group(self):
         self._post_file()
-        results = self.controller.GET(self.dataset_id, summary=True,
-                    group='rating')
-        self._test_results(results)
-        results = self.controller.GET(self.dataset_id, summary=True,
-                    group='amount')
-        self._test_results(results)
+        groups = [
+            ('rating', ['delectible', 'epic_eat']),
+            ('amount', []),
+        ]
+        for group, cols in groups:
+            json_results = self.controller.GET(self.dataset_id, summary=True,
+                        group=group)
+            results = self._test_results(json_results)
+
+            if len(cols):
+                self.assertTrue(group in results.keys())
+                self.assertEqual(cols, results[group].keys())
+            else:
+                self.assertFalse(group in results.keys())
 
     def test_GET_summary_with_group_and_query(self):
         self._post_file()
