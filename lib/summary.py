@@ -37,8 +37,8 @@ def summarize_with_groups(dframe, stats, group=None):
     if group:
         # do not allow group by numeric types
         _type = dframe.dtypes.get(group)
-        if _type and isinstance(_type.type, np.object_):
+        if _type is not None and _type.type == np.object_:
             grouped_stats = series_to_jsondict(
                     dframe.groupby(group).apply(summarize_df))
-            stats.update(grouped_stats)
+            stats.update({group: grouped_stats})
     return stats
