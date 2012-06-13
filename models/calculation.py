@@ -1,4 +1,4 @@
-from lib.constants import ALL, DATASET_ID, STATS
+from lib.constants import ALL, DATASET_ID, ERROR, STATS
 from lib.exceptions import ParseError
 from lib.parser import Parser
 from lib.tasks.calculator import calculate_column
@@ -36,7 +36,7 @@ class Calculation(AbstractModel):
             cls.parser.validate_formula(formula, row)
         except ParseError, err:
             # do not save record, return error
-            return {'error': err}
+            return {ERROR: err}
 
         record = {
             DATASET_ID: dataset[DATASET_ID],

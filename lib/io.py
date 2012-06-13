@@ -3,6 +3,7 @@ import tempfile
 import urllib2
 import uuid
 
+from lib.constants import ERROR
 from lib.tasks.import_dataset import import_dataset
 from models.dataset import Dataset
 
@@ -51,7 +52,7 @@ def create_dataset_from_url(url, allow_local_file=False):
 
     if not _file:
         # could not get a file handle
-        return {'error': 'could not get a filehandle for: %s' % url}
+        return {ERROR: 'could not get a filehandle for: %s' % url}
 
     dataset_id = uuid.uuid4().hex
     dataset = Dataset.create(dataset_id)

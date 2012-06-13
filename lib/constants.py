@@ -21,6 +21,7 @@ MONGO_RESERVED_KEY_PREFIX = 'MONGO_RESERVED_KEY'
 # output labels
 ALL = '_all'
 DATA = 'data'
+ERROR = 'error'
 NAME = 'name'
 SUMMARY = 'summary'
 

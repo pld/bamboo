@@ -1,5 +1,6 @@
 from pymongo.cursor import Cursor
 
+from lib.constants import ERROR
 from models.calculation import Calculation
 from models.dataset import Dataset
 from models.observation import Observation
@@ -28,28 +29,28 @@ class TestCalculation(TestBase):
     def test_save_improper_formula(self):
         record = self._save_observations_and_calculation('NON_EXISTENT_COLUMN')
         self.assertTrue(isinstance(record, dict))
-        self.assertTrue('error' in record.keys())
-        self.assertTrue('Missing column' in record['error'].__str__())
+        self.assertTrue(ERROR in record.keys())
+        self.assertTrue('Missing column' in record[ERROR].__str__())
 
     def test_save_unparsable_formula(self):
         record = self._save_observations_and_calculation('=NON_EXISTENT_COLUMN')
         self.assertTrue(isinstance(record, dict))
-        self.assertTrue('error' in record.keys())
-        self.assertTrue('Parse Failure' in record['error'].__str__())
+        self.assertTrue(ERROR in record.keys())
+        self.assertTrue('Parse Failure' in record[ERROR].__str__())
 
     def test_save_improper_formula_no_data(self):
         record = Calculation.save(self.dataset, 'NON_EXISTENT_COLUMN',
                 self.name)
         self.assertTrue(isinstance(record, dict))
-        self.assertTrue('error' in record.keys())
-        self.assertTrue('Missing column' in record['error'].__str__())
+        self.assertTrue(ERROR in record.keys())
+        self.assertTrue('Missing column' in record[ERROR].__str__())
 
     def test_save_unparsable_formula_no_data(self):
         record = Calculation.save(self.dataset, '=NON_EXISTENT_COLUMN',
                 self.name)
         self.assertTrue(isinstance(record, dict))
-        self.assertTrue('error' in record.keys())
-        self.assertTrue('Parse Failure' in record['error'].__str__())
+        self.assertTrue(ERROR in record.keys())
+        self.assertTrue('Parse Failure' in record[ERROR].__str__())
 
     def test_find(self):
         record = self._save_observations_and_calculation()

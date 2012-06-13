@@ -1,4 +1,4 @@
-from lib.constants import ALL
+from lib.constants import ALL, ERROR
 from lib.exceptions import JSONError
 from lib.mongo import mongo_to_json
 from lib.io import create_dataset_from_url, create_dataset_from_csv
@@ -46,7 +46,7 @@ class Datasets(object):
                     return mongo_to_json(Observation.find(dataset, query,
                                 select))
         except JSONError, e:
-            result = {'error': e.__str__()}
+            result = {ERROR: e.__str__()}
 
         return dump_or_error(result, 'id not found')
 

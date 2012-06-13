@@ -1,7 +1,7 @@
 import json
 
 from controllers.datasets import Datasets
-from lib.constants import MONGO_RESERVED_KEYS, SUMMARY
+from lib.constants import ERROR, MONGO_RESERVED_KEYS, SUMMARY
 from lib.decorators import requires_internet
 from lib.io import create_dataset_from_url
 from tests.test_base import TestBase
@@ -62,7 +62,7 @@ class TestDatasets(TestBase):
     def test_POST_file_as_url_failure(self):
         result = json.loads(self.controller.POST(self._file_uri))
         self.assertTrue(isinstance(result, dict))
-        self.assertTrue('error' in result)
+        self.assertTrue(ERROR in result)
 
     @requires_internet
     def test_POST_url(self):
@@ -73,7 +73,7 @@ class TestDatasets(TestBase):
     def test_POST_bad_url(self):
         result = json.loads(self.controller.POST('http://noformhub.org/'))
         self.assertTrue(isinstance(result, dict))
-        self.assertTrue('error' in result)
+        self.assertTrue(ERROR in result)
 
     def test_GET(self):
         self._post_file()
@@ -85,7 +85,7 @@ class TestDatasets(TestBase):
     def test_GET_bad_id(self):
         for dataset_name in self.TEST_DATASETS:
             results = self.controller.GET(self.test_dataset_ids[dataset_name])
-            self.assertTrue('error' in results)
+            self.assertTrue(ERROR in results)
 
     def test_GET_with_query(self):
         # (sic)
@@ -95,7 +95,7 @@ class TestDatasets(TestBase):
         self._post_file()
         results = json.loads(self.controller.GET(self.dataset_id,
                     query='bad json'))
-        self.assertTrue('JSON' in results['error'])
+        self.assertTrue('JSON' in results[ERROR])
 
     def test_GET_with_select(self):
         self._test_get_with_query_or_select(select='{"rating": 1}')
@@ -138,7 +138,9 @@ class TestDatasets(TestBase):
                 for column_value in column_values:
                     self._test_summary_no_group(results[group][column_value])
             else:
+                print results.keys()
                 self.assertFalse(group in results.keys())
+                self.assertTrue(ERROR in results.keys())
 
     def test_GET_summary_with_group_and_query(self):
         self._post_file()
@@ -157,4 +159,4 @@ class TestDatasets(TestBase):
         for dataset_name in self.TEST_DATASETS:
             result = json.loads(self.controller.DELETE(
                         self.test_dataset_ids[dataset_name]))
-            self.assertTrue('error' in result)
+            self.assertTrue(ERROR in result)
