@@ -1,8 +1,9 @@
 import json
 
+from lib.constants import ID
+from lib.mongo import dump_mongo_json
 from models.calculation import Calculation
 from models.dataset import Dataset
-from lib.mongo import dump_mongo_json
 
 
 class Calculations(object):
@@ -18,7 +19,7 @@ class Calculations(object):
         dataset = Dataset.find_one(dataset_id)
         if dataset:
             Calculation.save(dataset, formula, name)
-            return json.dumps({'id': dataset_id})
+            return json.dumps({ID: dataset_id})
 
     def GET(self, dataset_id):
         """

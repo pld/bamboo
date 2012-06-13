@@ -1,4 +1,4 @@
-from lib.constants import ALL, ERROR
+from lib.constants import ALL, ERROR, SUCCESS
 from lib.exceptions import JSONError
 from lib.mongo import mongo_to_json
 from lib.io import create_dataset_from_url, create_dataset_from_csv
@@ -23,7 +23,7 @@ class Datasets(object):
         if dataset:
             Dataset.delete(dataset_id)
             Observation.delete(dataset)
-            result = {'success': 'deleted dataset: %s' % dataset_id}
+            result = {SUCCESS: 'deleted dataset: %s' % dataset_id}
         return dump_or_error(result, 'id not found')
 
     def GET(self, dataset_id, summary=False, query='{}', select=None,

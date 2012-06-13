@@ -1,7 +1,7 @@
 import json
 
 from controllers.datasets import Datasets
-from lib.constants import ERROR, MONGO_RESERVED_KEYS, SUMMARY
+from lib.constants import ERROR, ID, MONGO_RESERVED_KEYS, SUCCESS, SUMMARY
 from lib.decorators import requires_internet
 from lib.io import create_dataset_from_url
 from tests.test_base import TestBase
@@ -21,7 +21,7 @@ class TestDatasets(TestBase):
 
     def _post_file(self):
         self.dataset_id = create_dataset_from_url(self._file_uri,
-                allow_local_file=True)['id']
+                allow_local_file=True)[ID]
 
     def _test_summary_results(self, results):
         results = json.loads(results)
@@ -57,7 +57,7 @@ class TestDatasets(TestBase):
         mock_uploaded_file = MockUploadedFile(_file)
         result = json.loads(self.controller.POST(csv_file=mock_uploaded_file))
         self.assertTrue(isinstance(result, dict))
-        self.assertTrue('id' in result)
+        self.assertTrue(ID in result)
 
     def test_POST_file_as_url_failure(self):
         result = json.loads(self.controller.POST(self._file_uri))
@@ -68,7 +68,7 @@ class TestDatasets(TestBase):
     def test_POST_url(self):
         result = json.loads(self.controller.POST(self.url))
         self.assertTrue(isinstance(result, dict))
-        self.assertTrue('id' in result)
+        self.assertTrue(ID in result)
 
     def test_POST_bad_url(self):
         result = json.loads(self.controller.POST('http://noformhub.org/'))
@@ -151,8 +151,8 @@ class TestDatasets(TestBase):
     def test_DELETE(self):
         self._post_file()
         result = json.loads(self.controller.DELETE(self.dataset_id))
-        self.assertTrue('success' in result)
-        self.assertEqual(result['success'], 'deleted dataset: %s' % \
+        self.assertTrue(SUCCESS in result)
+        self.assertEqual(result[SUCCESS], 'deleted dataset: %s' % \
                 self.dataset_id)
 
     def test_DELETE_bad_id(self):

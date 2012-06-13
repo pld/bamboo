@@ -3,7 +3,7 @@ import tempfile
 import urllib2
 import uuid
 
-from lib.constants import ERROR
+from lib.constants import ERROR, ID
 from lib.tasks.import_dataset import import_dataset
 from models.dataset import Dataset
 
@@ -58,7 +58,7 @@ def create_dataset_from_url(url, allow_local_file=False):
     dataset = Dataset.create(dataset_id)
     import_dataset(_file, dataset)
 
-    return {'id': dataset_id}
+    return {ID: dataset_id}
 
 
 def create_dataset_from_csv(csv_file):
@@ -74,4 +74,4 @@ def create_dataset_from_csv(csv_file):
         tmpfile.write(read_uploaded_file(csv_file))
         import_dataset(tmpfile.name, dataset)
 
-    return {'id': dataset_id}
+    return {ID: dataset_id}

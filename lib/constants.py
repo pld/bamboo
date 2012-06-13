@@ -22,7 +22,9 @@ MONGO_RESERVED_KEY_PREFIX = 'MONGO_RESERVED_KEY'
 ALL = '_all'
 DATA = 'data'
 ERROR = 'error'
+ID = 'id'
 NAME = 'name'
+SUCCESS = 'success'
 SUMMARY = 'summary'
 
 # batch size for bulk inserts
