@@ -1,3 +1,4 @@
+from lib.constants import ALL
 from lib.exceptions import JSONError
 from lib.mongo import mongo_to_json
 from lib.io import create_dataset_from_url, create_dataset_from_csv
@@ -26,7 +27,7 @@ class Datasets(object):
         return dump_or_error(result, 'id not found')
 
     def GET(self, dataset_id, summary=False, query='{}', select=None,
-            group=None):
+            group=ALL):
         """
         Return data set for hash *dataset_id*.
         Execute query *query* in mongo if passed.
