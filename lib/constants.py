@@ -1,3 +1,6 @@
+import re
+
+
 # hash algorithm parameter
 DEFAULT_HASH_ALGORITHM = 'sha1'
 
@@ -16,9 +19,15 @@ MONGO_RESERVED_KEYS = ['_id']
 MONGO_RESERVED_KEY_PREFIX = 'MONGO_RESERVED_KEY'
 
 # output labels
-ALL = '(ALL)'
+ALL = '_all'
 DATA = 'data'
 NAME = 'name'
+SUMMARY = 'summary'
 
 # batch size for bulk inserts
 DB_BATCH_SIZE = 1000
+
+# regex for finding encoded mongo keys
+ENCODED_DOLLAR = 'JA=='
+ENCODED_DOT = 'Lg=='
+ENCODED_KEY_REGEX = re.compile(r'%s|%s' % (ENCODED_DOLLAR, ENCODED_DOT))

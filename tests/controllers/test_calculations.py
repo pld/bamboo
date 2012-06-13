@@ -36,7 +36,7 @@ class TestCalculations(TestBase):
         Datasets().GET(self.dataset_id, summary=True)
         dataset = Dataset.find_one(self.dataset_id)
         self.assertTrue(isinstance(dataset[STATS], dict))
-        self.assertTrue(isinstance(dataset[STATS][ALL], list))
+        self.assertTrue(isinstance(dataset[STATS][ALL], dict))
         self._post_formula()
         # [STATS][ALL] should be removed
         dataset = Dataset.find_one(self.dataset_id)

@@ -1,7 +1,7 @@
 import json
 
 from controllers.datasets import Datasets
-from lib.constants import ALL
+from lib.constants import MONGO_RESERVED_KEYS, SUMMARY
 from lib.decorators import requires_internet
 from lib.io import create_dataset_from_url
 from tests.test_base import TestBase
@@ -13,7 +13,8 @@ class TestDatasets(TestBase):
 
     def setUp(self):
         TestBase.setUp(self)
-        self._file_path = 'tests/fixtures/good_eats.csv'
+        self._file_name = 'good_eats.csv'
+        self._file_path = 'tests/fixtures/%s' % self._file_name
         self._file_uri = 'file://%s' % self._file_path
         self.url = 'http://formhub.org/mberg/forms/good_eats/data.csv'
         self.controller = Datasets()
@@ -22,12 +23,23 @@ class TestDatasets(TestBase):
         self.dataset_id = create_dataset_from_url(self._file_uri,
                 allow_local_file=True)['id']
 
-    def _test_results(self, results):
+    def _test_summary_results(self, results):
         results = json.loads(results)
         self.assertTrue(isinstance(results, dict))
-        self.assertTrue(isinstance(results[ALL], list))
-        self.assertEqual(len(results[ALL]), self.NUM_COLS)
         return results
+
+    def _test_summary_no_group(self, results):
+        result_keys = results.keys()
+        print result_keys
+        print self.test_data[self._file_name].columns.tolist()
+        self.assertEqual(len(result_keys), self.NUM_COLS)
+        columns = [col for col in
+                self.test_data[self._file_name].columns.tolist()
+                if not col in MONGO_RESERVED_KEYS]
+        for col in columns:
+            self.assertTrue(col in result_keys, 'col: %s in: %s' % (col,
+                        result_keys))
+            self.assertTrue(SUMMARY in results[col].keys())
 
     def _test_get_with_query_or_select(self, query='{}', select=None):
         self._post_file()
@@ -95,14 +107,16 @@ class TestDatasets(TestBase):
     def test_GET_summary(self):
         self._post_file()
         results = self.controller.GET(self.dataset_id, summary=True)
-        self._test_results(results)
+        results = self._test_summary_results(results)
+        self._test_summary_no_group(results)
 
     def test_GET_summary_with_query(self):
         self._post_file()
         # (sic)
         results = self.controller.GET(self.dataset_id, summary=True,
                     query='{"rating": "delectible"}')
-        self._test_results(results)
+        results = self._test_summary_results(results)
+        self._test_summary_no_group(results)
 
     def test_GET_summary_with_group(self):
         self._post_file()
@@ -110,14 +124,19 @@ class TestDatasets(TestBase):
             ('rating', ['delectible', 'epic_eat']),
             ('amount', []),
         ]
-        for group, cols in groups:
+
+        for group, column_values in groups:
             json_results = self.controller.GET(self.dataset_id, summary=True,
                         group=group)
-            results = self._test_results(json_results)
+            results = self._test_summary_results(json_results)
+            result_keys = results.keys()
 
-            if len(cols):
-                self.assertTrue(group in results.keys())
-                self.assertEqual(cols, results[group].keys())
+            if len(column_values):
+                self.assertTrue(group in result_keys, 'group: %s in: %s'
+                        % (group, result_keys))
+                self.assertEqual(column_values, results[group].keys())
+                for column_value in column_values:
+                    self._test_summary_no_group(results[group][column_value])
             else:
                 self.assertFalse(group in results.keys())
 
@@ -125,7 +144,7 @@ class TestDatasets(TestBase):
         self._post_file()
         results = self.controller.GET(self.dataset_id, summary=True,
                     group='rating', query='{"rating": "delectible"}')
-        self._test_results(results)
+        self._test_summary_results(results)
 
     def test_DELETE(self):
         self._post_file()

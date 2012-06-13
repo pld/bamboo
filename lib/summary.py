@@ -1,6 +1,6 @@
 import numpy as np
 
-from lib.constants import ALL, DATA, MONGO_RESERVED_KEYS, NAME
+from lib.constants import ALL, DATA, MONGO_RESERVED_KEYS, NAME, SUMMARY
 from lib.utils import series_to_jsondict
 
 
@@ -22,23 +22,17 @@ def summarize_df(dframe):
     dtypes = dframe.dtypes
     # TODO handle empty data
     # before we wrapped with filter(lambda d: d[DATA] and len(d[DATA]), array)
-    return [{
-                NAME: col,
-                DATA: series_to_jsondict(summarize_series(dtypes[col], data))
-    } for col, data in dframe.iteritems() if not col in MONGO_RESERVED_KEYS]
+    return dict([
+        (col, {SUMMARY: series_to_jsondict(summarize_series(dtypes[col], data))})
+                for col, data in dframe.iteritems() if not col in MONGO_RESERVED_KEYS
+    ])
 
 
-def summarize_with_groups(dframe, stats, group=None):
+def summarize_with_groups(dframe, stats, group):
     """
-    Calculate summary statistics including for group if exists
+    Calculate summary statistics for group.
     """
-    if not stats.get(ALL):
-        stats[ALL] = summarize_df(dframe)
-    if group:
-        # do not allow group by numeric types
-        _type = dframe.dtypes.get(group)
-        if _type is not None and _type.type == np.object_:
-            grouped_stats = series_to_jsondict(
-                    dframe.groupby(group).apply(summarize_df))
-            stats.update({group: grouped_stats})
+    grouped_stats = series_to_jsondict(
+            dframe.groupby(group).apply(summarize_df))
+    stats.update({group: grouped_stats})
     return stats
