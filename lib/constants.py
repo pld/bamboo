@@ -3,6 +3,10 @@ import re
 import numpy as np
 
 
+# versioning
+VERSION_NUMBER = '0.1'
+VERSION_DESCRIPTION = 'alpha'
+
 # hash algorithm parameter
 DEFAULT_HASH_ALGORITHM = 'sha1'
 
