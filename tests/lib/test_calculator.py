@@ -2,10 +2,11 @@ import numpy as np
 
 from tests.test_base import TestBase
 
+from lib.constants import DATASET_ID, SCHEMA, SIMPLETYPE
+from lib.mongo import _encode_for_mongo
 from lib.tasks.calculator import calculate_column
 from models.dataset import Dataset
 from models.observation import Observation
-from lib.mongo import _encode_for_mongo
 
 
 class TestCalculator(TestBase):
@@ -71,6 +72,15 @@ class TestCalculator(TestBase):
             # test that updated dataframe persisted
             dframe = Observation.find(self.dataset, as_df=True)
             self.assertTrue(name in dframe.columns)
+
+            # test that the schema is up to date
+            dataset = Dataset.find_one(self.dataset[DATASET_ID])
+            self.assertTrue(SCHEMA in dataset.keys())
+            self.assertTrue(isinstance(dataset[SCHEMA], dict))
+            schema = dataset[SCHEMA]
+            encoded_formula = _encode_for_mongo(formula)
+            self.assertTrue(encoded_formula in schema.keys(),
+                    '%s: in %s' % (encoded_formula, schema.keys()))
 
             # test result of calculation
             for idx, row in dframe.iterrows():

@@ -7,6 +7,7 @@ from lib.constants import DATASET_OBSERVATION_ID, DB_BATCH_SIZE
 from lib.exceptions import JSONError
 from lib.mongo import df_to_mongo, mongo_to_df
 from models.abstract_model import AbstractModel
+from models.dataset import Dataset
 
 
 class Observation(AbstractModel):
@@ -51,9 +52,10 @@ class Observation(AbstractModel):
     @classmethod
     def save(cls, dframe, dataset):
         """
-        Convert dframe to mongo format, iterate through rows adding ids,
-        insert chunk by chunk.
+        Convert *dframe* to mongo format, iterate through rows adding ids for
+        *dataset*, insert in chuncks of size *DB_BATCH_SIZE*.
         """
+        Dataset.build_schema(dataset, dframe.dtypes)
         observations = df_to_mongo(dframe)
         # add metadata to file
         dataset_observation_id = dataset[DATASET_OBSERVATION_ID]
@@ -76,4 +78,5 @@ class Observation(AbstractModel):
         """
         cls.delete(dataset)
         cls.save(dframe, dataset)
+        Dataset.build_schema(dataset, dframe.dtypes)
         return cls.find(dataset, as_df=True)

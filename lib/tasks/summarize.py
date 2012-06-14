@@ -1,7 +1,7 @@
 from celery.task import task
 import numpy as np
 
-from lib.constants import ALL, STATS
+from lib.constants import ALL, ERROR, STATS
 from lib.mongo import dict_from_mongo
 from lib.summary import summarize_df, summarize_with_groups
 from models.dataset import Dataset
@@ -21,7 +21,7 @@ def summarize(dataset, query, select, group):
     # TODO check schema for valid groupby columns once included
     _type = dframe.dtypes.get(group)
     if group != ALL and (_type is None or _type.type != np.object_):
-        return {'error': "group: '%s' is not categorical." % group}
+        return {ERROR: "group: '%s' is not categorical." % group}
 
     # check cached stats for group and update as necessary
     stats = dataset.get(STATS, {})
