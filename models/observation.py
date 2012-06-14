@@ -78,4 +78,5 @@ class Observation(AbstractModel):
         """
         cls.delete(dataset)
         cls.save(dframe, dataset)
+        Dataset.build_schema(dataset, dframe.dtypes)
         return cls.find(dataset, as_df=True)
