@@ -1,5 +1,7 @@
 import re
 
+import numpy as np
+
 
 # hash algorithm parameter
 DEFAULT_HASH_ALGORITHM = 'sha1'
@@ -11,21 +13,40 @@ JSON_NULL = 'null'
 BAMBOO_RESERVED_KEY_PREFIX = 'BAMBOO_RESERVED_KEY_'
 DATASET_ID = BAMBOO_RESERVED_KEY_PREFIX + 'dataset_id'
 DATASET_OBSERVATION_ID = BAMBOO_RESERVED_KEY_PREFIX + 'dataset_observation_id'
-FORMULA = 'formula'
-STATS = '_stats'
 
 # special MongoDB keys
 MONGO_RESERVED_KEYS = ['_id']
 MONGO_RESERVED_KEY_PREFIX = 'MONGO_RESERVED_KEY'
 
-# output labels
+# internal caching keys
 ALL = '_all'
-DATA = 'data'
+STATS = '_stats'
+
+# JSON output labels
 ERROR = 'error'
 ID = 'id'
-NAME = 'name'
 SUCCESS = 'success'
+
+# metadata
+CREATED_AT = 'created_at'
+SCHEMA = 'schema'
+SIMPLETYPE = 'simpletype'
 SUMMARY = 'summary'
+UPDATED_AT = 'updated_at'
+
+# simpletypes
+STRING = 'string'
+INTEGER = 'integer'
+FLOAT = 'float'
+BOOLEAN = 'boolean'
+
+# map from numpy objects to simpletypes
+DTYPE_TO_SIMPLETYPE_MAP = {
+    np.object_: STRING,
+    np.int64:   INTEGER,
+    np.float64: FLOAT,
+    np.bool_:   BOOLEAN,
+}
 
 # batch size for bulk inserts
 DB_BATCH_SIZE = 1000

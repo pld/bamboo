@@ -1,6 +1,8 @@
 import uuid
+from time import gmtime, strftime
 
-from lib.constants import DATASET_ID, DATASET_OBSERVATION_ID
+from lib.constants import CREATED_AT, DATASET_ID, DATASET_OBSERVATION_ID,\
+         DTYPE_TO_SIMPLETYPE_MAP, SCHEMA, SIMPLETYPE, UPDATED_AT
 from models.abstract_model import AbstractModel
 
 
@@ -27,7 +29,8 @@ class Dataset(AbstractModel):
         """
         record = {
             DATASET_ID: dataset_id,
-            DATASET_OBSERVATION_ID: uuid.uuid4().hex
+            DATASET_OBSERVATION_ID: uuid.uuid4().hex,
+            CREATED_AT: strftime("%Y-%m-%d %H:%M:%S", gmtime()),
         }
         cls.collection.insert(record)
         return record
@@ -44,4 +47,12 @@ class Dataset(AbstractModel):
         """
         Update dataset *dataset* with *_dict*.
         """
-        cls.collection.update(dataset, dict(dataset.items() + _dict.items()))
+        _dict[UPDATED_AT] = strftime("%Y-%m-%d %H:%M:%S", gmtime())
+        dataset.update(_dict)
+        cls.collection.update({DATASET_ID: dataset[DATASET_ID]}, dataset)
+
+    @classmethod
+    def build_schema(cls, dataset, dtypes):
+        schema = dict([(name, {SIMPLETYPE: DTYPE_TO_SIMPLETYPE_MAP[dtype.type]})
+                for (name, dtype) in dtypes.to_dict().items()])
+        cls.update(dataset, {SCHEMA: schema})
