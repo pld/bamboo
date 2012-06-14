@@ -17,5 +17,4 @@ def calculate_column(dataset, dframe, formula, name):
 
     new_column = dframe.apply(func, axis=1, args=(parser, ))
     new_column.name = name
-    #print new_column
     return Observation.update(dframe.join(new_column), dataset)
