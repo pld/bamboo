@@ -1,6 +1,11 @@
 Basic Commands
 ==============
 
+Check the Bamboo version
+------------------------
+
+``curl http://bamboo.io/version``
+
 Storing data in Bamboo
 ----------------------
 
