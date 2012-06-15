@@ -1,4 +1,4 @@
-numpy==1.6.1
+numpy==1.6.2
 cherrypy==3.2.2
 pandas==0.7.3
 scipy==0.10.1
