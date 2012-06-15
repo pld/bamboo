@@ -1,7 +1,8 @@
 import json
 
 from controllers.datasets import Datasets
-from lib.constants import ERROR, ID, MONGO_RESERVED_KEYS, SUCCESS, SUMMARY
+from lib.constants import CREATED_AT, ERROR, ID, MONGO_RESERVED_KEYS, SCHEMA,\
+         SUCCESS, SUMMARY, UPDATED_AT
 from lib.decorators import requires_internet
 from lib.io import create_dataset_from_url
 from tests.test_base import TestBase
@@ -81,6 +82,14 @@ class TestDatasets(TestBase):
         self.assertTrue(isinstance(results, list))
         self.assertTrue(isinstance(results[0], dict))
         self.assertEqual(len(results), 19)
+
+    def test_GET_schema(self):
+        self._post_file()
+        results = json.loads(self.controller.GET(self.dataset_id, info=True))
+        self.assertTrue(isinstance(results, dict))
+        result_keys = results.keys()
+        for key in [CREATED_AT, ID, SCHEMA, UPDATED_AT]:
+            self.assertTrue(key in result_keys)
 
     def test_GET_bad_id(self):
         for dataset_name in self.TEST_DATASETS:

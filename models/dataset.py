@@ -2,7 +2,7 @@ import uuid
 from time import gmtime, strftime
 
 from lib.constants import CREATED_AT, DATASET_ID, DATASET_OBSERVATION_ID,\
-         DTYPE_TO_SIMPLETYPE_MAP, SCHEMA, SIMPLETYPE, UPDATED_AT
+         DTYPE_TO_SIMPLETYPE_MAP, ID, SCHEMA, SIMPLETYPE, UPDATED_AT
 from models.abstract_model import AbstractModel
 
 
@@ -56,3 +56,12 @@ class Dataset(AbstractModel):
         schema = dict([(name, {SIMPLETYPE: DTYPE_TO_SIMPLETYPE_MAP[dtype.type]})
                 for (name, dtype) in dtypes.to_dict().items()])
         cls.update(dataset, {SCHEMA: schema})
+
+    @classmethod
+    def schema(cls, dataset):
+        return {
+            ID: dataset[DATASET_ID],
+            SCHEMA: dataset[SCHEMA],
+            CREATED_AT: dataset[CREATED_AT],
+            UPDATED_AT: dataset[UPDATED_AT],
+        }
