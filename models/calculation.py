@@ -1,5 +1,6 @@
 from lib.constants import ALL, DATASET_ID, ERROR, STATS
 from lib.exceptions import ParseError
+from lib.mongo import mongo_remove_reserved_keys
 from lib.parser import Parser
 from lib.tasks.calculator import calculate_column
 from models.abstract_model import AbstractModel
@@ -54,13 +55,13 @@ class Calculation(AbstractModel):
 
         # call remote calculate and pass calculation id
         calculate_column.delay(dataset, dframe, formula, name)
-        return record
+        return mongo_remove_reserved_keys(record)
 
     @classmethod
     def find(cls, dataset):
         """
         Return the calculations for given *dataset*.
         """
-        return cls.collection.find({
+        return [mongo_remove_reserved_keys(record) for record in cls.collection.find({
             DATASET_ID: dataset[DATASET_ID],
-        })
+        })]

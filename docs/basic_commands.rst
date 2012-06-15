@@ -36,7 +36,7 @@ given the id is ``8a3d74711475d8a51c84484fe73f24bd151242ea``
 by ID with select:
 ^^^^^^^^^^^^^^^^^^
 
-``curl http://bamboo.io/datasets/8a3d74711475d8a51c84484fe73f24bd151242ea?select='{"rating": 1}'``
+``curl -g http://bamboo.io/datasets/8a3d74711475d8a51c84484fe73f24bd151242ea?select='{"rating":1}'``
 
 
 by ID and query:
@@ -44,7 +44,7 @@ by ID and query:
 
 query must be valid MongoDB extended JSON
 
-``curl http://bamboo.io/datasets/8a3d74711475d8a51c84484fe73f24bd151242ea?query='{"food_type": "lunch"}'``
+``curl -g http://bamboo.io/datasets/8a3d74711475d8a51c84484fe73f24bd151242ea?query='{"food_type":"lunch"}'``
 
 Retrieve summary statistics for dataset
 ---------------------------------------
@@ -57,7 +57,7 @@ by ID:
 by ID and query:
 ^^^^^^^^^^^^^^^^
 
-``curl http://bamboo.io/datasets/8a3d74711475d8a51c84484fe73f24bd151242ea/summary?query='{"food_type": "lunch"}'``
+``curl -g http://bamboo.io/datasets/8a3d74711475d8a51c84484fe73f24bd151242ea/summary?query='{"food_type":"lunch"}'``
 
 with a grouping:
 ^^^^^^^^^^^^^^^^
@@ -70,4 +70,8 @@ Calculation formulas
 store calculation formula:
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-``curl http://bamboo.io/calculations/8a3d74711475d8a51c84484fe73f24bd151242ea?name=[NAME]&formula=[FORMULA]``
+``curl -X POST -d "name=amount_less_than_10&formula=amount<10" http://bamboo.io/calculations/8a3d74711475d8a51c84484fe73f24bd151242ea``
+
+retrieve newly calculated column:
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+``curl -g http://bamboo.io/datasets/8a3d74711475d8a51c84484fe73f24bd151242ea?select='{"amount_less_than_10":1}'``

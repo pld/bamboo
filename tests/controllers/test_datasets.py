@@ -48,7 +48,7 @@ class TestDatasets(TestBase):
         self.assertTrue(isinstance(results, list))
         self.assertTrue(isinstance(results[0], dict))
         if select:
-            self.assertEqual(sorted(results[0].keys()), ['_id', 'rating'])
+            self.assertEqual(sorted(results[0].keys()), ['rating'])
         if query != '{}':
             self.assertEqual(len(results), 11)
 

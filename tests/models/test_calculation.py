@@ -24,7 +24,7 @@ class TestCalculation(TestBase):
     def test_save(self):
         record = self._save_observations_and_calculation()
         self.assertTrue(isinstance(record, dict))
-        self.assertTrue('_id' in record.keys())
+        self.assertTrue(Calculation.FORMULA in record.keys())
 
     def test_save_improper_formula(self):
         record = self._save_observations_and_calculation('NON_EXISTENT_COLUMN')
@@ -54,7 +54,5 @@ class TestCalculation(TestBase):
 
     def test_find(self):
         record = self._save_observations_and_calculation()
-        cursor = Calculation.find(self.dataset)
-        rows = [x for x in cursor]
-        self.assertTrue(isinstance(cursor, Cursor))
+        rows = Calculation.find(self.dataset)
         self.assertEqual(record, rows[0])

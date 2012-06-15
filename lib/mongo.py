@@ -88,6 +88,9 @@ def mongo_to_df(cursor):
 
 
 def mongo_to_json(cursor):
+    """
+    Convert mongo *cursor* to json dict, via dataframe, then dump to JSON.
+    """
     jsondict = df_to_jsondict(mongo_to_df(cursor))
     return dump_mongo_json(jsondict)
 
@@ -103,12 +106,21 @@ def mongo_decode_keys(observations):
     """
     for observation in observations:
         observation.pop(DATASET_OBSERVATION_ID, None)
+        observation = mongo_remove_reserved_keys(observation)
 
-        for key, value in observation.items():
-            if key in MONGO_RESERVED_KEYS and observation.get(
-                    _prefix_mongo_reserved_key(key)):
-                value = observation.pop(_prefix_mongo_reserved_key(key))
-                observation[key] = value
-            elif value == 'null':
-                observation[key] = np.nan
     return observations
+
+def mongo_remove_reserved_keys(_dict):
+    for key, value in _dict.items():
+        if key in MONGO_RESERVED_KEYS:
+            prefixed_key = _prefix_mongo_reserved_key(key)
+            if _dict.get(prefixed_key):
+                # replace reserved key value with original key value
+                value = _dict.pop(prefixed_key)
+                _dict[key] = value
+            else:
+                # remove mongo reserved keys
+                del _dict[key]
+        elif value == 'null':
+            _dict[key] = np.nan
+    return _dict
