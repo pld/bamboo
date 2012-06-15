@@ -26,7 +26,7 @@ class Datasets(object):
             result = {SUCCESS: 'deleted dataset: %s' % dataset_id}
         return dump_or_error(result, 'id not found')
 
-    def GET(self, dataset_id, summary=False, query='{}', select=None,
+    def GET(self, dataset_id, summary=False, info=False, query='{}', select=None,
             group=ALL):
         """
         Return data set for hash *dataset_id*.
@@ -40,7 +40,9 @@ class Datasets(object):
 
         try:
             if dataset:
-                if summary:
+                if info:
+                    result = Dataset.schema(dataset)
+                elif summary:
                     result = summarize(dataset, query, select, group)
                 else:
                     return mongo_to_json(Observation.find(dataset, query,

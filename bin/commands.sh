@@ -1,5 +1,15 @@
 # var for bamboo server
-HOST='http://bamboo.io'
+
+while getopts l opt
+do
+  case "$opt" in
+    l) HOST='http://localhost:8080' ;;
+    *) HOST='http://bamboo.io' ;;
+  esac
+done
+
+echo -e "\nBamboo command demo\n"
+echo -e "Using host $HOST...\n"
 
 # post a csv url to bamboo
 RET=$(curl -#X POST -d "url=https://opendata.go.ke/api/views/i6vz-a543/rows.csv" $HOST/datasets)
@@ -9,6 +19,10 @@ ID=`echo "$RET" | sed 's/.*: "\(\w*\).*/\1/'`
 
 # output the id
 echo "The dataset id is $ID"
+
+echo -e "\nRetrieve info for dataset"
+RET=$(curl -#g $HOST/datasets/$ID?info=t)
+echo $RET
 
 echo -e "\nRetrieve data"
 RET=$(curl -#g $HOST/datasets/$ID?query='{"School%20Zone":"RWIKA"}')
