@@ -13,6 +13,10 @@ DEFAULT_HASH_ALGORITHM = 'sha1'
 # JSON encoding string
 JSON_NULL = 'null'
 
+# modes for dataset controller
+MODE_SUMMARY = 'summary'
+MODE_INFO = 'info'
+
 # common MongoDB keys
 BAMBOO_RESERVED_KEY_PREFIX = 'BAMBOO_RESERVED_KEY_'
 DATASET_ID = BAMBOO_RESERVED_KEY_PREFIX + 'dataset_id'

@@ -1,8 +1,9 @@
 import json
 
 from controllers.datasets import Datasets
-from lib.constants import CREATED_AT, ERROR, ID, MONGO_RESERVED_KEYS, SCHEMA,\
-         SUCCESS, SUMMARY, UPDATED_AT
+from lib.constants import CREATED_AT, ERROR, ID, MODE_INFO,\
+        MODE_SUMMARY, MONGO_RESERVED_KEYS, SCHEMA, SUCCESS,\
+        SUMMARY, UPDATED_AT
 from lib.decorators import requires_internet
 from lib.io import create_dataset_from_url
 from tests.test_base import TestBase
@@ -85,7 +86,7 @@ class TestDatasets(TestBase):
 
     def test_GET_schema(self):
         self._post_file()
-        results = json.loads(self.controller.GET(self.dataset_id, info=True))
+        results = json.loads(self.controller.GET(self.dataset_id, mode=MODE_INFO))
         self.assertTrue(isinstance(results, dict))
         result_keys = results.keys()
         for key in [CREATED_AT, ID, SCHEMA, UPDATED_AT]:
@@ -115,14 +116,14 @@ class TestDatasets(TestBase):
 
     def test_GET_summary(self):
         self._post_file()
-        results = self.controller.GET(self.dataset_id, summary=True)
+        results = self.controller.GET(self.dataset_id, mode=MODE_SUMMARY)
         results = self._test_summary_results(results)
         self._test_summary_no_group(results)
 
     def test_GET_summary_with_query(self):
         self._post_file()
         # (sic)
-        results = self.controller.GET(self.dataset_id, summary=True,
+        results = self.controller.GET(self.dataset_id, mode=MODE_SUMMARY,
                     query='{"rating": "delectible"}')
         results = self._test_summary_results(results)
         self._test_summary_no_group(results)
@@ -135,7 +136,7 @@ class TestDatasets(TestBase):
         ]
 
         for group, column_values in groups:
-            json_results = self.controller.GET(self.dataset_id, summary=True,
+            json_results = self.controller.GET(self.dataset_id, mode=MODE_SUMMARY,
                         group=group)
             results = self._test_summary_results(json_results)
             result_keys = results.keys()
@@ -153,7 +154,7 @@ class TestDatasets(TestBase):
 
     def test_GET_summary_with_group_and_query(self):
         self._post_file()
-        results = self.controller.GET(self.dataset_id, summary=True,
+        results = self.controller.GET(self.dataset_id, mode=MODE_SUMMARY,
                     group='rating', query='{"rating": "delectible"}')
         self._test_summary_results(results)
 
