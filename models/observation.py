@@ -55,7 +55,6 @@ class Observation(AbstractModel):
         Convert *dframe* to mongo format, iterate through rows adding ids for
         *dataset*, insert in chuncks of size *DB_BATCH_SIZE*.
         """
-        Dataset.build_schema(dataset, dframe.dtypes)
         observations = df_to_mongo(dframe)
         # add metadata to file
         dataset_observation_id = dataset[DATASET_OBSERVATION_ID]
@@ -76,7 +75,11 @@ class Observation(AbstractModel):
         Update *dataset* by overwriting all observations with the given
         *dframe*.
         """
+        previous_dtypes = cls.find(dataset, as_df=True).dtypes.to_dict()
+        new_dtypes = dframe.dtypes.to_dict().items()
         cls.delete(dataset)
         cls.save(dframe, dataset)
-        Dataset.build_schema(dataset, dframe.dtypes)
+        cols_to_add = dict([(name, dtype) for name, dtype in
+                    new_dtypes if name not in previous_dtypes])
+        Dataset.update_schema(dataset, cols_to_add)
         return cls.find(dataset, as_df=True)

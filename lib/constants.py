@@ -37,6 +37,7 @@ SUCCESS = 'success'
 
 # metadata
 CREATED_AT = 'created_at'
+LABEL = 'label'
 OLAP_TYPE = 'olap_type'
 SCHEMA = 'schema'
 SIMPLETYPE = 'simpletype'

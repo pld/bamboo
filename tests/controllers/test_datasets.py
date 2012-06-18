@@ -11,7 +11,7 @@ from tests.mock import MockUploadedFile
 
 class TestDatasets(TestBase):
 
-    NUM_COLS = 43
+    NUM_COLS = 42
 
     def setUp(self):
         TestBase.setUp(self)

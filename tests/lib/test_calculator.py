@@ -2,9 +2,11 @@ import numpy as np
 
 from tests.test_base import TestBase
 
-from lib.constants import DATASET_ID, SCHEMA, SIMPLETYPE
+from lib.constants import DATASET_ID, LABEL, SCHEMA, SIMPLETYPE
 from lib.mongo import _encode_for_mongo
 from lib.tasks.calculator import calculate_column
+from lib.tasks.import_dataset import import_dataset
+from lib.utils import slugify_columns
 from models.dataset import Dataset
 from models.observation import Observation
 
@@ -14,7 +16,9 @@ class TestCalculator(TestBase):
     def setUp(self):
         TestBase.setUp(self)
         self.dataset = Dataset.save(self.test_dataset_ids['good_eats.csv'])
-        Observation.save(self.test_data['good_eats.csv'], self.dataset)
+        dframe = self.test_data['good_eats.csv']
+        Dataset.build_schema(self.dataset, dframe.dtypes)
+        Observation.save(dframe, self.dataset)
         self.calculations = [
             'rating',
             'gps',
@@ -57,6 +61,13 @@ class TestCalculator(TestBase):
     def _test_calculator(self, delay=True):
         dframe = Observation.find(self.dataset, as_df=True)
 
+        columns = dframe.columns.tolist()
+        start_num_cols = len(columns)
+        added_num_cols = 0
+
+        label_list = [val[LABEL] for val in self.dataset[SCHEMA].values()]
+        slugified_key_list = self.dataset[SCHEMA].keys()
+
         for idx, formula in enumerate(self.calculations):
             name = 'test-%s' % idx
             if delay:
@@ -73,14 +84,25 @@ class TestCalculator(TestBase):
             dframe = Observation.find(self.dataset, as_df=True)
             self.assertTrue(name in dframe.columns)
 
+            # test new number of columns
+            added_num_cols += 1
+            self.assertEqual(start_num_cols + added_num_cols,
+                    len(dframe.columns.tolist()))
+
             # test that the schema is up to date
             dataset = Dataset.find_one(self.dataset[DATASET_ID])
             self.assertTrue(SCHEMA in dataset.keys())
             self.assertTrue(isinstance(dataset[SCHEMA], dict))
             schema = dataset[SCHEMA]
-            encoded_formula = _encode_for_mongo(formula)
-            self.assertTrue(encoded_formula in schema.keys(),
-                    '%s: in %s' % (encoded_formula, schema.keys()))
+
+            # test slugified column names
+            slugified_key_list.extend(slugify_columns([name]))
+            self.assertEqual(sorted(schema.keys()), sorted(slugified_key_list))
+
+            # test column labels
+            label_list.append(name)
+            labels = [schema[col][LABEL] for col in schema.keys()]
+            self.assertEqual(sorted(labels), sorted(label_list))
 
             # test result of calculation
             for idx, row in dframe.iterrows():

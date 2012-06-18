@@ -39,10 +39,12 @@ returns::
         "id": "8a3d74711475d8a51c84484fe73f24bd151242ea",
         "schema": {
             "rating": {
+                "label": "Rating",
                 "olap_type": "numeric",
                 "simpletype": "integer"
             },
             "food_type": {
+                "label": "Food Type",
                 "olap_type": "dimension",
                 "simpletype": "string"
             },
