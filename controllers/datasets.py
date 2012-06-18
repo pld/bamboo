@@ -26,8 +26,8 @@ class Datasets(object):
             result = {SUCCESS: 'deleted dataset: %s' % dataset_id}
         return dump_or_error(result, 'id not found')
 
-    def GET(self, dataset_id, summary=False, info=False, query='{}', select=None,
-            group=ALL):
+    def GET(self, dataset_id, summary=False, info=False, query='{}',
+            select=None, group=ALL):
         """
         Return data set for hash *dataset_id*.
         Execute query *query* in mongo if passed.
