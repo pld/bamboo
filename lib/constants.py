@@ -33,6 +33,7 @@ SUCCESS = 'success'
 
 # metadata
 CREATED_AT = 'created_at'
+OLAP_TYPE = 'olap_type'
 SCHEMA = 'schema'
 SIMPLETYPE = 'simpletype'
 SUMMARY = 'summary'
@@ -44,12 +45,24 @@ INTEGER = 'integer'
 FLOAT = 'float'
 BOOLEAN = 'boolean'
 
+# olap_types
+DIMENSION = 'dimension'
+MEASURE = 'measure'
+
 # map from numpy objects to simpletypes
 DTYPE_TO_SIMPLETYPE_MAP = {
-    np.object_: STRING,
-    np.int64:   INTEGER,
-    np.float64: FLOAT,
     np.bool_:   BOOLEAN,
+    np.float64: FLOAT,
+    np.int64:   INTEGER,
+    np.object_: STRING,
+}
+
+# map from numpy objects to olap_types
+DTYPE_TO_OLAP_TYPE_MAP = {
+    np.object_: DIMENSION,
+    np.bool_: DIMENSION,
+    np.float64: MEASURE,
+    np.int64: MEASURE,
 }
 
 # batch size for bulk inserts
