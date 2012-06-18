@@ -1,4 +1,4 @@
-from lib.constants import ALL, ERROR, SUCCESS
+from lib.constants import ALL, ERROR, MODE_SUMMARY, MODE_INFO, SUCCESS
 from lib.exceptions import JSONError
 from lib.mongo import mongo_to_json
 from lib.io import create_dataset_from_url, create_dataset_from_csv
@@ -26,7 +26,7 @@ class Datasets(object):
             result = {SUCCESS: 'deleted dataset: %s' % dataset_id}
         return dump_or_error(result, 'id not found')
 
-    def GET(self, dataset_id, summary=False, info=False, query='{}', select=None,
+    def GET(self, dataset_id, mode=False, query='{}', select=None,
             group=ALL):
         """
         Return data set for hash *dataset_id*.
@@ -40,9 +40,9 @@ class Datasets(object):
 
         try:
             if dataset:
-                if info:
+                if mode == MODE_INFO:
                     result = Dataset.schema(dataset)
-                elif summary:
+                elif mode == MODE_SUMMARY:
                     result = summarize(dataset, query, select, group)
                 else:
                     return mongo_to_json(Observation.find(dataset, query,
