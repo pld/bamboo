@@ -4,7 +4,7 @@ from pymongo.cursor import Cursor
 from tests.test_base import TestBase
 from models.dataset import Dataset
 from models.observation import Observation
-from lib.constants import DATASET_ID, SCHEMA, SIMPLETYPE
+from lib.constants import DATASET_ID, OLAP_TYPE, SCHEMA, SIMPLETYPE
 from lib.mongo import mongo_decode_keys
 
 
@@ -62,3 +62,4 @@ class TestDataset(TestBase):
             self.assertTrue(isinstance(dataset[SCHEMA], dict))
             for column_name, column_attributes in dataset[SCHEMA].items():
                 self.assertTrue(SIMPLETYPE in column_attributes)
+                self.assertTrue(OLAP_TYPE in column_attributes)

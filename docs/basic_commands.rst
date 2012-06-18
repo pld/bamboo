@@ -33,6 +33,25 @@ by ID get information about a dataset:
 
 ``curl http://bamboo.io/datasets/8a3d74711475d8a51c84484fe73f24bd151242ea?info=t``
 
+returns::
+    {
+        "id": "8a3d74711475d8a51c84484fe73f24bd151242ea",
+        "schema": {
+            "rating": {
+                "olap_type": "numeric",
+                "simpletype": "integer"
+            },
+            "food_type": {
+                "olap_type": "dimension",
+                "simpletype": "string"
+            },
+            ...
+        }
+        "created_at": "2012-6-18 14:43:32",
+        "updated_at": "2012-6-18 14:43:32"
+    }
+
+
 by ID:
 ^^^^^^^^^^^^^^^^^^^^^^
 
