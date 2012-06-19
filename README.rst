@@ -40,16 +40,16 @@ Documentation
 Viewing Documentation
 ^^^^^^^^^^^^^^^^^^^^^
 
-    The latest docs are available at http://bamboo.modilabs.org/
+    The latest docs are available at http://bamboo.io/
     
 Building Documentation
 ^^^^^^^^^^^^^^^^^^^^^^
 
-    ``pip install -r requirements-docs.pip``
+::
 
-    ``cd docs``
-
-    ``make html``
+    pip install -r requirements-docs.pip
+    cd docs
+    make html
 
 Contributing Code
 -----------------
@@ -64,5 +64,25 @@ To work on the code:
 
 Example Usage
 -------------
+
+On the remote server
+^^^^^^^^^^^^^^^^^^^^
+
+    running the example basic commands
+
+    ``./bin/commands.sh``
+
+    posting a dataset
+
+    ``curl -X POST -d "url=http://formhub.org/mberg/forms/good_eats/data.csv" http://bamboo.io/datasets``
+
+On your local server
+^^^^^^^^^^^^^^^^^^^
+
+    running the example basic commands
+
+    ``./bin/commands.sh -l``
+
+    start the bamboo server as above, then request from your local server
 
     ``curl -X POST -d "url=http://formhub.org/mberg/forms/good_eats/data.csv" http://localhost:8080/datasets``

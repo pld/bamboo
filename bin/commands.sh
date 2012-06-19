@@ -43,4 +43,4 @@ echo $RET
 
 echo -e "\nRetrieve new calculated column small_schools and Districts (truncated)"
 RET=$(curl -#g $HOST/datasets/$ID?select='{"small_schools":1,"District":1}')
-echo $RET | cut -c -1000
+echo $RET | cut -c -2000

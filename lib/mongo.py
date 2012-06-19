@@ -6,24 +6,8 @@ from bson import json_util
 from pandas import DataFrame
 
 from lib.constants import DATASET_OBSERVATION_ID, DEFAULT_HASH_ALGORITHM,\
-         ENCODED_DOLLAR, ENCODED_DOT, ENCODED_KEY_REGEX, MONGO_RESERVED_KEYS,\
-         MONGO_RESERVED_KEY_PREFIX
-from lib.utils import df_to_jsondict, get_json_value
-
-
-def df_to_mongo(dframe):
-    """
-    Prefix mongos reserved keys and ensure keys are in mongo acceptable format.
-    """
-    return [
-        series if series is None else _dict_for_mongo(dict(
-            [
-                (_prefix_mongo_reserved_key(key) if key in MONGO_RESERVED_KEYS else
-                        key, get_json_value(value))
-                for key, value in series.iteritems()
-            ]))
-        for idx, series in dframe.iterrows()
-    ]
+         ENCODED_DOLLAR, ENCODED_DOT, ENCODED_KEY_REGEX, MONGO_RESERVED_KEYS
+from lib.utils import df_to_jsondict, get_json_value, prefix_reserved_key
 
 
 def _dict_for_mongo(d):
@@ -76,13 +60,6 @@ def _decode_from_mongo(key):
             [(r'^%s' % ENCODED_DOLLAR, '$'), (r'%s' % ENCODED_DOT, '.')], key)
 
 
-def _prefix_mongo_reserved_key(key):
-    """
-    Prefix mongo reserved key
-    """
-    return '%s%s' % (MONGO_RESERVED_KEY_PREFIX, key)
-
-
 def mongo_to_df(cursor):
     return DataFrame(mongo_decode_keys([row for row in cursor]))
 
@@ -113,7 +90,7 @@ def mongo_decode_keys(observations):
 def mongo_remove_reserved_keys(_dict):
     for key, value in _dict.items():
         if key in MONGO_RESERVED_KEYS:
-            prefixed_key = _prefix_mongo_reserved_key(key)
+            prefixed_key = prefix_reserved_key(key)
             if _dict.get(prefixed_key):
                 # replace reserved key value with original key value
                 value = _dict.pop(prefixed_key)

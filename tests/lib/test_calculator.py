@@ -6,7 +6,7 @@ from lib.constants import DATASET_ID, LABEL, SCHEMA, SIMPLETYPE
 from lib.mongo import _encode_for_mongo
 from lib.tasks.calculator import calculate_column
 from lib.tasks.import_dataset import import_dataset
-from lib.utils import slugify_columns
+from lib.utils import build_labels_to_slugs, slugify_columns
 from models.dataset import Dataset
 from models.observation import Observation
 
@@ -65,8 +65,9 @@ class TestCalculator(TestBase):
         start_num_cols = len(columns)
         added_num_cols = 0
 
-        label_list = [val[LABEL] for val in self.dataset[SCHEMA].values()]
-        slugified_key_list = self.dataset[SCHEMA].keys()
+        column_labels_to_slugs = build_labels_to_slugs(self.dataset)
+        label_list, slugified_key_list = [list(ary) for ary in
+                zip(*column_labels_to_slugs.items())]
 
         for idx, formula in enumerate(self.calculations):
             name = 'test-%s' % idx
@@ -79,6 +80,11 @@ class TestCalculator(TestBase):
             else:
                 task = calculate_column(self.dataset, dframe,
                         formula, name)
+
+            column_labels_to_slugs = build_labels_to_slugs(self.dataset)
+
+            unslug_name = name
+            name = column_labels_to_slugs[unslug_name]
 
             # test that updated dataframe persisted
             dframe = Observation.find(self.dataset, as_df=True)
@@ -96,17 +102,18 @@ class TestCalculator(TestBase):
             schema = dataset[SCHEMA]
 
             # test slugified column names
-            slugified_key_list.extend(slugify_columns([name]))
+            slugified_key_list.append(name)
             self.assertEqual(sorted(schema.keys()), sorted(slugified_key_list))
 
             # test column labels
-            label_list.append(name)
+            label_list.append(unslug_name)
             labels = [schema[col][LABEL] for col in schema.keys()]
             self.assertEqual(sorted(labels), sorted(label_list))
 
             # test result of calculation
+            formula = column_labels_to_slugs[formula]
+
             for idx, row in dframe.iterrows():
-                formula = _encode_for_mongo(formula)
                 try:
                     result = np.float64(row[name])
                     stored = np.float64(row[formula])

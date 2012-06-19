@@ -3,7 +3,8 @@ from pymongo.cursor import Cursor
 
 from lib.constants import MONGO_RESERVED_KEYS
 from lib.exceptions import JSONError
-from lib.mongo import _prefix_mongo_reserved_key, mongo_decode_keys
+from lib.mongo import mongo_decode_keys
+from lib.utils import prefix_reserved_key
 from models.dataset import Dataset
 from models.observation import Observation
 from tests.test_base import TestBase
@@ -14,6 +15,8 @@ class TestObservation(TestBase):
     def setUp(self):
         TestBase.setUp(self)
         self.dataset = Dataset.save(self.test_dataset_ids['good_eats.csv'])
+        Dataset.build_schema(self.dataset,
+                self.test_data['good_eats.csv'].dtypes)
 
     def _save_records(self):
         records = Observation.save(self.test_data['good_eats.csv'],
@@ -53,7 +56,7 @@ class TestObservation(TestBase):
                     columns=dframe.columns), dframe)
         columns = dframe.columns
         for key in MONGO_RESERVED_KEYS:
-            self.assertFalse(_prefix_mongo_reserved_key(key) in columns)
+            self.assertFalse(prefix_reserved_key(key) in columns)
 
     def test_find_with_query(self):
         self._save_observations()
