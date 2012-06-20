@@ -79,10 +79,12 @@ On the remote server
 On your local server
 ^^^^^^^^^^^^^^^^^^^
 
-    running the example basic commands
+    start the bamboo server as above, then
+
+    run the example basic commands
 
     ``./bin/commands.sh -l``
 
-    start the bamboo server as above, then request from your local server
+    make requests from your local server
 
     ``curl -X POST -d "url=http://formhub.org/mberg/forms/good_eats/data.csv" http://localhost:8080/datasets``
