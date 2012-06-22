@@ -3,7 +3,6 @@ import numpy as np
 from tests.test_base import TestBase
 
 from lib.constants import DATASET_ID, LABEL, SCHEMA, SIMPLETYPE
-from lib.mongo import _encode_for_mongo
 from lib.tasks.calculator import calculate_column
 from lib.tasks.import_dataset import import_dataset
 from lib.utils import build_labels_to_slugs, slugify_columns

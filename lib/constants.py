@@ -72,8 +72,3 @@ DTYPE_TO_OLAP_TYPE_MAP = {
 
 # batch size for bulk inserts
 DB_BATCH_SIZE = 1000
-
-# regex for finding encoded mongo keys
-ENCODED_DOLLAR = 'JA=='
-ENCODED_DOT = 'Lg=='
-ENCODED_KEY_REGEX = re.compile(r'%s|%s' % (ENCODED_DOLLAR, ENCODED_DOT))

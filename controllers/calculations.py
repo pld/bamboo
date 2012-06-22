@@ -10,7 +10,7 @@ class Calculations(object):
 
     exposed = True
 
-    def POST(self, dataset_id, formula, name, query=None, constraints=None):
+    def POST(self, dataset_id, formula, name):
         """
         Create a new calculation for *dataset_id* named *name* that calulates
         the *formula*.  Variables in formula can only refer to columns in the

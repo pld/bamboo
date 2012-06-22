@@ -6,58 +6,8 @@ from bson import json_util
 from pandas import DataFrame
 
 from lib.constants import DATASET_OBSERVATION_ID, DEFAULT_HASH_ALGORITHM,\
-         ENCODED_DOLLAR, ENCODED_DOT, ENCODED_KEY_REGEX, MONGO_RESERVED_KEYS
+         MONGO_RESERVED_KEYS
 from lib.utils import df_to_jsondict, get_json_value, prefix_reserved_key
-
-
-def _dict_for_mongo(d):
-    """
-    Ensure keys do not begin with '$' or contain a '.'
-    """
-    for key, value in d.items():
-        if _is_invalid_for_mongo(key):
-            del d[key]
-            d[_encode_for_mongo(key)] = value
-    return d
-
-
-def _is_invalid_for_mongo(key):
-    return key.startswith('$') or key.count('.') > 0
-
-
-def _is_encoded_key(key):
-    return True if ENCODED_KEY_REGEX.search(key) else False
-
-
-def dict_from_mongo(_dict):
-    """
-    Return the dictionary *_dict* (which may have other internal data structures)
-    with any keys decoded if they had been previously encoded for mongo.
-    """
-    for key, value in _dict.iteritems():
-        if _is_encoded_key(key):
-            del _dict[key]
-            key = _decode_from_mongo(key)
-        elif type(value) == dict:
-            value = dict_from_mongo(value)
-        _dict[key] = value
-    return _dict
-
-
-def _encode_for_mongo(key):
-    """
-    Base64 encode keys that begin with a '$' or contain a '.'
-    """
-    return reduce(lambda s, c: re.sub(c[0], c[1], s),
-            [(r'^\$', ENCODED_DOLLAR), (r'\.', ENCODED_DOT)], key)
-
-
-def _decode_from_mongo(key):
-    """
-    Decode Base64 keys that contained a '$' or '.'
-    """
-    return reduce(lambda s, c: re.sub(c[0], c[1], s),
-            [(r'^%s' % ENCODED_DOLLAR, '$'), (r'%s' % ENCODED_DOT, '.')], key)
 
 
 def mongo_to_df(cursor):
