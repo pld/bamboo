@@ -1,3 +1,4 @@
+import os
 import re
 import tempfile
 import urllib2
@@ -31,13 +32,6 @@ def open_data_file(url, allow_local_file=False):
     return None
 
 
-def read_uploaded_file(_file, chunk_size=8192):
-    data = ''
-    for line in _file.file.xreadlines():
-        data += line
-    return data
-
-
 def create_dataset_from_url(url, allow_local_file=False):
     """
     Load a URL, read from a CSV, create a dataset and return the unique ID.
@@ -69,9 +63,12 @@ def create_dataset_from_csv(csv_file):
     dataset = Dataset.create(dataset_id)
 
     # need to write out to a named tempfile in order
-    # to get a handle in order for pandas read_csv
-    with tempfile.NamedTemporaryFile() as tmpfile:
-        tmpfile.write(read_uploaded_file(csv_file))
-        import_dataset(tmpfile.name, dataset)
+    # to get a handle for pandas *read_csv* function
+    tmpfile = tempfile.NamedTemporaryFile(delete=False)
+    tmpfile.write(csv_file.file.read())
+    # pandas needs a closed file for *read_csv*
+    tmpfile.close()
+    import_dataset(tmpfile.name, dataset)
+    os.unlink(tmpfile.name)
 
     return {ID: dataset_id}

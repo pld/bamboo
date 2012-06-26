@@ -15,6 +15,9 @@ echo -e "Using host $HOST...\n"
 # post a csv url to bamboo
 RET=$(curl -#X POST -d "url=https://opendata.go.ke/api/views/i6vz-a543/rows.csv" $HOST/datasets)
 
+# upload a local file
+#RET=$(curl -#X POST -F csv_file=@/home/modilabs/src/bamboo/tests/fixtures/kenya_secondary_schools_2007.csv $HOST/datasets)
+
 # strip out id
 ID=`echo "$RET" | sed 's/.*: "\(\w*\).*/\1/'`
 
