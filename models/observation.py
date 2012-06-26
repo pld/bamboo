@@ -74,6 +74,7 @@ class Observation(AbstractModel):
                 # insert data into collection
                 cls.collection.insert(rows, safe=True)
                 rows = []
+
         if len(rows):
             cls.collection.insert(rows, safe=True)
 

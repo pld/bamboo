@@ -38,16 +38,15 @@ def mongo_decode_keys(observations):
     return observations
 
 def mongo_remove_reserved_keys(_dict):
-    for key, value in _dict.items():
-        if key in MONGO_RESERVED_KEYS:
-            prefixed_key = prefix_reserved_key(key)
-            if _dict.get(prefixed_key):
-                # replace reserved key value with original key value
-                value = _dict.pop(prefixed_key)
-                _dict[key] = value
-            else:
-                # remove mongo reserved keys
-                del _dict[key]
-        elif value == 'null':
-            _dict[key] = np.nan
+    """
+    Check for *MONGO_RESERVED_KEYS* in stored dictionary.  If found replaced
+    with unprefixed, if not found remove reserved key from dictionary.
+    """
+    for key in MONGO_RESERVED_KEYS:
+        prefixed_key = prefix_reserved_key(key)
+        if _dict.get(prefixed_key):
+            _dict[key] = _dict.pop(prefixed_key)
+        else:
+            # remove mongo reserved keys
+            del _dict[key]
     return _dict

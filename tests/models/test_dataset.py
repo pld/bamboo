@@ -55,7 +55,7 @@ class TestDataset(TestBase):
             self.assertEqual(dataset['field'], {'key': 'value'})
 
     def test_build_schema(self):
-        illegal_col_regex = re.compile(r'\W|[A-Z]')
+        illegal_col_regex = re.compile(r'\W')
 
         for dataset_name in self.TEST_DATASETS:
             dataset = Dataset.create(self.test_dataset_ids[dataset_name])

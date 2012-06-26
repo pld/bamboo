@@ -13,7 +13,8 @@ from tests.mock import MockUploadedFile
 
 class TestDatasets(TestBase):
 
-    NUM_COLS = 43
+    NUM_COLS = 42
+    NUM_ROWS = 19
 
     def setUp(self):
         TestBase.setUp(self)
@@ -87,7 +88,7 @@ class TestDatasets(TestBase):
         results = json.loads(self.controller.GET(self.dataset_id))
         self.assertTrue(isinstance(results, list))
         self.assertTrue(isinstance(results[0], dict))
-        self.assertEqual(len(results), 19)
+        self.assertEqual(len(results), self.NUM_ROWS)
 
     def test_GET_schema(self):
         self._post_file()
