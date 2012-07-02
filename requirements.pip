@@ -3,4 +3,5 @@ cherrypy==3.2.2
 pandas==0.8.0
 scipy==0.10.1
 celery-with-mongodb==2.5
+celery==2.5.5
 pyparsing==1.5.6

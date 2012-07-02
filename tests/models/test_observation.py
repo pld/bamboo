@@ -53,7 +53,7 @@ class TestObservation(TestBase):
         dframe = Observation.find(self.dataset, as_df=True)
         self.assertTrue(isinstance(dframe, DataFrame))
         self.assertTrue(all(self.test_data['good_eats.csv'].reindex(
-                    columns=dframe.columns) == dframe))
+                    columns=dframe.columns).eq(dframe)))
         columns = dframe.columns
         for key in MONGO_RESERVED_KEYS:
             self.assertFalse(prefix_reserved_key(key) in columns)

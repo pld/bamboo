@@ -56,14 +56,20 @@ class Datasets(object):
         """
         If *url* is provided read data from URL *url*.
         If *csv_file* is provided read data from *csv_file*.
-        Otherwise return an error message.
+        If neither are provided return an error message.  Also return an error
+        message if an improperly formatted value raises a ValueError, e.g. an
+        improperly formatted CSV file.
         """
         result = None
+        error = 'url or csv_file required'
 
-        if url:
-            result = create_dataset_from_url(url)
+        try:
+            if url:
+                result = create_dataset_from_url(url)
 
-        if csv_file:
-            result = create_dataset_from_csv(csv_file)
+            if csv_file:
+                result = create_dataset_from_csv(csv_file)
+        except ValueError as e:
+            error  = e.__str__()
 
-        return dump_or_error(result, 'url or csv_file required')
+        return dump_or_error(result, error)

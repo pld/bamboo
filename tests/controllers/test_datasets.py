@@ -35,8 +35,6 @@ class TestDatasets(TestBase):
 
     def _test_summary_no_group(self, results):
         result_keys = results.keys()
-        print result_keys
-        print self.test_data[self._file_name].columns.tolist()
         self.assertEqual(len(result_keys), self.NUM_COLS)
         columns = [col for col in
                 self.test_data[self._file_name].columns.tolist()
@@ -78,8 +76,13 @@ class TestDatasets(TestBase):
         self.assertTrue(isinstance(result, dict))
         self.assertTrue(ID in result)
 
-    def test_POST_bad_url(self):
+    def test_POST_nonexistent_url(self):
         result = json.loads(self.controller.POST('http://noformhub.org/'))
+        self.assertTrue(isinstance(result, dict))
+        self.assertTrue(ERROR in result)
+
+    def test_POST_bad__url(self):
+        result = json.loads(self.controller.POST('http://gooogle.com'))
         self.assertTrue(isinstance(result, dict))
         self.assertTrue(ERROR in result)
 
@@ -155,7 +158,6 @@ class TestDatasets(TestBase):
                 for column_value in column_values:
                     self._test_summary_no_group(results[group][column_value])
             else:
-                print results.keys()
                 self.assertFalse(group in results.keys())
                 self.assertTrue(ERROR in results.keys())
 
