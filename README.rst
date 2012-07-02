@@ -13,7 +13,7 @@ Dependencies
 
 Arch: ``# pacman -S blas lapack gcc-fortran``
 
-Ubuntu: ``# apt-get install liblapack-dev gfortran``
+Ubuntu: ``# apt-get install gfortran libatlas-base-dev``
 
 Installation
 ------------
