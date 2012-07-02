@@ -76,8 +76,13 @@ class TestDatasets(TestBase):
         self.assertTrue(isinstance(result, dict))
         self.assertTrue(ID in result)
 
-    def test_POST_bad_url(self):
+    def test_POST_nonexistent_url(self):
         result = json.loads(self.controller.POST('http://noformhub.org/'))
+        self.assertTrue(isinstance(result, dict))
+        self.assertTrue(ERROR in result)
+
+    def test_POST_bad__url(self):
+        result = json.loads(self.controller.POST('http://gooogle.com'))
         self.assertTrue(isinstance(result, dict))
         self.assertTrue(ERROR in result)
 
