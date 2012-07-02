@@ -11,6 +11,10 @@ Dependencies
 * python
 * mongodb
 
+Arch: ``# pacman -S blas lapack gcc-fortran``
+
+Ubuntu: ``# apt-get install liblapack-dev gfortran``
+
 Installation
 ------------
     
