@@ -36,8 +36,11 @@ ID = 'id'
 SUCCESS = 'success'
 
 # metadata
+ATTRIBUTION = 'attribution'
 CREATED_AT = 'created_at'
+DESCRIPTION = 'description'
 LABEL = 'label'
+LICENSE = 'license'
 OLAP_TYPE = 'olap_type'
 SCHEMA = 'schema'
 SIMPLETYPE = 'simpletype'
