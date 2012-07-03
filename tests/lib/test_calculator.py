@@ -3,6 +3,7 @@ import numpy as np
 from tests.test_base import TestBase
 
 from lib.constants import DATASET_ID, LABEL, SCHEMA, SIMPLETYPE
+from lib.parser import Parser
 from lib.tasks.calculator import calculate_column
 from lib.tasks.import_dataset import import_dataset
 from lib.utils import build_labels_to_slugs, slugify_columns
@@ -18,6 +19,7 @@ class TestCalculator(TestBase):
         dframe = self.test_data['good_eats.csv']
         Dataset.build_schema(self.dataset, dframe.dtypes)
         Observation.save(dframe, self.dataset)
+        self.parser = Parser()
         self.calculations = [
             'rating',
             'gps',
@@ -71,13 +73,13 @@ class TestCalculator(TestBase):
         for idx, formula in enumerate(self.calculations):
             name = 'test-%s' % idx
             if delay:
-                task = calculate_column.delay(self.dataset, dframe,
+                task = calculate_column.delay(self.parser, self.dataset, dframe,
                         formula, name)
                 # test that task has completed
                 self.assertTrue(task.ready())
                 self.assertTrue(task.successful())
             else:
-                task = calculate_column(self.dataset, dframe,
+                task = calculate_column(self.parser, self.dataset, dframe,
                         formula, name)
 
             column_labels_to_slugs = build_labels_to_slugs(self.dataset)

@@ -10,7 +10,7 @@ class Calculations(object):
 
     exposed = True
 
-    def POST(self, dataset_id, formula, name):
+    def POST(self, dataset_id, formula, name, group=None, query=None):
         """
         Create a new calculation for *dataset_id* named *name* that calulates
         the *formula*.  Variables in formula can only refer to columns in the
@@ -18,7 +18,8 @@ class Calculations(object):
         """
         dataset = Dataset.find_one(dataset_id)
         if dataset:
-            return dump_mongo_json(Calculation.save(dataset, formula, name))
+            return dump_mongo_json(Calculation.save(dataset, formula, name,
+                        group, query))
 
     def GET(self, dataset_id):
         """
