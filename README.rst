@@ -14,9 +14,9 @@ Dependencies
 for numpy, pandas, and scipy (in requirements.pip):
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-on Arch: ``# pacman -S blas lapack gcc-fortran``
+on Arch Linux: ``# pacman -S blas lapack gcc-fortran``
 
-on Ubuntu: ``# apt-get install gfortran libatlas-base-dev``
+on Debian based: ``# apt-get install gfortran libatlas-base-dev``
 
 Installation
 ------------
