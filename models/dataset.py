@@ -1,8 +1,11 @@
 import uuid
 from time import gmtime, strftime
 
-from lib.constants import CREATED_AT, DATASET_ID, DATASET_OBSERVATION_ID,\
-         DTYPE_TO_SIMPLETYPE_MAP, ID, SCHEMA, SIMPLETYPE, UPDATED_AT
+from lib.constants import ATTRIBUTION, CREATED_AT, DATASET_ID,\
+        DATASET_OBSERVATION_ID, DESCRIPTION, DTYPE_TO_OLAP_TYPE_MAP,\
+        DTYPE_TO_SIMPLETYPE_MAP, ID, LABEL, LICENSE, OLAP_TYPE, SCHEMA,\
+        SIMPLETYPE, UPDATED_AT
+from lib.utils import slugify_columns
 from models.abstract_model import AbstractModel
 
 
@@ -52,16 +55,41 @@ class Dataset(AbstractModel):
         cls.collection.update({DATASET_ID: dataset[DATASET_ID]}, dataset)
 
     @classmethod
+    def _schema_from_dtypes(cls, dtypes):
+        """
+        Build schema from a dict of dtypes, *dtypes*.
+        """
+        column_names = dtypes.keys()
+        encoded_names = dict(zip(column_names, slugify_columns(column_names)))
+        return dict([(encoded_names[name], {
+            LABEL: name,
+            OLAP_TYPE: DTYPE_TO_OLAP_TYPE_MAP[dtype.type],
+            SIMPLETYPE: DTYPE_TO_SIMPLETYPE_MAP[dtype.type],
+        }) for (name, dtype) in dtypes.items()])
+
+    @classmethod
     def build_schema(cls, dataset, dtypes):
-        schema = dict([(name, {SIMPLETYPE: DTYPE_TO_SIMPLETYPE_MAP[dtype.type]})
-                for (name, dtype) in dtypes.to_dict().items()])
+        schema = cls._schema_from_dtypes(dtypes.to_dict())
+        cls.update(dataset, {SCHEMA: schema})
+
+    @classmethod
+    def update_schema(cls, dataset, dtypes):
+        # merge in new schema dicts
+        schema = cls._schema_from_dtypes(dtypes)
+        schema.update(dataset[SCHEMA])
+
+        # store new complete schema with dataset
         cls.update(dataset, {SCHEMA: schema})
 
     @classmethod
     def schema(cls, dataset):
         return {
             ID: dataset[DATASET_ID],
+            LABEL: '',
+            DESCRIPTION: '',
             SCHEMA: dataset[SCHEMA],
+            LICENSE: '',
+            ATTRIBUTION: '',
             CREATED_AT: dataset[CREATED_AT],
             UPDATED_AT: dataset[UPDATED_AT],
         }

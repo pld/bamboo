@@ -1,4 +1,4 @@
-from lib.constants import ALL, ERROR, SUCCESS
+from lib.constants import ALL, ERROR, MODE_SUMMARY, MODE_INFO, SUCCESS
 from lib.exceptions import JSONError
 from lib.mongo import mongo_to_json
 from lib.io import create_dataset_from_url, create_dataset_from_csv
@@ -26,7 +26,7 @@ class Datasets(object):
             result = {SUCCESS: 'deleted dataset: %s' % dataset_id}
         return dump_or_error(result, 'id not found')
 
-    def GET(self, dataset_id, summary=False, info=False, query='{}', select=None,
+    def GET(self, dataset_id, mode=False, query='{}', select=None,
             group=ALL):
         """
         Return data set for hash *dataset_id*.
@@ -40,9 +40,9 @@ class Datasets(object):
 
         try:
             if dataset:
-                if info:
+                if mode == MODE_INFO:
                     result = Dataset.schema(dataset)
-                elif summary:
+                elif mode == MODE_SUMMARY:
                     result = summarize(dataset, query, select, group)
                 else:
                     return mongo_to_json(Observation.find(dataset, query,
@@ -56,14 +56,20 @@ class Datasets(object):
         """
         If *url* is provided read data from URL *url*.
         If *csv_file* is provided read data from *csv_file*.
-        Otherwise return an error message.
+        If neither are provided return an error message.  Also return an error
+        message if an improperly formatted value raises a ValueError, e.g. an
+        improperly formatted CSV file.
         """
         result = None
+        error = 'url or csv_file required'
 
-        if url:
-            result = create_dataset_from_url(url)
+        try:
+            if url:
+                result = create_dataset_from_url(url)
 
-        if csv_file:
-            result = create_dataset_from_csv(csv_file)
+            if csv_file:
+                result = create_dataset_from_csv(csv_file)
+        except ValueError as e:
+            error  = e.__str__()
 
-        return dump_or_error(result, 'url or csv_file required')
+        return dump_or_error(result, error)

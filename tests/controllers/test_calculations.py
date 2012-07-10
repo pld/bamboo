@@ -2,7 +2,7 @@ import json
 
 from controllers.calculations import Calculations
 from controllers.datasets import Datasets
-from lib.constants import ALL, ID, STATS
+from lib.constants import ALL, ID, MODE_SUMMARY, STATS
 from lib.io import create_dataset_from_url
 from models.calculation import Calculation
 from models.dataset import Dataset
@@ -33,7 +33,7 @@ class TestCalculations(TestBase):
         self.assertTrue(isinstance(json.loads(response), dict))
 
     def test_POST_remove_summary(self):
-        Datasets().GET(self.dataset_id, summary=True)
+        Datasets().GET(self.dataset_id, mode=MODE_SUMMARY)
         dataset = Dataset.find_one(self.dataset_id)
         self.assertTrue(isinstance(dataset[STATS], dict))
         self.assertTrue(isinstance(dataset[STATS][ALL], dict))

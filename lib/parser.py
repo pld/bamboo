@@ -81,8 +81,8 @@ class Parser(object):
                 ZeroOrMore(comma + string) + close_bracket
 
         arith_expr = operatorPrecedence(operand, [
-            (exp_op, 2, opAssoc.RIGHT, EvalExpOp),
             (sign_op, 1, opAssoc.RIGHT, EvalSignOp),
+            (exp_op, 2, opAssoc.RIGHT, EvalExpOp),
             (mult_op, 2, opAssoc.LEFT, EvalMultOp),
             (plus_op, 2, opAssoc.LEFT, EvalPlusOp),
         ])

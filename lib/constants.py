@@ -13,6 +13,10 @@ DEFAULT_HASH_ALGORITHM = 'sha1'
 # JSON encoding string
 JSON_NULL = 'null'
 
+# modes for dataset controller
+MODE_SUMMARY = 'summary'
+MODE_INFO = 'info'
+
 # common MongoDB keys
 BAMBOO_RESERVED_KEY_PREFIX = 'BAMBOO_RESERVED_KEY_'
 DATASET_ID = BAMBOO_RESERVED_KEY_PREFIX + 'dataset_id'
@@ -32,7 +36,12 @@ ID = 'id'
 SUCCESS = 'success'
 
 # metadata
+ATTRIBUTION = 'attribution'
 CREATED_AT = 'created_at'
+DESCRIPTION = 'description'
+LABEL = 'label'
+LICENSE = 'license'
+OLAP_TYPE = 'olap_type'
 SCHEMA = 'schema'
 SIMPLETYPE = 'simpletype'
 SUMMARY = 'summary'
@@ -44,18 +53,25 @@ INTEGER = 'integer'
 FLOAT = 'float'
 BOOLEAN = 'boolean'
 
+# olap_types
+DIMENSION = 'dimension'
+MEASURE = 'measure'
+
 # map from numpy objects to simpletypes
 DTYPE_TO_SIMPLETYPE_MAP = {
-    np.object_: STRING,
-    np.int64:   INTEGER,
-    np.float64: FLOAT,
     np.bool_:   BOOLEAN,
+    np.float64: FLOAT,
+    np.int64:   INTEGER,
+    np.object_: STRING,
+}
+
+# map from numpy objects to olap_types
+DTYPE_TO_OLAP_TYPE_MAP = {
+    np.object_: DIMENSION,
+    np.bool_: DIMENSION,
+    np.float64: MEASURE,
+    np.int64: MEASURE,
 }
 
 # batch size for bulk inserts
 DB_BATCH_SIZE = 1000
-
-# regex for finding encoded mongo keys
-ENCODED_DOLLAR = 'JA=='
-ENCODED_DOT = 'Lg=='
-ENCODED_KEY_REGEX = re.compile(r'%s|%s' % (ENCODED_DOLLAR, ENCODED_DOT))

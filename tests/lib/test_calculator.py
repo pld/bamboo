@@ -9,4 +9,3 @@ class TestCalculator(TestBase):
     def setUp(self):
         TestBase.setUp(self)
         self.dataset = Dataset.save(self.test_dataset_ids['good_eats.csv'])
-        Observation.save(self.test_data['good_eats.csv'], self.dataset)

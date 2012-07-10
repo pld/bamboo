@@ -23,7 +23,6 @@ class TestParser(TestBase):
 
     def test_bnf(self):
         result = self.parser.BNF()
-        print type(self.parser.bnf)
         self.assertNotEqual(self.parser.bnf, None)
 
     def test_parse_formula_with_var(self):

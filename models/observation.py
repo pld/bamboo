@@ -5,7 +5,8 @@ from bson import json_util
 from config.db import Database
 from lib.constants import DATASET_OBSERVATION_ID, DB_BATCH_SIZE
 from lib.exceptions import JSONError
-from lib.mongo import df_to_mongo, mongo_to_df
+from lib.mongo import mongo_to_df
+from lib.utils import build_labels_to_slugs, slugify_columns
 from models.abstract_model import AbstractModel
 from models.dataset import Dataset
 
@@ -42,7 +43,6 @@ class Observation(AbstractModel):
                 raise JSONError('cannot decode select: %s' % e.__str__())
 
         query[DATASET_OBSERVATION_ID] = dataset[DATASET_OBSERVATION_ID]
-        # TODO encode query for mongo
         cursor = cls.collection.find(query, select)
 
         if as_df:
@@ -55,20 +55,28 @@ class Observation(AbstractModel):
         Convert *dframe* to mongo format, iterate through rows adding ids for
         *dataset*, insert in chuncks of size *DB_BATCH_SIZE*.
         """
-        Dataset.build_schema(dataset, dframe.dtypes)
-        observations = df_to_mongo(dframe)
         # add metadata to file
         dataset_observation_id = dataset[DATASET_OBSERVATION_ID]
         rows = []
-        for row in observations:
+
+        labels_to_slugs = build_labels_to_slugs(dataset)
+
+        # if column name is not in map assume it is already slugified
+        # (i.e. NOT a label)
+        dframe.columns = [labels_to_slugs.get(column, column) for column in
+                dframe.columns.tolist()]
+
+        for row_index, row in dframe.iterrows():
+            row = row.to_dict()
             row[DATASET_OBSERVATION_ID] = dataset_observation_id
             rows.append(row)
             if len(rows) > DB_BATCH_SIZE:
                 # insert data into collection
-                cls.collection.insert(rows)
+                cls.collection.insert(rows, safe=True)
                 rows = []
+
         if len(rows):
-            cls.collection.insert(rows)
+            cls.collection.insert(rows, safe=True)
 
     @classmethod
     def update(cls, dframe, dataset):
@@ -76,7 +84,11 @@ class Observation(AbstractModel):
         Update *dataset* by overwriting all observations with the given
         *dframe*.
         """
+        previous_dtypes = cls.find(dataset, as_df=True).dtypes.to_dict()
+        new_dtypes = dframe.dtypes.to_dict().items()
+        cols_to_add = dict([(name, dtype) for name, dtype in
+                    new_dtypes if name not in previous_dtypes])
+        Dataset.update_schema(dataset, cols_to_add)
         cls.delete(dataset)
         cls.save(dframe, dataset)
-        Dataset.build_schema(dataset, dframe.dtypes)
         return cls.find(dataset, as_df=True)

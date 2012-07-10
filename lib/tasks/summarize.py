@@ -2,7 +2,6 @@ from celery.task import task
 import numpy as np
 
 from lib.constants import ALL, ERROR, STATS
-from lib.mongo import dict_from_mongo
 from lib.summary import summarize_df, summarize_with_groups
 from models.dataset import Dataset
 from models.observation import Observation
@@ -31,5 +30,4 @@ def summarize(dataset, query, select, group):
         Dataset.update(dataset, {STATS: stats})
     stats_to_return = stats.get(group)
 
-    return dict_from_mongo(stats_to_return if group == ALL else {group:
-            stats_to_return})
+    return stats_to_return if group == ALL else {group: stats_to_return}
