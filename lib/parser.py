@@ -16,7 +16,8 @@ class Parser(object):
     bnf = None
     reserved_words = ['and', 'or', 'not']
 
-    def __init__(self):
+    def __init__(self, allow_aggregations=False):
+        self.allow_aggregations = allow_aggregations
         self.bnf = self.BNF()
 
     def BNF(self):
@@ -119,7 +120,15 @@ class Parser(object):
 
         return _eval
 
-    def validate_formula(self, formula, row):
+    def validate_formula(self, formula, row, allow_aggregations=False):
+        """
+        Validate the *formula* on an example *row* of data.  Rebuild the BNF
+        taking into consideration *allow_aggregations*.
+        """
+        if self.allow_aggregations != allow_aggregations:
+            self.allow_aggregations = allow_aggregations
+            self.bnf = self.BNF()
+
         # check valid formula
         _eval = self.parse_formula(formula)
         try:

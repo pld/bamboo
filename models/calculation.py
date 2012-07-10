@@ -14,11 +14,13 @@ class Calculation(AbstractModel):
     parser = Parser()
 
     FORMULA = 'formula'
+    GROUP = 'group'
     NAME = 'name'
+    QUERY = 'query'
 
 
     @classmethod
-    def save(cls, dataset, formula, name, **kwargs):
+    def save(cls, dataset, formula, name, group=None, query=None):
         """
         Attempt to parse formula, then save formula, and add a task to calculate
         formula.
@@ -33,8 +35,10 @@ class Calculation(AbstractModel):
             row = {}
 
         # ensure that the formula is parsable
+        allow_aggregations = bool(group)
         try:
-            cls.parser.validate_formula(formula, row)
+            # TODO raise ParseError if group not in dataframe
+            cls.parser.validate_formula(formula, row, allow_aggregations)
         except ParseError, err:
             # do not save record, return error
             return {ERROR: err}
@@ -42,7 +46,9 @@ class Calculation(AbstractModel):
         record = {
             DATASET_ID: dataset[DATASET_ID],
             cls.FORMULA: formula,
+            cls.GROUP: group,
             cls.NAME: name,
+            cls.QUERY: query,
         }
         cls.collection.insert(record)
 
@@ -54,7 +60,8 @@ class Calculation(AbstractModel):
             Dataset.update(dataset, {STATS: stats})
 
         # call remote calculate and pass calculation id
-        calculate_column.delay(dataset, dframe, formula, name)
+        calculate_column.delay(cls.parser, dataset, dframe, formula, name,
+                group, query)
         return mongo_remove_reserved_keys(record)
 
     @classmethod
@@ -62,6 +69,7 @@ class Calculation(AbstractModel):
         """
         Return the calculations for given *dataset*.
         """
-        return [mongo_remove_reserved_keys(record) for record in cls.collection.find({
+        return [mongo_remove_reserved_keys(record)
+                for record in cls.collection.find({
             DATASET_ID: dataset[DATASET_ID],
         })]

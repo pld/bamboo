@@ -57,6 +57,7 @@ class TestCalculations(TestCalculator):
 
     def _test_calculator(self, delay=True):
         dframe = Observation.find(self.dataset, as_df=True)
+        row = dframe.irow(0)
 
         columns = dframe.columns.tolist()
         start_num_cols = len(columns)
@@ -68,14 +69,16 @@ class TestCalculations(TestCalculator):
 
         for idx, formula in enumerate(self.calculations):
             name = 'test-%s' % idx
+            self.parser.validate_formula(formula, row, False)
+
             if delay:
-                task = calculate_column.delay(self.dataset, dframe,
+                task = calculate_column.delay(self.parser, self.dataset, dframe,
                         formula, name)
                 # test that task has completed
                 self.assertTrue(task.ready())
                 self.assertTrue(task.successful())
             else:
-                task = calculate_column(self.dataset, dframe,
+                task = calculate_column(self.parser, self.dataset, dframe,
                         formula, name)
 
             column_labels_to_slugs = build_labels_to_slugs(self.dataset)
