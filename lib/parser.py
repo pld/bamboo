@@ -14,7 +14,8 @@ class Parser(object):
     """
 
     bnf = None
-    reserved_words = ['and', 'or', 'not']
+    functions = ['sum']
+    reserved_words = ['and', 'or', 'not', 'in'] + functions
 
     def __init__(self, allow_aggregations=False):
         self.allow_aggregations = allow_aggregations
@@ -64,6 +65,8 @@ class Parser(object):
         # literal syntactic
         open_bracket = Literal('[').suppress()
         close_bracket = Literal(']').suppress()
+        open_paren = Literal('(').suppress()
+        close_paren = Literal(')').suppress()
         comma = Literal(',')
         dquote = Literal('"').suppress()
 
@@ -98,6 +101,10 @@ class Parser(object):
             (and_op, 2, opAssoc.LEFT, EvalAndOp),
             (or_op, 2, opAssoc.LEFT, EvalOrOp),
         ])
+
+        # functions
+        function_name = '|'.join(self.functions)
+        fucntion_call = function_name + open_paren + variable + close_paren
 
         # top level bnf
         self.bnf = prop_expr

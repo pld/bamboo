@@ -8,3 +8,12 @@ class TestAggregations(TestCalculator):
         self.calculations = [
             'sum(amount)',
         ]
+
+    def _test_calculation_results(self, name, formula):
+        pass
+
+    def test_calculator_with_delay(self):
+        self._test_calculator()
+
+    def test_calculator_without_delay(self):
+        self._test_calculator(delay=False)
