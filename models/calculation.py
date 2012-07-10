@@ -35,10 +35,9 @@ class Calculation(AbstractModel):
             row = {}
 
         # ensure that the formula is parsable
-        allow_aggregations = bool(group)
         try:
             # TODO raise ParseError if group not in dataframe
-            cls.parser.validate_formula(formula, row, allow_aggregations)
+            cls.parser.validate_formula(formula, row)
         except ParseError, err:
             # do not save record, return error
             return {ERROR: err}

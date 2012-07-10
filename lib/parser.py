@@ -120,15 +120,11 @@ class Parser(object):
 
         return _eval
 
-    def validate_formula(self, formula, row, allow_aggregations=False):
+    def validate_formula(self, formula, row):
         """
         Validate the *formula* on an example *row* of data.  Rebuild the BNF
         taking into consideration *allow_aggregations*.
         """
-        if self.allow_aggregations != allow_aggregations:
-            self.allow_aggregations = allow_aggregations
-            self.bnf = self.BNF()
-
         # check valid formula
         _eval = self.parse_formula(formula)
         try:

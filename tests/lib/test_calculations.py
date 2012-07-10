@@ -1,9 +1,7 @@
 import numpy as np
 
 from lib.constants import DATASET_ID, LABEL, SCHEMA, SIMPLETYPE
-from lib.tasks.calculator import calculate_column
 from lib.tasks.import_dataset import import_dataset
-from lib.utils import build_labels_to_slugs, slugify_columns
 from models.dataset import Dataset
 from models.observation import Observation
 from test_calculator import TestCalculator
@@ -13,9 +11,6 @@ class TestCalculations(TestCalculator):
 
     def setUp(self):
         TestCalculator.setUp(self)
-        dframe = self.test_data['good_eats.csv']
-        Dataset.build_schema(self.dataset, dframe.dtypes)
-        Observation.save(dframe, self.dataset)
         self.calculations = [
             'rating',
             'gps',
@@ -50,50 +45,18 @@ class TestCalculations(TestCalculator):
         ]
         self.places = 5
 
-    def _equal_msg(self, calculated, stored, formula):
-        return '(calculated %s) %s != (stored %s) %s (within %s places), formula: %s'\
-                % (type(calculated), calculated, type(stored), stored,
-                        self.places, formula)
-
-    def _test_calculator(self, delay=True):
-        dframe = Observation.find(self.dataset, as_df=True)
-        row = dframe.irow(0)
-
-        columns = dframe.columns.tolist()
-        start_num_cols = len(columns)
-        added_num_cols = 0
-
-        column_labels_to_slugs = build_labels_to_slugs(self.dataset)
-        label_list, slugified_key_list = [list(ary) for ary in
-                zip(*column_labels_to_slugs.items())]
-
-        for idx, formula in enumerate(self.calculations):
-            name = 'test-%s' % idx
-            self.parser.validate_formula(formula, row, False)
-
-            if delay:
-                task = calculate_column.delay(self.parser, self.dataset, dframe,
-                        formula, name)
-                # test that task has completed
-                self.assertTrue(task.ready())
-                self.assertTrue(task.successful())
-            else:
-                task = calculate_column(self.parser, self.dataset, dframe,
-                        formula, name)
-
-            column_labels_to_slugs = build_labels_to_slugs(self.dataset)
-
+    def _test_calculation_results(self, name, formula):
             unslug_name = name
-            name = column_labels_to_slugs[unslug_name]
+            name = self.column_labels_to_slugs[unslug_name]
 
             # test that updated dataframe persisted
-            dframe = Observation.find(self.dataset, as_df=True)
-            self.assertTrue(name in dframe.columns)
+            self.dframe = Observation.find(self.dataset, as_df=True)
+            self.assertTrue(name in self.dframe.columns)
 
             # test new number of columns
-            added_num_cols += 1
-            self.assertEqual(start_num_cols + added_num_cols,
-                    len(dframe.columns.tolist()))
+            self.added_num_cols += 1
+            self.assertEqual(self.start_num_cols + self.added_num_cols,
+                    len(self.dframe.columns.tolist()))
 
             # test that the schema is up to date
             dataset = Dataset.find_one(self.dataset[DATASET_ID])
@@ -102,18 +65,18 @@ class TestCalculations(TestCalculator):
             schema = dataset[SCHEMA]
 
             # test slugified column names
-            slugified_key_list.append(name)
-            self.assertEqual(sorted(schema.keys()), sorted(slugified_key_list))
+            self.slugified_key_list.append(name)
+            self.assertEqual(sorted(schema.keys()), sorted(self.slugified_key_list))
 
             # test column labels
-            label_list.append(unslug_name)
+            self.label_list.append(unslug_name)
             labels = [schema[col][LABEL] for col in schema.keys()]
-            self.assertEqual(sorted(labels), sorted(label_list))
+            self.assertEqual(sorted(labels), sorted(self.label_list))
 
             # test result of calculation
-            formula = column_labels_to_slugs[formula]
+            formula = self.column_labels_to_slugs[formula]
 
-            for idx, row in dframe.iterrows():
+            for idx, row in self.dframe.iterrows():
                 try:
                     result = np.float64(row[name])
                     stored = np.float64(row[formula])
