@@ -1,8 +1,12 @@
 /*.csv
 *.pyc
+*.swp
 *~
 .coverage
 .noseids
+
+# pip build directory
+build
 
 # built docs
 docs/_build

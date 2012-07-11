@@ -22,7 +22,9 @@ class Dataset(AbstractModel):
         return cls.collection.find_one({DATASET_ID: dataset_id})
 
     @classmethod
-    def create(cls, dataset_id):
+    def create(cls, dataset_id=None):
+        if dataset_id is None:
+            dataset_id = uuid.uuid4().hex
         return cls.save(dataset_id)
 
     @classmethod

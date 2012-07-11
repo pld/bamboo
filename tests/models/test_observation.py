@@ -15,8 +15,6 @@ class TestObservation(TestBase):
     def setUp(self):
         TestBase.setUp(self)
         self.dataset = Dataset.save(self.test_dataset_ids['good_eats.csv'])
-        Dataset.build_schema(self.dataset,
-                self.test_data['good_eats.csv'].dtypes)
 
     def _save_records(self):
         records = Observation.save(self.test_data['good_eats.csv'],

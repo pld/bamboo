@@ -17,3 +17,7 @@ class TestAggregations(TestCalculator):
 
     def test_calculator_without_delay(self):
         self._test_calculator(delay=False)
+
+    def test_calculator_with_group(self):
+        self.group = 'food_type'
+        self._test_calculator(delay=False)

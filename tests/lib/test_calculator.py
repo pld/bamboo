@@ -13,8 +13,8 @@ class TestCalculator(TestBase):
         TestBase.setUp(self)
         self.dataset = Dataset.save(self.test_dataset_ids['good_eats.csv'])
         dframe = self.test_data['good_eats.csv']
-        Dataset.build_schema(self.dataset, dframe.dtypes)
         Observation.save(dframe, self.dataset)
+        self.group = None
         self.parser = Parser()
 
     def _equal_msg(self, calculated, stored, formula):
@@ -40,13 +40,13 @@ class TestCalculator(TestBase):
 
             if delay:
                 task = calculate_column.delay(self.parser, self.dataset,
-                        self.dframe, formula, name)
+                        self.dframe, formula, name, self.group)
                 # test that task has completed
                 self.assertTrue(task.ready())
                 self.assertTrue(task.successful())
             else:
                 task = calculate_column(self.parser, self.dataset, self.dframe,
-                        formula, name)
+                        formula, name, self.group)
 
             self.column_labels_to_slugs = build_labels_to_slugs(self.dataset)
 

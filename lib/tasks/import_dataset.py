@@ -12,5 +12,4 @@ def import_dataset(_file, dataset):
     For reading a URL and saving the corresponding dataset.
     """
     dframe = read_csv(_file)
-    Dataset.build_schema(dataset, dframe.dtypes)
     Observation.save(dframe, dataset)

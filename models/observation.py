@@ -3,7 +3,7 @@ import json
 from bson import json_util
 
 from config.db import Database
-from lib.constants import DATASET_OBSERVATION_ID, DB_BATCH_SIZE
+from lib.constants import DATASET_OBSERVATION_ID, DB_BATCH_SIZE, SCHEMA
 from lib.exceptions import JSONError
 from lib.mongo import mongo_to_df
 from lib.utils import build_labels_to_slugs, slugify_columns
@@ -55,6 +55,10 @@ class Observation(AbstractModel):
         Convert *dframe* to mongo format, iterate through rows adding ids for
         *dataset*, insert in chuncks of size *DB_BATCH_SIZE*.
         """
+        # build schema for the dataset after having read it from file.
+        if not SCHEMA in dataset:
+            Dataset.build_schema(dataset, dframe.dtypes)
+
         # add metadata to file
         dataset_observation_id = dataset[DATASET_OBSERVATION_ID]
         rows = []

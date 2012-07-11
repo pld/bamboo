@@ -2,9 +2,8 @@ import os
 import re
 import tempfile
 import urllib2
-import uuid
 
-from lib.constants import ERROR, ID
+from lib.constants import DATASET_ID, ERROR, ID
 from lib.tasks.import_dataset import import_dataset
 from models.dataset import Dataset
 
@@ -48,19 +47,17 @@ def create_dataset_from_url(url, allow_local_file=False):
         # could not get a file handle
         return {ERROR: 'could not get a filehandle for: %s' % url}
 
-    dataset_id = uuid.uuid4().hex
-    dataset = Dataset.create(dataset_id)
+    dataset = Dataset.create()
     import_dataset(_file, dataset)
 
-    return {ID: dataset_id}
+    return {ID: dataset[DATASET_ID]}
 
 
 def create_dataset_from_csv(csv_file):
     """
     Create a dataset from the uploaded .csv file.
     """
-    dataset_id = uuid.uuid4().hex
-    dataset = Dataset.create(dataset_id)
+    dataset = Dataset.create()
 
     # need to write out to a named tempfile in order
     # to get a handle for pandas *read_csv* function
@@ -71,4 +68,4 @@ def create_dataset_from_csv(csv_file):
     import_dataset(tmpfile.name, dataset)
     os.unlink(tmpfile.name)
 
-    return {ID: dataset_id}
+    return {ID: dataset[DATASET_ID]}

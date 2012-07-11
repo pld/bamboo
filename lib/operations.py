@@ -26,7 +26,6 @@ class EvalTerm(object):
         return self.operations[op](result, val)
 
 
-
 class EvalConstant(EvalTerm):
     """
     Class to evaluate a parsed constant or variable
