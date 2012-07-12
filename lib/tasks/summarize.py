@@ -26,7 +26,7 @@ def summarize(dataset, query, select, group):
     stats = dataset.get(STATS, {})
     if not stats.get(group):
         stats = {ALL: summarize_df(dframe)} if group == ALL \
-                else summarize_with_groups(dframe, stats, group)
+            else summarize_with_groups(dframe, stats, group)
         Dataset.update(dataset, {STATS: stats})
     stats_to_return = stats.get(group)
 

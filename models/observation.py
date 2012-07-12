@@ -68,7 +68,7 @@ class Observation(AbstractModel):
         # if column name is not in map assume it is already slugified
         # (i.e. NOT a label)
         dframe.columns = [labels_to_slugs.get(column, column) for column in
-                dframe.columns.tolist()]
+                          dframe.columns.tolist()]
 
         for row_index, row in dframe.iterrows():
             row = row.to_dict()
@@ -91,7 +91,7 @@ class Observation(AbstractModel):
         previous_dtypes = cls.find(dataset, as_df=True).dtypes.to_dict()
         new_dtypes = dframe.dtypes.to_dict().items()
         cols_to_add = dict([(name, dtype) for name, dtype in
-                    new_dtypes if name not in previous_dtypes])
+                            new_dtypes if name not in previous_dtypes])
         Dataset.update_schema(dataset, cols_to_add)
         cls.delete(dataset)
         cls.save(dframe, dataset)

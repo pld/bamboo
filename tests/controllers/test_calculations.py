@@ -8,6 +8,7 @@ from models.calculation import Calculation
 from models.dataset import Dataset
 from tests.test_base import TestBase
 
+
 class TestCalculations(TestBase):
 
     def setUp(self):
@@ -15,7 +16,7 @@ class TestCalculations(TestBase):
 
         self._file = 'file://tests/fixtures/good_eats.csv'
         self.dataset_id = create_dataset_from_url(self._file,
-                allow_local_file=True)[ID]
+                                                  allow_local_file=True)[ID]
         self.controller = Calculations()
         self.formula = 'amount + gps_alt'
         self.name = 'test'

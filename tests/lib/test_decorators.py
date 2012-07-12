@@ -2,6 +2,7 @@
 from lib import decorators
 from tests.test_base import TestBase
 
+
 class TestDecorators(TestBase):
 
     def setUp(self):
@@ -22,7 +23,7 @@ class TestDecorators(TestBase):
 
     def test_requires_internet_bad_url(self):
         wrapped_test_func = decorators.requires_internet(self._test_func,
-                'http://')
+                                                         'http://')
         self.assertTrue(hasattr(wrapped_test_func, '__call__'))
         self.assertRaises(AssertionError, wrapped_test_func)
 

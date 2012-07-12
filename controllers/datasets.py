@@ -15,7 +15,7 @@ class Datasets(object):
 
     def DELETE(self, dataset_id):
         """
-        Delete observations (i.e. the dataset) with hash *dataset_id* from mongo
+        Delete the dataset with hash *dataset_id* from mongo
         """
         dataset = Dataset.find_one(dataset_id)
         result = None
@@ -46,7 +46,7 @@ class Datasets(object):
                     result = summarize(dataset, query, select, group)
                 else:
                     return mongo_to_json(Observation.find(dataset, query,
-                                select))
+                                                          select))
         except JSONError, e:
             result = {ERROR: e.__str__()}
 
@@ -70,6 +70,6 @@ class Datasets(object):
             if csv_file:
                 result = create_dataset_from_csv(csv_file)
         except ValueError as e:
-            error  = e.__str__()
+            error = e.__str__()
 
         return dump_or_error(result, error)

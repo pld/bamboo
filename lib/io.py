@@ -18,10 +18,10 @@ def open_data_file(url, allow_local_file=False):
         'https': open_url,
     }
     if allow_local_file:
-        protocols.update({'file':  lambda d: d['path']})
+        protocols.update({'file': lambda d: d['path']})
 
     regex = re.compile(
-        '^(?P<url>(?P<protocol>%s):\/\/(?P<path>.+))$' \
+        '^(?P<url>(?P<protocol>%s):\/\/(?P<path>.+))$'
         % '|'.join(protocols.keys())
     )
     match = re.match(regex, url)

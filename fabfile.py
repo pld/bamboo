@@ -19,12 +19,12 @@ DEPLOYMENTS = {
 
 def _run_in_virtualenv(command):
     run('source ~/.virtualenvs/%s/bin/activate && %s' % (env.virtual_env,
-                command))
+                                                         command))
 
 
 def _check_key_filename(deployment_name):
-    if DEPLOYMENTS[deployment_name].has_key('key_filename') and \
-        not os.path.exists(DEPLOYMENTS[deployment_name]['key_filename']):
+    if 'key_filename' in DEPLOYMENTS[deployment_name] and \
+            not os.path.exists(DEPLOYMENTS[deployment_name]['key_filename']):
         print 'Cannot find required permissions file: %s' % \
             DEPLOYMENTS[deployment_name]['key_filename']
         return False
@@ -33,7 +33,8 @@ def _check_key_filename(deployment_name):
 
 def _setup_env(deployment_name):
     env.update(DEPLOYMENTS[deployment_name])
-    if not _check_key_filename(deployment_name): sys.exit(1)
+    if not _check_key_filename(deployment_name):
+        sys.exit(1)
     env.project_directory = os.path.join(env.home, env.project)
     env.code_src = os.path.join(env.project_directory, env.repo_name)
     env.doc_src = os.path.join(env.project_directory, env.repo_name, env.docs)

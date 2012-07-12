@@ -18,12 +18,11 @@ class Calculation(AbstractModel):
     NAME = 'name'
     QUERY = 'query'
 
-
     @classmethod
     def save(cls, dataset, formula, name, group=None, query=None):
         """
-        Attempt to parse formula, then save formula, and add a task to calculate
-        formula.
+        Attempt to parse formula, then save formula, and add a task to
+        calculate formula.
         """
 
         dframe = Observation.find(dataset, as_df=True)
@@ -60,7 +59,7 @@ class Calculation(AbstractModel):
 
         # call remote calculate and pass calculation id
         calculate_column.delay(cls.parser, dataset, dframe, formula, name,
-                group, query)
+                               group, query)
         return mongo_remove_reserved_keys(record)
 
     @classmethod
@@ -68,7 +67,7 @@ class Calculation(AbstractModel):
         """
         Return the calculations for given *dataset*.
         """
-        return [mongo_remove_reserved_keys(record)
-                for record in cls.collection.find({
-            DATASET_ID: dataset[DATASET_ID],
-        })]
+        records = cls.collection.find({DATASET_ID: dataset[DATASET_ID]})
+        return [
+            mongo_remove_reserved_keys(record) for record in records
+        ]
