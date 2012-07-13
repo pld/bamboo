@@ -1,8 +1,9 @@
+from collections import defaultdict
+
 from celery.task import task
 from pandas import DataFrame
 
 from constants import DATASET_ID, LINKED_DATASETS
-
 from models.dataset import Dataset
 from models.observation import Observation
 
@@ -38,10 +39,10 @@ def calculate_column(parser, dataset, dframe, formula, name, group=None,
 
         new_dataset = Dataset.create()
         Observation.save(new_dframe, new_dataset)
-        Dataset.update(dataset, {
-            LINKED_DATASETS: (dataset.get(LINKED_DATASETS, []) +
-                              [new_dataset[DATASET_ID]])
-        })
+        linked_datasets = dataset.get(LINKED_DATASETS, defaultdict(list))
+        # Mongo does not allow None as a key
+        linked_datasets[group or ''].append(new_dataset[DATASET_ID])
+        Dataset.update(dataset, {LINKED_DATASETS: linked_datasets})
     else:
         new_dframe = Observation.update(dframe.join(new_column), dataset)
 
