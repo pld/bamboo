@@ -16,6 +16,7 @@ class TestCalculator(TestBase):
         Observation.save(dframe, self.dataset)
         self.group = None
         self.parser = Parser()
+        self.places = 5
 
     def _equal_msg(self, calculated, stored, formula):
         return '(calculated %s) %s != (stored %s) %s ' % (type(calculated),

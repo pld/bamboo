@@ -34,7 +34,7 @@ def calculate_column(parser, dataset, dframe, formula, name, group=None,
             result = {
                 'sum': sum_dframe,
             }[aggregation](new_column)
-            new_dframe = DataFrame({formula: [result]})
+            new_dframe = DataFrame({name: [result]})
 
         new_dataset = Dataset.create()
         Observation.save(new_dframe, new_dataset)

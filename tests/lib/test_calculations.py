@@ -43,7 +43,6 @@ class TestCalculations(TestCalculator):
             'amount in ["9.0", "2.0", "20.0"]',
             '(risk_factor in ["low_risk"]) and (amount in ["9.0", "20.0"])',
         ]
-        self.places = 5
 
     def _test_calculation_results(self, name, formula):
             unslug_name = name
