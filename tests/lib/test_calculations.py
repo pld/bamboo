@@ -56,7 +56,7 @@ class TestCalculations(TestCalculator):
             # test new number of columns
             self.added_num_cols += 1
             self.assertEqual(self.start_num_cols + self.added_num_cols,
-                    len(self.dframe.columns.tolist()))
+                             len(self.dframe.columns.tolist()))
 
             # test that the schema is up to date
             dataset = Dataset.find_one(self.dataset[DATASET_ID])
@@ -66,7 +66,8 @@ class TestCalculations(TestCalculator):
 
             # test slugified column names
             self.slugified_key_list.append(name)
-            self.assertEqual(sorted(schema.keys()), sorted(self.slugified_key_list))
+            self.assertEqual(sorted(schema.keys()),
+                             sorted(self.slugified_key_list))
 
             # test column labels
             self.label_list.append(unslug_name)

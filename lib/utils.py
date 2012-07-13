@@ -5,7 +5,7 @@ import re
 import numpy as np
 
 from constants import ERROR, JSON_NULL, LABEL, MONGO_RESERVED_KEYS,\
-         MONGO_RESERVED_KEY_PREFIX, SCHEMA
+    MONGO_RESERVED_KEY_PREFIX, SCHEMA
 
 
 def is_float_nan(num):
@@ -57,8 +57,8 @@ def slugify_columns(column_names):
 
     for column_name in column_names:
         new_col_name = prefix_reserved_key(column_name) if\
-                column_name in MONGO_RESERVED_KEYS else\
-                        encode_column_re.sub('_', column_name).lower()
+            column_name in MONGO_RESERVED_KEYS else\
+            encode_column_re.sub('_', column_name).lower()
         while new_col_name in encoded_names:
             new_col_name += '_'
         encoded_names.append(new_col_name)
@@ -70,4 +70,4 @@ def build_labels_to_slugs(dataset):
     Map the column labels back to their slugified versions
     """
     return dict([(column_attrs[LABEL], column_name) for
-            (column_name, column_attrs) in dataset[SCHEMA].items()])
+                 (column_name, column_attrs) in dataset[SCHEMA].items()])

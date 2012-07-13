@@ -8,5 +8,5 @@ class EvalSumAgg(object):
         self.result = 0
 
     def _eval(self, row):
-        self.result +=  self.value._eval(row)
+        self.result += self.value._eval(row)
         return self.result

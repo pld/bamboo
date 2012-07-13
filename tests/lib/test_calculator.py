@@ -19,8 +19,8 @@ class TestCalculator(TestBase):
 
     def _equal_msg(self, calculated, stored, formula):
         return '(calculated %s) %s != (stored %s) %s ' % (type(calculated),
-                calculated, type(stored), stored) +\
-                '(within %s places), formula: %s' % (self.places, formula)
+               calculated, type(stored), stored) +\
+            '(within %s places), formula: %s' % (self.places, formula)
 
     def _test_calculator(self, delay=True):
         self.dframe = Observation.find(self.dataset, as_df=True)
@@ -31,8 +31,9 @@ class TestCalculator(TestBase):
         self.added_num_cols = 0
 
         column_labels_to_slugs = build_labels_to_slugs(self.dataset)
-        self.label_list, self.slugified_key_list = [list(ary) for ary in
-                zip(*column_labels_to_slugs.items())]
+        self.label_list, self.slugified_key_list = [
+            list(ary) for ary in zip(*column_labels_to_slugs.items())
+        ]
 
         for idx, formula in enumerate(self.calculations):
             name = 'test-%s' % idx
@@ -40,13 +41,14 @@ class TestCalculator(TestBase):
 
             if delay:
                 task = calculate_column.delay(self.parser, self.dataset,
-                        self.dframe, formula, name, self.group)
+                                              self.dframe, formula, name,
+                                              self.group)
                 # test that task has completed
                 self.assertTrue(task.ready())
                 self.assertTrue(task.successful())
             else:
                 task = calculate_column(self.parser, self.dataset, self.dframe,
-                        formula, name, self.group)
+                                        formula, name, self.group)
 
             self.column_labels_to_slugs = build_labels_to_slugs(self.dataset)
 

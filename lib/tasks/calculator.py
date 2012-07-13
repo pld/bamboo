@@ -13,7 +13,7 @@ def sum_dframe(column):
 
 @task
 def calculate_column(parser, dataset, dframe, formula, name, group=None,
-            query=None):
+                     query=None):
     """
     For calculating new columns.
     Get necessary data given a calculation ID, execute calculation formula,
@@ -29,7 +29,7 @@ def calculate_column(parser, dataset, dframe, formula, name, group=None,
         if group:
             # groupby on dframe then run aggregation on groupby obj
             new_dframe = DataFrame(dframe[group]).join(new_column).\
-                    groupby(group, as_index=False).agg(aggregation)
+                groupby(group, as_index=False).agg(aggregation)
         else:
             result = {
                 'sum': sum_dframe,

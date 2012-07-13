@@ -19,7 +19,7 @@ class Calculations(object):
         dataset = Dataset.find_one(dataset_id)
         if dataset:
             return dump_mongo_json(Calculation.save(dataset, formula, name,
-                        group, query))
+                                                    group, query))
 
     def GET(self, dataset_id):
         """
