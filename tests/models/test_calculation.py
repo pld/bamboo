@@ -12,8 +12,6 @@ class TestCalculation(TestBase):
     def setUp(self):
         TestBase.setUp(self)
         self.dataset = Dataset.save(self.test_dataset_ids['good_eats.csv'])
-        Dataset.build_schema(self.dataset,
-                self.test_data['good_eats.csv'].dtypes)
         self.formula = 'rating'
         self.name = 'test'
 
@@ -35,21 +33,22 @@ class TestCalculation(TestBase):
         self.assertTrue('Missing column' in record[ERROR].__str__())
 
     def test_save_unparsable_formula(self):
-        record = self._save_observations_and_calculation('=NON_EXISTENT_COLUMN')
+        record = self._save_observations_and_calculation(
+            '=NON_EXISTENT_COLUMN')
         self.assertTrue(isinstance(record, dict))
         self.assertTrue(ERROR in record.keys())
         self.assertTrue('Parse Failure' in record[ERROR].__str__())
 
     def test_save_improper_formula_no_data(self):
         record = Calculation.save(self.dataset, 'NON_EXISTENT_COLUMN',
-                self.name)
+                                  self.name)
         self.assertTrue(isinstance(record, dict))
         self.assertTrue(ERROR in record.keys())
         self.assertTrue('Missing column' in record[ERROR].__str__())
 
     def test_save_unparsable_formula_no_data(self):
         record = Calculation.save(self.dataset, '=NON_EXISTENT_COLUMN',
-                self.name)
+                                  self.name)
         self.assertTrue(isinstance(record, dict))
         self.assertTrue(ERROR in record.keys())
         self.assertTrue('Parse Failure' in record[ERROR].__str__())

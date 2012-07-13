@@ -2,9 +2,9 @@ import uuid
 from time import gmtime, strftime
 
 from lib.constants import ATTRIBUTION, CREATED_AT, DATASET_ID,\
-        DATASET_OBSERVATION_ID, DESCRIPTION, DTYPE_TO_OLAP_TYPE_MAP,\
-        DTYPE_TO_SIMPLETYPE_MAP, ID, LABEL, LICENSE, OLAP_TYPE, SCHEMA,\
-        SIMPLETYPE, UPDATED_AT
+    DATASET_OBSERVATION_ID, DESCRIPTION, DTYPE_TO_OLAP_TYPE_MAP,\
+    DTYPE_TO_SIMPLETYPE_MAP, ID, LABEL, LICENSE, OLAP_TYPE, SCHEMA,\
+    SIMPLETYPE, UPDATED_AT
 from lib.utils import slugify_columns
 from models.abstract_model import AbstractModel
 
@@ -22,7 +22,9 @@ class Dataset(AbstractModel):
         return cls.collection.find_one({DATASET_ID: dataset_id})
 
     @classmethod
-    def create(cls, dataset_id):
+    def create(cls, dataset_id=None):
+        if dataset_id is None:
+            dataset_id = uuid.uuid4().hex
         return cls.save(dataset_id)
 
     @classmethod

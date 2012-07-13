@@ -26,7 +26,6 @@ class EvalTerm(object):
         return self.operations[op](result, val)
 
 
-
 class EvalConstant(EvalTerm):
     """
     Class to evaluate a parsed constant or variable
@@ -58,7 +57,7 @@ class EvalSignOp(EvalTerm):
         self.sign, self.value = tokens[0]
 
     def _eval(self, row):
-        mult = {'+':1, '-':-1}[self.sign]
+        mult = {'+': 1, '-': -1}[self.sign]
         return mult * self.value._eval(row)
 
 
@@ -112,12 +111,12 @@ class EvalComparisonOp(EvalTerm):
     """
 
     opMap = {
-        "<" : lambda a,b : a < b,
-        "<=" : lambda a,b : a <= b,
-        ">" : lambda a,b : a > b,
-        ">=" : lambda a,b : a >= b,
-        "!=" : lambda a,b : a != b,
-        "=" : lambda a,b : a == b,
+        "<": lambda a, b: a < b,
+        "<=": lambda a, b: a <= b,
+        ">": lambda a, b: a > b,
+        ">=": lambda a, b: a >= b,
+        "!=": lambda a, b: a != b,
+        "=": lambda a, b: a == b,
     }
 
     def _eval(self, row):

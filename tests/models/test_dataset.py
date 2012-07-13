@@ -7,7 +7,7 @@ from tests.test_base import TestBase
 from models.dataset import Dataset
 from models.observation import Observation
 from lib.constants import CREATED_AT, DATASET_ID, LABEL, OLAP_TYPE, SCHEMA,\
-     SIMPLETYPE, UPDATED_AT
+    SIMPLETYPE, UPDATED_AT
 from lib.mongo import mongo_decode_keys
 
 
@@ -27,7 +27,7 @@ class TestDataset(TestBase):
             self.assertTrue(isinstance(cursor, Cursor))
             self.assertEqual(record, rows[0])
             self.assertEqual(record, Dataset.find_one(
-                        self.test_dataset_ids[dataset_name]))
+                             self.test_dataset_ids[dataset_name]))
 
     def test_create(self):
         for dataset_name in self.TEST_DATASETS:
@@ -37,12 +37,12 @@ class TestDataset(TestBase):
     def test_delete(self):
         for dataset_name in self.TEST_DATASETS:
             record = Dataset.save(self.test_dataset_ids[dataset_name])
-            records = [x for x in \
-                    Dataset.find(self.test_dataset_ids[dataset_name])]
+            records = [x for x in
+                       Dataset.find(self.test_dataset_ids[dataset_name])]
             self.assertNotEqual(records, [])
             Dataset.delete(self.test_dataset_ids[dataset_name])
             records = [x for x in
-                    Dataset.find(self.test_dataset_ids[dataset_name])]
+                       Dataset.find(self.test_dataset_ids[dataset_name])]
             self.assertEqual(records, [])
 
     def test_update(self):
@@ -60,7 +60,7 @@ class TestDataset(TestBase):
         for dataset_name in self.TEST_DATASETS:
             dataset = Dataset.create(self.test_dataset_ids[dataset_name])
             Dataset.build_schema(dataset,
-                    self.test_data[dataset_name].dtypes)
+                                 self.test_data[dataset_name].dtypes)
 
             # get dataset with new schema
             dataset = Dataset.find_one(self.test_dataset_ids[dataset_name])

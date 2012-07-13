@@ -12,5 +12,5 @@ root.version = Version()
 
 cherrypy.tree.mount(root, '/')
 
-if __name__ == '__main__': # pragma: no cover
+if __name__ == '__main__':  # pragma: no cover
     cherrypy.quickstart(root, config='config/prod.conf')

@@ -25,7 +25,8 @@ def summarize_df(dframe):
     return dict([
         (col, {
             SUMMARY: series_to_jsondict(summarize_series(dtypes[col], data))
-        }) for col, data in dframe.iteritems() if not col in MONGO_RESERVED_KEYS
+        }) for col, data in dframe.iteritems()
+        if not col in MONGO_RESERVED_KEYS
     ])
 
 
@@ -34,6 +35,6 @@ def summarize_with_groups(dframe, stats, group):
     Calculate summary statistics for group.
     """
     grouped_stats = series_to_jsondict(
-            dframe.groupby(group).apply(summarize_df))
+        dframe.groupby(group).apply(summarize_df))
     stats.update({group: grouped_stats})
     return stats

@@ -15,12 +15,10 @@ class TestObservation(TestBase):
     def setUp(self):
         TestBase.setUp(self)
         self.dataset = Dataset.save(self.test_dataset_ids['good_eats.csv'])
-        Dataset.build_schema(self.dataset,
-                self.test_data['good_eats.csv'].dtypes)
 
     def _save_records(self):
         records = Observation.save(self.test_data['good_eats.csv'],
-                self.dataset)
+                                   self.dataset)
         cursor = Observation.find(self.dataset)
         records = [x for x in cursor]
         self.assertTrue(isinstance(records, list))
@@ -37,7 +35,7 @@ class TestObservation(TestBase):
 
     def test_save_over_bulk(self):
         Observation.save(self.test_data['good_eats_large.csv'],
-                self.dataset)
+                         self.dataset)
         cursor = Observation.find(self.dataset)
         records = [x for x in cursor]
         self.assertEqual(len(records), 1001)
@@ -53,7 +51,7 @@ class TestObservation(TestBase):
         dframe = Observation.find(self.dataset, as_df=True)
         self.assertTrue(isinstance(dframe, DataFrame))
         self.assertTrue(all(self.test_data['good_eats.csv'].reindex(
-                    columns=dframe.columns).eq(dframe)))
+                        columns=dframe.columns).eq(dframe)))
         columns = dframe.columns
         for key in MONGO_RESERVED_KEYS:
             self.assertFalse(prefix_reserved_key(key) in columns)
@@ -66,7 +64,7 @@ class TestObservation(TestBase):
     def test_find_with_bad_query_json(self):
         self._save_observations()
         self.assertRaises(JSONError, Observation.find, self.dataset,
-                '{rating: "delectible"}')
+                          '{rating: "delectible"}')
 
     def test_find_with_select(self):
         self._save_observations()
@@ -75,16 +73,15 @@ class TestObservation(TestBase):
         results = [row for row in cursor]
         self.assertEquals(sorted(results[0].keys()), ['_id', 'rating'])
 
-
     def test_find_with_bad_select(self):
         self._save_observations()
         self.assertRaises(JSONError, Observation.find, self.dataset,
-                select='{rating: 1}')
+                          select='{rating: 1}')
 
     def test_find_with_select_and_query(self):
         self._save_observations()
         cursor = Observation.find(self.dataset, '{"rating": "delectible"}',
-                '{"rating": 1}')
+                                  '{"rating": 1}')
         self.assertTrue(isinstance(cursor, Cursor))
         results = [row for row in cursor]
         self.assertEquals(sorted(results[0].keys()), ['_id', 'rating'])

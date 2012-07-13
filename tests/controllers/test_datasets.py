@@ -2,14 +2,15 @@ import json
 
 from controllers.datasets import Datasets
 from lib.constants import CREATED_AT, ERROR, ID, MODE_INFO,\
-        MODE_SUMMARY, MONGO_RESERVED_KEYS, SCHEMA, SUCCESS,\
-        SUMMARY, UPDATED_AT
+    MODE_SUMMARY, MONGO_RESERVED_KEYS, SCHEMA, SUCCESS,\
+    SUMMARY, UPDATED_AT
 from lib.decorators import requires_internet
 from lib.io import create_dataset_from_url
 from lib.utils import build_labels_to_slugs
 from models.dataset import Dataset
 from tests.test_base import TestBase
 from tests.mock import MockUploadedFile
+
 
 class TestDatasets(TestBase):
 
@@ -26,7 +27,7 @@ class TestDatasets(TestBase):
 
     def _post_file(self):
         self.dataset_id = create_dataset_from_url(self._file_uri,
-                allow_local_file=True)[ID]
+                                                  allow_local_file=True)[ID]
 
     def _test_summary_results(self, results):
         results = json.loads(results)
@@ -37,20 +38,20 @@ class TestDatasets(TestBase):
         result_keys = results.keys()
         self.assertEqual(len(result_keys), self.NUM_COLS)
         columns = [col for col in
-                self.test_data[self._file_name].columns.tolist()
-                if not col in MONGO_RESERVED_KEYS]
+                   self.test_data[self._file_name].columns.tolist()
+                   if not col in MONGO_RESERVED_KEYS]
         dataset = Dataset.find_one(self.dataset_id)
         labels_to_slugs = build_labels_to_slugs(dataset)
         for col in columns:
             slug = labels_to_slugs[col]
             self.assertTrue(slug in result_keys,
-                    'col (slug): %s in: %s' % (slug, result_keys))
+                            'col (slug): %s in: %s' % (slug, result_keys))
             self.assertTrue(SUMMARY in results[slug].keys())
 
     def _test_get_with_query_or_select(self, query='{}', select=None):
         self._post_file()
         results = json.loads(self.controller.GET(self.dataset_id, query=query,
-                    select=select))
+                             select=select))
         self.assertTrue(isinstance(results, list))
         self.assertTrue(isinstance(results[0], dict))
         if select:
@@ -96,7 +97,7 @@ class TestDatasets(TestBase):
     def test_GET_schema(self):
         self._post_file()
         results = json.loads(self.controller.GET(self.dataset_id,
-                mode=MODE_INFO))
+                             mode=MODE_INFO))
         self.assertTrue(isinstance(results, dict))
         result_keys = results.keys()
         for key in [CREATED_AT, ID, SCHEMA, UPDATED_AT]:
@@ -114,7 +115,7 @@ class TestDatasets(TestBase):
     def test_GET_with_bad_query(self):
         self._post_file()
         results = json.loads(self.controller.GET(self.dataset_id,
-                    query='bad json'))
+                             query='bad json'))
         self.assertTrue('JSON' in results[ERROR])
 
     def test_GET_with_select(self):
@@ -122,7 +123,7 @@ class TestDatasets(TestBase):
 
     def test_GET_with_select_and_query(self):
         self._test_get_with_query_or_select('{"rating": "delectible"}',
-                '{"rating": 1}')
+                                            '{"rating": 1}')
 
     def test_GET_summary(self):
         self._post_file()
@@ -134,7 +135,7 @@ class TestDatasets(TestBase):
         self._post_file()
         # (sic)
         results = self.controller.GET(self.dataset_id, mode=MODE_SUMMARY,
-                    query='{"rating": "delectible"}')
+                                      query='{"rating": "delectible"}')
         results = self._test_summary_results(results)
         self._test_summary_no_group(results)
 
@@ -147,13 +148,13 @@ class TestDatasets(TestBase):
 
         for group, column_values in groups:
             json_results = self.controller.GET(self.dataset_id,
-                    mode=MODE_SUMMARY, group=group)
+                                               mode=MODE_SUMMARY, group=group)
             results = self._test_summary_results(json_results)
             result_keys = results.keys()
 
             if len(column_values):
                 self.assertTrue(group in result_keys, 'group: %s in: %s'
-                        % (group, result_keys))
+                                % (group, result_keys))
                 self.assertEqual(column_values, results[group].keys())
                 for column_value in column_values:
                     self._test_summary_no_group(results[group][column_value])
@@ -164,18 +165,19 @@ class TestDatasets(TestBase):
     def test_GET_summary_with_group_and_query(self):
         self._post_file()
         results = self.controller.GET(self.dataset_id, mode=MODE_SUMMARY,
-                    group='rating', query='{"rating": "delectible"}')
+                                      group='rating',
+                                      query='{"rating": "delectible"}')
         self._test_summary_results(results)
 
     def test_DELETE(self):
         self._post_file()
         result = json.loads(self.controller.DELETE(self.dataset_id))
         self.assertTrue(SUCCESS in result)
-        self.assertEqual(result[SUCCESS], 'deleted dataset: %s' % \
-                self.dataset_id)
+        self.assertEqual(result[SUCCESS], 'deleted dataset: %s' %
+                         self.dataset_id)
 
     def test_DELETE_bad_id(self):
         for dataset_name in self.TEST_DATASETS:
             result = json.loads(self.controller.DELETE(
-                        self.test_dataset_ids[dataset_name]))
+                                self.test_dataset_ids[dataset_name]))
             self.assertTrue(ERROR in result)

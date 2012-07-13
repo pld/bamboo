@@ -14,14 +14,15 @@ class Calculation(AbstractModel):
     parser = Parser()
 
     FORMULA = 'formula'
+    GROUP = 'group'
     NAME = 'name'
-
+    QUERY = 'query'
 
     @classmethod
-    def save(cls, dataset, formula, name, **kwargs):
+    def save(cls, dataset, formula, name, group=None, query=None):
         """
-        Attempt to parse formula, then save formula, and add a task to calculate
-        formula.
+        Attempt to parse formula, then save formula, and add a task to
+        calculate formula.
         """
 
         dframe = Observation.find(dataset, as_df=True)
@@ -34,6 +35,7 @@ class Calculation(AbstractModel):
 
         # ensure that the formula is parsable
         try:
+            # TODO raise ParseError if group not in dataframe
             cls.parser.validate_formula(formula, row)
         except ParseError, err:
             # do not save record, return error
@@ -42,7 +44,9 @@ class Calculation(AbstractModel):
         record = {
             DATASET_ID: dataset[DATASET_ID],
             cls.FORMULA: formula,
+            cls.GROUP: group,
             cls.NAME: name,
+            cls.QUERY: query,
         }
         cls.collection.insert(record)
 
@@ -54,7 +58,8 @@ class Calculation(AbstractModel):
             Dataset.update(dataset, {STATS: stats})
 
         # call remote calculate and pass calculation id
-        calculate_column.delay(dataset, dframe, formula, name)
+        calculate_column.delay(cls.parser, dataset, dframe, formula, name,
+                               group, query)
         return mongo_remove_reserved_keys(record)
 
     @classmethod
@@ -62,6 +67,7 @@ class Calculation(AbstractModel):
         """
         Return the calculations for given *dataset*.
         """
-        return [mongo_remove_reserved_keys(record) for record in cls.collection.find({
-            DATASET_ID: dataset[DATASET_ID],
-        })]
+        records = cls.collection.find({DATASET_ID: dataset[DATASET_ID]})
+        return [
+            mongo_remove_reserved_keys(record) for record in records
+        ]
