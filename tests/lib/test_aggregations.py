@@ -10,7 +10,7 @@ class TestAggregations(TestCalculator):
         ]
 
     def _test_calculation_results(self, name, formula):
-        pass
+        self.dataset
 
     def test_calculator_with_delay(self):
         self._test_calculator()
