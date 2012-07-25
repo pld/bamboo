@@ -3,7 +3,7 @@ from collections import defaultdict
 from celery.task import task
 from pandas import DataFrame
 
-from constants import DATASET_ID, LINKED_DATASETS
+from lib.constants import DATASET_ID, LINKED_DATASETS
 from models.dataset import Dataset
 from models.observation import Observation
 
