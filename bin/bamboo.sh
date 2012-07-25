@@ -12,6 +12,7 @@ DAEMON=$VENV_DIR/cherryd
 DAEMON_ARGS="-i bamboo -c $PROJECT_DIR/current/config/prod.conf -p $PIDFILE -d"
 
 # load the virtualenv
+echo "Loading virtualenv 'bamboo'..."
 . $VENV_DIR/activate
 
 # Exit if the package is not installed
@@ -22,7 +23,9 @@ DAEMON_ARGS="-i bamboo -c $PROJECT_DIR/current/config/prod.conf -p $PIDFILE -d"
 #
 do_start()
 {
+    echo "Starting daemon process with command: $DAEMON $DAEMON_ARGS"
     $DAEMON $DAEMON_ARGS
+    echo "Process started"
 }
 
 #
@@ -33,11 +36,13 @@ do_stop()
     if [ -e $PIDFILE ]
     then
         PID=`cat $PIDFILE`
+        echo "Stopping daemon process: $PID"
         if ! kill $PID > /dev/null 2>&1
         then
             echo "Could not send SIGTERM to process $PID" >&2
         fi
         rm -f $PIDFILE
+        echo "Process stopped"
     fi
 }
 
