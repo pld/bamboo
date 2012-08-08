@@ -37,6 +37,7 @@ class Datasets(object):
         """
         dataset = Dataset.find_one(dataset_id)
         result = None
+        error = 'id not found'
 
         try:
             if dataset:
@@ -44,13 +45,15 @@ class Datasets(object):
                     result = Dataset.schema(dataset)
                 elif mode == MODE_SUMMARY:
                     result = summarize(dataset, query, select, group)
-                else:
+                elif mode == False:
                     return mongo_to_json(Observation.find(dataset, query,
                                                           select))
+                else:
+                    error = 'unsupported API call'
         except JSONError, e:
             result = {ERROR: e.__str__()}
 
-        return dump_or_error(result, 'id not found')
+        return dump_or_error(result, error)
 
     def POST(self, url=None, csv_file=None):
         """

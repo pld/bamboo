@@ -104,9 +104,14 @@ class TestDatasets(TestBase):
             self.assertTrue(key in result_keys)
 
     def test_GET_bad_id(self):
-        for dataset_name in self.TEST_DATASETS:
-            results = self.controller.GET(self.test_dataset_ids[dataset_name])
-            self.assertTrue(ERROR in results)
+        results = self.controller.GET('honey_badger')
+        self.assertTrue(ERROR in results)
+
+    def test_GET_unsupported_api_call(self):
+        self._post_file()
+        results = json.loads(self.controller.GET(self.dataset_id,
+            'honey_badger'))
+        self.assertTrue(ERROR in results)
 
     def test_GET_with_query(self):
         # (sic)
