@@ -1,4 +1,7 @@
 import json
+import os
+
+import cherrypy
 
 from controllers.datasets import Datasets
 from lib.constants import CREATED_AT, ERROR, ID, MODE_INFO,\
@@ -14,7 +17,8 @@ from tests.mock import MockUploadedFile
 
 class TestDatasets(TestBase):
 
-    NUM_COLS = 42
+    # NOTE: NUM_COLS should be 15 (we are not currently returning _id column)
+    NUM_COLS = 14
     NUM_ROWS = 19
 
     def setUp(self):
@@ -23,6 +27,8 @@ class TestDatasets(TestBase):
         self._file_path = 'tests/fixtures/%s' % self._file_name
         self._file_uri = 'file://%s' % self._file_path
         self.url = 'http://formhub.org/mberg/forms/good_eats/data.csv'
+        self._update_file_name = 'good_eats_update.json'
+        self._update_file_path = 'tests/fixtures/%s' % self._update_file_name
         self.controller = Datasets()
 
     def _post_file(self):
@@ -53,11 +59,23 @@ class TestDatasets(TestBase):
         results = json.loads(self.controller.GET(self.dataset_id, query=query,
                              select=select))
         self.assertTrue(isinstance(results, list))
-        self.assertTrue(isinstance(results[0], dict))
+        self.assertTrue(isinstance(results[3], dict))
         if select:
             self.assertEqual(sorted(results[0].keys()), ['rating'])
         if query != '{}':
             self.assertEqual(len(results), 11)
+
+    def test_POST_dataset_id_update(self):
+        self._post_file()
+        num_rows = len(json.loads(self.controller.GET(self.dataset_id)))
+        # mock the cherrypy server by setting the POST request body
+        cherrypy.request.body = open(self._update_file_path, 'r')
+        result = json.loads(self.controller.POST(dataset_id=self.dataset_id))
+        num_rows_after_update = len(json.loads(
+            self.controller.GET(self.dataset_id)))
+        self.assertTrue(isinstance(result, dict))
+        self.assertTrue(ID in result)
+        self.assertEqual(num_rows_after_update, num_rows + 1)
 
     def test_POST_file(self):
         _file = open(self._file_path, 'r')
@@ -67,23 +85,23 @@ class TestDatasets(TestBase):
         self.assertTrue(ID in result)
 
     def test_POST_file_as_url_failure(self):
-        result = json.loads(self.controller.POST(self._file_uri))
+        result = json.loads(self.controller.POST(url=self._file_uri))
         self.assertTrue(isinstance(result, dict))
         self.assertTrue(ERROR in result)
 
     @requires_internet
     def test_POST_url(self):
-        result = json.loads(self.controller.POST(self.url))
+        result = json.loads(self.controller.POST(url=self.url))
         self.assertTrue(isinstance(result, dict))
         self.assertTrue(ID in result)
 
     def test_POST_nonexistent_url(self):
-        result = json.loads(self.controller.POST('http://noformhub.org/'))
+        result = json.loads(self.controller.POST(url='http://noformhub.org/'))
         self.assertTrue(isinstance(result, dict))
         self.assertTrue(ERROR in result)
 
     def test_POST_bad__url(self):
-        result = json.loads(self.controller.POST('http://gooogle.com'))
+        result = json.loads(self.controller.POST(url='http://gooogle.com'))
         self.assertTrue(isinstance(result, dict))
         self.assertTrue(ERROR in result)
 
