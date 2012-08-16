@@ -10,7 +10,7 @@ from lib.mongo import mongo_to_json
 from lib.io import create_dataset_from_url, create_dataset_from_csv
 from lib.parser import Parser
 from lib.tasks.summarize import summarize
-from lib.utils import dump_or_error
+from lib.utils import dump_or_error, build_labels_to_slugs
 from models.calculation import Calculation
 from models.dataset import Dataset
 from models.observation import Observation
@@ -73,6 +73,7 @@ class Datasets(object):
         """
         # if we have a dataset_id then try to update
         if dataset_id:
+            # TODO: move this into it's own function
             dataset = Dataset.find_one(dataset_id)
             if dataset:
                 # get the dataframe for this dataset
@@ -85,14 +86,18 @@ class Datasets(object):
                 # calculate columns (and update aggregated datasets?)
                 calculations = Calculation.find(dataset)
                 parser = Parser()
+                labels_to_slugs = build_labels_to_slugs(dataset)
                 for calculation in calculations:
-                    print calculation
                     aggregation, function = \
-                        parser.parse_formula(calculation[FORMULA])
+                        parser.parse_formula(calculation[Calculation.FORMULA])
                     new_column = new_dframe.apply(function, axis=1,
                         args=(parser, ))
-                    new_column.name = calculation[NAME]
-                    new_dframe = new_dframe.apply()
+                    potential_name = calculation[Calculation.NAME]
+                    if potential_name not in existing_dframe.columns:
+                        new_column.name = labels_to_slugs[potential_name]
+                    else:
+                        new_column.name = potential_name
+                    new_dframe = new_dframe.join(new_column)
                 # merge the two
                 updated_dframe = concat([existing_dframe, new_dframe])
                 # update (overwrite) the dataset with the new merged version

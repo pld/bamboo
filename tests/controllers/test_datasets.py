@@ -4,13 +4,15 @@ import os
 import cherrypy
 
 from controllers.datasets import Datasets
+from controllers.calculations import Calculations
 from lib.constants import CREATED_AT, ERROR, ID, MODE_INFO,\
-    MODE_SUMMARY, MONGO_RESERVED_KEYS, SCHEMA, SUCCESS,\
-    SUMMARY, UPDATED_AT
+    MODE_SUMMARY, MONGO_RESERVED_KEYS, MONGO_RESERVED_KEY_PREFIX,\
+    SCHEMA, SUCCESS, SUMMARY, UPDATED_AT
 from lib.decorators import requires_internet
 from lib.io import create_dataset_from_url
 from lib.utils import build_labels_to_slugs
 from models.dataset import Dataset
+from models.calculation import Calculation
 from tests.test_base import TestBase
 from tests.mock import MockUploadedFile
 
@@ -34,6 +36,17 @@ class TestDatasets(TestBase):
     def _post_file(self):
         self.dataset_id = create_dataset_from_url(self._file_uri,
                                                   allow_local_file=True)[ID]
+
+    def _post_calculations(self):
+        # must call after _post_file
+        controller = Calculations()
+        formulae = [
+            'amount + 1',
+            'amount - 5',
+        ]
+        # NOTE: this may not work due to lack of synchronization
+        for formula in formulae:
+            controller.POST(self.dataset_id, formula, formula)
 
     def _test_summary_results(self, results):
         results = json.loads(results)
@@ -67,6 +80,7 @@ class TestDatasets(TestBase):
 
     def test_POST_dataset_id_update(self):
         self._post_file()
+        self._post_calculations()
         num_rows = len(json.loads(self.controller.GET(self.dataset_id)))
         # mock the cherrypy server by setting the POST request body
         cherrypy.request.body = open(self._update_file_path, 'r')
@@ -76,6 +90,20 @@ class TestDatasets(TestBase):
         self.assertTrue(isinstance(result, dict))
         self.assertTrue(ID in result)
         self.assertEqual(num_rows_after_update, num_rows + 1)
+        results = json.loads(self.controller.GET(self.dataset_id))
+        schema = json.loads(self.controller.GET(self.dataset_id,
+                             mode=MODE_INFO))
+        print schema[SCHEMA].keys()
+        print results
+        # TODO: deal with reserved keys
+        temp_keys_to_ignore = [MONGO_RESERVED_KEY_PREFIX + key
+            for key in MONGO_RESERVED_KEYS]
+        for result in results:
+            for column in schema[SCHEMA].keys():
+                if column not in temp_keys_to_ignore:
+                    self.assertTrue(column in result.keys(),
+                        "column %s not in %s" % (column, result.keys()))
+                    # TODO: check value somehow?
 
     def test_POST_file(self):
         _file = open(self._file_path, 'r')
