@@ -13,6 +13,7 @@ class TestBase(unittest.TestCase):
     TEST_DATASETS = [
         'good_eats.csv',
         'good_eats_large.csv',
+        'good_eats_with_calculations.csv',
         'kenya_secondary_schools_2007.csv',
     ]
 

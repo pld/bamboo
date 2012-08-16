@@ -11,8 +11,9 @@ class TestCalculator(TestBase):
 
     def setUp(self):
         TestBase.setUp(self)
-        self.dataset = Dataset.save(self.test_dataset_ids['good_eats.csv'])
-        dframe = self.test_data['good_eats.csv']
+        self.dataset = Dataset.save(
+            self.test_dataset_ids['good_eats_with_calculations.csv'])
+        dframe = self.test_data['good_eats_with_calculations.csv']
         Observation.save(dframe, self.dataset)
         self.group = None
         self.parser = Parser()
