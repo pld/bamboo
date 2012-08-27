@@ -50,13 +50,14 @@ class TestAggregations(TestCalculator):
             return self.AGGREGATION_RESULTS[formula]
 
     def _test_calculation_results(self, name, formula):
-        linked_dataset_ids = self.dataset[LINKED_DATASETS][self.group or '']
+        linked_dataset_id = self.dataset[LINKED_DATASETS][self.group or '']
         self.expected_length[self.group] += 1
-        self.assertEqual(len(linked_dataset_ids),
-                         self.expected_length[self.group])
+        self.assertFalse(linked_dataset_id is None)
+        #self.assertEqual(len(linked_dataset_ids),
+        #                 self.expected_length[self.group])
 
         # we are interested in the new dataset
-        linked_dataset_id = linked_dataset_ids[-1]
+        #linked_dataset_id = linked_dataset_ids[-1]
         linked_dataset = Dataset.find_one(linked_dataset_id)
         linked_dframe = Observation.find(linked_dataset, as_df=True)
 
@@ -64,6 +65,8 @@ class TestAggregations(TestCalculator):
         name = column_labels_to_slugs[name]
 
         self.assertTrue(name in linked_dframe.columns)
+        self.assertEqual(len(linked_dframe.columns),
+                         self.expected_length[self.group])
 
         # test that the schema is up to date
         self.assertTrue(SCHEMA in linked_dataset.keys())
