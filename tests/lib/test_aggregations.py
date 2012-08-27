@@ -51,7 +51,13 @@ class TestAggregations(TestCalculator):
 
     def _test_calculation_results(self, name, formula):
         linked_dataset_id = self.dataset[LINKED_DATASETS][self.group or '']
+
+        if self.group not in self.expected_length and self.group is not None:
+            self.expected_length[self.group] = 1
+
+        # add an extra column for the group names
         self.expected_length[self.group] += 1
+
         self.assertFalse(linked_dataset_id is None)
         #self.assertEqual(len(linked_dataset_ids),
         #                 self.expected_length[self.group])
@@ -77,9 +83,8 @@ class TestAggregations(TestCalculator):
         column_names = [name]
         if self.group:
             column_names.append(self.group)
-            column_names = sorted(column_names)
-        self.assertEqual(sorted(schema.keys()),
-                         column_names)
+        for column_name in column_names:
+            self.assertTrue(column_name in schema.keys())
 
         for idx, row in linked_dframe.iterrows():
             result = np.float64(row[name])
