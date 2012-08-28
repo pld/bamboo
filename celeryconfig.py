@@ -9,3 +9,4 @@ CELERY_MONGODB_BACKEND_SETTINGS = {
     'taskmeta_collection': 'celery_tasks',
 }
 CELERY_IMPORTS = ('lib.calculator', )
+CELERY_ALWAYS_EAGER = True
