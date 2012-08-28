@@ -165,3 +165,10 @@ store calculation formula:
 retrieve newly calculated column:
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ``curl -g http://bamboo.io/datasets/8a3d74711475d8a51c84484fe73f24bd151242ea?select='{"amount_less_than_10":1}'``
+
+retrieve aggregated datasets:
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+``curl -g http://bamboo.io/datasets/8a3d74711475d8a51c84484fe73f24bd151242ea?mode=related``
+
+Returns a map of groups (included an empty group) to dataset IDs for
+aggregation calculations.
