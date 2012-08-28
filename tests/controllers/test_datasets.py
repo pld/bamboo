@@ -78,6 +78,10 @@ class TestDatasets(TestBase):
         if query != '{}':
             self.assertEqual(len(results), 11)
 
+    def test_POST_dataset_id_update_bad_dataset_id(self):
+        result = json.loads(self.controller.POST(dataset_id=111))
+        assert(ERROR in result)
+
     def test_POST_dataset_id_update(self):
         self._post_file()
         self._post_calculations()
