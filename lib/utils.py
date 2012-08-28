@@ -32,7 +32,9 @@ def df_to_jsondict(dframe):
 
 
 def dump_or_error(data, error_message):
-    return json.dumps(data or {ERROR: error_message})
+    if data == None:
+        data = {ERROR: error_message}
+    return json.dumps(data)
 
 
 def prefix_reserved_key(key):

@@ -14,8 +14,9 @@ DEFAULT_HASH_ALGORITHM = 'sha1'
 JSON_NULL = 'null'
 
 # modes for dataset controller
-MODE_SUMMARY = 'summary'
 MODE_INFO = 'info'
+MODE_RELATED = 'related'
+MODE_SUMMARY = 'summary'
 
 # common MongoDB keys
 BAMBOO_RESERVED_KEY_PREFIX = 'BAMBOO_RESERVED_KEY_'

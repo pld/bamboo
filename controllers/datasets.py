@@ -3,7 +3,7 @@ import json
 import cherrypy
 from pandas import concat, DataFrame
 
-from lib.constants import ALL, ERROR, ID, MODE_SUMMARY, MODE_INFO, \
+from lib.constants import ALL, ERROR, ID, LINKED_DATASETS, MODE_RELATED, MODE_SUMMARY, MODE_INFO, \
      SCHEMA, SUCCESS
 from lib.exceptions import JSONError
 from lib.mongo import mongo_to_json
@@ -51,6 +51,8 @@ class Datasets(object):
             if dataset:
                 if mode == MODE_INFO:
                     result = Dataset.schema(dataset)
+                elif mode == MODE_RELATED:
+                    result = dataset[LINKED_DATASETS]
                 elif mode == MODE_SUMMARY:
                     result = summarize(dataset, query, select, group)
                 elif mode == False:

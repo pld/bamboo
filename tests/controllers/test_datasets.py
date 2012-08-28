@@ -6,7 +6,7 @@ import cherrypy
 from controllers.datasets import Datasets
 from controllers.calculations import Calculations
 from lib.constants import CREATED_AT, ERROR, ID, MODE_INFO,\
-    MODE_SUMMARY, MONGO_RESERVED_KEYS, MONGO_RESERVED_KEY_PREFIX,\
+    MODE_RELATED, MODE_SUMMARY, MONGO_RESERVED_KEYS, MONGO_RESERVED_KEY_PREFIX,\
     SCHEMA, SUCCESS, SUMMARY, UPDATED_AT
 from lib.decorators import requires_internet
 from lib.io import create_dataset_from_url
@@ -224,6 +224,14 @@ class TestDatasets(TestBase):
                                       group='rating',
                                       query='{"rating": "delectible"}')
         self._test_summary_results(results)
+
+    def test_GET_related_datasets(self):
+        self._post_file()
+        self._post_calculations()
+        results = json.loads(self.controller.GET(self.dataset_id,
+                             mode=MODE_RELATED))
+        self.assertTrue(isinstance(results, dict))
+        self.assertTrue(len(results.keys()) == 0)
 
     def test_DELETE(self):
         self._post_file()
