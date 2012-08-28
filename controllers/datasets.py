@@ -96,7 +96,7 @@ class Datasets(object):
                     if potential_name not in existing_dframe.columns:
                         new_column.name = labels_to_slugs[potential_name]
                     else:
-                        # TODO is this block unreachable?
+                        # TODO this block is uncovered
                         new_column.name = potential_name
                     new_dframe = new_dframe.join(new_column)
                 # merge the two
