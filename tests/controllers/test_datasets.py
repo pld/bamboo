@@ -6,7 +6,7 @@ import cherrypy
 from controllers.datasets import Datasets
 from controllers.calculations import Calculations
 from lib.constants import CREATED_AT, ERROR, ID, MODE_INFO,\
-    MODE_SUMMARY, MONGO_RESERVED_KEYS, MONGO_RESERVED_KEY_PREFIX,\
+    MODE_RELATED, MODE_SUMMARY, MONGO_RESERVED_KEYS, MONGO_RESERVED_KEY_PREFIX,\
     SCHEMA, SUCCESS, SUMMARY, UPDATED_AT
 from lib.decorators import requires_internet
 from lib.io import create_dataset_from_url
@@ -37,16 +37,17 @@ class TestDatasets(TestBase):
         self.dataset_id = create_dataset_from_url(self._file_uri,
                                                   allow_local_file=True)[ID]
 
-    def _post_calculations(self):
+    def _post_calculations(self, additional_formulae=[]):
         # must call after _post_file
         controller = Calculations()
         formulae = [
+            'amount',
             'amount + 1',
             'amount - 5',
-        ]
-        # NOTE: this may not work due to lack of synchronization
-        for formula in formulae:
-            controller.POST(self.dataset_id, formula, formula)
+        ] + additional_formulae
+        for idx, formula in enumerate(formulae):
+            name = 'calc_%d' % idx if idx < 1 else formula
+            controller.POST(self.dataset_id, formula, name)
 
     def _test_summary_results(self, results):
         results = json.loads(results)
@@ -77,6 +78,10 @@ class TestDatasets(TestBase):
             self.assertEqual(sorted(results[0].keys()), ['rating'])
         if query != '{}':
             self.assertEqual(len(results), 11)
+
+    def test_POST_dataset_id_update_bad_dataset_id(self):
+        result = json.loads(self.controller.POST(dataset_id=111))
+        assert(ERROR in result)
 
     def test_POST_dataset_id_update(self):
         self._post_file()
@@ -219,6 +224,24 @@ class TestDatasets(TestBase):
                                       group='rating',
                                       query='{"rating": "delectible"}')
         self._test_summary_results(results)
+
+    def test_GET_related_datasets_empty(self):
+        self._post_file()
+        self._post_calculations()
+        results = json.loads(self.controller.GET(self.dataset_id,
+                             mode=MODE_RELATED))
+        self.assertTrue(isinstance(results, dict))
+        self.assertTrue(len(results.keys()) == 0)
+
+    def test_GET_related_datasets(self):
+        self._post_file()
+        self._post_calculations(['sum(amount)'])
+        results = json.loads(self.controller.GET(self.dataset_id,
+                             mode=MODE_RELATED))
+        self.assertTrue(isinstance(results, dict))
+        self.assertTrue(len(results.keys()) == 1)
+        self.assertTrue(results.keys()[0] == '')
+        self.assertTrue(isinstance(results[''], basestring))
 
     def test_DELETE(self):
         self._post_file()

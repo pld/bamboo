@@ -1,7 +1,6 @@
 numpy==1.6.2
 cherrypy==3.2.2
-pandas==0.8.0
+pandas==0.8.1
 scipy==0.10.1
-celery-with-mongodb==2.5
-celery==2.5.5
+celery-with-mongodb==3.0
 pyparsing==1.5.6

@@ -150,7 +150,7 @@ strings which must map to column names, as well as operators and functions
 (specified in the Parser).
 
 Calculations that are aggregations can also be specified with a *group* and a
-*query*. The dataset will be grouped by *group* parameter and limited to rows
+*query*. The dataset will be grouped by the *group* parameter and limited to rows
 matching the *query* parameter.
 
 The results of aggregations are stored in a dataset with one column for
@@ -165,3 +165,10 @@ store calculation formula:
 retrieve newly calculated column:
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ``curl -g http://bamboo.io/datasets/8a3d74711475d8a51c84484fe73f24bd151242ea?select='{"amount_less_than_10":1}'``
+
+retrieve aggregated datasets:
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+``curl -g http://bamboo.io/datasets/8a3d74711475d8a51c84484fe73f24bd151242ea?mode=related``
+
+Returns a map of groups (included an empty group) to dataset IDs for
+aggregation calculations.
