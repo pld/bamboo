@@ -40,7 +40,7 @@ def calculate_column(parser, dataset, dframe, formula, name, group=None,
             new_column = agg_dframe[name]
         else:
             result = FUNCTION_MAP[aggregation](new_column)
-            new_column = Series({name: [result]})
+            new_column = Series({0: [result]})
 
         linked_datasets = dataset.get(LINKED_DATASETS, {})
         # Mongo does not allow None as a key
