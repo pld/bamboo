@@ -37,14 +37,14 @@ class TestDatasets(TestBase):
         self.dataset_id = create_dataset_from_url(self._file_uri,
                                                   allow_local_file=True)[ID]
 
-    def _post_calculations(self):
+    def _post_calculations(self, additional_formulae=[]):
         # must call after _post_file
         controller = Calculations()
         formulae = [
             'amount',
             'amount + 1',
             'amount - 5',
-        ]
+        ] + additional_formulae
         for idx, formula in enumerate(formulae):
             name = 'calc_%d' % idx if idx < 1 else formula
             controller.POST(self.dataset_id, formula, name)
@@ -225,13 +225,23 @@ class TestDatasets(TestBase):
                                       query='{"rating": "delectible"}')
         self._test_summary_results(results)
 
-    def test_GET_related_datasets(self):
+    def test_GET_related_datasets_empty(self):
         self._post_file()
         self._post_calculations()
         results = json.loads(self.controller.GET(self.dataset_id,
                              mode=MODE_RELATED))
         self.assertTrue(isinstance(results, dict))
         self.assertTrue(len(results.keys()) == 0)
+
+    def test_GET_related_datasets(self):
+        self._post_file()
+        self._post_calculations(['sum(amount)'])
+        results = json.loads(self.controller.GET(self.dataset_id,
+                             mode=MODE_RELATED))
+        self.assertTrue(isinstance(results, dict))
+        self.assertTrue(len(results.keys()) == 1)
+        self.assertTrue(results.keys()[0] == '')
+        self.assertTrue(isinstance(results[''], basestring))
 
     def test_DELETE(self):
         self._post_file()
