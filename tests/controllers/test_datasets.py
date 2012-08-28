@@ -41,12 +41,13 @@ class TestDatasets(TestBase):
         # must call after _post_file
         controller = Calculations()
         formulae = [
+            'amount',
             'amount + 1',
             'amount - 5',
         ]
-        # NOTE: this may not work due to lack of synchronization
-        for formula in formulae:
-            controller.POST(self.dataset_id, formula, formula)
+        for idx, formula in enumerate(formulae):
+            name = 'calc_%d' % idx if idx < 1 else formula
+            controller.POST(self.dataset_id, formula, name)
 
     def _test_summary_results(self, results):
         results = json.loads(results)
