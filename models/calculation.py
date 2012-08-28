@@ -53,8 +53,8 @@ class Calculation(AbstractModel):
         # invalidate summary ALL since we have a new column
         stats = dataset.get(STATS)
         if stats:
-            del stats[ALL]
-            del dataset[STATS]
+            stats.pop(ALL, None)
+            dataset.pop(STATS, None)
             Dataset.update(dataset, {STATS: stats})
 
         # call remote calculate and pass calculation id
