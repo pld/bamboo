@@ -6,8 +6,8 @@ import cherrypy
 from controllers.datasets import Datasets
 from controllers.calculations import Calculations
 from lib.constants import CREATED_AT, ERROR, ID, MODE_INFO,\
-    MODE_RELATED, MODE_SUMMARY, MONGO_RESERVED_KEYS, MONGO_RESERVED_KEY_PREFIX,\
-    SCHEMA, SUCCESS, SUMMARY, UPDATED_AT
+    MODE_RELATED, MODE_SUMMARY, MONGO_RESERVED_KEYS,\
+    MONGO_RESERVED_KEY_PREFIX, SCHEMA, SUCCESS, SUMMARY, UPDATED_AT
 from lib.decorators import requires_internet
 from lib.io import create_dataset_from_url
 from lib.utils import build_labels_to_slugs
@@ -32,21 +32,24 @@ class TestDatasets(TestBase):
         self._update_file_name = 'good_eats_update.json'
         self._update_file_path = 'tests/fixtures/%s' % self._update_file_name
         self.controller = Datasets()
+        self.default_formulae = [
+            'amount',
+            'amount + 1',
+            'amount - 5',
+        ]
 
     def _post_file(self):
         self.dataset_id = create_dataset_from_url(self._file_uri,
                                                   allow_local_file=True)[ID]
+        self.schema = json.loads(self.controller.GET(self.dataset_id,
+                                 mode=MODE_INFO))[SCHEMA]
 
-    def _post_calculations(self, additional_formulae=[], group=None):
+    def _post_calculations(self, formulae=[], group=None):
         # must call after _post_file
         controller = Calculations()
-        formulae = [
-            'amount',
-            'amount + 1',
-            'amount - 5',
-        ] + additional_formulae
         for idx, formula in enumerate(formulae):
-            name = 'calc_%d' % idx if idx < 1 else formula
+            name = 'calc_%d' % idx if formula in self.schema.keys()\
+                else formula
             controller.POST(self.dataset_id, formula, name, group)
 
     def _test_summary_results(self, results):
@@ -79,13 +82,24 @@ class TestDatasets(TestBase):
         if query != '{}':
             self.assertEqual(len(results), 11)
 
+    def _test_mode_related(self, groups=['']):
+        results = json.loads(self.controller.GET(self.dataset_id,
+                             mode=MODE_RELATED))
+        self.assertTrue(isinstance(results, dict))
+        self.assertEqual(len(results.keys()), len(groups))
+        self.assertEqual(results.keys(), groups)
+        linked_dataset_id = results[groups[0]]
+        self.assertTrue(isinstance(linked_dataset_id, basestring))
+        # inspect linked dataset
+        return json.loads(self.controller.GET(linked_dataset_id))
+
     def test_POST_dataset_id_update_bad_dataset_id(self):
         result = json.loads(self.controller.POST(dataset_id=111))
         assert(ERROR in result)
 
     def test_POST_dataset_id_update(self):
         self._post_file()
-        self._post_calculations()
+        self._post_calculations(self.default_formulae)
         num_rows = len(json.loads(self.controller.GET(self.dataset_id)))
         # mock the cherrypy server by setting the POST request body
         cherrypy.request.body = open(self._update_file_path, 'r')
@@ -96,17 +110,14 @@ class TestDatasets(TestBase):
         self.assertTrue(ID in result)
         self.assertEqual(num_rows_after_update, num_rows + 1)
         results = json.loads(self.controller.GET(self.dataset_id))
-        schema = json.loads(self.controller.GET(self.dataset_id,
-                             mode=MODE_INFO))
-        print schema[SCHEMA].keys()
-        print results
         # TODO: deal with reserved keys
         temp_keys_to_ignore = [MONGO_RESERVED_KEY_PREFIX + key
-            for key in MONGO_RESERVED_KEYS]
+                               for key in MONGO_RESERVED_KEYS]
         for result in results:
-            for column in schema[SCHEMA].keys():
+            for column in self.schema.keys():
                 if column not in temp_keys_to_ignore:
-                    self.assertTrue(column in result.keys(),
+                    self.assertTrue(
+                        column in result.keys(),
                         "column %s not in %s" % (column, result.keys()))
                     # TODO: check value somehow?
 
@@ -161,7 +172,7 @@ class TestDatasets(TestBase):
     def test_GET_unsupported_api_call(self):
         self._post_file()
         results = json.loads(self.controller.GET(self.dataset_id,
-            'honey_badger'))
+                             'honey_badger'))
         self.assertTrue(ERROR in results)
 
     def test_GET_with_query(self):
@@ -227,7 +238,7 @@ class TestDatasets(TestBase):
 
     def test_GET_related_datasets_empty(self):
         self._post_file()
-        self._post_calculations()
+        self._post_calculations(formulae=self.default_formulae)
         results = json.loads(self.controller.GET(self.dataset_id,
                              mode=MODE_RELATED))
         self.assertTrue(isinstance(results, dict))
@@ -235,36 +246,61 @@ class TestDatasets(TestBase):
 
     def test_GET_related_datasets(self):
         self._post_file()
-        self._post_calculations(['sum(amount)'])
-        self._test_mode_related()
+        self._post_calculations(
+            formulae=self.default_formulae + ['sum(amount)'])
+        results = self._test_mode_related()
+        row_keys = ['sum_amount_']
+        for row in results:
+            self.assertEqual(row.keys(), row_keys)
+            self.assertTrue(isinstance(row.values()[0], float))
 
     def test_GET_related_datasets_with_group(self):
         self._post_file()
         group = 'food_type'
-        self._post_calculations(['sum(amount)'], group)
-        self._test_mode_related(group)
+        self._post_calculations(self.default_formulae + ['sum(amount)'], group)
+        results = self._test_mode_related([group])
+        row_keys = [group, 'sum_amount_']
+        for row in results:
+            self.assertEqual(row.keys(), row_keys)
+            self.assertTrue(isinstance(row.values()[0], basestring))
+            self.assertTrue(isinstance(row.values()[1], float))
 
-    def _test_mode_related(self, group=''):
+    def test_GET_related_datasets_with_group_two_calculations(self):
+        self._post_file()
+        group = 'food_type'
+        self._post_calculations(
+            self.default_formulae + ['sum(amount)', 'sum(gps_alt)'], group)
+        results = self._test_mode_related([group])
+        row_keys = [group, 'sum_amount_', 'sum_gps_alt_']
+        for row in results:
+            self.assertEqual(row.keys(), row_keys)
+            self.assertTrue(isinstance(row.values()[0], basestring))
+            for value in row.values()[1:]:
+                self.assertTrue(isinstance(value, float) or value == 'null')
+
+    def test_GET_related_datasets_with_two_groups(self):
+        self._post_file()
+        group = 'food_type'
+        self._post_calculations(self.default_formulae + ['sum(amount)'])
+        self._post_calculations(['sum(gps_alt)'], group)
+        groups = ['', group]
+        results = self._test_mode_related(groups)
+        for row in results:
+            self.assertEqual(row.keys(), ['sum_amount_'])
+            self.assertTrue(isinstance(row.values()[0], float))
+
+        # get second linked dataset
         results = json.loads(self.controller.GET(self.dataset_id,
                              mode=MODE_RELATED))
-        self.assertTrue(isinstance(results, dict))
-        self.assertEqual(len(results.keys()), 1)
-        self.assertEqual(results.keys()[0], group)
+        self.assertEqual(len(results.keys()), len(groups))
+        self.assertEqual(results.keys(), groups)
         linked_dataset_id = results[group]
         self.assertTrue(isinstance(linked_dataset_id, basestring))
         # inspect linked dataset
         results = json.loads(self.controller.GET(linked_dataset_id))
-        calculation_slug = 'sum_amount_'
-        row_keys = [calculation_slug]
-        if group != '':
-            row_keys = [group] + row_keys
+        row_keys = [group, 'sum_gps_alt_']
         for row in results:
             self.assertEqual(row.keys(), row_keys)
-            if group == '':
-                self.assertTrue(isinstance(row.values()[0], float))
-            else:
-                self.assertTrue(isinstance(row.values()[0], basestring))
-                self.assertTrue(isinstance(row.values()[1], float))
 
     def test_DELETE(self):
         self._post_file()

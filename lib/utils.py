@@ -32,7 +32,7 @@ def df_to_jsondict(dframe):
 
 
 def dump_or_error(data, error_message):
-    if data == None:
+    if data is None:
         data = {ERROR: error_message}
     return json.dumps(data)
 

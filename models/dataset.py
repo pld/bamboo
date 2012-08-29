@@ -3,8 +3,8 @@ from time import gmtime, strftime
 
 from lib.constants import ATTRIBUTION, CREATED_AT, DATASET_ID,\
     DATASET_OBSERVATION_ID, DESCRIPTION, DTYPE_TO_OLAP_TYPE_MAP,\
-    DTYPE_TO_SIMPLETYPE_MAP, ID, LABEL, LICENSE, LINKED_DATASETS, OLAP_TYPE, SCHEMA,\
-    SIMPLETYPE, UPDATED_AT
+    DTYPE_TO_SIMPLETYPE_MAP, ID, LABEL, LICENSE, LINKED_DATASETS, OLAP_TYPE,\
+    SCHEMA, SIMPLETYPE, UPDATED_AT
 from lib.utils import slugify_columns
 from models.abstract_model import AbstractModel
 
