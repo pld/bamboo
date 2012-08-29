@@ -37,7 +37,7 @@ class TestDatasets(TestBase):
         self.dataset_id = create_dataset_from_url(self._file_uri,
                                                   allow_local_file=True)[ID]
 
-    def _post_calculations(self, additional_formulae=[]):
+    def _post_calculations(self, additional_formulae=[], group=None):
         # must call after _post_file
         controller = Calculations()
         formulae = [
@@ -47,7 +47,7 @@ class TestDatasets(TestBase):
         ] + additional_formulae
         for idx, formula in enumerate(formulae):
             name = 'calc_%d' % idx if idx < 1 else formula
-            controller.POST(self.dataset_id, formula, name)
+            controller.POST(self.dataset_id, formula, name, group)
 
     def _test_summary_results(self, results):
         results = json.loads(results)
@@ -231,17 +231,40 @@ class TestDatasets(TestBase):
         results = json.loads(self.controller.GET(self.dataset_id,
                              mode=MODE_RELATED))
         self.assertTrue(isinstance(results, dict))
-        self.assertTrue(len(results.keys()) == 0)
+        self.assertEqual(len(results.keys()), 0)
 
     def test_GET_related_datasets(self):
         self._post_file()
         self._post_calculations(['sum(amount)'])
+        self._test_mode_related()
+
+    def test_GET_related_datasets_with_group(self):
+        self._post_file()
+        group = 'food_type'
+        self._post_calculations(['sum(amount)'], group)
+        self._test_mode_related(group)
+
+    def _test_mode_related(self, group=''):
         results = json.loads(self.controller.GET(self.dataset_id,
                              mode=MODE_RELATED))
         self.assertTrue(isinstance(results, dict))
-        self.assertTrue(len(results.keys()) == 1)
-        self.assertTrue(results.keys()[0] == '')
-        self.assertTrue(isinstance(results[''], basestring))
+        self.assertEqual(len(results.keys()), 1)
+        self.assertEqual(results.keys()[0], group)
+        linked_dataset_id = results[group]
+        self.assertTrue(isinstance(linked_dataset_id, basestring))
+        # inspect linked dataset
+        results = json.loads(self.controller.GET(linked_dataset_id))
+        calculation_slug = 'sum_amount_'
+        row_keys = [calculation_slug]
+        if group != '':
+            row_keys = [group] + row_keys
+        for row in results:
+            self.assertEqual(row.keys(), row_keys)
+            if group == '':
+                self.assertTrue(isinstance(row.values()[0], float))
+            else:
+                self.assertTrue(isinstance(row.values()[0], basestring))
+                self.assertTrue(isinstance(row.values()[1], float))
 
     def test_DELETE(self):
         self._post_file()
