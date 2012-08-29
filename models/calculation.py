@@ -48,7 +48,7 @@ class Calculation(AbstractModel):
             cls.NAME: name,
             cls.QUERY: query,
         }
-        cls.collection.insert(record)
+        cls.collection.insert(record, safe=True)
 
         # invalidate summary ALL since we have a new column
         stats = dataset.get(STATS)
