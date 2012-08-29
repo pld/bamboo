@@ -164,10 +164,22 @@ store calculation formula:
 
 retrieve newly calculated column:
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
 ``curl -g http://bamboo.io/datasets/8a3d74711475d8a51c84484fe73f24bd151242ea?select='{"amount_less_than_10":1}'``
+
+store aggregation formula:
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+``curl -X POST -d "name=sum_of_amount&formula=sum(amount)" http://bamboo.io/calculations/8a3d74711475d8a51c84484fe73f24bd151242ea``
+
+store aggregation formula with group:
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+``curl -X POST -d "name=sum_of_amount&formula=sum(amount)&group=food_type" http://bamboo.io/calculations/8a3d74711475d8a51c84484fe73f24bd151242ea``
 
 retrieve aggregated datasets:
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
 ``curl -g http://bamboo.io/datasets/8a3d74711475d8a51c84484fe73f24bd151242ea?mode=related``
 
 Returns a map of groups (included an empty group) to dataset IDs for

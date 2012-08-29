@@ -78,3 +78,16 @@ echo -e "\nRetrieve linked dataset"
 LINKED_ID=`echo "$RET" | sed 's/.*: "\(\w*\).*/\1/'`
 RET=$(curl -#g $HOST/datasets/$LINKED_ID)
 echo $RET
+
+echo -e "\nStore aggregation sum(tsc_male_teachers) grouped by province"
+RET=$(curl -#X POST -d "name=sum_tsc_male_teachers&formula=sum(tsc_male_teachers)&group=province" $HOST/calculations/$ID)
+echo $RET
+
+echo -e "\nRetrieve linked dataset IDs"
+RET=$(curl -#g $HOST/datasets/$ID/related)
+echo $RET
+
+echo -e "\nRetrieve linked dataset"
+LINKED_ID=`echo "$RET" | sed 's/.*: "\(\w*\).*/\1/'`
+RET=$(curl -#g $HOST/datasets/$LINKED_ID)
+echo $RET
