@@ -9,7 +9,7 @@ VENV_DIR=/home/bamboo/.virtualenvs/bamboo/bin
 PIDFILE=$PROJECT_DIR/shared/pids/$NAME.pid
 SCRIPTNAME=$PROJECT_DIR/current/scripts/$NAME.sh
 DAEMON=$VENV_DIR/cherryd
-DAEMON_ARGS="-i bamboo -c $PROJECT_DIR/current/bamboo/config/prod.conf -p $PIDFILE -d"
+DAEMON_ARGS="-i run_server -c $PROJECT_DIR/current/bamboo/config/prod.conf -p $PIDFILE -P $PROJECT_DIR/current/$NAME -d"
 
 # load the virtualenv
 echo "Loading virtualenv 'bamboo'..."
