@@ -6,6 +6,6 @@ before_install:
 install:
   - pip install numpy --use-mirrors
   - pip install -r requirements.pip --use-mirrors
-script: nosetests
+script: cd bamboo && nosetests
 notifications:
   irc: "irc.freenode.org#moditest"

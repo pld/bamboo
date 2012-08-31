@@ -47,7 +47,7 @@ def deploy(deployment_name):
     # update code
     with cd(env.code_src):
         run('git pull origin %(branch)s' % env)
-        run('find . -name "*.pyc" -exec rm -rf {} \;')
+        run('find . -name "*.pyc" -delete')
 
     # update docs
     with cd(env.doc_src):
