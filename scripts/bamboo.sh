@@ -24,7 +24,7 @@ echo "Loading virtualenv 'bamboo'..."
 do_start()
 {
     echo "Starting daemon process with command: $DAEMON $DAEMON_ARGS"
-    cd $PROJECT_DIR/current
+    cd $PROJECT_DIR/current/$NAME
     $DAEMON $DAEMON_ARGS
     echo "Process started"
 }
