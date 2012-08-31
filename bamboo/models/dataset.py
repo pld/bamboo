@@ -5,7 +5,7 @@ from lib.constants import ATTRIBUTION, CREATED_AT, DATASET_ID,\
     DATASET_OBSERVATION_ID, DESCRIPTION, DTYPE_TO_OLAP_TYPE_MAP,\
     DTYPE_TO_SIMPLETYPE_MAP, ID, LABEL, LICENSE, LINKED_DATASETS, OLAP_TYPE,\
     SCHEMA, SIMPLETYPE, UPDATED_AT
-from lib.utils import slugify_columns
+from lib.utils import slugify_columns, type_for_data_and_dtypes
 from models.abstract_model import AbstractModel
 
 
@@ -59,27 +59,35 @@ class Dataset(AbstractModel):
                               safe=True)
 
     @classmethod
-    def _schema_from_dtypes(cls, dtypes):
+    def _schema_from_data_and_dtypes(cls, dframe, dtypes):
         """
-        Build schema from a dict of dtypes, *dtypes*.
+        Build schema from the dframe, *dframe*, and a dict of dtypes, *dtypes*.
         """
         column_names = dtypes.keys()
         encoded_names = dict(zip(column_names, slugify_columns(column_names)))
         return dict([(encoded_names[name], {
             LABEL: name,
-            OLAP_TYPE: DTYPE_TO_OLAP_TYPE_MAP[dtype.type],
-            SIMPLETYPE: DTYPE_TO_SIMPLETYPE_MAP[dtype.type],
+            OLAP_TYPE: type_for_data_and_dtypes(DTYPE_TO_OLAP_TYPE_MAP,
+                                                dframe[name], dtype.type),
+            SIMPLETYPE: type_for_data_and_dtypes(DTYPE_TO_SIMPLETYPE_MAP,
+                                                 dframe[name], dtype.type),
         }) for (name, dtype) in dtypes.items()])
 
     @classmethod
-    def build_schema(cls, dataset, dtypes):
-        schema = cls._schema_from_dtypes(dtypes.to_dict())
+    def build_schema(cls, dataset, dframe, dtypes):
+        """
+        Build schema for a dataset.
+        """
+        schema = cls._schema_from_data_and_dtypes(dframe, dtypes.to_dict())
         cls.update(dataset, {SCHEMA: schema})
 
     @classmethod
-    def update_schema(cls, dataset, dtypes):
+    def update_schema(cls, dataset, dframe, dtypes):
+        """
+        Update schema to include new columns.
+        """
         # merge in new schema dicts
-        schema = cls._schema_from_dtypes(dtypes)
+        schema = cls._schema_from_data_and_dtypes(dframe, dtypes)
         schema.update(dataset[SCHEMA])
 
         # store new complete schema with dataset

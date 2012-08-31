@@ -57,7 +57,7 @@ class Observation(AbstractModel):
         """
         # build schema for the dataset after having read it from file.
         if not SCHEMA in dataset:
-            Dataset.build_schema(dataset, dframe.dtypes)
+            Dataset.build_schema(dataset, dframe, dframe.dtypes)
 
         # add metadata to file
         dataset_observation_id = dataset[DATASET_OBSERVATION_ID]
@@ -92,7 +92,7 @@ class Observation(AbstractModel):
         new_dtypes = dframe.dtypes.to_dict().items()
         cols_to_add = dict([(name, dtype) for name, dtype in
                             new_dtypes if name not in previous_dtypes])
-        Dataset.update_schema(dataset, cols_to_add)
+        Dataset.update_schema(dataset, dframe, cols_to_add)
         cls.delete(dataset)
         cls.save(dframe, dataset)
         return cls.find(dataset, as_df=True)

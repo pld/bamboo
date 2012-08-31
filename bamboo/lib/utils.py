@@ -1,3 +1,4 @@
+from datetime import datetime
 import json
 from math import isnan
 import re
@@ -93,3 +94,8 @@ def recognize_dates(dframe):
                 # it is not a correctly formatted date
                 pass
     return dframe
+
+
+def type_for_data_and_dtypes(type_map, column, dtype_type):
+    field_type = type(column[0])
+    return type_map[field_type if field_type == datetime else dtype_type]

@@ -5,9 +5,9 @@ import cherrypy
 
 from controllers.datasets import Datasets
 from controllers.calculations import Calculations
-from lib.constants import CREATED_AT, ERROR, ID, MODE_INFO,\
+from lib.constants import CREATED_AT, DATETIME, ERROR, ID, MODE_INFO,\
     MODE_RELATED, MODE_SUMMARY, MONGO_RESERVED_KEYS,\
-    MONGO_RESERVED_KEY_PREFIX, SCHEMA, SUCCESS, SUMMARY, UPDATED_AT
+    MONGO_RESERVED_KEY_PREFIX, SCHEMA, SIMPLETYPE, SUCCESS, SUMMARY, UPDATED_AT
 from lib.decorators import requires_internet
 from lib.io import create_dataset_from_url
 from lib.utils import build_labels_to_slugs
@@ -164,6 +164,7 @@ class TestDatasets(TestBase):
         result_keys = results.keys()
         for key in [CREATED_AT, ID, SCHEMA, UPDATED_AT]:
             self.assertTrue(key in result_keys)
+        self.assertEqual(results[SCHEMA]['submit_date'][SIMPLETYPE], DATETIME)
 
     def test_GET_bad_id(self):
         results = self.controller.GET('honey_badger')

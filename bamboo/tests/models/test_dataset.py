@@ -60,6 +60,7 @@ class TestDataset(TestBase):
         for dataset_name in self.TEST_DATASETS:
             dataset = Dataset.create(self.test_dataset_ids[dataset_name])
             Dataset.build_schema(dataset,
+                                 self.test_data[dataset_name],
                                  self.test_data[dataset_name].dtypes)
 
             # get dataset with new schema
