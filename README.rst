@@ -5,6 +5,14 @@ Bamboo
 .. image:: https://secure.travis-ci.org/modilabs/bamboo.png?branch=master
   :target: http://travis-ci.org/modilabs/bamboo
 
+Bamboo is a data analysis web service.
+Bamboo is `open source <https://github.com/modilabs/bamboo>`_ software.
+
+Bamboo supports a simple querying language to build calculations
+(e.g. student teacher ratio) and aggregations (e.g. average number of students
+per district) from datasets. These are updated as new data is received.
+
+
 Dependencies
 ------------
 
