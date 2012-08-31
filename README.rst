@@ -29,7 +29,7 @@ on Debian based: ``# apt-get install gfortran libatlas-base-dev``
 Installation
 ------------
     
-    ``./scripts/install.sh``
+    ``$ ./scripts/install.sh``
 
 Running the server
 ------------------
@@ -38,22 +38,41 @@ Running the server
 
 ::
 
-    cd bamboo
-    python run_server.py
+    $ cd bamboo
+    $ python run_server.py
+
+Running the server as a daemon
+
+------------------------------
+
+    start mongodb on localhost and standard port
+
+    1. create a user named 'bamboo', with home directory ``/home/bamboo``
+    2. create a virtualenv using virtualenvwrapper called 'bamboo'
+    3. place the bamboo root directory in ``/var/www/bamboo/current``
+
+    start the daemon using:
+
+    ``$ /var/www/bamboo/current/scripts/bamboo.sh start``
+
+    stop the daemon using:
+
+    ``$ /var/www/bamboo/current/scripts/bamboo.sh stop``
+
 
 Testing
 -------
 
     install nose testing requirements
     
-    ``pip install -r requirements-test.pip``
+    ``$ pip install -r requirements-test.pip``
 
     run tests
 
 ::
 
-    cd bamboo
-    ./test.sh
+    $ cd bamboo
+    $ ./test.sh
 
 Documentation
 -------------
@@ -68,9 +87,9 @@ Building Documentation
 
 ::
 
-    pip install -r requirements-docs.pip
-    cd docs
-    make html
+    $ pip install -r requirements-docs.pip
+    $ cd docs
+    $ make html
 
 Contributing Code
 -----------------
@@ -91,11 +110,11 @@ On the remote server
 
     running the example basic commands
 
-    ``./scripts/commands.sh``
+    ``$ ./scripts/commands.sh``
 
     posting a dataset
 
-    ``curl -X POST -d "url=http://formhub.org/mberg/forms/good_eats/data.csv" http://bamboo.io/datasets``
+    ``$ curl -X POST -d "url=http://formhub.org/mberg/forms/good_eats/data.csv" http://bamboo.io/datasets``
 
 On your local server
 ^^^^^^^^^^^^^^^^^^^
@@ -104,8 +123,8 @@ On your local server
 
     run the example basic commands
 
-    ``./scripts/commands.sh -l``
+    ``$ ./scripts/commands.sh -l``
 
     make requests from your local server
 
-    ``curl -X POST -d "url=http://formhub.org/mberg/forms/good_eats/data.csv" http://localhost:8080/datasets``
+    ``$ curl -X POST -d "url=http://formhub.org/mberg/forms/good_eats/data.csv" http://localhost:8080/datasets``
