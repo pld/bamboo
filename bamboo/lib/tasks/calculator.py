@@ -9,7 +9,7 @@ from models.observation import Observation
 
 
 def sum_dframe(column):
-    return column.sum()
+    return float(column.sum())
 
 
 # TODO: move this somewhere else
@@ -40,7 +40,7 @@ def calculate_column(parser, dataset, dframe, formula, name, group=None,
             new_column = agg_dframe[name]
         else:
             result = FUNCTION_MAP[aggregation](new_column)
-            new_column = Series({0: [result]})
+            new_column = Series([result])
 
         linked_datasets = dataset.get(LINKED_DATASETS, {})
         # Mongo does not allow None as a key
@@ -52,8 +52,7 @@ def calculate_column(parser, dataset, dframe, formula, name, group=None,
 
             Observation.save(new_dframe, agg_dataset)
 
-            # store a link to the update new dataset
-            linked_datasets = dataset.get(LINKED_DATASETS, {})
+            # store a link to the new dataset
             linked_datasets[group or ''] = agg_dataset[DATASET_ID]
             Dataset.update(dataset, {LINKED_DATASETS: linked_datasets})
         else:

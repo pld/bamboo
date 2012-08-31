@@ -3,8 +3,8 @@ import json
 import cherrypy
 from pandas import concat, DataFrame
 
-from lib.constants import ALL, ERROR, ID, LINKED_DATASETS, MODE_RELATED, MODE_SUMMARY, MODE_INFO, \
-     SCHEMA, SUCCESS
+from lib.constants import ALL, ERROR, ID, LINKED_DATASETS, MODE_RELATED,\
+    MODE_SUMMARY, MODE_INFO, SCHEMA, SUCCESS
 from lib.exceptions import JSONError
 from lib.mongo import mongo_to_json
 from lib.io import create_dataset_from_url, create_dataset_from_csv
@@ -55,7 +55,7 @@ class Datasets(object):
                     result = dataset[LINKED_DATASETS]
                 elif mode == MODE_SUMMARY:
                     result = summarize(dataset, query, select, group)
-                elif mode == False:
+                elif mode is False:
                     return mongo_to_json(Observation.find(dataset, query,
                                                           select))
                 else:
@@ -83,7 +83,7 @@ class Datasets(object):
                 # make a dataframe for the additional data to add
                 new_data = json.loads(cherrypy.request.body.read())
                 filtered_data = [dict([(k, v) for k, v in new_data.iteritems()
-                    if k in existing_dframe.columns])]
+                                 if k in existing_dframe.columns])]
                 new_dframe = DataFrame(filtered_data)
                 # calculate columns (and update aggregated datasets?)
                 calculations = Calculation.find(dataset)
@@ -93,7 +93,7 @@ class Datasets(object):
                     aggregation, function = \
                         parser.parse_formula(calculation[Calculation.FORMULA])
                     new_column = new_dframe.apply(function, axis=1,
-                        args=(parser, ))
+                                                  args=(parser, ))
                     potential_name = calculation[Calculation.NAME]
                     if potential_name not in existing_dframe.columns:
                         new_column.name = labels_to_slugs[potential_name]
@@ -108,7 +108,7 @@ class Datasets(object):
                 return json.dumps({ID: dataset_id})
             else:
                 return json.dumps({ERROR:
-                    'dataset for this id does not exist'})
+                                   'dataset for this id does not exist'})
 
         # no dataset_id, try to load from file handle
         result = None

@@ -22,7 +22,7 @@ class Observation(AbstractModel):
         """
         cls.collection.remove({
             DATASET_OBSERVATION_ID: dataset[DATASET_OBSERVATION_ID]
-        })
+            }, safe=True)
 
     @classmethod
     def find(cls, dataset, query='{}', select=None, as_df=False):

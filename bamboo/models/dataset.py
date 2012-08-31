@@ -3,8 +3,8 @@ from time import gmtime, strftime
 
 from lib.constants import ATTRIBUTION, CREATED_AT, DATASET_ID,\
     DATASET_OBSERVATION_ID, DESCRIPTION, DTYPE_TO_OLAP_TYPE_MAP,\
-    DTYPE_TO_SIMPLETYPE_MAP, ID, LABEL, LICENSE, LINKED_DATASETS, OLAP_TYPE, SCHEMA,\
-    SIMPLETYPE, UPDATED_AT
+    DTYPE_TO_SIMPLETYPE_MAP, ID, LABEL, LICENSE, LINKED_DATASETS, OLAP_TYPE,\
+    SCHEMA, SIMPLETYPE, UPDATED_AT
 from lib.utils import slugify_columns
 from models.abstract_model import AbstractModel
 
@@ -38,7 +38,7 @@ class Dataset(AbstractModel):
             DATASET_OBSERVATION_ID: uuid.uuid4().hex,
             LINKED_DATASETS: {},
         }
-        cls.collection.insert(record)
+        cls.collection.insert(record, safe=True)
         return record
 
     @classmethod
@@ -46,7 +46,7 @@ class Dataset(AbstractModel):
         """
         Delete dataset with *dataset_id*.
         """
-        cls.collection.remove({DATASET_ID: dataset_id})
+        cls.collection.remove({DATASET_ID: dataset_id}, safe=True)
 
     @classmethod
     def update(cls, dataset, _dict):
@@ -55,7 +55,8 @@ class Dataset(AbstractModel):
         """
         _dict[UPDATED_AT] = strftime("%Y-%m-%d %H:%M:%S", gmtime())
         dataset.update(_dict)
-        cls.collection.update({DATASET_ID: dataset[DATASET_ID]}, dataset)
+        cls.collection.update({DATASET_ID: dataset[DATASET_ID]}, dataset,
+            safe=True)
 
     @classmethod
     def _schema_from_dtypes(cls, dtypes):
