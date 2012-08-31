@@ -31,12 +31,15 @@ Installation
     
     ``./scripts/install.sh``
 
-Running
--------
+Running the server
+------------------
 
     start mongodb on localhost and standard port
 
-    ``python bamboo.py``
+::
+
+    cd bamboo
+    python run_server.py
 
 Testing
 -------

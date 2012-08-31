@@ -56,7 +56,7 @@ class Dataset(AbstractModel):
         _dict[UPDATED_AT] = strftime("%Y-%m-%d %H:%M:%S", gmtime())
         dataset.update(_dict)
         cls.collection.update({DATASET_ID: dataset[DATASET_ID]}, dataset,
-            safe=True)
+                              safe=True)
 
     @classmethod
     def _schema_from_dtypes(cls, dtypes):

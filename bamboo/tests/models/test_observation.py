@@ -1,10 +1,12 @@
+from datetime import datetime
+
 from pandas import DataFrame, read_csv
 from pymongo.cursor import Cursor
 
 from lib.constants import MONGO_RESERVED_KEYS
 from lib.exceptions import JSONError
 from lib.mongo import mongo_decode_keys
-from lib.utils import prefix_reserved_key
+from lib.utils import prefix_reserved_key, recognize_dates
 from models.dataset import Dataset
 from models.observation import Observation
 from tests.test_base import TestBase
@@ -27,7 +29,8 @@ class TestObservation(TestBase):
         return records
 
     def _save_observations(self):
-        return Observation.save(self.test_data['good_eats.csv'], self.dataset)
+        return Observation.save(
+            recognize_dates(self.test_data['good_eats.csv']), self.dataset)
 
     def test_save(self):
         records = self._save_records()
@@ -53,8 +56,11 @@ class TestObservation(TestBase):
         self.assertTrue(all(self.test_data['good_eats.csv'].reindex(
                         columns=dframe.columns).eq(dframe)))
         columns = dframe.columns
+        # ensure no reserved keys
         for key in MONGO_RESERVED_KEYS:
             self.assertFalse(prefix_reserved_key(key) in columns)
+        # ensure date's converted
+        self.assertTrue(isinstance(dframe.submit_date[0], datetime))
 
     def test_find_with_query(self):
         self._save_observations()

@@ -2,6 +2,7 @@ import json
 from math import isnan
 import re
 
+from dateutil.parser import parse as date_parse
 import numpy as np
 
 from constants import ERROR, JSON_NULL, LABEL, MONGO_RESERVED_KEYS,\
@@ -22,7 +23,7 @@ def get_json_value(value):
 
 def series_to_jsondict(series):
     return series if series is None else dict([
-        (key, get_json_value(value))
+        (str(key), get_json_value(value))
         for key, value in series.iteritems()
     ])
 
@@ -73,3 +74,22 @@ def build_labels_to_slugs(dataset):
     """
     return dict([(column_attrs[LABEL], column_name) for
                  (column_name, column_attrs) in dataset[SCHEMA].items()])
+
+
+def recognize_dates(dframe):
+    """
+    Check if object columns in a dataframe can be parsed as dates.
+    If yes, rewrite column with values parsed as dates.
+    """
+    for idx, dtype in enumerate(dframe.dtypes):
+        if dtype.type == np.object_:
+            try:
+                column = dframe.columns[idx]
+                # attempt to parse first entry as a date
+                date_parse(dframe[column][0])
+                # it is parseable as a date, convert column to date
+                dframe[column] = dframe[column].map(date_parse)
+            except ValueError:
+                # it is not a correctly formatted date
+                pass
+    return dframe
