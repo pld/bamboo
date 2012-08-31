@@ -21,7 +21,7 @@ on Debian based: ``# apt-get install gfortran libatlas-base-dev``
 Installation
 ------------
     
-    ``./bin/install.sh``
+    ``./scripts/install.sh``
 
 Running
 -------
@@ -39,7 +39,10 @@ Testing
 
     run tests
 
-    ``nosetests --with-progressive --with-cov``
+::
+
+    cd bamboo
+    ./test.sh
 
 Documentation
 -------------
@@ -77,7 +80,7 @@ On the remote server
 
     running the example basic commands
 
-    ``./bin/commands.sh``
+    ``./scripts/commands.sh``
 
     posting a dataset
 
@@ -90,7 +93,7 @@ On your local server
 
     run the example basic commands
 
-    ``./bin/commands.sh -l``
+    ``./scripts/commands.sh -l``
 
     make requests from your local server
 
