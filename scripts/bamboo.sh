@@ -7,7 +7,7 @@ NAME=bamboo
 PROJECT_DIR=/var/www/bamboo
 VENV_DIR=/home/bamboo/.virtualenvs/bamboo/bin
 PIDFILE=$PROJECT_DIR/shared/pids/$NAME.pid
-SCRIPTNAME=$PROJECT_DIR/current/bin/$NAME.sh
+SCRIPTNAME=$PROJECT_DIR/current/scripts/$NAME.sh
 DAEMON=$VENV_DIR/cherryd
 DAEMON_ARGS="-i bamboo -c $PROJECT_DIR/current/bamboo/config/prod.conf -p $PIDFILE -d"
 
