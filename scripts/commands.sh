@@ -65,3 +65,29 @@ echo $RET | cut -c -2000
 echo -e "\nRetrieve new calculated column male_female_teacher_ratio summary grouped by province (truncated to 2000 characters)"
 RET=$(curl -#g $HOST/datasets/$ID?group=province&select='{"male_female_teacher_ratio":1}')
 echo $RET | cut -c -2000
+
+echo -e "\nStore aggregation sum(tsc_male_teachers)"
+RET=$(curl -#X POST -d "name=sum_tsc_male_teachers&formula=sum(tsc_male_teachers)" $HOST/calculations/$ID)
+echo $RET
+
+echo -e "\nRetrieve linked dataset IDs"
+RET=$(curl -#g $HOST/datasets/$ID/related)
+echo $RET
+
+echo -e "\nRetrieve linked dataset"
+LINKED_ID=`echo "$RET" | sed 's/.*: "\(\w*\).*/\1/'`
+RET=$(curl -#g $HOST/datasets/$LINKED_ID)
+echo $RET
+
+echo -e "\nStore aggregation sum(tsc_male_teachers) grouped by province"
+RET=$(curl -#X POST -d "name=sum_tsc_male_teachers&formula=sum(tsc_male_teachers)&group=province" $HOST/calculations/$ID)
+echo $RET
+
+echo -e "\nRetrieve linked dataset IDs"
+RET=$(curl -#g $HOST/datasets/$ID/related)
+echo $RET
+
+echo -e "\nRetrieve linked dataset"
+LINKED_ID=`echo "$RET" | sed 's/.*: "\(\w*\).*/\1/'`
+RET=$(curl -#g $HOST/datasets/$LINKED_ID)
+echo $RET
