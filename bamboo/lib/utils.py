@@ -23,7 +23,7 @@ def get_json_value(value):
 
 def series_to_jsondict(series):
     return series if series is None else dict([
-        (key, get_json_value(value))
+        (str(key), get_json_value(value))
         for key, value in series.iteritems()
     ])
 
@@ -86,10 +86,6 @@ def recognize_dates(dframe):
             try:
                 column = dframe.columns[idx]
                 # attempt to parse first entry as a date
-                print 'idx: %s' % idx
-                print 'column: %s' % column
-                print 'column[0]: %s' % dframe[column][0]
-                #print dframe[column]#[0]
                 date_parse(dframe[column][0])
                 # it is parseable as a date, convert column to date
                 dframe[column] = dframe[column].map(date_parse)
