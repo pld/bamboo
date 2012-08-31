@@ -53,8 +53,11 @@ class TestObservation(TestBase):
         self.assertTrue(all(self.test_data['good_eats.csv'].reindex(
                         columns=dframe.columns).eq(dframe)))
         columns = dframe.columns
+        # ensure no reserved keys
         for key in MONGO_RESERVED_KEYS:
             self.assertFalse(prefix_reserved_key(key) in columns)
+        # ensure date's converted
+        self.assertTrue(isinstance(dframe.submit_date[0], datetime.datetime))
 
     def test_find_with_query(self):
         self._save_observations()

@@ -1,3 +1,4 @@
+from datetime import datetime
 import re
 
 import numpy as np
@@ -54,6 +55,7 @@ STRING = 'string'
 INTEGER = 'integer'
 FLOAT = 'float'
 BOOLEAN = 'boolean'
+DATETIME = 'datetime'
 
 # olap_types
 DIMENSION = 'dimension'
@@ -65,6 +67,7 @@ DTYPE_TO_SIMPLETYPE_MAP = {
     np.float64: FLOAT,
     np.int64:   INTEGER,
     np.object_: STRING,
+    datetime: DATETIME,
 }
 
 # map from numpy objects to olap_types
@@ -73,6 +76,7 @@ DTYPE_TO_OLAP_TYPE_MAP = {
     np.bool_: DIMENSION,
     np.float64: MEASURE,
     np.int64: MEASURE,
+    datetime: MEASURE,
 }
 
 # batch size for bulk inserts
