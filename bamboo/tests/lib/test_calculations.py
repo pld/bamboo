@@ -12,36 +12,47 @@ class TestCalculations(TestCalculator):
     def setUp(self):
         TestCalculator.setUp(self)
         self.calculations = [
-            'rating',
-            'gps',
-            'amount + gps_alt',
-            'amount - gps_alt',
-            'amount + 5',
-            'amount - gps_alt + 2.5',
-            'amount * gps_alt',
-            'amount / gps_alt',
-            'amount * gps_alt / 2.5',
-            'amount + gps_alt * gps_precision',
-            '(amount + gps_alt) * gps_precision',
-            'amount = 2',
-            '10 < amount',
-            '10 < amount + gps_alt',
-            'not amount = 2',
-            'not(amount = 2)',
-            'amount = 2 and 10 < amount',
-            'amount = 2 or 10 < amount',
-            'not not amount = 2 or 10 < amount',
-            'not amount = 2 or 10 < amount',
-            '(not amount = 2) or 10 < amount',
-            'not(amount = 2 or 10 < amount)',
-            'amount ^ 3',
-            '(amount + gps_alt) ^ 2 + 100',
-            '-amount',
-            '-amount < gps_alt - 100',
-            'rating in ["delectible"]',
-            'risk_factor in ["low_risk"]',
-            'amount in ["9.0", "2.0", "20.0"]',
-            '(risk_factor in ["low_risk"]) and (amount in ["9.0", "20.0"])',
+#            # constants
+#            '-9 + 5',
+#            # aliases
+#            'rating',
+#            'gps',
+#            # arithmetic
+#            'amount + gps_alt',
+#            'amount - gps_alt',
+#            'amount + 5',
+#            'amount - gps_alt + 2.5',
+#            'amount * gps_alt',
+#            'amount / gps_alt',
+#            'amount * gps_alt / 2.5',
+#            'amount + gps_alt * gps_precision',
+#            # precedence
+#            '(amount + gps_alt) * gps_precision',
+#            # comparison
+#            'amount = 2',
+#            '10 < amount',
+#            '10 < amount + gps_alt',
+#            # logical
+#            'not amount = 2',
+#            'not(amount = 2)',
+#            'amount = 2 and 10 < amount',
+#            'amount = 2 or 10 < amount',
+#            'not not amount = 2 or 10 < amount',
+#            'not amount = 2 or 10 < amount',
+#            '(not amount = 2) or 10 < amount',
+#            'not(amount = 2 or 10 < amount)',
+#            'amount ^ 3',
+#            '(amount + gps_alt) ^ 2 + 100',
+#            '-amount',
+#            '-amount < gps_alt - 100',
+#            # membership
+#            'rating in ["delectible"]',
+#            'risk_factor in ["low_risk"]',
+#            'amount in ["9.0", "2.0", "20.0"]',
+#            '(risk_factor in ["low_risk"]) and (amount in ["9.0", "20.0"])',
+#            # dates
+            #'date("09-04-2012")',
+            'date("09-04-2012") - submit_date < 600',
         ]
 
     def _test_calculation_results(self, name, formula):
@@ -89,8 +100,8 @@ class TestCalculations(TestCalculator):
                     msg = self._equal_msg(row[name], row[formula], formula)
                     self.assertEqual(row[name], row[formula], msg)
 
-    def test_calculator_with_delay(self):
-        self._test_calculator()
+#    def test_calculator_with_delay(self):
+#        self._test_calculator()
 
     def test_calculator_without_delay(self):
         self._test_calculator(delay=False)

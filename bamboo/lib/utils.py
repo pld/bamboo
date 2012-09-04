@@ -2,6 +2,7 @@ from datetime import datetime
 import json
 from math import isnan
 import re
+from time import mktime
 
 from dateutil.parser import parse as date_parse
 import numpy as np
@@ -99,3 +100,8 @@ def recognize_dates(dframe):
 def type_for_data_and_dtypes(type_map, column, dtype_type):
     field_type = type(column[0])
     return type_map[field_type if field_type == datetime else dtype_type]
+
+
+def parse_to_unix_date(value):
+    date = date_parse(value)
+    return mktime(date.timetuple())

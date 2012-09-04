@@ -4,8 +4,8 @@ from pyparsing import alphanums, nums, oneOf, opAssoc, operatorPrecedence,\
 
 from lib.exceptions import ParseError
 from lib.operations import EvalAndOp, EvalComparisonOp, EvalConstant,\
-    EvalExpOp, EvalInOp, EvalMultOp, EvalNotOp, EvalOrOp, EvalPlusOp,\
-    EvalSignOp, EvalString
+    EvalExpOp, EvalDate, EvalInOp, EvalMultOp, EvalNotOp, EvalOrOp,\
+    EvalPlusOp, EvalSignOp, EvalString
 
 
 class Parser(object):
@@ -15,9 +15,10 @@ class Parser(object):
 
     aggregation = None
     bnf = None
-    function_names = ['sum']
+    aggregation_names = ['sum']
+    function_names = ['date', 'years']
     operator_names = ['and', 'or', 'not', 'in']
-    reserved_words = function_names + operator_names
+    reserved_words = aggregation_names + function_names + operator_names
 
     def __init__(self, allow_aggregations=False):
         self.allow_aggregations = allow_aggregations
@@ -41,17 +42,23 @@ class Parser(object):
         andop       'and'
         orop        'or'
         real        \d+(.\d+)
+        integer     \d+
         variable    string
-        in          variable in '[' "variable"[, "variable"]* ']'
-        atom        real | variable | [notop]* '(' disj ')'
+        atom        real | integer | variable
+        func        func ( atom )
         factor      atom [ expop factor]*
         term        factor [ multop factor ]*
         expr        term [ addop term ]*
         equation    expr [compop expr]*
+        in          equation in '[' "equation"[, "equation"]* ']'
         neg         [notop]* equation
         conj        neg [andop neg]*
         disj        conj [orop conj]*
+        agg         agg ( disj )
         =========   ==========
+
+        Examples:
+        - see bamboo/tests/lib/test_calculations.py
         """
         if self.bnf:
             return self.bnf
@@ -67,6 +74,9 @@ class Parser(object):
         in_op = CaselessLiteral('in')
         comparison_op = oneOf('< <= > >= != =')
 
+        # functions
+        date_func = CaselessLiteral('date')
+
         # aggregation functions
         sum_agg = CaselessLiteral('sum').setParseAction(self.set_aggregation)
 
@@ -78,21 +88,29 @@ class Parser(object):
         comma = Literal(',')
         dquote = Literal('"').suppress()
 
-        # operands
+        reserved_words = MatchFirst(map(Keyword, self.reserved_words))
+
+        # atoms
         integer = Word(nums)
         real = Combine(Word(nums) + '.' + Word(nums))
-        reserved_words = MatchFirst(map(Keyword, self.reserved_words))
         variable = ~reserved_words + Word(alphanums + '_')
-        string = (dquote + (real | integer | variable) + dquote)\
-            .setParseAction(EvalString)
-        operand = real | integer | variable
-        operand.setParseAction(EvalConstant)
+        atom = real | integer | variable
+        atom.setParseAction(EvalConstant)
+
+        #string = (dquote + (real | integer | variable) + dquote)\
+        #    .setParseAction(EvalString)
+        string = dquote + Regex('[^"]+') + dquote
+        string.setParseAction(EvalString)
 
         # expressions
         in_list = open_bracket + string +\
             ZeroOrMore(comma + string) + close_bracket
 
-        arith_expr = operatorPrecedence(operand, [
+        func_expr = operatorPrecedence(string, [
+            (date_func, 1, opAssoc.RIGHT, EvalDate),
+        ])
+
+        arith_expr = operatorPrecedence(atom | func_expr, [
             (sign_op, 1, opAssoc.RIGHT, EvalSignOp),
             (exp_op, 2, opAssoc.RIGHT, EvalExpOp),
             (mult_op, 2, opAssoc.LEFT, EvalMultOp),
@@ -110,11 +128,11 @@ class Parser(object):
             (or_op, 2, opAssoc.LEFT, EvalOrOp),
         ])
 
-        func_expr = (sum_agg.suppress() + open_paren + prop_expr + close_paren
+        agg_expr = (sum_agg.suppress() + open_paren + prop_expr + close_paren
                      ) | prop_expr
 
         # top level bnf
-        self.bnf = func_expr
+        self.bnf = agg_expr
 
         return self.bnf
 
@@ -129,12 +147,12 @@ class Parser(object):
             raise ParseError('Parse Failure for string "%s": %s' % (input_str,
                              err))
 
-        def function(row, parser):
-            return parser.parsed_expr._eval(row)
+        def function(context, parser):
+            return parser.parsed_expr._eval(context)
 
         return self.aggregation, function
 
-    def validate_formula(self, formula, row):
+    def validate_formula(self, formula, context):
         """
         Validate the *formula* on an example *row* of data.  Rebuild the BNF
         taking into consideration *allow_aggregations*.
@@ -144,7 +162,8 @@ class Parser(object):
 
         # check valid formula
         aggregation, function = self.parse_formula(formula)
+        function(context, self)
         try:
-            function(row, self)
+            function(context, self)
         except KeyError, err:
-            raise ParseError('Missing column "%s": %s' % (1, err))
+            raise ParseError('Missing column reference: %s' % err)

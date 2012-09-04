@@ -1,8 +1,11 @@
 # future must be first
 from __future__ import division
+import datetime
 import operator
 
 import numpy as np
+
+from utils import parse_to_unix_date
 
 
 class EvalTerm(object):
@@ -31,12 +34,17 @@ class EvalConstant(EvalTerm):
     Class to evaluate a parsed constant or variable
     """
 
-    def _eval(self, row):
+    def _eval(self, context):
+        row = context.row
         try:
-            np.float64(self.value)
-            return self.value
+            return np.float64(self.value)
         except ValueError:
-            return row[self.value]
+            # test is date and parse as date
+            field = row[self.value]
+            print  isinstance(field, datetime.datetime)
+            print parse_to_unix_date(field)
+            return parse_to_unix_date(field) if isinstance(field,
+                    datetime.datetime) else field
 
 
 class EvalString(EvalTerm):
@@ -130,6 +138,23 @@ class EvalComparisonOp(EvalTerm):
         else:
             return True
         return False
+
+
+class EvalDate(EvalTerm):
+    """
+    Class to evaluate not expressions
+    """
+
+    def __init__(self, tokens):
+        self.value = tokens[0][1]
+
+    def _eval(self, row):
+        try:
+            # parse date from string
+            return parse_to_unix_date(self.value._eval(row))
+        except ValueError:
+            raise Exception('could not parse date')
+            return False
 
 
 class EvalNotOp(EvalTerm):
