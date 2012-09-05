@@ -53,15 +53,16 @@ class Parser(object):
         orop        'or'
         real        \d+(.\d+)
         integer     \d+
-        variable    string
+        variable    \w+
+        string      ".+"
         atom        real | integer | variable
         func        func ( atom )
         factor      atom [ expop factor]*
         term        factor [ multop factor ]*
         expr        term [ addop term ]*
         equation    expr [compop expr]*
-        in          equation in '[' "equation"[, "equation"]* ']'
-        neg         [notop]* equation
+        in          string in '[' "string"[, "string"]* ']'
+        neg         [notop]* equation | in
         conj        neg [andop neg]*
         disj        conj [orop conj]*
         agg         agg ( disj )
@@ -148,8 +149,7 @@ class Parser(object):
         atom = real | integer | variable
         atom.setParseAction(EvalConstant)
 
-        #string = (dquote + (real | integer | variable) + dquote)\
-        #    .setParseAction(EvalString)
+        # everything between pairs of double quotes is a string
         string = dquote + Regex('[^"]+') + dquote
         string.setParseAction(EvalString)
 
