@@ -2,10 +2,20 @@ from pyparsing import alphanums, nums, oneOf, opAssoc, operatorPrecedence,\
     CaselessLiteral, Combine, Forward, Keyword, Literal, MatchFirst,\
     OneOrMore, Optional, ParseException, Regex, Word, ZeroOrMore
 
+from lib.constants import SCHEMA
 from lib.exceptions import ParseError
 from lib.operations import EvalAndOp, EvalComparisonOp, EvalConstant,\
     EvalExpOp, EvalDate, EvalInOp, EvalMultOp, EvalNotOp, EvalOrOp,\
     EvalPlusOp, EvalSignOp, EvalString
+
+
+class ParserContext(object):
+    """
+    Context to be passed into parser.
+    """
+
+    def __init__(self, dataset):
+        self.schema = dataset.get(SCHEMA)
 
 
 class Parser(object):
@@ -20,8 +30,8 @@ class Parser(object):
     operator_names = ['and', 'or', 'not', 'in']
     reserved_words = aggregation_names + function_names + operator_names
 
-    def __init__(self, allow_aggregations=False):
-        self.allow_aggregations = allow_aggregations
+    def __init__(self, dataset=None):
+        self.context = ParserContext(dataset) if dataset else None
         self.bnf = self.BNF()
 
     def set_aggregation(self, string, location, tokens):
@@ -58,7 +68,48 @@ class Parser(object):
         =========   ==========
 
         Examples:
-        - see bamboo/tests/lib/test_calculations.py
+
+        - constants
+            - 9 + 5',
+            - aliases
+            - rating',
+            - gps',
+        - arithmetic
+            - amount + gps_alt',
+            - amount - gps_alt',
+            - amount + 5',
+            - amount - gps_alt + 2.5',
+            - amount * gps_alt',
+            - amount / gps_alt',
+            - amount * gps_alt / 2.5',
+            - amount + gps_alt * gps_precision',
+        - precedence
+            - amount + gps_alt) * gps_precision',
+        - comparison
+            - amount = 2',
+            - 10 < amount',
+            - 10 < amount + gps_alt',
+        - logical
+            - not amount = 2',
+            - not(amount = 2)',
+            - amount = 2 and 10 < amount',
+            - amount = 2 or 10 < amount',
+            - not not amount = 2 or 10 < amount',
+            - not amount = 2 or 10 < amount',
+            - not amount = 2) or 10 < amount',
+            - not(amount = 2 or 10 < amount)',
+            - amount ^ 3',
+            - amount + gps_alt) ^ 2 + 100',
+            - amount',
+            - amount < gps_alt - 100',
+            - membership
+            - rating in ["delectible"]',
+            - risk_factor in ["low_risk"]',
+            - amount in ["9.0", "2.0", "20.0"]',
+            - risk_factor in ["low_risk"]) and (amount in ["9.0", "20.0"])',
+        - dates
+            - date("09-04-2012") - submit_date > 21078000',
+
         """
         if self.bnf:
             return self.bnf
@@ -129,7 +180,7 @@ class Parser(object):
         ])
 
         agg_expr = (sum_agg.suppress() + open_paren + prop_expr + close_paren
-                     ) | prop_expr
+                    ) | prop_expr
 
         # top level bnf
         self.bnf = agg_expr
@@ -147,23 +198,21 @@ class Parser(object):
             raise ParseError('Parse Failure for string "%s": %s' % (input_str,
                              err))
 
-        def function(context, parser):
-            return parser.parsed_expr._eval(context)
+        def function(row, parser):
+            return parser.parsed_expr._eval(row, parser.context)
 
         return self.aggregation, function
 
-    def validate_formula(self, formula, context):
+    def validate_formula(self, formula, row):
         """
         Validate the *formula* on an example *row* of data.  Rebuild the BNF
-        taking into consideration *allow_aggregations*.
         """
         # remove saved aggregation
         self.aggregation = None
 
         # check valid formula
         aggregation, function = self.parse_formula(formula)
-        function(context, self)
         try:
-            function(context, self)
+            function(row, self)
         except KeyError, err:
             raise ParseError('Missing column reference: %s' % err)

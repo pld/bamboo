@@ -1,8 +1,8 @@
 from lib.constants import ALL, DATASET_ID, ERROR, STATS
 from lib.exceptions import ParseError
 from lib.mongo import mongo_remove_reserved_keys
-from lib.parser import Parser
-from lib.tasks.calculator import calculate_column
+from lib.parser import Parser, ParserContext
+from lib.tasks.calculator import calculate_column, calculate_updates
 from models.abstract_model import AbstractModel
 from models.dataset import Dataset
 from models.observation import Observation
@@ -33,6 +33,8 @@ class Calculation(AbstractModel):
         except IndexError, err:
             row = {}
 
+        cls.parser.context = ParserContext(dataset)
+
         # ensure that the formula is parsable
         try:
             # TODO raise ParseError if group not in dataframe
@@ -61,6 +63,11 @@ class Calculation(AbstractModel):
         calculate_column.delay(cls.parser, dataset, dframe, formula, name,
                                group, query)
         return mongo_remove_reserved_keys(record)
+
+    @classmethod
+    def update(cls, dataset, data):
+        calculations = Calculation.find(dataset)
+        calculate_updates(dataset, data, calculations, cls.FORMULA, cls.NAME)
 
     @classmethod
     def find(cls, dataset):

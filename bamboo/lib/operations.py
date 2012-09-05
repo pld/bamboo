@@ -1,11 +1,12 @@
 # future must be first
 from __future__ import division
 import datetime
+from lib.constants import DATETIME, SIMPLETYPE
 import operator
 
 import numpy as np
 
-from utils import parse_to_unix_date
+from utils import parse_date_to_unix_time, parse_str_to_unix_time
 
 
 class EvalTerm(object):
@@ -34,17 +35,14 @@ class EvalConstant(EvalTerm):
     Class to evaluate a parsed constant or variable
     """
 
-    def _eval(self, context):
-        row = context.row
+    def _eval(self, row, context):
         try:
             return np.float64(self.value)
         except ValueError:
             # test is date and parse as date
             field = row[self.value]
-            print  isinstance(field, datetime.datetime)
-            print parse_to_unix_date(field)
-            return parse_to_unix_date(field) if isinstance(field,
-                    datetime.datetime) else field
+            return parse_date_to_unix_time(field) if context and\
+                context.schema[self.value][SIMPLETYPE] == DATETIME else field
 
 
 class EvalString(EvalTerm):
@@ -52,7 +50,7 @@ class EvalString(EvalTerm):
     Class to evaluate a parsed string.
     """
 
-    def _eval(self, row):
+    def _eval(self, row, context):
         return self.value
 
 
@@ -64,9 +62,9 @@ class EvalSignOp(EvalTerm):
     def __init__(self, tokens):
         self.sign, self.value = tokens[0]
 
-    def _eval(self, row):
+    def _eval(self, row, context):
         mult = {'+': 1, '-': -1}[self.sign]
-        return mult * self.value._eval(row)
+        return mult * self.value._eval(row, context)
 
 
 class EvalBinaryArithOp(EvalTerm):
@@ -82,10 +80,10 @@ class EvalBinaryArithOp(EvalTerm):
         '^': operator.__pow__,
     }
 
-    def _eval(self, row):
-        result = np.float64(self.value[0]._eval(row))
+    def _eval(self, row, context):
+        result = np.float64(self.value[0]._eval(row, context))
         for op, val in self.operator_operands(self.value[1:]):
-            val = np.float64(val._eval(row))
+            val = np.float64(val._eval(row, context))
             result = self.operation(op, result, val)
             if np.isinf(result):
                 return np.nan
@@ -127,11 +125,11 @@ class EvalComparisonOp(EvalTerm):
         "=": lambda a, b: a == b,
     }
 
-    def _eval(self, row):
-        val1 = np.float64(self.value[0]._eval(row))
+    def _eval(self, row, context):
+        val1 = np.float64(self.value[0]._eval(row, context))
         for op, val in self.operator_operands(self.value[1:]):
             fn = EvalComparisonOp.opMap[op]
-            val2 = np.float64(val._eval(row))
+            val2 = np.float64(val._eval(row, context))
             if not fn(val1, val2):
                 break
             val1 = val2
@@ -148,10 +146,10 @@ class EvalDate(EvalTerm):
     def __init__(self, tokens):
         self.value = tokens[0][1]
 
-    def _eval(self, row):
+    def _eval(self, row, context):
         try:
             # parse date from string
-            return parse_to_unix_date(self.value._eval(row))
+            return parse_str_to_unix_time(self.value._eval(row, context))
         except ValueError:
             raise Exception('could not parse date')
             return False
@@ -165,8 +163,8 @@ class EvalNotOp(EvalTerm):
     def __init__(self, tokens):
         self.value = tokens[0][1]
 
-    def _eval(self, row):
-        return not self.value._eval(row)
+    def _eval(self, row, context):
+        return not self.value._eval(row, context)
 
 
 class EvalBinaryBooleanOp(EvalTerm):
@@ -179,10 +177,10 @@ class EvalBinaryBooleanOp(EvalTerm):
         'or': lambda p, q: p or q,
     }
 
-    def _eval(self, row):
-        result = np.bool_(self.value[0]._eval(row))
+    def _eval(self, row, context):
+        result = np.bool_(self.value[0]._eval(row, context))
         for op, val in self.operator_operands(self.value[1:]):
-                val = np.bool_(val._eval(row))
+                val = np.bool_(val._eval(row, context))
                 result = self.operation(op, result, val)
         return result
 
@@ -206,9 +204,9 @@ class EvalInOp(EvalTerm):
     Class to eval in expressions.
     """
 
-    def _eval(self, row):
-        val_to_test = str(self.value[0]._eval(row))
+    def _eval(self, row, context):
+        val_to_test = str(self.value[0]._eval(row, context))
         val_list = []
         for op, val in self.operator_operands(self.value[1:]):
-            val_list.append(val._eval(row))
+            val_list.append(val._eval(row, context))
         return val_to_test in val_list

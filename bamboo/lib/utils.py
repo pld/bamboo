@@ -102,6 +102,9 @@ def type_for_data_and_dtypes(type_map, column, dtype_type):
     return type_map[field_type if field_type == datetime else dtype_type]
 
 
-def parse_to_unix_date(value):
-    date = date_parse(value)
+def parse_str_to_unix_time(value):
+    return parse_date_to_unix_time(date_parse(value))
+
+
+def parse_date_to_unix_time(date):
     return mktime(date.timetuple())

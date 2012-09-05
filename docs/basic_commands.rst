@@ -1,13 +1,13 @@
 Basic Commands
 ==============
 
-Check the Bamboo version
-------------------------
+Check the Bamboo version:
+-------------------------
 
 ``curl http://bamboo.io/version``
 
-Storing data in Bamboo
-----------------------
+Storing data in Bamboo:
+-----------------------
 
 upload data from a URL to Bamboo:
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -52,8 +52,8 @@ returns::
     }
 
 
-Retrieve data
--------------
+Retrieve data:
+--------------
 
 given the id is ``8a3d74711475d8a51c84484fe73f24bd151242ea``
 
@@ -92,8 +92,8 @@ query must be valid MongoDB extended JSON
 
 ``curl -g http://bamboo.io/datasets/8a3d74711475d8a51c84484fe73f24bd151242ea?query='{"food_type":"lunch"}'``
 
-Retrieve summary statistics for dataset
----------------------------------------
+Retrieve summary statistics for dataset:
+----------------------------------------
 
 by ID:
 ^^^^^^
@@ -139,8 +139,8 @@ with a grouping:
 
 ``curl http://bamboo.io/datasets/8a3d74711475d8a51c84484fe73f24bd151242ea/summary?group=food_type``
 
-Calculation formulas
---------------------
+Calculation formulas:
+---------------------
 
 Calculations are specified by a *name*, which is the label and a *formula*,
 which is either calculated by row or aggregated over multiple rows.
