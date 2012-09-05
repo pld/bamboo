@@ -2,7 +2,7 @@ from datetime import datetime
 import json
 from math import isnan
 import re
-from time import mktime
+from calendar import timegm
 
 from dateutil.parser import parse as date_parse
 import numpy as np
@@ -107,4 +107,4 @@ def parse_str_to_unix_time(value):
 
 
 def parse_date_to_unix_time(date):
-    return mktime(date.timetuple())
+    return timegm(date.utctimetuple())
