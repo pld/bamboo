@@ -2,7 +2,7 @@ from tests.test_base import TestBase
 
 from lib.parser import Parser
 from lib.tasks.calculator import calculate_column
-from lib.utils import build_labels_to_slugs, slugify_columns
+from lib.utils import build_labels_to_slugs, recognize_dates, slugify_columns
 from models.dataset import Dataset
 from models.observation import Observation
 
@@ -13,10 +13,11 @@ class TestCalculator(TestBase):
         TestBase.setUp(self)
         self.dataset = Dataset.save(
             self.test_dataset_ids['good_eats_with_calculations.csv'])
-        dframe = self.test_data['good_eats_with_calculations.csv']
+        dframe = recognize_dates(
+            self.test_data['good_eats_with_calculations.csv'])
         Observation.save(dframe, self.dataset)
         self.group = None
-        self.parser = Parser()
+        self.parser = Parser(self.dataset)
         self.places = 5
 
     def _equal_msg(self, calculated, stored, formula):

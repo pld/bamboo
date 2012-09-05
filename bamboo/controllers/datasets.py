@@ -1,16 +1,14 @@
 import json
 
 import cherrypy
-from pandas import concat, DataFrame
 
 from lib.constants import ALL, ERROR, ID, LINKED_DATASETS, MODE_RELATED,\
     MODE_SUMMARY, MODE_INFO, SCHEMA, SUCCESS
 from lib.exceptions import JSONError
 from lib.mongo import mongo_to_json
 from lib.io import create_dataset_from_url, create_dataset_from_csv
-from lib.parser import Parser
 from lib.tasks.summarize import summarize
-from lib.utils import dump_or_error, build_labels_to_slugs
+from lib.utils import dump_or_error
 from models.calculation import Calculation
 from models.dataset import Dataset
 from models.observation import Observation
@@ -75,35 +73,11 @@ class Datasets(object):
         """
         # if we have a dataset_id then try to update
         if dataset_id:
-            # TODO: move this into it's own function
             dataset = Dataset.find_one(dataset_id)
             if dataset:
-                # get the dataframe for this dataset
-                existing_dframe = Observation.find(dataset, as_df=True)
-                # make a dataframe for the additional data to add
-                new_data = json.loads(cherrypy.request.body.read())
-                filtered_data = [dict([(k, v) for k, v in new_data.iteritems()
-                                 if k in existing_dframe.columns])]
-                new_dframe = DataFrame(filtered_data)
-                # calculate columns (and update aggregated datasets?)
-                calculations = Calculation.find(dataset)
-                parser = Parser()
-                labels_to_slugs = build_labels_to_slugs(dataset)
-                for calculation in calculations:
-                    aggregation, function = \
-                        parser.parse_formula(calculation[Calculation.FORMULA])
-                    new_column = new_dframe.apply(function, axis=1,
-                                                  args=(parser, ))
-                    potential_name = calculation[Calculation.NAME]
-                    if potential_name not in existing_dframe.columns:
-                        new_column.name = labels_to_slugs[potential_name]
-                    else:
-                        new_column.name = potential_name
-                    new_dframe = new_dframe.join(new_column)
-                # merge the two
-                updated_dframe = concat([existing_dframe, new_dframe])
-                # update (overwrite) the dataset with the new merged version
-                updated_dframe = Observation.update(updated_dframe, dataset)
+                Calculation.update(
+                    dataset,
+                    data=json.loads(cherrypy.request.body.read()))
                 # return some success value
                 return json.dumps({ID: dataset_id})
             else:
