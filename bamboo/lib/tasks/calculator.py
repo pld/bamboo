@@ -3,20 +3,9 @@ from collections import defaultdict
 from celery.task import task
 from pandas import concat, DataFrame, Series
 
-from lib.constants import LINKED_DATASETS
+from lib.aggregator import Aggregator
 from lib.parser import Parser
-from models.dataset import Dataset
 from models.observation import Observation
-
-
-def sum_dframe(column):
-    return float(column.sum())
-
-
-# TODO: move this somewhere else
-FUNCTION_MAP = {
-    'sum': sum_dframe,
-}
 
 
 @task
@@ -34,37 +23,10 @@ def calculate_column(parser, dataset, dframe, formula, name, group=None,
     new_column.name = name
 
     if aggregation:
-        if group:
-            # groupby on dframe then run aggregation on groupby obj
-            agg_dframe = DataFrame(dframe[group]).join(new_column).\
-                groupby(group, as_index=False).agg(aggregation)
-            new_column = agg_dframe[name]
-        else:
-            result = FUNCTION_MAP[aggregation](new_column)
-            new_column = Series([result])
+        new_dframe = Aggregator(
+            dataset, dframe, new_column, group, aggregation, name
+        ).new_dframe
 
-        linked_datasets = dataset.linked_datasets
-        # Mongo does not allow None as a key
-        agg_dataset_id = linked_datasets.get(group or '', None)
-
-        if agg_dataset_id is None:
-            agg_dataset = Dataset()
-            agg_dataset.save()
-            new_dframe = agg_dframe if group else DataFrame({name: new_column})
-
-            Observation().save(new_dframe, agg_dataset)
-
-            # store a link to the new dataset
-            linked_datasets[group or ''] = agg_dataset.dataset_id
-            dataset.update({LINKED_DATASETS: linked_datasets})
-        else:
-            agg_dataset = Dataset.find_one(agg_dataset_id)
-            new_dframe = Observation.find(agg_dataset, as_df=True)
-
-            # attach new column to aggregation data frame
-            new_column.name = name
-            new_dframe = new_dframe.join(new_column)
-            Observation.update(new_dframe, agg_dataset)
     else:
         new_dframe = Observation.update(dframe.join(new_column), dataset)
 
