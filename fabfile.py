@@ -58,4 +58,4 @@ def deploy(deployment_name):
 
     # restart the server
     with cd(env.code_src):
-        _run_in_virtualenv('./bin/bamboo.sh restart')
+        _run_in_virtualenv('./scripts/bamboo.sh restart')
