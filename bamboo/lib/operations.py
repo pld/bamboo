@@ -147,12 +147,8 @@ class EvalDate(EvalTerm):
         self.value = tokens[0][1]
 
     def _eval(self, row, context):
-        try:
-            # parse date from string
-            return parse_str_to_unix_time(self.value._eval(row, context))
-        except ValueError:
-            raise Exception('could not parse date')
-            return False
+        # parse date from string
+        return parse_str_to_unix_time(self.value._eval(row, context))
 
 
 class EvalNotOp(EvalTerm):

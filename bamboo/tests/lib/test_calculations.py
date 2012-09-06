@@ -1,6 +1,6 @@
 import numpy as np
 
-from lib.constants import DATASET_ID, LABEL, SCHEMA, SIMPLETYPE
+from lib.constants import LABEL, SCHEMA, SIMPLETYPE
 from lib.tasks.import_dataset import import_dataset
 from models.dataset import Dataset
 from models.observation import Observation
@@ -68,10 +68,10 @@ class TestCalculations(TestCalculator):
                              len(self.dframe.columns.tolist()))
 
             # test that the schema is up to date
-            dataset = Dataset.find_one(self.dataset[DATASET_ID])
-            self.assertTrue(SCHEMA in dataset.keys())
-            self.assertTrue(isinstance(dataset[SCHEMA], dict))
-            schema = dataset[SCHEMA]
+            dataset = Dataset.find_one(self.dataset.dataset_id)
+            self.assertTrue(SCHEMA in dataset.record.keys())
+            self.assertTrue(isinstance(dataset.data_schema, dict))
+            schema = dataset.data_schema
 
             # test slugified column names
             self.slugified_key_list.append(name)

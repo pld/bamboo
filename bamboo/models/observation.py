@@ -6,7 +6,7 @@ from config.db import Database
 from lib.constants import DATASET_OBSERVATION_ID, DB_BATCH_SIZE, SCHEMA
 from lib.exceptions import JSONError
 from lib.mongo import mongo_to_df
-from lib.utils import build_labels_to_slugs, slugify_columns
+from lib.utils import slugify_columns
 from models.abstract_model import AbstractModel
 from models.dataset import Dataset
 
@@ -16,12 +16,12 @@ class Observation(AbstractModel):
     __collectionname__ = 'observations'
 
     @classmethod
-    def delete(cls, dataset):
+    def delete_all(cls, dataset):
         """
         Delete the observations for *dataset*.
         """
         cls.collection.remove({
-            DATASET_OBSERVATION_ID: dataset[DATASET_OBSERVATION_ID]
+            DATASET_OBSERVATION_ID: dataset.dataset_observation_id
         }, safe=True)
 
     @classmethod
@@ -42,28 +42,27 @@ class Observation(AbstractModel):
             except ValueError, e:
                 raise JSONError('cannot decode select: %s' % e.__str__())
 
-        query[DATASET_OBSERVATION_ID] = dataset[DATASET_OBSERVATION_ID]
-        cursor = cls.collection.find(query, select)
+        query[DATASET_OBSERVATION_ID] = dataset.dataset_observation_id
+        rows = super(cls, cls).find(query, select, as_dict=True)
 
         if as_df:
-            return mongo_to_df(cursor)
-        return cursor
+            return mongo_to_df(rows)
+        return rows
 
-    @classmethod
-    def save(cls, dframe, dataset):
+    def save(self, dframe, dataset):
         """
         Convert *dframe* to mongo format, iterate through rows adding ids for
         *dataset*, insert in chuncks of size *DB_BATCH_SIZE*.
         """
         # build schema for the dataset after having read it from file.
-        if not SCHEMA in dataset:
-            Dataset.build_schema(dataset, dframe, dframe.dtypes)
+        if not SCHEMA in dataset.record:
+            dataset.build_schema(dframe, dframe.dtypes)
 
         # add metadata to file
-        dataset_observation_id = dataset[DATASET_OBSERVATION_ID]
+        dataset_observation_id = dataset.dataset_observation_id
         rows = []
 
-        labels_to_slugs = build_labels_to_slugs(dataset)
+        labels_to_slugs = dataset.build_labels_to_slugs()
 
         # if column name is not in map assume it is already slugified
         # (i.e. NOT a label)
@@ -76,11 +75,11 @@ class Observation(AbstractModel):
             rows.append(row)
             if len(rows) > DB_BATCH_SIZE:
                 # insert data into collection
-                cls.collection.insert(rows, safe=True)
+                self.collection.insert(rows, safe=True)
                 rows = []
 
         if len(rows):
-            cls.collection.insert(rows, safe=True)
+            self.collection.insert(rows, safe=True)
 
     @classmethod
     def update(cls, dframe, dataset):
@@ -92,7 +91,7 @@ class Observation(AbstractModel):
         new_dtypes = dframe.dtypes.to_dict().items()
         cols_to_add = dict([(name, dtype) for name, dtype in
                             new_dtypes if name not in previous_dtypes])
-        Dataset.update_schema(dataset, dframe, cols_to_add)
-        cls.delete(dataset)
-        cls.save(dframe, dataset)
+        dataset.update_schema(dframe, cols_to_add)
+        cls.delete_all(dataset)
+        cls().save(dframe, dataset)
         return cls.find(dataset, as_df=True)

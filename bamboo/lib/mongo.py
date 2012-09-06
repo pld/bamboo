@@ -10,15 +10,18 @@ from lib.constants import DATASET_OBSERVATION_ID, DEFAULT_HASH_ALGORITHM,\
 from lib.utils import df_to_jsondict, get_json_value, prefix_reserved_key
 
 
-def mongo_to_df(cursor):
-    return DataFrame(mongo_decode_keys([row for row in cursor]))
+def mongo_to_df(rows):
+    """
+    Decode all row keys and create DataFrame.
+    """
+    return DataFrame(mongo_decode_keys(rows))
 
 
-def mongo_to_json(cursor):
+def mongo_to_json(rows):
     """
     Convert mongo *cursor* to json dict, via dataframe, then dump to JSON.
     """
-    jsondict = df_to_jsondict(mongo_to_df(cursor))
+    jsondict = df_to_jsondict(mongo_to_df(rows))
     return dump_mongo_json(jsondict)
 
 
@@ -40,7 +43,7 @@ def mongo_decode_keys(observations):
 
 def mongo_remove_reserved_keys(_dict):
     """
-    Check for *MONGO_RESERVED_KEYS* in stored dictionary.  If found replaced
+    Check for *MONGO_RESERVED_KEYS* in stored dictionary.  If found replace
     with unprefixed, if not found remove reserved key from dictionary.
     """
     for key in MONGO_RESERVED_KEYS:

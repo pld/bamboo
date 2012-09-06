@@ -8,7 +8,7 @@ from dateutil.parser import parse as date_parse
 import numpy as np
 
 from constants import ERROR, JSON_NULL, LABEL, MONGO_RESERVED_KEYS,\
-    MONGO_RESERVED_KEY_PREFIX, SCHEMA
+    MONGO_RESERVED_KEY_PREFIX
 
 
 def is_float_nan(num):
@@ -68,14 +68,6 @@ def slugify_columns(column_names):
             new_col_name += '_'
         encoded_names.append(new_col_name)
     return encoded_names
-
-
-def build_labels_to_slugs(dataset):
-    """
-    Map the column labels back to their slugified versions
-    """
-    return dict([(column_attrs[LABEL], column_name) for
-                 (column_name, column_attrs) in dataset[SCHEMA].items()])
 
 
 def recognize_dates(dframe):

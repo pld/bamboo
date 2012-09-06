@@ -1,6 +1,5 @@
 from lib.constants import ALL, DATASET_ID, ERROR, STATS
 from lib.exceptions import ParseError
-from lib.mongo import mongo_remove_reserved_keys
 from lib.parser import Parser, ParserContext
 from lib.tasks.calculator import calculate_column, calculate_updates
 from models.abstract_model import AbstractModel
@@ -18,8 +17,7 @@ class Calculation(AbstractModel):
     NAME = 'name'
     QUERY = 'query'
 
-    @classmethod
-    def save(cls, dataset, formula, name, group=None, query=None):
+    def save(self, dataset, formula, name, group=None, query=None):
         """
         Attempt to parse formula, then save formula, and add a task to
         calculate formula.
@@ -33,48 +31,43 @@ class Calculation(AbstractModel):
         except IndexError, err:
             row = {}
 
-        cls.parser.context = ParserContext(dataset)
+        self.parser.context = ParserContext(dataset.record)
 
         # ensure that the formula is parsable
         try:
             # TODO raise ParseError if group not in dataframe
-            cls.parser.validate_formula(formula, row)
+            self.parser.validate_formula(formula, row)
         except ParseError, err:
             # do not save record, return error
             return {ERROR: err}
 
         record = {
-            DATASET_ID: dataset[DATASET_ID],
-            cls.FORMULA: formula,
-            cls.GROUP: group,
-            cls.NAME: name,
-            cls.QUERY: query,
+            DATASET_ID: dataset.dataset_id,
+            self.FORMULA: formula,
+            self.GROUP: group,
+            self.NAME: name,
+            self.QUERY: query,
         }
-        cls.collection.insert(record, safe=True)
+        self.collection.insert(record, safe=True)
 
         # invalidate summary ALL since we have a new column
-        stats = dataset.get(STATS)
+        stats = dataset.stats
         if stats:
             stats.pop(ALL, None)
-            dataset.pop(STATS, None)
-            Dataset.update(dataset, {STATS: stats})
+            dataset.update({STATS: stats})
 
         # call remote calculate and pass calculation id
-        calculate_column.delay(cls.parser, dataset, dframe, formula, name,
+        calculate_column.delay(self.parser, dataset, dframe, formula, name,
                                group, query)
-        return mongo_remove_reserved_keys(record)
+
+        self.record = record
+        return self.record
+
+    @classmethod
+    def find(cls, dataset):
+        return super(cls, cls).find({DATASET_ID: dataset.dataset_id})
 
     @classmethod
     def update(cls, dataset, data):
         calculations = Calculation.find(dataset)
         calculate_updates(dataset, data, calculations, cls.FORMULA, cls.NAME)
-
-    @classmethod
-    def find(cls, dataset):
-        """
-        Return the calculations for given *dataset*.
-        """
-        records = cls.collection.find({DATASET_ID: dataset[DATASET_ID]})
-        return [
-            mongo_remove_reserved_keys(record) for record in records
-        ]

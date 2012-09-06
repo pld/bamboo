@@ -18,8 +18,9 @@ class Calculations(object):
         """
         dataset = Dataset.find_one(dataset_id)
         if dataset:
-            return dump_mongo_json(Calculation.save(dataset, formula, name,
-                                                    group, query))
+            calculation = Calculation()
+            calculation.save(dataset, formula, name, group, query)
+            return dump_mongo_json(calculation.clean_record)
 
     def GET(self, dataset_id):
         """
@@ -29,4 +30,5 @@ class Calculations(object):
         if dataset:
             # get the calculations
             calculations = Calculation.find(dataset)
-            return dump_mongo_json([x for x in calculations])
+            return dump_mongo_json(
+                [x.clean_record for x in calculations])

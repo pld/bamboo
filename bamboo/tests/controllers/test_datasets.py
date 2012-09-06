@@ -10,7 +10,6 @@ from lib.constants import CREATED_AT, DATETIME, ERROR, ID, MODE_INFO,\
     MONGO_RESERVED_KEY_PREFIX, SCHEMA, SIMPLETYPE, SUCCESS, SUMMARY, UPDATED_AT
 from lib.decorators import requires_internet
 from lib.io import create_dataset_from_url
-from lib.utils import build_labels_to_slugs
 from models.dataset import Dataset
 from models.calculation import Calculation
 from tests.test_base import TestBase
@@ -64,7 +63,7 @@ class TestDatasets(TestBase):
                    self.test_data[self._file_name].columns.tolist()
                    if not col in MONGO_RESERVED_KEYS]
         dataset = Dataset.find_one(self.dataset_id)
-        labels_to_slugs = build_labels_to_slugs(dataset)
+        labels_to_slugs = dataset.build_labels_to_slugs()
         for col in columns:
             slug = labels_to_slugs[col]
             self.assertTrue(slug in result_keys,
