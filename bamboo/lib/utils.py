@@ -61,9 +61,7 @@ def slugify_columns(column_names):
     encoded_names = []
 
     for column_name in column_names:
-        new_col_name = prefix_reserved_key(column_name) if\
-            column_name in MONGO_RESERVED_KEYS else\
-            encode_column_re.sub('_', column_name).lower()
+        new_col_name = encode_column_re.sub('_', column_name).lower()
         while new_col_name in encoded_names:
             new_col_name += '_'
         encoded_names.append(new_col_name)
@@ -100,3 +98,8 @@ def parse_str_to_unix_time(value):
 
 def parse_date_to_unix_time(date):
     return timegm(date.utctimetuple())
+
+
+def reserve_encoded(string):
+    return prefix_reserved_key(string) if string in MONGO_RESERVED_KEYS else\
+        string
