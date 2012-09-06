@@ -3,7 +3,6 @@ from collections import defaultdict
 import numpy as np
 
 from lib.constants import SCHEMA
-from lib.utils import slugify_columns
 from models.dataset import Dataset
 from models.observation import Observation
 from test_calculator import TestCalculator

@@ -6,8 +6,8 @@ from pymongo.cursor import Cursor
 from tests.test_base import TestBase
 from models.dataset import Dataset
 from models.observation import Observation
-from lib.constants import CREATED_AT, LABEL, OLAP_TYPE, SCHEMA,\
-    SIMPLETYPE, UPDATED_AT
+from lib.constants import CREATED_AT, LABEL, MONGO_RESERVED_KEY_STRS,\
+    OLAP_TYPE, SCHEMA, SIMPLETYPE, UPDATED_AT
 from lib.mongo import mongo_decode_keys
 
 
@@ -77,6 +77,7 @@ class TestDataset(TestBase):
 
                 # check column name is only legal chars
                 self.assertFalse(illegal_col_regex.search(column_name))
+
                 # check has require attributes
                 self.assertTrue(SIMPLETYPE in column_attributes)
                 self.assertTrue(OLAP_TYPE in column_attributes)
@@ -85,6 +86,9 @@ class TestDataset(TestBase):
                 # check label is an original column
                 self.assertTrue(column_attributes[LABEL] in df_columns)
                 df_columns.remove(column_attributes[LABEL])
+
+                # check not reserved key
+                self.assertFalse(column_name in MONGO_RESERVED_KEY_STRS)
 
             # ensure all columns in df_columns have store columns
             self.assertTrue(len(df_columns) == 0)

@@ -7,7 +7,8 @@ from controllers.datasets import Datasets
 from controllers.calculations import Calculations
 from lib.constants import CREATED_AT, DATETIME, ERROR, ID, MODE_INFO,\
     MODE_RELATED, MODE_SUMMARY, MONGO_RESERVED_KEYS,\
-    MONGO_RESERVED_KEY_PREFIX, SCHEMA, SIMPLETYPE, SUCCESS, SUMMARY, UPDATED_AT
+    MONGO_RESERVED_KEY_PREFIX, SCHEMA, SIMPLETYPE, SUCCESS, SUMMARY,\
+    UPDATED_AT, MONGO_RESERVED_KEY_STRS
 from lib.decorators import requires_internet
 from lib.io import create_dataset_from_url
 from models.dataset import Dataset
@@ -109,12 +110,9 @@ class TestDatasets(TestBase):
         self.assertTrue(ID in result)
         self.assertEqual(num_rows_after_update, num_rows + 1)
         results = json.loads(self.controller.GET(self.dataset_id))
-        # TODO: deal with reserved keys
-        temp_keys_to_ignore = [MONGO_RESERVED_KEY_PREFIX + key
-                               for key in MONGO_RESERVED_KEYS]
         for result in results:
             for column in self.schema.keys():
-                if column not in temp_keys_to_ignore:
+                if column not in MONGO_RESERVED_KEY_STRS:
                     self.assertTrue(
                         column in result.keys(),
                         "column %s not in %s" % (column, result.keys()))
