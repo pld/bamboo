@@ -2,7 +2,7 @@ from tests.test_base import TestBase
 
 from lib.parser import Parser
 from lib.tasks.calculator import calculate_column
-from lib.utils import build_labels_to_slugs, recognize_dates, slugify_columns
+from lib.utils import recognize_dates, slugify_columns
 from models.dataset import Dataset
 from models.observation import Observation
 
@@ -11,13 +11,14 @@ class TestCalculator(TestBase):
 
     def setUp(self):
         TestBase.setUp(self)
-        self.dataset = Dataset.save(
+        self.dataset = Dataset()
+        self.dataset.save(
             self.test_dataset_ids['good_eats_with_calculations.csv'])
         dframe = recognize_dates(
             self.test_data['good_eats_with_calculations.csv'])
-        Observation.save(dframe, self.dataset)
+        Observation().save(dframe, self.dataset)
         self.group = None
-        self.parser = Parser(self.dataset)
+        self.parser = Parser(self.dataset.record)
         self.places = 5
 
     def _equal_msg(self, calculated, stored, formula):
@@ -33,7 +34,7 @@ class TestCalculator(TestBase):
         self.start_num_cols = len(columns)
         self.added_num_cols = 0
 
-        column_labels_to_slugs = build_labels_to_slugs(self.dataset)
+        column_labels_to_slugs = self.dataset.build_labels_to_slugs()
         self.label_list, self.slugified_key_list = [
             list(ary) for ary in zip(*column_labels_to_slugs.items())
         ]
@@ -53,6 +54,6 @@ class TestCalculator(TestBase):
                 task = calculate_column(self.parser, self.dataset, self.dframe,
                                         formula, name, self.group)
 
-            self.column_labels_to_slugs = build_labels_to_slugs(self.dataset)
+            self.column_labels_to_slugs = self.dataset.build_labels_to_slugs()
 
             self._test_calculation_results(name, formula)

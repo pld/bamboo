@@ -3,9 +3,8 @@ from collections import defaultdict
 from celery.task import task
 from pandas import concat, DataFrame, Series
 
-from lib.constants import DATASET_ID, LINKED_DATASETS
+from lib.constants import LINKED_DATASETS
 from lib.parser import Parser
-from lib.utils import build_labels_to_slugs
 from models.dataset import Dataset
 from models.observation import Observation
 
@@ -44,19 +43,20 @@ def calculate_column(parser, dataset, dframe, formula, name, group=None,
             result = FUNCTION_MAP[aggregation](new_column)
             new_column = Series([result])
 
-        linked_datasets = dataset.get(LINKED_DATASETS, {})
+        linked_datasets = dataset.linked_datasets
         # Mongo does not allow None as a key
         agg_dataset_id = linked_datasets.get(group or '', None)
 
         if agg_dataset_id is None:
-            agg_dataset = Dataset.create()
+            agg_dataset = Dataset()
+            agg_dataset.save()
             new_dframe = agg_dframe if group else DataFrame({name: new_column})
 
-            Observation.save(new_dframe, agg_dataset)
+            Observation().save(new_dframe, agg_dataset)
 
             # store a link to the new dataset
-            linked_datasets[group or ''] = agg_dataset[DATASET_ID]
-            Dataset.update(dataset, {LINKED_DATASETS: linked_datasets})
+            linked_datasets[group or ''] = agg_dataset.dataset_id
+            dataset.update({LINKED_DATASETS: linked_datasets})
         else:
             agg_dataset = Dataset.find_one(agg_dataset_id)
             new_dframe = Observation.find(agg_dataset, as_df=True)
@@ -82,15 +82,15 @@ def calculate_updates(dataset, new_data, calculations, FORMULA, NAME):
 
     # calculate columns
     # TODO update aggregated datasets
-    parser = Parser(dataset)
-    labels_to_slugs = build_labels_to_slugs(dataset)
+    parser = Parser(dataset.record)
+    labels_to_slugs = dataset.build_labels_to_slugs()
 
     for calculation in calculations:
         aggregation, function = \
-            parser.parse_formula(calculation[FORMULA])
+            parser.parse_formula(calculation.record[FORMULA])
         new_column = new_dframe.apply(function, axis=1,
                                       args=(parser, ))
-        potential_name = calculation[NAME]
+        potential_name = calculation.record[NAME]
         if potential_name not in existing_dframe.columns:
             new_column.name = labels_to_slugs[potential_name]
         else:

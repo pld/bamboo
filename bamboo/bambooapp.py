@@ -21,5 +21,5 @@ cherrypy.tree.mount(root, '/')
 
 cherrypy.config.update({'environment': 'embedded'})
 
-application = cherrypy.Application(root, script_name='/', 
+application = cherrypy.Application(root, script_name='/',
                                    config='config/prod.conf')

@@ -2,8 +2,8 @@ from collections import defaultdict
 
 import numpy as np
 
-from lib.constants import LINKED_DATASETS, SCHEMA
-from lib.utils import build_labels_to_slugs, slugify_columns
+from lib.constants import SCHEMA
+from lib.utils import slugify_columns
 from models.dataset import Dataset
 from models.observation import Observation
 from test_calculator import TestCalculator
@@ -50,7 +50,7 @@ class TestAggregations(TestCalculator):
             return self.AGGREGATION_RESULTS[formula]
 
     def _test_calculation_results(self, name, formula):
-        linked_dataset_id = self.dataset[LINKED_DATASETS][self.group or '']
+        linked_dataset_id = self.dataset.linked_datasets[self.group or '']
 
         if self.group not in self.expected_length and self.group is not None:
             self.expected_length[self.group] = 1
@@ -58,16 +58,12 @@ class TestAggregations(TestCalculator):
         # add an extra column for the group names
         self.expected_length[self.group] += 1
 
+        # retrieve linked dataset
         self.assertFalse(linked_dataset_id is None)
-        #self.assertEqual(len(linked_dataset_ids),
-        #                 self.expected_length[self.group])
-
-        # we are interested in the new dataset
-        #linked_dataset_id = linked_dataset_ids[-1]
         linked_dataset = Dataset.find_one(linked_dataset_id)
         linked_dframe = Observation.find(linked_dataset, as_df=True)
 
-        column_labels_to_slugs = build_labels_to_slugs(linked_dataset)
+        column_labels_to_slugs = linked_dataset.build_labels_to_slugs()
         name = column_labels_to_slugs[name]
 
         self.assertTrue(name in linked_dframe.columns)
@@ -75,9 +71,9 @@ class TestAggregations(TestCalculator):
                          self.expected_length[self.group])
 
         # test that the schema is up to date
-        self.assertTrue(SCHEMA in linked_dataset.keys())
-        self.assertTrue(isinstance(linked_dataset[SCHEMA], dict))
-        schema = linked_dataset[SCHEMA]
+        self.assertTrue(SCHEMA in linked_dataset.record.keys())
+        self.assertTrue(isinstance(linked_dataset.data_schema, dict))
+        schema = linked_dataset.data_schema
 
         # test slugified column names
         column_names = [name]

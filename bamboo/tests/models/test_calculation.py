@@ -11,15 +11,17 @@ class TestCalculation(TestBase):
 
     def setUp(self):
         TestBase.setUp(self)
-        self.dataset = Dataset.save(self.test_dataset_ids['good_eats.csv'])
+        self.dataset = Dataset()
+        self.dataset.save(self.test_dataset_ids['good_eats.csv'])
         self.formula = 'rating'
         self.name = 'test'
 
     def _save_observations_and_calculation(self, formula=None):
         if not formula:
             formula = self.formula
-        Observation.save(self.test_data['good_eats.csv'], self.dataset)
-        return Calculation.save(self.dataset, formula, self.name)
+        Observation().save(self.test_data['good_eats.csv'], self.dataset)
+        calculation = Calculation()
+        return calculation.save(self.dataset, formula, self.name)
 
     def test_save(self):
         record = self._save_observations_and_calculation()
@@ -40,15 +42,15 @@ class TestCalculation(TestBase):
         self.assertTrue('Parse Failure' in record[ERROR].__str__())
 
     def test_save_improper_formula_no_data(self):
-        record = Calculation.save(self.dataset, 'NON_EXISTENT_COLUMN',
-                                  self.name)
+        record = Calculation().save(self.dataset, 'NON_EXISTENT_COLUMN',
+                                    self.name)
         self.assertTrue(isinstance(record, dict))
         self.assertTrue(ERROR in record.keys())
         self.assertTrue('Missing column' in record[ERROR].__str__())
 
     def test_save_unparsable_formula_no_data(self):
-        record = Calculation.save(self.dataset, '=NON_EXISTENT_COLUMN',
-                                  self.name)
+        record = Calculation().save(self.dataset, '=NON_EXISTENT_COLUMN',
+                                    self.name)
         self.assertTrue(isinstance(record, dict))
         self.assertTrue(ERROR in record.keys())
         self.assertTrue('Parse Failure' in record[ERROR].__str__())
@@ -56,4 +58,4 @@ class TestCalculation(TestBase):
     def test_find(self):
         record = self._save_observations_and_calculation()
         rows = Calculation.find(self.dataset)
-        self.assertEqual(record, rows[0])
+        self.assertEqual(record, rows[0].record)

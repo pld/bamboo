@@ -2,7 +2,7 @@ import json
 
 import cherrypy
 
-from lib.constants import ALL, ERROR, ID, LINKED_DATASETS, MODE_RELATED,\
+from lib.constants import ALL, ERROR, ID, MODE_RELATED,\
     MODE_SUMMARY, MODE_INFO, SCHEMA, SUCCESS
 from lib.exceptions import JSONError
 from lib.mongo import mongo_to_json
@@ -26,9 +26,9 @@ class Datasets(object):
         dataset = Dataset.find_one(dataset_id)
         result = None
 
-        if dataset:
-            Dataset.delete(dataset_id)
-            Observation.delete(dataset)
+        if dataset.record:
+            dataset.delete()
+            Observation.delete_all(dataset)
             result = {SUCCESS: 'deleted dataset: %s' % dataset_id}
         return dump_or_error(result, 'id not found')
 
@@ -46,11 +46,11 @@ class Datasets(object):
         error = 'id not found'
 
         try:
-            if dataset:
+            if dataset.record:
                 if mode == MODE_INFO:
-                    result = Dataset.schema(dataset)
+                    result = dataset.schema()
                 elif mode == MODE_RELATED:
-                    result = dataset[LINKED_DATASETS]
+                    result = dataset.linked_datasets
                 elif mode == MODE_SUMMARY:
                     result = summarize(dataset, query, select, group)
                 elif mode is False:
@@ -74,7 +74,7 @@ class Datasets(object):
         # if we have a dataset_id then try to update
         if dataset_id:
             dataset = Dataset.find_one(dataset_id)
-            if dataset:
+            if dataset.record:
                 Calculation.update(
                     dataset,
                     data=json.loads(cherrypy.request.body.read()))

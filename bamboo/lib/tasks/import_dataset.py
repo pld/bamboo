@@ -13,4 +13,4 @@ def import_dataset(_file, dataset):
     For reading a URL and saving the corresponding dataset.
     """
     dframe = recognize_dates(read_csv(_file))
-    Observation.save(dframe, dataset)
+    Observation().save(dframe, dataset)

@@ -23,7 +23,7 @@ def summarize(dataset, query, select, group):
         return {ERROR: "group: '%s' is not categorical." % group}
 
     # check cached stats for group and update as necessary
-    stats = dataset.get(STATS, {})
+    stats = dataset.stats
     if not stats.get(group):
         stats = {ALL: summarize_df(dframe)} if group == ALL \
             else summarize_with_groups(dframe, stats, group)
