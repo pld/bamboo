@@ -99,8 +99,12 @@ To work on the code:
 1. fork this github project
 2. add tests for your new feature
 3. add the code for your new feature
-4. ensure all existing tests and your new tests are passing
-5. submit a pull request
+4. ensure it is pep8
+    - ``pip install pep8``
+    - ``pep8 bamboo``
+5. ensure all existing tests and your new tests are passing
+    - ``cd bamboo && ./test.sh``
+6. submit a pull request
 
 Example Usage
 -------------
