@@ -100,10 +100,15 @@ To work on the code:
 2. add tests for your new feature
 3. add the code for your new feature
 4. ensure it is pep8
-    - ``pip install pep8``
-    - ``pep8 bamboo``
+
+    ``$ pip install pep8``
+    
+    ``$ pep8 bamboo``
+
 5. ensure all existing tests and your new tests are passing
-    - ``cd bamboo && ./test.sh``
+
+    ``$ cd bamboo && ./test.sh``
+
 6. submit a pull request
 
 Example Usage
