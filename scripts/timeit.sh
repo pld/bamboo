@@ -9,14 +9,13 @@ GROUP[1]='research_asst_name'
 RD_IDX=0
 HOST="http://bamboo.io"
 
-while getopts ":l:r:g:" opt
+while getopts "lr:g:" opt
 do
   case "$opt" in
     l) HOST='http://localhost:8080' ;;
     r) RD_IDX=$OPTARG ;;
-    g) GROUP_BY=$OPTARG;;
+    g) GROUP_BY=$OPTARG ;;
   esac
-
 done
 
 # set defaults
@@ -30,9 +29,7 @@ HOSTURI=$HOST/datasets
 
 echo
 echo host: $HOST
-echo id: $ID
 echo data path: $DATAPATH
-echo --------------------
 
 cd `pwd`
 
@@ -44,6 +41,8 @@ POSTTIME=$(echo "$END - $START" | bc)
 # strip out id
 ID=`echo "$RET" | sed 's/.*: "\(\w*\).*/\1/'`
 
+echo id: $ID
+echo --------------------
 echo post time: $POSTTIME
 
 START=$(date '+%s.%N')
