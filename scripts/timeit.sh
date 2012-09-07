@@ -1,20 +1,49 @@
 #!/bin/bash
 
+REMOTE_DATA[0]='https://opendata.go.ke/api/views/i6vz-a543/rows.csv'
+REMOTE_DATA[1]='https://formhub.org/north_ghana/forms/_08_Water_points_train3/data.csv'
+
+GROUP[0]='district'
+GROUP[1]='research_asst_name'
+
+RD_IDX=0
+HOST="http://bamboo.io"
+
+while getopts ":l:r:g:" opt
+do
+  case "$opt" in
+    l) HOST='http://localhost:8080' ;;
+    r) RD_IDX=$OPTARG ;;
+    g) GROUP_BY=$OPTARG;;
+  esac
+
+done
+
 # set defaults
-DATAPATH=$1
-: ${DATAPATH:='tests/fixtures/good_eats.csv'}
-GROUPBY=$2
-HOSTURI='http://localhost:8080/datasets'
+DATAPATH=${REMOTE_DATA[$RD_IDX]}
+if [ -z "$GROUP_BY" ]
+then
+  GROUP_BY=${GROUP[$RD_IDX]}
+fi
+
+HOSTURI=$HOST/datasets
+
+echo
+echo host: $HOST
+echo id: $ID
+echo data path: $DATAPATH
+echo --------------------
 
 cd `pwd`
 
 START=$(date '+%s.%N')
-RET=$(curl -sX POST -d "url=file://$DATAPATH" $HOSTURI)
+RET=$(curl -sX POST -d "url=$DATAPATH" $HOSTURI)
 END=$(date '+%s.%N')
 POSTTIME=$(echo "$END - $START" | bc)
-ID=$(echo $RET | sed 's/.*"\([0-9,a-f]\+\)".*/\1/')
 
-echo id: $ID
+# strip out id
+ID=`echo "$RET" | sed 's/.*: "\(\w*\).*/\1/'`
+
 echo post time: $POSTTIME
 
 START=$(date '+%s.%N')
@@ -31,23 +60,12 @@ SUMMARYTIME=$(echo "$END - $START" | bc)
 
 echo summary time: $SUMMARYTIME
 
-if [ -n "${GROUPBY}" ]
+if [ -n "${GROUP_BY}" ]
 then
     START=$(date '+%s.%N')
-    curl -s "$HOSTURI/$ID/summary?group=$GROUPBY" > /dev/null
+    curl -s "$HOSTURI/$ID/summary?group=$GROUP_BY" > /dev/null
     END=$(date '+%s.%N')
     GROUPTIME=$(echo "$END - $START" | bc)
 
-    echo group time: $GROUPTIME
-fi
-
-echo
-echo data path: $DATAPATH
-echo --------------------
-echo post time: $POSTTIME
-echo get time: $GETTIME
-echo summary time: $SUMMARYTIME
-if [ -n "${GROUPBY}" ]
-then
     echo group time: $GROUPTIME
 fi
