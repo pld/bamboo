@@ -84,5 +84,3 @@ def calculate_updates(dataset, new_data, calculations, FORMULA, NAME):
     updated_dframe = Observation.update(updated_dframe, dataset)
 
     dataset.clear_summary_stats(ALL)
-
-    return updated_dframe
