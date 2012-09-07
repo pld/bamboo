@@ -39,6 +39,6 @@ class TestCalculations(TestBase):
         self.assertTrue(isinstance(dataset.stats, dict))
         self.assertTrue(isinstance(dataset.stats[ALL], dict))
         self._post_formula()
-        # [STATS][ALL] should be removed
+        # stats should have new column for calculation
         dataset = Dataset.find_one(self.dataset_id)
-        self.assertEqual(dataset.stats.get(ALL), None)
+        self.assertTrue(self.name in dataset.stats.get(ALL).keys())

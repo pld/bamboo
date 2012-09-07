@@ -79,6 +79,8 @@ class Observation(AbstractModel):
         if len(rows):
             self.collection.insert(rows, safe=True)
 
+        dataset.summarize.delay(dataset)
+
     @classmethod
     def update(cls, dframe, dataset):
         """

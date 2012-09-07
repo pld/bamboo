@@ -7,7 +7,6 @@ from lib.constants import ALL, ERROR, ID, MODE_RELATED,\
 from lib.exceptions import JSONError
 from lib.mongo import mongo_to_json
 from lib.io import create_dataset_from_url, create_dataset_from_csv
-from lib.tasks.summarize import summarize
 from lib.utils import dump_or_error
 from models.calculation import Calculation
 from models.dataset import Dataset
@@ -51,7 +50,7 @@ class Datasets(object):
                 elif mode == MODE_RELATED:
                     result = dataset.linked_datasets
                 elif mode == MODE_SUMMARY:
-                    result = summarize(dataset, query, select, group)
+                    result = dataset.summarize(dataset, query, select, group)
                 elif mode is False:
                     return mongo_to_json(dataset.observations(query, select))
                 else:
@@ -81,18 +80,18 @@ class Datasets(object):
             else:
                 return json.dumps({ERROR:
                                    'dataset for this id does not exist'})
+        else:
+            # no dataset_id, try to load from file handle
+            result = None
+            error = 'url or csv_file required'
 
-        # no dataset_id, try to load from file handle
-        result = None
-        error = 'url or csv_file required'
+            try:
+                if url:
+                    result = create_dataset_from_url(url)
 
-        try:
-            if url:
-                result = create_dataset_from_url(url)
-
-            if csv_file:
-                result = create_dataset_from_csv(csv_file)
-        except ValueError as e:
-            error = e.__str__()
+                if csv_file:
+                    result = create_dataset_from_csv(csv_file)
+            except ValueError as e:
+                error = e.__str__()
 
         return dump_or_error(result, error)

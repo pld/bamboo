@@ -71,6 +71,12 @@ class TestDatasets(TestBase):
                             'col (slug): %s in: %s' % (slug, result_keys))
             self.assertTrue(SUMMARY in results[slug].keys())
 
+    def _test_summary_built(self, result):
+        # check that summary is created
+        self.dataset_id = result[ID]
+        results = self.controller.GET(self.dataset_id, mode=MODE_SUMMARY)
+        return self._test_summary_results(results)
+
     def _test_get_with_query_or_select(self, query='{}', select=None):
         self._post_file()
         results = json.loads(self.controller.GET(self.dataset_id, query=query,
@@ -90,6 +96,7 @@ class TestDatasets(TestBase):
         self.assertEqual(results.keys(), groups)
         linked_dataset_id = results[groups[0]]
         self.assertTrue(isinstance(linked_dataset_id, basestring))
+
         # inspect linked dataset
         return json.loads(self.controller.GET(linked_dataset_id))
 
@@ -125,6 +132,9 @@ class TestDatasets(TestBase):
         self.assertTrue(isinstance(result, dict))
         self.assertTrue(ID in result)
 
+        results = self._test_summary_built(result)
+        self._test_summary_no_group(results)
+
     def test_POST_file_as_url_failure(self):
         result = json.loads(self.controller.POST(url=self._file_uri))
         self.assertTrue(isinstance(result, dict))
@@ -135,6 +145,8 @@ class TestDatasets(TestBase):
         result = json.loads(self.controller.POST(url=self.url))
         self.assertTrue(isinstance(result, dict))
         self.assertTrue(ID in result)
+
+        self._test_summary_built(result)
 
     def test_POST_nonexistent_url(self):
         result = json.loads(self.controller.POST(url='http://noformhub.org/'))
@@ -294,6 +306,7 @@ class TestDatasets(TestBase):
         self.assertEqual(results.keys(), groups)
         linked_dataset_id = results[group]
         self.assertTrue(isinstance(linked_dataset_id, basestring))
+
         # inspect linked dataset
         results = json.loads(self.controller.GET(linked_dataset_id))
         row_keys = [group, 'sum_gps_alt_']

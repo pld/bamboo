@@ -2,12 +2,14 @@ import uuid
 from time import gmtime, strftime
 
 from celery.contrib.methods import task
+import numpy as np
 
-from lib.constants import ATTRIBUTION, CREATED_AT, DATASET_ID,\
+from lib.constants import ALL, ATTRIBUTION, CREATED_AT, DATASET_ID,\
     DATASET_OBSERVATION_ID, DESCRIPTION, DTYPE_TO_OLAP_TYPE_MAP,\
-    DTYPE_TO_SIMPLETYPE_MAP, ID, LABEL, LICENSE, LINKED_DATASETS,\
+    DTYPE_TO_SIMPLETYPE_MAP, ERROR, ID, LABEL, LICENSE, LINKED_DATASETS,\
     MONGO_RESERVED_KEY_STRS, OLAP_TYPE,\
     SCHEMA, SIMPLETYPE, STATS, UPDATED_AT
+from lib.summary import summarize_df, summarize_with_groups
 from lib.utils import reserve_encoded, slugify_columns,\
     type_for_data_and_dtypes
 from models.abstract_model import AbstractModel
@@ -70,6 +72,31 @@ class Dataset(AbstractModel):
     def delete(self):
         super(self.__class__, self).delete({DATASET_ID: self.dataset_id})
         Observation.delete_all(self)
+
+    @task
+    def summarize(self, query='{}', select=None, group=ALL):
+        """
+        Return a summary for the rows/values filtered by *query* and *select*
+        and grouped by *group* or the overall summary if no group is specified.
+        """
+        # narrow list of observations via query/select
+        dframe = Observation.find(self, query, select, as_df=True)
+
+        # do not allow group by numeric types
+        # TODO check schema for valid groupby columns once included
+        _type = dframe.dtypes.get(group)
+        if group != ALL and (_type is None or _type.type != np.object_):
+            return {ERROR: "group: '%s' is not categorical." % group}
+
+        # check cached stats for group and update as necessary
+        stats = self.stats
+        if not stats.get(group):
+            stats = {ALL: summarize_df(dframe)} if group == ALL \
+                else summarize_with_groups(dframe, stats, group)
+            self.update({STATS: stats})
+        stats_to_return = stats.get(group)
+
+        return stats_to_return if group == ALL else {group: stats_to_return}
 
     @classmethod
     def find(cls, dataset_id):
