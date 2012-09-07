@@ -41,7 +41,10 @@ class Dataset(AbstractModel):
     def linked_datasets(self):
         return self.record.get(LINKED_DATASETS, {})
 
-    def clear_summary_stats(self, field):
+    def clear_linked_datasets(self):
+        self.update({LINKED_DATASETS: {}})
+
+    def clear_summary_stats(self, field=ALL):
         """
         Invalidate summary stats for *field*.
         """

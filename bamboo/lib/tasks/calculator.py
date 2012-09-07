@@ -6,7 +6,7 @@ from pandas import concat, DataFrame, Series
 from lib.aggregator import Aggregator
 from lib.parser import Parser
 from models.observation import Observation
-
+from models.dataset import Dataset
 
 @task
 def calculate_column(parser, dataset, dframe, formula, name, group=None,
@@ -18,7 +18,7 @@ def calculate_column(parser, dataset, dframe, formula, name, group=None,
 
     This can result in race-conditions when:
 
-    - deleting, ``controllers.Datasets.DELETE``
+    - deleting ``controllers.Datasets.DELETE``
     - updating ``controllers.Datasets.POST([dataset_id])``
 
     Therefore, perform these actions asychronously.
@@ -47,7 +47,7 @@ def calculate_updates(dataset, new_data, calculations, FORMULA, NAME):
 
     This can result in race-conditions when:
 
-    - deleting, ``controllers.Datasets.DELETE``
+    - deleting ``controllers.Datasets.DELETE``
     - updating ``controllers.Datasets.POST([dataset_id])``
 
     Therefore, perform these actions asychronously.
@@ -61,9 +61,20 @@ def calculate_updates(dataset, new_data, calculations, FORMULA, NAME):
     new_dframe = DataFrame(filtered_data)
 
     # calculate columns
-    # TODO update aggregated datasets
     parser = Parser(dataset.record)
     labels_to_slugs = dataset.build_labels_to_slugs()
+
+    labels_to_slugs_and_groups = dict()
+
+    # extract info from linked datasets
+    for group, dataset_id in dataset.linked_datasets.items():
+        linked_dataset = Dataset.find_one(dataset_id)
+        for label, slug in linked_dataset.build_labels_to_slugs().items():
+            labels_to_slugs_and_groups[label] = (slug, group)
+        linked_dataset.delete(linked_dataset)
+
+    # remove linked datasets
+    dataset.clear_linked_datasets()
 
     for calculation in calculations:
         aggregation, function = \
@@ -72,7 +83,14 @@ def calculate_updates(dataset, new_data, calculations, FORMULA, NAME):
                                       args=(parser, ))
         potential_name = calculation.record[NAME]
         if potential_name not in existing_dframe.columns:
-            new_column.name = labels_to_slugs[potential_name]
+            if potential_name not in labels_to_slugs:
+                # it is a linked calculation
+                slug, group = labels_to_slugs_and_groups[potential_name]
+                calculate_column(parser, dataset, existing_dframe,
+                                 potential_name, slug, group)
+                continue
+            else:
+                new_column.name = labels_to_slugs[potential_name]
         else:
             new_column.name = potential_name
         new_dframe = new_dframe.join(new_column)
@@ -83,4 +101,4 @@ def calculate_updates(dataset, new_data, calculations, FORMULA, NAME):
     # update (overwrite) the dataset with the new merged version
     updated_dframe = Observation.update(updated_dframe, dataset)
 
-    dataset.clear_summary_stats(ALL)
+    dataset.clear_summary_stats()

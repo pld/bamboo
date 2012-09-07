@@ -1,4 +1,4 @@
-from lib.constants import ALL, DATASET_ID, ERROR, STATS
+from lib.constants import DATASET_ID, ERROR, STATS
 from lib.exceptions import ParseError
 from lib.parser import Parser, ParserContext
 from lib.tasks.calculator import calculate_column, calculate_updates
@@ -49,7 +49,7 @@ class Calculation(AbstractModel):
         }
         self.collection.insert(record, safe=True)
 
-        dataset.clear_summary_stats(ALL)
+        dataset.clear_summary_stats()
 
         # call remote calculate and pass calculation id
         calculate_column.delay(self.parser, dataset, dframe, formula, name,

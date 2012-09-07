@@ -111,19 +111,38 @@ class TestDatasets(TestBase):
         # mock the cherrypy server by setting the POST request body
         cherrypy.request.body = open(self._update_file_path, 'r')
         result = json.loads(self.controller.POST(dataset_id=self.dataset_id))
-        num_rows_after_update = len(json.loads(
-            self.controller.GET(self.dataset_id)))
         self.assertTrue(isinstance(result, dict))
         self.assertTrue(ID in result)
-        self.assertEqual(num_rows_after_update, num_rows + 1)
         results = json.loads(self.controller.GET(self.dataset_id))
+        num_rows_after_update = len(results)
+        self.assertEqual(num_rows_after_update, num_rows + 1)
         for result in results:
             for column in self.schema.keys():
-                if column not in MONGO_RESERVED_KEY_STRS:
-                    self.assertTrue(
-                        column in result.keys(),
-                        "column %s not in %s" % (column, result.keys()))
+                self.assertTrue(
+                    column in result.keys(),
+                    "column %s not in %s" % (column, result.keys()))
                     # TODO: check value somehow?
+
+    def test_POST_dataset_id_update_with_aggregation(self):
+        self._post_file()
+        self._post_calculations(
+            formulae=self.default_formulae + ['sum(amount)'])
+        num_rows = len(json.loads(self.controller.GET(self.dataset_id)))
+        # mock the cherrypy server by setting the POST request body
+        cherrypy.request.body = open(self._update_file_path, 'r')
+        result = json.loads(self.controller.POST(dataset_id=self.dataset_id))
+        self.assertTrue(isinstance(result, dict))
+        self.assertTrue(ID in result)
+        results = json.loads(self.controller.GET(self.dataset_id))
+        num_rows_after_update = len(results)
+        self.assertEqual(num_rows_after_update, num_rows + 1)
+        for result in results:
+            for column in self.schema.keys():
+                self.assertTrue(
+                    column in result.keys(),
+                    "column %s not in %s" % (column, result.keys()))
+                    # TODO: check value somehow?
+        self._test_mode_related()
 
     def test_POST_file(self):
         _file = open(self._file_path, 'r')
