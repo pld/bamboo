@@ -25,7 +25,7 @@ def get_json_value(value):
 
 def series_to_jsondict(series):
     return series if series is None else dict([
-        (str(key), get_json_value(value))
+        (unicode(key), get_json_value(value))
         for key, value in series.iteritems()
     ])
 
