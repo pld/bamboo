@@ -22,7 +22,6 @@ class Calculation(AbstractModel):
         Attempt to parse formula, then save formula, and add a task to
         calculate formula.
         """
-
         dframe = Observation.find(dataset, as_df=True)
 
         # attempt to get a row from the dataframe
@@ -50,11 +49,7 @@ class Calculation(AbstractModel):
         }
         self.collection.insert(record, safe=True)
 
-        # invalidate summary ALL since we have a new column
-        stats = dataset.stats
-        if stats:
-            stats.pop(ALL, None)
-            dataset.update({STATS: stats})
+        dataset.clear_summary_stats(ALL)
 
         # call remote calculate and pass calculation id
         calculate_column.delay(self.parser, dataset, dframe, formula, name,
@@ -69,5 +64,9 @@ class Calculation(AbstractModel):
 
     @classmethod
     def update(cls, dataset, data):
+        """
+        Update *dataset* with new *data*.
+        """
         calculations = Calculation.find(dataset)
-        calculate_updates(dataset, data, calculations, cls.FORMULA, cls.NAME)
+        calculate_updates.delay(dataset, data, calculations, cls.FORMULA,
+                                cls.NAME)

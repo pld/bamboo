@@ -7,7 +7,6 @@ from lib.constants import DATASET_OBSERVATION_ID, DB_BATCH_SIZE, SCHEMA
 from lib.exceptions import JSONError
 from lib.mongo import mongo_to_df
 from models.abstract_model import AbstractModel
-from models.dataset import Dataset
 
 
 class Observation(AbstractModel):

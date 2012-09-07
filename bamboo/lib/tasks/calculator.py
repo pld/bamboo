@@ -15,6 +15,13 @@ def calculate_column(parser, dataset, dframe, formula, name, group=None,
     For calculating new columns.
     Get necessary data given a calculation ID, execute calculation formula,
     store results in dataset the calculation refers to.
+
+    This can result in race-conditions when:
+
+    - deleting, ``controllers.Datasets.DELETE``
+    - updating ``controllers.Datasets.POST([dataset_id])``
+
+    Therefore, perform these actions asychronously.
     """
     # parse formula into function and variables
     aggregation, function = parser.parse_formula(formula)
@@ -33,7 +40,18 @@ def calculate_column(parser, dataset, dframe, formula, name, group=None,
     return new_dframe
 
 
+@task
 def calculate_updates(dataset, new_data, calculations, FORMULA, NAME):
+    """
+    Update dataset with new data.
+
+    This can result in race-conditions when:
+
+    - deleting, ``controllers.Datasets.DELETE``
+    - updating ``controllers.Datasets.POST([dataset_id])``
+
+    Therefore, perform these actions asychronously.
+    """
     # get the dataframe for this dataset
     existing_dframe = Observation.find(dataset, as_df=True)
 
@@ -64,5 +82,7 @@ def calculate_updates(dataset, new_data, calculations, FORMULA, NAME):
 
     # update (overwrite) the dataset with the new merged version
     updated_dframe = Observation.update(updated_dframe, dataset)
+
+    dataset.clear_summary_stats(ALL)
 
     return updated_dframe

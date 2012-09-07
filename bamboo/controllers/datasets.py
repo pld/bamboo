@@ -27,8 +27,7 @@ class Datasets(object):
         result = None
 
         if dataset.record:
-            dataset.delete()
-            Observation.delete_all(dataset)
+            task = dataset.delete.delay(dataset)
             result = {SUCCESS: 'deleted dataset: %s' % dataset_id}
         return dump_or_error(result, 'id not found')
 
@@ -54,8 +53,7 @@ class Datasets(object):
                 elif mode == MODE_SUMMARY:
                     result = summarize(dataset, query, select, group)
                 elif mode is False:
-                    return mongo_to_json(Observation.find(dataset, query,
-                                                          select))
+                    return mongo_to_json(dataset.observations(query, select))
                 else:
                     error = 'unsupported API call'
         except JSONError, e:
