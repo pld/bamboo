@@ -18,11 +18,12 @@ class TestAggregations(TestCalculator):
 
     GROUP_TO_RESULTS = {
         ('food_type', ):
-            pickle.load(
-                open('tests/fixtures/good_eats_agg_group_food_type.p', 'rb')),
+        pickle.load(
+            open('tests/fixtures/good_eats_agg_group_food_type.p', 'rb')),
         ('food_type', 'rating'):
-            pickle.load(
-                open('tests/fixtures/good_eats_agg_group_food_type_rating.p', 'rb')),
+        pickle.load(
+            open('tests/fixtures/good_eats_agg_group_food_type_rating.p',
+                 'rb')),
     }
 
     def setUp(self):
@@ -39,7 +40,8 @@ class TestAggregations(TestCalculator):
         if self.group:
             groups = tuple(self.group)
             res = self.GROUP_TO_RESULTS[groups][name]
-            column = row[self.group[0]] if len(self.group) <= 1 else tuple([row[group] for group in self.group])
+            column = row[self.group[0]] if len(self.group) <= 1 else tuple(
+                [row[group] for group in self.group])
             res = res[column]
             return res
         else:
@@ -55,7 +57,7 @@ class TestAggregations(TestCalculator):
 
         linked_dataset_id = self.dataset.linked_datasets[self.group_key]
 
-        if self.group_key not in self.expected_length and self.group is not None:
+        if not (self.group_key in self.expected_length or self.group is None):
             self.expected_length[self.group_key] = len(self.group)
 
         # add an extra column for the group names
