@@ -12,7 +12,7 @@ class Aggregator(object):
 
         if group:
             # groupby on dframe then run aggregation on groupby obj
-            self.new_dframe = dframe([[group]]).join(column).\
+            self.new_dframe = dframe[[group]].join(column).\
                 groupby(group, as_index=False).agg(aggregation)
         else:
             result = self.function_map(aggregation)
