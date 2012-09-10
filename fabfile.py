@@ -1,4 +1,5 @@
-import os, sys
+import os
+import sys
 
 from fabric.api import env, run, cd
 

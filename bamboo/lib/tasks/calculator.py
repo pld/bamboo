@@ -8,6 +8,7 @@ from lib.parser import Parser
 from models.observation import Observation
 from models.dataset import Dataset
 
+
 @task
 def calculate_column(parser, dataset, dframe, formula, name, group=None,
                      query=None):
