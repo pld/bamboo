@@ -4,7 +4,7 @@ REMOTE_DATA[0]='https://opendata.go.ke/api/views/i6vz-a543/rows.csv'
 REMOTE_DATA[1]='https://formhub.org/north_ghana/forms/_08_Water_points_train3/data.csv'
 
 GROUP[0]='district'
-GROUP[1]='research_asst_name'
+GROUP[1]='district'
 
 RD_IDX=0
 HOST="http://bamboo.io"
