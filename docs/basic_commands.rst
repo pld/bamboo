@@ -14,6 +14,12 @@ upload data from a URL to Bamboo:
 
 ``curl -X POST -d "url=http://formhub.org/mberg/forms/good_eats/data.csv" http://bamboo.io/datasets``
 
+returns::
+
+    {
+        "id": "8a3d74711475d8a51c84484fe73f24bd151242ea"
+    }
+
 upload data from a file to Bamboo:
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -22,6 +28,11 @@ filesystem
 
 ``curl -X POST -F csv_file=@/home/modilabs/good_eats.csv http://bamboo.io/datasets``
 
+returns::
+
+    {
+        "id": "8a3d74711475d8a51c84484fe73f24bd151242ea"
+    }
 
 Retrieve information about a dataset:
 -------------------------------------
@@ -46,7 +57,7 @@ returns::
                 "simpletype": "string"
             },
             ...
-        }
+        },
         "created_at": "2012-6-18 14:43:32",
         "updated_at": "2012-6-18 14:43:32"
     }
