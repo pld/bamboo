@@ -72,7 +72,7 @@ class Parser(object):
 
         - constants
             - ``9 + 5``,
-            - ``aliases
+        - aliases
             - ``rating``,
             - ``gps``,
         - arithmetic
@@ -103,7 +103,7 @@ class Parser(object):
             - ``amount + gps_alt) ^ 2 + 100``,
             - ``amount``,
             - ``amount < gps_alt - 100``,
-            - ``membership
+        - membership
             - ``rating in ["delectible"]``,
             - ``risk_factor in ["low_risk"]``,
             - ``amount in ["9.0", "2.0", "20.0"]``,
