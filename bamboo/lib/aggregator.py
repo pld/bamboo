@@ -12,16 +12,20 @@ class Aggregator(object):
 
         if group:
             # groupby on dframe then run aggregation on groupby obj
-            self.new_dframe = dframe[[group]].join(column).\
+            if not isinstance(group, list):
+                group = [group]
+            self.new_dframe = dframe[group].join(column).\
                 groupby(group, as_index=False).agg(aggregation)
+            group = str(group)
         else:
             result = self.function_map(aggregation)
             self.new_dframe = DataFrame({name: Series([result])})
+            group = ''
 
         linked_datasets = dataset.linked_datasets
 
         # MongoDB does not allow None as a key
-        agg_dataset_id = linked_datasets.get(group or '', None)
+        agg_dataset_id = linked_datasets.get(group, None)
 
         if agg_dataset_id is None:
             agg_dataset = Dataset()
@@ -30,7 +34,7 @@ class Aggregator(object):
             Observation().save(self.new_dframe, agg_dataset)
 
             # store a link to the new dataset
-            linked_datasets[group or ''] = agg_dataset.dataset_id
+            linked_datasets[group] = agg_dataset.dataset_id
             dataset.update({LINKED_DATASETS: linked_datasets})
         else:
             agg_dataset = Dataset.find_one(agg_dataset_id)

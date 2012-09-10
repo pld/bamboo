@@ -49,6 +49,10 @@ class TestAggregations(TestCalculator):
             return self.AGGREGATION_RESULTS[formula]
 
     def _test_calculation_results(self, name, formula):
+        if self.group:
+            if not isinstance(self.group, list):
+                self.group = [self.group]
+            self.group = str(self.group)
         linked_dataset_id = self.dataset.linked_datasets[self.group or '']
 
         if self.group not in self.expected_length and self.group is not None:
@@ -78,7 +82,9 @@ class TestAggregations(TestCalculator):
         column_names = [name]
         if self.group:
             column_names.append(self.group)
+        print schema.keys()
         for column_name in column_names:
+            print column_name
             self.assertTrue(column_name in schema.keys())
 
         for idx, row in linked_dframe.iterrows():
@@ -100,6 +106,6 @@ class TestAggregations(TestCalculator):
         self.group = 'food_type'
         self._test_calculator(delay=False)
 
-    #def test_calculator_with_multigroup(self):
-    #    self.group = ['food_type', 'rating']
-    #    self._test_calculator(delay=False)
+    def test_calculator_with_multigroup(self):
+        self.group = ['food_type', 'rating']
+        self._test_calculator(delay=False)
