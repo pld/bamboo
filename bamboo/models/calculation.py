@@ -17,7 +17,7 @@ class Calculation(AbstractModel):
     NAME = 'name'
     QUERY = 'query'
 
-    def save(self, dataset, formula, name, group=None, query=None):
+    def save(self, dataset, formula, name, group=None):
         """
         Attempt to parse formula, then save formula, and add a task to
         calculate formula.
@@ -45,7 +45,6 @@ class Calculation(AbstractModel):
             self.FORMULA: formula,
             self.GROUP: group,
             self.NAME: name,
-            self.QUERY: query,
         }
         self.collection.insert(record, safe=True)
 
@@ -53,7 +52,7 @@ class Calculation(AbstractModel):
 
         # call remote calculate and pass calculation id
         calculate_column.delay(self.parser, dataset, dframe, formula, name,
-                               group, query)
+                               group)
 
         self.record = record
         return self.record

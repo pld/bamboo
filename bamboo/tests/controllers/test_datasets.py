@@ -5,6 +5,7 @@ import cherrypy
 
 from controllers.datasets import Datasets
 from controllers.calculations import Calculations
+from lib.aggregator import Aggregator
 from lib.constants import CREATED_AT, DATETIME, ERROR, ID, MODE_INFO,\
     MODE_RELATED, MODE_SUMMARY, MONGO_RESERVED_KEYS,\
     MONGO_RESERVED_KEY_PREFIX, SCHEMA, SIMPLETYPE, SUCCESS, SUMMARY,\
@@ -293,6 +294,20 @@ class TestDatasets(TestBase):
             self.assertEqual(row.keys(), row_keys)
             self.assertTrue(isinstance(row.values()[0], basestring))
             self.assertTrue(isinstance(row.values()[1], float))
+
+    def test_GET_related_datasets_with_multigroup(self):
+        self._post_file()
+        group = 'food_type,rating'
+        self._post_calculations(self.default_formulae + ['sum(amount)'], group)
+        results = self._test_mode_related([group])
+        row_keys = (group.split(Aggregator.GROUP_DELIMITER) +
+                    ['sum_amount_']).sort()
+        for row in results:
+            sorted_row_keys = row.keys().sort()
+            self.assertEqual(sorted_row_keys, row_keys)
+            self.assertTrue(isinstance(row.values()[0], basestring))
+            self.assertTrue(isinstance(row.values()[1], basestring))
+            self.assertTrue(isinstance(row.values()[2], float))
 
     def test_GET_related_datasets_with_group_two_calculations(self):
         self._post_file()

@@ -7,21 +7,32 @@ from models.observation import Observation
 
 class Aggregator(object):
 
-    def __init__(self, dataset, dframe, column, group, aggregation, name):
+    GROUP_DELIMITER = ','
+
+    def __init__(self, dataset, dframe, column, group_str, aggregation, name):
+        """
+        Apply the *aggregation* to group columns in *group_str* and the *column
+        of the *dframe*.
+        Store the resulting *dframe* as a linked dataset for *dataset*.
+        If a linked dataset with the same groups already exists update this
+        dataset.  Otherwise create a new linked dataset.
+        """
         self.column = column
 
-        if group:
+        if group_str:
             # groupby on dframe then run aggregation on groupby obj
-            self.new_dframe = DataFrame(dframe[group]).join(column).\
-                groupby(group, as_index=False).agg(aggregation)
+            groups = group_str.split(self.GROUP_DELIMITER)
+            self.new_dframe = dframe[groups].join(column).\
+                groupby(groups, as_index=False).agg(aggregation)
         else:
             result = self.function_map(aggregation)
             self.new_dframe = DataFrame({name: Series([result])})
+            group_str = ''
 
         linked_datasets = dataset.linked_datasets
 
         # MongoDB does not allow None as a key
-        agg_dataset_id = linked_datasets.get(group or '', None)
+        agg_dataset_id = linked_datasets.get(group_str, None)
 
         if agg_dataset_id is None:
             agg_dataset = Dataset()
@@ -30,7 +41,7 @@ class Aggregator(object):
             Observation().save(self.new_dframe, agg_dataset)
 
             # store a link to the new dataset
-            linked_datasets[group or ''] = agg_dataset.dataset_id
+            linked_datasets[group_str] = agg_dataset.dataset_id
             dataset.update({LINKED_DATASETS: linked_datasets})
         else:
             agg_dataset = Dataset.find_one(agg_dataset_id)
