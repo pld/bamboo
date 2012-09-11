@@ -3,6 +3,7 @@ import pickle
 
 import numpy as np
 
+from lib.aggregator import Aggregator
 from lib.constants import SCHEMA
 from models.dataset import Dataset
 from models.observation import Observation
@@ -17,10 +18,10 @@ class TestAggregations(TestCalculator):
     }
 
     GROUP_TO_RESULTS = {
-        ('food_type', ):
+        'food_type':
         pickle.load(
             open('tests/fixtures/good_eats_agg_group_food_type.p', 'rb')),
-        ('food_type', 'rating'):
+        'food_type,rating':
         pickle.load(
             open('tests/fixtures/good_eats_agg_group_food_type_rating.p',
                  'rb')),
@@ -34,14 +35,14 @@ class TestAggregations(TestCalculator):
         }
         self.calculations = self.calculations_to_columns.keys()
         self.expected_length = defaultdict(int)
+        self.groups_list = None
 
     def _calculations_to_results(self, formula, row):
         name = self.calculations_to_columns[formula]
         if self.group:
-            groups = tuple(self.group)
-            res = self.GROUP_TO_RESULTS[groups][name]
-            column = row[self.group[0]] if len(self.group) <= 1 else tuple(
-                [row[group] for group in self.group])
+            res = self.GROUP_TO_RESULTS[self.group][name]
+            column = row[self.groups_list[0]] if len(self.groups_list) <= 1\
+                else tuple([row[group] for group in self.groups_list])
             res = res[column]
             return res
         else:
@@ -49,19 +50,17 @@ class TestAggregations(TestCalculator):
 
     def _test_calculation_results(self, name, formula):
         if self.group:
-            if not isinstance(self.group, list):
-                self.group = [self.group]
-            self.group_key = str(self.group)
+            self.groups_list = self.group.split(Aggregator.GROUP_DELIMITER)
         else:
-            self.group_key = ''
+            self.group = ''
 
-        linked_dataset_id = self.dataset.linked_datasets[self.group_key]
+        linked_dataset_id = self.dataset.linked_datasets[self.group]
 
-        if not (self.group_key in self.expected_length or self.group is None):
-            self.expected_length[self.group_key] = len(self.group)
+        if not (self.group in self.expected_length or self.group == ''):
+            self.expected_length[self.group] = len(self.groups_list)
 
         # add an extra column for the group names
-        self.expected_length[self.group_key] += 1
+        self.expected_length[self.group] += 1
 
         # retrieve linked dataset
         self.assertFalse(linked_dataset_id is None)
@@ -74,7 +73,7 @@ class TestAggregations(TestCalculator):
         self.assertTrue(name in linked_dframe.columns)
 
         self.assertEqual(len(linked_dframe.columns),
-                         self.expected_length[self.group_key])
+                         self.expected_length[self.group])
 
         # test that the schema is up to date
         self.assertTrue(SCHEMA in linked_dataset.record.keys())
@@ -83,8 +82,8 @@ class TestAggregations(TestCalculator):
 
         # test slugified column names
         column_names = [name]
-        if self.group:
-            column_names.extend(self.group)
+        if self.groups_list:
+            column_names.extend(self.groups_list)
         for column_name in column_names:
             self.assertTrue(column_name in schema.keys())
 
@@ -108,9 +107,9 @@ class TestAggregations(TestCalculator):
         self._test_calculator(delay=False)
 
     def test_calculator_with_group_list(self):
-        self.group = ['food_type']
+        self.group = 'food_type'
         self._test_calculator(delay=False)
 
     def test_calculator_with_multigroup_list(self):
-        self.group = ['food_type', 'rating']
+        self.group = 'food_type,rating'
         self._test_calculator(delay=False)

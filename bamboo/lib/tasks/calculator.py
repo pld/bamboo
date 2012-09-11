@@ -10,12 +10,12 @@ from models.dataset import Dataset
 
 
 @task
-def calculate_column(parser, dataset, dframe, formula, name, group=None,
-                     query=None):
+def calculate_column(parser, dataset, dframe, formula, name, group_str=None):
     """
-    For calculating new columns.
-    Get necessary data given a calculation ID, execute calculation formula,
-    store results in dataset the calculation refers to.
+    Calculate a new column based on *formula* store as *name*.
+    The *fomula* is parsed by the *parser* and applied to *dframe*.
+    The new column is joined to *dframe* and stored in *dataset*.
+    The *group* is only applicable to aggregations and groups for aggregations.
 
     This can result in race-conditions when:
 
@@ -32,7 +32,7 @@ def calculate_column(parser, dataset, dframe, formula, name, group=None,
 
     if aggregation:
         new_dframe = Aggregator(
-            dataset, dframe, new_column, group, aggregation, name
+            dataset, dframe, new_column, group_str, aggregation, name
         ).new_dframe
 
     else:
@@ -44,7 +44,7 @@ def calculate_column(parser, dataset, dframe, formula, name, group=None,
 @task
 def calculate_updates(dataset, new_data, calculations, FORMULA, NAME):
     """
-    Update dataset with new data.
+    Update dataset with *new_data*.
 
     This can result in race-conditions when:
 
