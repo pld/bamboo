@@ -48,7 +48,7 @@ returns::
         "schema": {
             "rating": {
                 "label": "Rating",
-                "olap_type": "numeric",
+                "olap_type": "measure",
                 "simpletype": "integer"
             },
             "food_type": {
