@@ -5,8 +5,8 @@ from pyparsing import alphanums, nums, oneOf, opAssoc, operatorPrecedence,\
 from lib.constants import SCHEMA
 from lib.exceptions import ParseError
 from lib.operations import EvalAndOp, EvalCaseOp, EvalComparisonOp,\
-    EvalConstant, EvalExpOp, EvalDate, EvalInOp, EvalMapOp, EvalMultOp, EvalNotOp,\
-    EvalOrOp, EvalPlusOp, EvalSignOp, EvalString
+    EvalConstant, EvalExpOp, EvalDate, EvalInOp, EvalMapOp, EvalMultOp,\
+    EvalNotOp, EvalOrOp, EvalPlusOp, EvalSignOp, EvalString
 
 
 class ParserContext(object):
@@ -193,8 +193,8 @@ class Parser(object):
         default_statement = (default + colon + atom).setParseAction(EvalMapOp)
         map_statement = (prop_expr + colon + atom).setParseAction(EvalMapOp)
 
-        case_list = map_statement + ZeroOrMore(comma +\
-            map_statement) + Optional(comma + default_statement)
+        case_list = map_statement + ZeroOrMore(
+            comma + map_statement) + Optional(comma + default_statement)
 
         case_expr = operatorPrecedence(case_list, [
             (case_op, 1, opAssoc.RIGHT, EvalCaseOp),

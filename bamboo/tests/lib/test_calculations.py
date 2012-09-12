@@ -54,8 +54,8 @@ class TestCalculations(TestCalculator):
             'date("09-04-2012") - submit_date > 21078000',
 
             # cases
-            'case food_type in ["morning_food"]: 1, food_type in ["lunch"]: 2, '
-            'default: 3',
+            'case food_type in ["morning_food"]: 1, food_type in ["lunch"]: 2,'
+            ' default: 3',
         ]
 
     def _test_calculation_results(self, name, formula):

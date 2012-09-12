@@ -59,7 +59,9 @@ returns::
             ...
         },
         "created_at": "2012-6-18 14:43:32",
-        "updated_at": "2012-6-18 14:43:32"
+        "updated_at": "2012-6-18 14:43:32",
+        "num_rows": "500",
+        "num_columns": "30"
     }
 
 

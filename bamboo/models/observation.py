@@ -3,7 +3,8 @@ import json
 from bson import json_util
 
 from config.db import Database
-from lib.constants import DATASET_OBSERVATION_ID, DB_BATCH_SIZE, SCHEMA
+from lib.constants import DATASET_OBSERVATION_ID, DB_BATCH_SIZE, NUM_COLUMNS,\
+    NUM_ROWS, SCHEMA
 from lib.exceptions import JSONError
 from lib.mongo import mongo_to_df
 from models.abstract_model import AbstractModel
@@ -56,7 +57,12 @@ class Observation(AbstractModel):
         if not SCHEMA in dataset.record:
             dataset.build_schema(dframe, dframe.dtypes)
 
-        # add metadata to file
+        # add metadata to dataset
+        dataset.update({
+            NUM_COLUMNS: len(dframe.columns),
+            NUM_ROWS: len(dframe),
+        })
+
         dataset_observation_id = dataset.dataset_observation_id
         rows = []
 

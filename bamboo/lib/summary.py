@@ -26,7 +26,6 @@ def summarize_df(dframe):
         (col, {
             SUMMARY: series_to_jsondict(summarize_series(dtypes[col], data))
         }) for col, data in dframe.iteritems()
-        if not col in MONGO_RESERVED_KEYS
     ])
 
 

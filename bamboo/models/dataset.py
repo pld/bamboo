@@ -7,7 +7,7 @@ import numpy as np
 from lib.constants import ALL, ATTRIBUTION, CREATED_AT, DATASET_ID,\
     DATASET_OBSERVATION_ID, DESCRIPTION, DTYPE_TO_OLAP_TYPE_MAP,\
     DTYPE_TO_SIMPLETYPE_MAP, ERROR, ID, LABEL, LICENSE, LINKED_DATASETS,\
-    MONGO_RESERVED_KEY_STRS, OLAP_TYPE,\
+    MONGO_RESERVED_KEY_STRS, NUM_COLUMNS, NUM_ROWS, OLAP_TYPE,\
     SCHEMA, SIMPLETYPE, STATS, UPDATED_AT
 from lib.summary import summarize_df, summarize_with_groups
 from lib.utils import reserve_encoded, slugify_columns,\
@@ -157,6 +157,8 @@ class Dataset(AbstractModel):
             ATTRIBUTION: '',
             CREATED_AT: self.record[CREATED_AT],
             UPDATED_AT: self.record[UPDATED_AT],
+            NUM_COLUMNS: self.record[NUM_COLUMNS],
+            NUM_ROWS: self.record[NUM_ROWS],
         }
 
     def build_labels_to_slugs(self):
