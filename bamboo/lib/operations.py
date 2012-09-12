@@ -15,6 +15,7 @@ class EvalTerm(object):
     """
 
     def __init__(self, tokens):
+        self.tokens = tokens
         self.value = tokens[0]
 
     def operator_operands(self, tokenlist):
@@ -203,6 +204,32 @@ class EvalInOp(EvalTerm):
     def _eval(self, row, context):
         val_to_test = str(self.value[0]._eval(row, context))
         val_list = []
-        for op, val in self.operator_operands(self.value[1:]):
+        # loop through values, skip atom literal
+        for val in self.value[1:]:
             val_list.append(val._eval(row, context))
         return val_to_test in val_list
+
+
+class EvalCaseOp(EvalTerm):
+    """
+    Class to eval case statements.
+    """
+
+    def _eval(self, row, context):
+        # skip 'case' literal
+        for token in self.value:
+            case_result = token._eval(row, context)
+            if case_result:
+                return case_result
+        return np.nan
+
+
+class EvalMapOp(EvalTerm):
+    """
+    Class to eval map statements.
+    """
+
+    def _eval(self, row, context):
+        if self.tokens[0] == 'default' or self.tokens[0]._eval(row, context):
+            return self.tokens[1]._eval(row, context)
+        return False

@@ -4,9 +4,9 @@ from pyparsing import alphanums, nums, oneOf, opAssoc, operatorPrecedence,\
 
 from lib.constants import SCHEMA
 from lib.exceptions import ParseError
-from lib.operations import EvalAndOp, EvalComparisonOp, EvalConstant,\
-    EvalExpOp, EvalDate, EvalInOp, EvalMultOp, EvalNotOp, EvalOrOp,\
-    EvalPlusOp, EvalSignOp, EvalString
+from lib.operations import EvalAndOp, EvalCaseOp, EvalComparisonOp,\
+    EvalConstant, EvalExpOp, EvalDate, EvalInOp, EvalMapOp, EvalMultOp, EvalNotOp,\
+    EvalOrOp, EvalPlusOp, EvalSignOp, EvalString
 
 
 class ParserContext(object):
@@ -28,7 +28,9 @@ class Parser(object):
     aggregation_names = ['sum']
     function_names = ['date', 'years']
     operator_names = ['and', 'or', 'not', 'in']
-    reserved_words = aggregation_names + function_names + operator_names
+    special_names = ['default']
+    reserved_words = aggregation_names + function_names + operator_names +\
+        special_names
 
     def __init__(self, dataset=None):
         self.context = ParserContext(dataset) if dataset else None
@@ -65,7 +67,8 @@ class Parser(object):
         neg         [notop]* equation | in
         conj        neg [andop neg]*
         disj        conj [orop conj]*
-        agg         agg ( disj )
+        case        'case' disj: atom[, disj: atom]*[, 'default': atom]
+        agg         agg ( case )
         =========   ==========
 
         Examples:
@@ -110,6 +113,9 @@ class Parser(object):
             - ``risk_factor in ["low_risk"]) and (amount in ["9.0", "20.0"])``,
         - dates
             - ``date("09-04-2012") - submit_date > 21078000``,
+        - cases
+            - ``case food_type in ["morning_food"]: 1, food_type in ["lunch"]:
+            2, default: 3``
 
         """
         if self.bnf:
@@ -123,8 +129,9 @@ class Parser(object):
         not_op = CaselessLiteral('not')
         and_op = CaselessLiteral('and')
         or_op = CaselessLiteral('or')
-        in_op = CaselessLiteral('in')
+        in_op = CaselessLiteral('in').suppress()
         comparison_op = oneOf('< <= > >= != =')
+        case_op = CaselessLiteral('case').suppress()
 
         # functions
         date_func = CaselessLiteral('date')
@@ -137,8 +144,12 @@ class Parser(object):
         close_bracket = Literal(']').suppress()
         open_paren = Literal('(').suppress()
         close_paren = Literal(')').suppress()
-        comma = Literal(',')
+        comma = Literal(',').suppress()
         dquote = Literal('"').suppress()
+        colon = Literal(':').suppress()
+
+        # case statment
+        default = CaselessLiteral('default')
 
         reserved_words = MatchFirst(map(Keyword, self.reserved_words))
 
@@ -179,8 +190,18 @@ class Parser(object):
             (or_op, 2, opAssoc.LEFT, EvalOrOp),
         ])
 
-        agg_expr = (sum_agg.suppress() + open_paren + prop_expr + close_paren
-                    ) | prop_expr
+        default_statement = (default + colon + atom).setParseAction(EvalMapOp)
+        map_statement = (prop_expr + colon + atom).setParseAction(EvalMapOp)
+
+        case_list = map_statement + ZeroOrMore(comma +\
+            map_statement) + Optional(comma + default_statement)
+
+        case_expr = operatorPrecedence(case_list, [
+            (case_op, 1, opAssoc.RIGHT, EvalCaseOp),
+        ]) | prop_expr
+
+        agg_expr = (sum_agg.suppress() + open_paren + case_expr + close_paren
+                    ) | case_expr
 
         # top level bnf
         self.bnf = agg_expr
