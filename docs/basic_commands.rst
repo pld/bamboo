@@ -202,11 +202,78 @@ returns::
         ...
     }
 
-
 with a grouping:
 ^^^^^^^^^^^^^^^^
 
 ``curl http://bamboo.io/datasets/8a3d74711475d8a51c84484fe73f24bd151242ea/summary?group=food_type``
+
+returns::
+
+    {
+        "food_type": {
+            "caffeination": {
+                "rating": {
+                    "summary": {
+                        "epic_eat": 1
+                     }
+                },
+                "description": {
+                    "summary": {
+                        "Turkish coffee": 1
+                    }
+                },
+                "amount": {
+                    "summary": {
+                        "count": 1.0, 
+                        "std": "null", 
+                        "min": 2.5, 
+                        "max": 2.5, 
+                        "50%": 2.5, 
+                        "25%": 2.5, 
+                        "75%": 2.5, 
+                        "mean": 2.5
+                    }
+                }, 
+                "risk_factor": {
+                    "summary": {
+                        "low_risk": 1
+                    }
+                },
+                ...
+            "deserts": {
+                "rating": {
+                    "summary": {
+                        "epic_eat": 2
+                    }
+                }, 
+                "description": {
+                    "summary": {
+                        "Baklava": 1,
+                        "Rice Pudding ": 1
+                    }
+                },
+                "amount": {
+                    "summary": {
+                        "count": 2.0,
+                        "std": 2.2980970388562794, 
+                        "min": 2.75,
+                        "max": 6.0,
+                        "50%": 4.375,
+                        "25%": 3.5625,
+                        "75%": 5.1875,
+                        "mean": 4.375
+                    }
+                },
+                "risk_factor": {
+                    "summary": {
+                        "low_risk": 2
+                    }
+                },
+                ...
+            }
+            ...
+        }
+    }
 
 Calculation formulas:
 ---------------------
@@ -231,20 +298,70 @@ store calculation formula:
 
 ``curl -X POST -d "name=amount_less_than_10&formula=amount<10" http://bamboo.io/calculations/8a3d74711475d8a51c84484fe73f24bd151242ea``
 
+returns::
+
+    {
+        "formula": "amount<10",
+        "group": null,
+        "name": "amount_less_than_10"
+    }
+
 retrieve newly calculated column:
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 ``curl -g http://bamboo.io/datasets/8a3d74711475d8a51c84484fe73f24bd151242ea?select='{"amount_less_than_10":1}'``
+
+returns::
+
+    [
+        {"amount_less_than_10": true},
+        {"amount_less_than_10": false},
+        {"amount_less_than_10": false},
+        {"amount_less_than_10": true},
+        {"amount_less_than_10": true},
+        {"amount_less_than_10": true},
+        {"amount_less_than_10": true},
+        {"amount_less_than_10": false},
+        {"amount_less_than_10": true},
+        {"amount_less_than_10": false},
+        {"amount_less_than_10": false},
+        {"amount_less_than_10": false},
+        {"amount_less_than_10": true},
+        {"amount_less_than_10": false},
+        {"amount_less_than_10": false},
+        {"amount_less_than_10": false},
+        {"amount_less_than_10": true},
+        {"amount_less_than_10": true},
+        {"amount_less_than_10": false},
+        {"amount_less_than_10": false},
+        {"amount_less_than_10": true}
+    ]
 
 store aggregation formula:
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 ``curl -X POST -d "name=sum_of_amount&formula=sum(amount)" http://bamboo.io/calculations/8a3d74711475d8a51c84484fe73f24bd151242ea``
 
+returns::
+
+    {
+        "formula": "sum(amount)",
+        "group": null,
+        "name": "sum_of_amount"
+    }
+
 store aggregation formula with group:
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 ``curl -X POST -d "name=sum_of_amount&formula=sum(amount)&group=food_type" http://bamboo.io/calculations/8a3d74711475d8a51c84484fe73f24bd151242ea``
+
+returns::
+
+    {
+        "formula": "sum(amount)",
+         "group": "food_type",
+         "name": "sum_of_amount"
+    }
 
 retrieve aggregated datasets:
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -253,3 +370,10 @@ retrieve aggregated datasets:
 
 Returns a map of groups (included an empty group) to dataset IDs for
 aggregation calculations.
+
+returns::
+
+    {
+        "": "9ae0ee32b78d445588742ac818c3d533",
+        "food_type": "643eaccb31e74216bfa7c16bfb0e79e5"
+    }
