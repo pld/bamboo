@@ -77,6 +77,8 @@ def recognize_dates(dframe):
         if dtype.type == np.object_:
             try:
                 column = dframe.columns[idx]
+                if is_float_nan(dframe[column][0]):
+                    raise ValueError
                 # attempt to parse first entry as a date
                 date_parse(dframe[column][0])
                 # it is parseable as a date, convert column to date

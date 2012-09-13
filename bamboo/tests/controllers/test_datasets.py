@@ -153,6 +153,20 @@ class TestDatasets(TestBase):
         results = self._test_summary_built(result)
         self._test_summary_no_group(results)
 
+    def test_POST_file_for_nan_float_cell(self):
+        """First data row has one cell blank, which is usually interpreted
+        as nan, a float value."""
+        _file_name = "nan_float_data.csv"
+        _file_path = self._file_path.replace(self._file_name, _file_name)
+        _file = open(_file_path, 'r')
+        mock_uploaded_file = MockUploadedFile(_file)
+        result = json.loads(self.controller.POST(csv_file=mock_uploaded_file))
+        self.assertTrue(isinstance(result, dict))
+        self.assertTrue(ID in result)
+
+        results = self._test_summary_built(result)
+        self._test_summary_no_group(results)
+
     def test_POST_file_as_url_failure(self):
         result = json.loads(self.controller.POST(url=self._file_uri))
         self.assertTrue(isinstance(result, dict))
