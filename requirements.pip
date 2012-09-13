@@ -6,3 +6,4 @@ scipy==0.10.1
 cherrypy==3.2.2
 celery-with-mongodb==3.0
 pyparsing==1.5.6
+simplejson==2.6.1

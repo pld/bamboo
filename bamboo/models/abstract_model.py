@@ -49,6 +49,8 @@ class AbstractModel(object):
     @property
     def clean_record(self):
         """
-        Clean records after taking them out of.
+        Remove reserved keys from records.
         """
-        return mongo_remove_reserved_keys(self.record)
+        _dict = mongo_remove_reserved_keys(self.record)
+        _dict.pop(DATASET_ID, None)
+        return _dict

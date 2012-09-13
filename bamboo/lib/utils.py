@@ -1,5 +1,5 @@
 from datetime import datetime
-import json
+import simplejson as json
 from math import isnan
 import re
 from calendar import timegm

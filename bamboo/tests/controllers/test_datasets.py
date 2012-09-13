@@ -197,6 +197,16 @@ class TestDatasets(TestBase):
         self.assertTrue(isinstance(results[0], dict))
         self.assertEqual(len(results), self.NUM_ROWS)
 
+    def test_GET_after_calculation(self):
+        self._post_file()
+        self._post_calculations(['amount < 4'])
+        results = json.loads(self.controller.GET(self.dataset_id,
+                    select='{"amount___4": 1}'))
+        print results
+        self.assertTrue(isinstance(results, list))
+        self.assertTrue(isinstance(results[0], dict))
+        self.assertEqual(len(results), self.NUM_ROWS)
+
     def test_GET_info(self):
         self._post_file()
         results = json.loads(self.controller.GET(self.dataset_id,
