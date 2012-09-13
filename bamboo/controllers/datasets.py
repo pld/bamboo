@@ -84,7 +84,7 @@ class Datasets(object):
         # if we have a dataset_id then try to update
         if dataset_id:
             dataset = Dataset.find_one(dataset_id)
-            if dataset.record:
+            if dataset:
                 Calculation.update(
                     dataset,
                     data=json.loads(cherrypy.request.body.read()))
