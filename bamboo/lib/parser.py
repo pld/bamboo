@@ -88,7 +88,7 @@ class Parser(object):
             - ``amount * gps_alt / 2.5``,
             - ``amount + gps_alt * gps_precision``,
         - precedence
-            - ``amount + gps_alt) * gps_precision``,
+            - ``(amount + gps_alt) * gps_precision``,
         - comparison
             - ``amount = 2``,
             - ``10 < amount``,
@@ -114,8 +114,7 @@ class Parser(object):
         - dates
             - ``date("09-04-2012") - submit_date > 21078000``,
         - cases
-            - ``case food_type in ["morning_food"]: 1, food_type in ["lunch"]:
-            2, default: 3``
+            - ``case food_type in ["morning_food"]: 1, default: 3``
 
         """
         if self.bnf:

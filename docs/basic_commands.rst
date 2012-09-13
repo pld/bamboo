@@ -363,8 +363,21 @@ returns::
          "name": "sum_of_amount"
     }
 
-retrieve aggregated datasets:
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+store aggregation formula with multi-group:
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+``curl -X POST -d "name=sum_of_amount&formula=sum(amount)&group=food_type,rating" http://bamboo.io/calculations/8a3d74711475d8a51c84484fe73f24bd151242ea``
+
+returns::
+
+    {
+        "formula": "sum(amount)",
+         "group": "food_type,rating",
+         "name": "sum_of_amount"
+    }
+
+retrieve lists of related datasets for aggregations:
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 ``curl -g http://bamboo.io/datasets/8a3d74711475d8a51c84484fe73f24bd151242ea?mode=related``
 
@@ -375,5 +388,78 @@ returns::
 
     {
         "": "9ae0ee32b78d445588742ac818c3d533",
-        "food_type": "643eaccb31e74216bfa7c16bfb0e79e5"
+        "food_type": "643eaccb31e74216bfa7c16bfb0e79e5",
+        "food_type,rating": "10cedc551e40418caa72495d771703b3"
     }
+
+retrieve the linked datasets that groups on foodtype and rating:
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+``curl -g http://bamboo.io/datasets/10cedc551e40418caa72495d771703b3``
+
+Linked dataset are the same as any other dataset.
+
+returns::
+
+    [
+        {
+            "rating": "epic_eat",
+            "food_type": "deserts",
+            "sum_of_amount": 8.75
+        },
+        {
+			"rating": "delectible",
+            "food_type": "dinner",
+            "sum_of_amount": 26.0
+		},
+        {
+			"rating": "epic_eat",
+            "food_type": "lunch",
+            "sum_of_amount": 22.25
+		},
+        {
+			"rating": "delectible",
+            "food_type": "street_meat",
+            "sum_of_amount": 2.0
+		},
+        {
+			"rating": "epic_eat",
+            "food_type": "caffeination",
+            "sum_of_amount": 2.5
+		},
+        {
+			"rating": "epic_eat",
+            "food_type": "dinner",
+            "sum_of_amount": 1612.0
+		},
+        {
+			"rating": "delectible",
+            "food_type": "drunk_food",
+            "sum_of_amount": 20.0
+		},
+        {
+			"rating": "epic_eat",
+            "food_type": "libations",
+            "sum_of_amount": 9.5
+		},
+        {
+			"rating": "delectible",
+            "food_type": "lunch",
+            "sum_of_amount": 249.0
+		},
+        {
+			"rating": "delectible",
+            "food_type": "morning_food",
+            "sum_of_amount": 12.0
+		},
+        {
+			"rating": "epic_eat",
+            "food_type": "morning_food",
+            "sum_of_amount": 28.0
+		},
+        {
+			"rating": "delectible",
+            "food_type": "streat_sweets",
+            "sum_of_amount": 4.0
+		}
+    ]
