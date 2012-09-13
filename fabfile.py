@@ -7,13 +7,14 @@ from fabric.api import env, run, cd
 DEPLOYMENTS = {
     'prod': {
         'home':         '/var/www/',
-        'host_string':  'bamboo@bamboo.modilabs.org',
+        'host_string':  'bamboo@bamboo.io',
         'virtual_env':  'bamboo',
         'repo_name':    'current',
         'project':      'bamboo',
         'docs':         'docs',
         'branch':       'master',
         'key_filename': os.path.expanduser('~/.ssh/modilabs.pem'),
+        'init_script': 'bamboo_uwsgi.sh',
     }
 }
 
@@ -59,4 +60,4 @@ def deploy(deployment_name):
 
     # restart the server
     with cd(env.code_src):
-        _run_in_virtualenv('./scripts/bamboo.sh restart')
+        _run_in_virtualenv('./scripts/%s restart') % env.init_script
