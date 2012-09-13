@@ -82,7 +82,7 @@ def calculate_updates(dataset, new_data, calculations, FORMULA, NAME):
             parser.parse_formula(calculation.record[FORMULA])
         new_column = new_dframe.apply(function, axis=1,
                                       args=(parser, ))
-        potential_name = calculation.record[NAME]
+        potential_name = calculation.name
         if potential_name not in existing_dframe.columns:
             if potential_name not in labels_to_slugs:
                 # it is a linked calculation

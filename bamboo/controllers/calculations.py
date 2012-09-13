@@ -1,7 +1,8 @@
 import json
 
-from lib.constants import ID
+from lib.constants import ID, SUCCESS
 from lib.mongo import dump_mongo_json
+from lib.utils import dump_or_error
 from models.calculation import Calculation
 from models.dataset import Dataset
 
@@ -9,6 +10,21 @@ from models.dataset import Dataset
 class Calculations(object):
 
     exposed = True
+
+    def DELETE(self, dataset_id, name):
+        """
+        Delete the calculation for the dataset specified by the hash
+        *dataset_id* from mongo and the column *name*
+        """
+        result = None
+
+        calculation = Calculation.find_one(dataset_id, name)
+        if calculation:
+            task = calculation.delete.delay(calculation)
+            result = {SUCCESS: 'deleted calculation: %s for dataset: %s' %
+                      (name, dataset_id)}
+        return dump_or_error(result,
+                             'name and dataset_id combination not found')
 
     def POST(self, dataset_id, formula, name, group=None):
         """

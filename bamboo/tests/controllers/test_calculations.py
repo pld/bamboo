@@ -2,7 +2,7 @@ import json
 
 from controllers.calculations import Calculations
 from controllers.datasets import Datasets
-from lib.constants import ALL, DATASET_ID, ID, MODE_SUMMARY
+from lib.constants import ALL, DATASET_ID, ERROR, ID, MODE_SUMMARY, SUCCESS
 from lib.io import create_dataset_from_url
 from models.calculation import Calculation
 from models.dataset import Dataset
@@ -43,3 +43,14 @@ class TestCalculations(TestBase):
         # stats should have new column for calculation
         dataset = Dataset.find_one(self.dataset_id)
         self.assertTrue(self.name in dataset.stats.get(ALL).keys())
+
+    def test_DELETE_nonexistent_calculation(self):
+        result = json.loads(self.controller.DELETE(self.dataset_id, self.name))
+        self.assertTrue(ERROR in result)
+
+    def test_DELETE(self):
+        self._post_formula()
+        result = json.loads(self.controller.DELETE(self.dataset_id, self.name))
+        self.assertTrue(SUCCESS in result)
+        dataset = Dataset.find_one(self.dataset_id)
+        self.assertTrue(self.name not in dataset.build_labels_to_slugs())

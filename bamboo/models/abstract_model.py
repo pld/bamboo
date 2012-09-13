@@ -22,17 +22,14 @@ class AbstractModel(object):
 
     @classmethod
     def find(cls, query, select=None, as_dict=False):
-        """
-        Return the calculations for given *dataset*.
-        """
         records = cls.collection.find(query, select)
         return [record for record in records] if as_dict else [
             cls(record) for record in records
         ]
 
     @classmethod
-    def find_one(cls, dataset_id):
-        return cls(cls.collection.find_one({DATASET_ID: dataset_id}))
+    def find_one(cls, query, select=None):
+        return cls(cls.collection.find_one(query, select))
 
     def __init__(self, record=None):
         """
@@ -40,9 +37,12 @@ class AbstractModel(object):
         """
         self.record = record
 
+    def __nonzero__(self):
+        return self.record is not None
+
     def delete(self, query):
         """
-        Delete dataset with *dataset_id*.
+        Delete the record.
         """
         self.collection.remove(query, safe=True)
 

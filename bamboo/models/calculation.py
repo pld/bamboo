@@ -1,3 +1,5 @@
+from celery.contrib.methods import task
+
 from lib.constants import DATASET_ID, ERROR, STATS
 from lib.exceptions import ParseError
 from lib.parser import Parser, ParserContext
@@ -16,6 +18,26 @@ class Calculation(AbstractModel):
     GROUP = 'group'
     NAME = 'name'
     QUERY = 'query'
+
+    @property
+    def dataset_id(self):
+        return self.record[DATASET_ID]
+
+    @property
+    def name(self):
+        return self.record[self.NAME]
+
+    @task
+    def delete(self):
+        dataset = Dataset.find_one(self.dataset_id)
+        dframe = Observation.find(dataset, as_df=True)
+        slug = dataset.build_labels_to_slugs()[self.name]
+        del dframe[slug]
+        Observation.update(dframe, dataset)
+        super(self.__class__, self).delete({
+            DATASET_ID: self.dataset_id,
+            self.NAME: self.name
+        })
 
     def save(self, dataset, formula, name, group=None):
         """
@@ -58,6 +80,13 @@ class Calculation(AbstractModel):
         return self.record
 
     @classmethod
+    def find_one(cls, dataset_id, name):
+        return super(cls, cls).find_one({
+            DATASET_ID: dataset_id,
+            cls.NAME: name,
+        })
+
+    @classmethod
     def find(cls, dataset):
         return super(cls, cls).find({DATASET_ID: dataset.dataset_id})
 
@@ -67,5 +96,5 @@ class Calculation(AbstractModel):
         Update *dataset* with new *data*.
         """
         calculations = Calculation.find(dataset)
-        calculate_updates.delay(dataset, data, calculations, cls.FORMULA,
-                                cls.NAME)
+        calculate_updates(dataset, data, calculations, cls.FORMULA,
+                          cls.NAME)

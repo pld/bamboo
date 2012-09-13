@@ -58,8 +58,7 @@ class TestDataset(TestBase):
         for dataset_name in self.TEST_DATASETS:
             dataset = Dataset()
             dataset.save(self.test_dataset_ids[dataset_name])
-            dataset.build_schema(self.test_data[dataset_name],
-                                 self.test_data[dataset_name].dtypes)
+            dataset.build_schema(self.test_data[dataset_name])
 
             # get dataset with new schema
             dataset = Dataset.find_one(self.test_dataset_ids[dataset_name])

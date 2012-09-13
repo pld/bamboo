@@ -35,7 +35,7 @@ class Dataset(AbstractModel):
 
     @property
     def data_schema(self):
-        return self.record[SCHEMA]
+        return self.record.get(SCHEMA)
 
     @property
     def linked_datasets(self):
@@ -102,6 +102,10 @@ class Dataset(AbstractModel):
         return stats_to_return if group == ALL else {group: stats_to_return}
 
     @classmethod
+    def find_one(cls, dataset_id):
+        return super(cls, cls).find_one({DATASET_ID: dataset_id})
+
+    @classmethod
     def find(cls, dataset_id):
         return super(cls, cls).find({DATASET_ID: dataset_id})
 
@@ -114,38 +118,40 @@ class Dataset(AbstractModel):
         self.collection.update({DATASET_ID: self.dataset_id}, self.record,
                                safe=True)
 
-    def _schema_from_data_and_dtypes(self, dframe, dtypes):
+    def _schema_from_data_and_dtypes(self, dframe):
         """
         Build schema from the dframe, *dframe*, and a dict of dtypes, *dtypes*.
         """
-        column_names = [name for name in dtypes.keys() if name not in
-                        MONGO_RESERVED_KEY_STRS]
+        dtypes = dframe.dtypes.to_dict()
+
+        column_names = list()
+        names_to_labels = dict()
+
+        # use existing labels for existing columns
+        for name in dtypes.keys():
+            if name not in MONGO_RESERVED_KEY_STRS:
+                column_names.append(name)
+                if self.data_schema:
+                    schema_for_name = self.data_schema.get(name)
+                    if schema_for_name:
+                        names_to_labels[name] = schema_for_name[LABEL]
+
         encoded_names = dict(zip(column_names, slugify_columns(column_names)))
+
         return dict([(encoded_names[name], {
-            LABEL: name,
+            LABEL: names_to_labels.get(name, name),
             OLAP_TYPE: type_for_data_and_dtypes(DTYPE_TO_OLAP_TYPE_MAP,
                                                 dframe[name], dtype.type),
             SIMPLETYPE: type_for_data_and_dtypes(DTYPE_TO_SIMPLETYPE_MAP,
                                                  dframe[name], dtype.type),
         }) for (name, dtype) in dtypes.items()])
 
-    def build_schema(self, dframe, dtypes):
+    def build_schema(self, dframe):
         """
         Build schema for a dataset.
         """
-        schema = self._schema_from_data_and_dtypes(dframe, dtypes.to_dict())
+        schema = self._schema_from_data_and_dtypes(dframe)
         self.update({SCHEMA: schema})
-
-    def update_schema(self, dframe, dtypes):
-        """
-        Update schema to include new columns.
-        """
-        # merge in new schema dicts
-        new_schema = self._schema_from_data_and_dtypes(dframe, dtypes)
-        new_schema.update(self.data_schema)
-
-        # store new complete schema with dataset
-        self.update({SCHEMA: new_schema})
 
     def schema(self):
         return {
