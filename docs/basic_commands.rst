@@ -46,10 +46,15 @@ returns::
     {
         "id": "8a3d74711475d8a51c84484fe73f24bd151242ea",
         "schema": {
+            "food_type": {
+                "label": "Amount",
+                "olap_type": "measure",
+                "simpletype": "float"
+            },
             "rating": {
                 "label": "Rating",
-                "olap_type": "measure",
-                "simpletype": "integer"
+                "olap_type": "dimension",
+                "simpletype": "string"
             },
             "food_type": {
                 "label": "Food Type",
