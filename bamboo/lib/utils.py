@@ -17,9 +17,11 @@ def is_float_nan(num):
 
 def get_json_value(value):
     if is_float_nan(value):
-        return JSON_NULL
-    if isinstance(value, np.int64):
-        return int(value)
+        value = JSON_NULL
+    elif isinstance(value, np.int64):
+        value = int(value)
+    elif isinstance(value, np.bool_):
+        value = bool(value)
     return value
 
 
