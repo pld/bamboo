@@ -180,13 +180,13 @@ class TestDatasets(TestBase):
 
         self._test_summary_built(result)
 
-    def test_POST_nonexistent_url(self):
-        result = json.loads(self.controller.POST(url='http://noformhub.org/'))
+    def test_POST_not_csv_url(self):
+        result = json.loads(self.controller.POST(url='http://google.com/'))
         self.assertTrue(isinstance(result, dict))
         self.assertTrue(ERROR in result)
 
     def test_POST_bad_url(self):
-        result = json.loads(self.controller.POST(url='http://iuaheriuaja.com'))
+        result = json.loads(self.controller.POST(url='http://dsfskfjdks.com'))
         self.assertTrue(isinstance(result, dict))
         self.assertTrue(ERROR in result)
 
@@ -202,7 +202,6 @@ class TestDatasets(TestBase):
         self._post_calculations(['amount < 4'])
         results = json.loads(self.controller.GET(self.dataset_id,
                     select='{"amount___4": 1}'))
-        print results
         self.assertTrue(isinstance(results, list))
         self.assertTrue(isinstance(results[0], dict))
         self.assertEqual(len(results), self.NUM_ROWS)
