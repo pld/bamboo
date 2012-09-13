@@ -67,6 +67,19 @@ class Datasets(object):
         If neither are provided return an error message.  Also return an error
         message if an improperly formatted value raises a ValueError, e.g. an
         improperly formatted CSV file.
+
+        The follow words are reserved and will lead to unexpected behavior if
+        used as column names:
+
+            - sum
+            - date
+            - years
+            - and
+            - or
+            - not
+            - in
+            - default
+
         """
         # if we have a dataset_id then try to update
         if dataset_id:
