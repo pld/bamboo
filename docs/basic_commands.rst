@@ -97,6 +97,35 @@ by ID with select:
 
 ``curl -g http://bamboo.io/datasets/8a3d74711475d8a51c84484fe73f24bd151242ea?select='{"rating":1}'``
 
+This returns the dataset as JSON given the select, i.e. only the rating
+column.
+
+returns::
+
+    [
+        {"rating": "epic_eat"},
+        {"rating": "delectible"},
+        {"rating": "delectible"},
+        {"rating": "delectible"},
+        {"rating": "epic_eat"},
+        {"rating": "delectible"},
+        {"rating": "delectible"},
+        {"rating": "delectible"},
+        {"rating": "delectible"},
+        {"rating": "epic_eat"}, 
+        {"rating": "epic_eat"}, 
+        {"rating": "epic_eat"},
+        {"rating": "delectible"}, 
+        {"rating": "epic_eat"}, 
+        {"rating": "epic_eat"},
+        {"rating": "epic_eat"}, 
+        {"rating": "delectible"}, 
+        {"rating": "delectible"},
+        {"rating": "delectible"}, 
+        {"rating": "delectible"}, 
+        {"rating": "epic_eat"}
+    ]
+
 
 by ID and query:
 ^^^^^^^^^^^^^^^^
@@ -104,6 +133,33 @@ by ID and query:
 query must be valid MongoDB extended JSON
 
 ``curl -g http://bamboo.io/datasets/8a3d74711475d8a51c84484fe73f24bd151242ea?query='{"food_type":"lunch"}'``
+
+This returns the dataset as JSON given the query, i.e. only rows with a
+food_type of "lunch".
+
+returns::
+
+    [
+        {
+            "rating": "delectible",
+            "location_name": "Tolga Copsis ",
+            "description": "Cotsi ", "_gps_precision": "85.0",
+            "submit_date": {"$date": 1325635200000}, 
+            "_gps_latitude": "37.951282449999994", 
+            "_gps_altitude": "0.0", 
+            "submit_data": {"$date": 1325635200000}, 
+            "_gps_longitude": "27.3700048", 
+            "comments": "n/a", 
+            "amount": 8.0, 
+            "risk_factor": "low_risk", 
+            "imei": 358490042584319, 
+            "food_type": "lunch", 
+            "gps": "37.951282449999994 27.3700048 0.0 85.0", 
+            "location_photo": "1325672494341.jpg", 
+            "food_photo": "1325672462974.jpg"
+        }, 
+        ...
+    ]
 
 Retrieve summary statistics for dataset:
 ----------------------------------------
@@ -141,11 +197,6 @@ returns::
         ...
     }
 
-
-by ID and query:
-^^^^^^^^^^^^^^^^
-
-``curl -g http://bamboo.io/datasets/8a3d74711475d8a51c84484fe73f24bd151242ea/summary?query='{"food_type":"lunch"}'``
 
 with a grouping:
 ^^^^^^^^^^^^^^^^
