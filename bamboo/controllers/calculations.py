@@ -14,7 +14,10 @@ class Calculations(object):
     def DELETE(self, dataset_id, name):
         """
         Delete the calculation for the dataset specified by the hash
-        *dataset_id* from mongo and the column *name*
+        *dataset_id* from mongo and the column *name*.
+
+        This will also remove the column *name* from the data frame for
+        dataset.
         """
         result = None
 

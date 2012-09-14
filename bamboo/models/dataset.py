@@ -77,7 +77,7 @@ class Dataset(AbstractModel):
         Observation.delete_all(self)
 
     @task
-    def summarize(self, query='{}', select=None, group=ALL):
+    def summarize(self, query=None, select=None, group=ALL):
         """
         Return a summary for the rows/values filtered by *query* and *select*
         and grouped by *group* or the overall summary if no group is specified.
@@ -93,7 +93,7 @@ class Dataset(AbstractModel):
 
         # check cached stats for group and update as necessary
         stats = self.stats
-        if not stats.get(group):
+        if query or not stats.get(group):
             stats = {ALL: summarize_df(dframe)} if group == ALL \
                 else summarize_with_groups(dframe, stats, group)
             self.update({STATS: stats})

@@ -24,16 +24,16 @@ class Observation(AbstractModel):
         }, safe=True)
 
     @classmethod
-    def find(cls, dataset, query='{}', select=None, as_df=False):
+    def find(cls, dataset, query=None, select=None, as_df=False):
         """
         Try to parse query if exists, then get all rows for ID matching query,
         or if no query all.  Decode rows from mongo and return.
         """
-        if query:
-            try:
-                query = json.loads(query, object_hook=json_util.object_hook)
-            except ValueError, e:
-                raise JSONError('cannot decode query: %s' % e.__str__())
+        try:
+            query = (query and json.loads(query,
+                                          object_hook=json_util.object_hook)) or {}
+        except ValueError, e:
+            raise JSONError('cannot decode query: %s' % e.__str__())
 
         if select:
             try:

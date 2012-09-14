@@ -277,9 +277,14 @@ class TestDatasets(TestBase):
     def test_GET_summary_with_query(self):
         self._post_file()
         # (sic)
-        results = self.controller.GET(self.dataset_id, mode=MODE_SUMMARY,
-                                      query='{"rating": "delectible"}')
+        query_column='rating'
+        results = self.controller.GET(
+            self.dataset_id,
+            mode=MODE_SUMMARY,
+            query='{"%s": "delectible"}' % query_column)
         results = self._test_summary_results(results)
+        # ensure only returned results for this query column
+        self.assertEqual(len(results[query_column][SUMMARY].keys()), 1)
         self._test_summary_no_group(results)
 
     def test_GET_summary_with_group(self):

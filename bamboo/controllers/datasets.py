@@ -30,14 +30,24 @@ class Datasets(object):
             result = {SUCCESS: 'deleted dataset: %s' % dataset_id}
         return dump_or_error(result, 'id not found')
 
-    def GET(self, dataset_id, mode=False, query='{}', select=None,
+    def GET(self, dataset_id, mode=False, query=None, select=None,
             group=ALL):
         """
-        Return data set for hash *dataset_id*.
-        Execute query *query* in mongo if passed.
-        If summary is passed return summary statistics for data set.
-        If group is passed group the summary, if summary is false group is
-        ignored.
+        Based on *mode* perform different operations on the dataset specified
+        by *dataset_id*.
+
+        - *info*: return the meta-data and schema of the dataset.
+        - *related*: return the dataset_ids of linked datasets for the
+        dataset.
+        - *summary*: return summary statistics for the dataset.
+          - If *group* is passed group the summary.
+          - If *query* is passed restrict summary to rows matching query.
+        - no mode passed: Return the raw data for the dataset.
+          - Restrict to *query* and *select* if passed.
+
+        Returns an error message if dataset_id does not exists, mode does not
+        exist, or the JSON for query or select is improperly formatted.
+        Otherwise, returns the result from above dependent on mode.
         """
         dataset = Dataset.find_one(dataset_id)
         result = None
