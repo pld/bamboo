@@ -202,10 +202,54 @@ returns::
         ...
     }
 
+with a query:
+^^^^^^^^^^^^^^^^
+
+``curl -g http://bamboo.io/datasets/8a3d74711475d8a51c84484fe73f24bd151242ea/summary?query='{"food_type": "lunch"}'``
+
+Return the summary restricting to data that matches the Mongo query passed as
+*query*.
+
+returns::
+
+    {
+        "rating": {
+			"summary": {
+				"delectible": 5,
+                "epic_eat": 2
+			}
+        },
+        "amount": {
+			"summary": {
+				"count": 7.0,
+                "std": 71.321017238959797,
+                "min": 4.25,
+                "max": 200.0,
+                "50%": 12.0,
+                "25%": 8.5,
+                "75%": 19.0,
+                "mean": 38.75
+			}
+        },
+        "risk_factor": {
+			"summary": {
+				"low_risk": 7
+			}
+        },
+        "food_type": {
+			"summary": {
+				"lunch": 7
+			}
+        },
+        ...
+    }
+
 with a grouping:
 ^^^^^^^^^^^^^^^^
 
 ``curl http://bamboo.io/datasets/8a3d74711475d8a51c84484fe73f24bd151242ea/summary?group=food_type``
+
+Return the summary grouping on the value passed as *group*.
 
 returns::
 
