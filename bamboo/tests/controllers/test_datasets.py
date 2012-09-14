@@ -5,9 +5,8 @@ import cherrypy
 
 from controllers.datasets import Datasets
 from controllers.calculations import Calculations
-from lib.aggregator import Aggregator
-from lib.constants import CREATED_AT, DATETIME, ERROR, ID, MODE_INFO,\
-    MODE_RELATED, MODE_SUMMARY, MONGO_RESERVED_KEYS,\
+from lib.constants import CREATED_AT, DATETIME, ERROR, ID, GROUP_DELIMITER,\
+    MODE_INFO, MODE_RELATED, MODE_SUMMARY, MONGO_RESERVED_KEYS,\
     MONGO_RESERVED_KEY_PREFIX, NUM_COLUMNS, NUM_ROWS, SCHEMA, SIMPLETYPE,\
     SUCCESS, SUMMARY, UPDATED_AT, MONGO_RESERVED_KEY_STRS
 from lib.decorators import requires_internet
@@ -277,7 +276,7 @@ class TestDatasets(TestBase):
     def test_GET_summary_with_query(self):
         self._post_file()
         # (sic)
-        query_column='rating'
+        query_column = 'rating'
         results = self.controller.GET(
             self.dataset_id,
             mode=MODE_SUMMARY,
@@ -310,12 +309,44 @@ class TestDatasets(TestBase):
                 self.assertFalse(group in results.keys())
                 self.assertTrue(ERROR in results.keys())
 
+    def test_GET_summary_with_multigroup(self):
+        self._post_file()
+        group_columns = 'rating,food_type'
+        results = self.controller.GET(self.dataset_id, mode=MODE_SUMMARY,
+                                      group=group_columns)
+        results = self._test_summary_results(results)
+        self.assertFalse(ERROR in results.keys())
+        self.assertTrue(group_columns in results.keys())
+        self.assertEqual(
+            len(results[group_columns].keys()[0].split(GROUP_DELIMITER)),
+            len(group_columns.split(GROUP_DELIMITER)))
+
+    def test_GET_summary_multigroup_noncat_group(self):
+        self._post_file()
+        group_columns = 'rating,amount'
+        results = self.controller.GET(self.dataset_id, mode=MODE_SUMMARY,
+                                      group=group_columns)
+        results = self._test_summary_results(results)
+        self.assertTrue(ERROR in results.keys())
+
+    def test_GET_summary_nonexistent_group(self):
+        self._post_file()
+        group_columns = 'bongo'
+        results = self.controller.GET(self.dataset_id, mode=MODE_SUMMARY,
+                                      group=group_columns)
+        results = self._test_summary_results(results)
+        self.assertTrue(ERROR in results.keys())
+
     def test_GET_summary_with_group_and_query(self):
         self._post_file()
-        results = self.controller.GET(self.dataset_id, mode=MODE_SUMMARY,
-                                      group='rating',
-                                      query='{"rating": "delectible"}')
-        self._test_summary_results(results)
+        query_column = 'rating'
+        results = self.controller.GET(
+            self.dataset_id,
+            mode=MODE_SUMMARY,
+            group='rating',
+            query='{"%s": "delectible"}' % query_column)
+        results = self._test_summary_results(results)
+        self.assertEqual(len(results[query_column].keys()), 1)
 
     def test_GET_related_datasets_empty(self):
         self._post_file()
@@ -351,7 +382,7 @@ class TestDatasets(TestBase):
         group = 'food_type,rating'
         self._post_calculations(self.default_formulae + ['sum(amount)'], group)
         results = self._test_mode_related([group])
-        row_keys = (group.split(Aggregator.GROUP_DELIMITER) +
+        row_keys = (group.split(GROUP_DELIMITER) +
                     ['sum_amount_']).sort()
         for row in results:
             sorted_row_keys = row.keys().sort()

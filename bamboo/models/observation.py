@@ -30,8 +30,8 @@ class Observation(AbstractModel):
         or if no query all.  Decode rows from mongo and return.
         """
         try:
-            query = (query and json.loads(query,
-                                          object_hook=json_util.object_hook)) or {}
+            query = (query and json.loads(
+                query, object_hook=json_util.object_hook)) or {}
         except ValueError, e:
             raise JSONError('cannot decode query: %s' % e.__str__())
 
