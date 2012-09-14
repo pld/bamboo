@@ -214,14 +214,14 @@ returns::
 
     {
         "rating": {
-			"summary": {
-				"delectible": 5,
+            "summary": {
+                "delectible": 5,
                 "epic_eat": 2
-			}
+            }
         },
         "amount": {
-			"summary": {
-				"count": 7.0,
+            "summary": {
+                "count": 7.0,
                 "std": 71.321017238959797,
                 "min": 4.25,
                 "max": 200.0,
@@ -229,17 +229,17 @@ returns::
                 "25%": 8.5,
                 "75%": 19.0,
                 "mean": 38.75
-			}
+            }
         },
         "risk_factor": {
-			"summary": {
-				"low_risk": 7
-			}
+            "summary": {
+                "low_risk": 7
+            }
         },
         "food_type": {
-			"summary": {
-				"lunch": 7
-			}
+            "summary": {
+                "lunch": 7
+            }
         },
         ...
     }
@@ -452,58 +452,58 @@ returns::
             "sum_of_amount": 8.75
         },
         {
-			"rating": "delectible",
+            "rating": "delectible",
             "food_type": "dinner",
             "sum_of_amount": 26.0
-		},
+        },
         {
-			"rating": "epic_eat",
+            "rating": "epic_eat",
             "food_type": "lunch",
             "sum_of_amount": 22.25
-		},
+        },
         {
-			"rating": "delectible",
+            "rating": "delectible",
             "food_type": "street_meat",
             "sum_of_amount": 2.0
-		},
+        },
         {
-			"rating": "epic_eat",
+            "rating": "epic_eat",
             "food_type": "caffeination",
             "sum_of_amount": 2.5
-		},
+        },
         {
-			"rating": "epic_eat",
+            "rating": "epic_eat",
             "food_type": "dinner",
             "sum_of_amount": 1612.0
-		},
+        },
         {
-			"rating": "delectible",
+            "rating": "delectible",
             "food_type": "drunk_food",
             "sum_of_amount": 20.0
-		},
+        },
         {
-			"rating": "epic_eat",
+            "rating": "epic_eat",
             "food_type": "libations",
             "sum_of_amount": 9.5
-		},
+        },
         {
-			"rating": "delectible",
+            "rating": "delectible",
             "food_type": "lunch",
             "sum_of_amount": 249.0
-		},
+        },
         {
-			"rating": "delectible",
+            "rating": "delectible",
             "food_type": "morning_food",
             "sum_of_amount": 12.0
-		},
+        },
         {
-			"rating": "epic_eat",
+            "rating": "epic_eat",
             "food_type": "morning_food",
             "sum_of_amount": 28.0
-		},
+        },
         {
-			"rating": "delectible",
+            "rating": "delectible",
             "food_type": "streat_sweets",
             "sum_of_amount": 4.0
-		}
+        }
     ]
