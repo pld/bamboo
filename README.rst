@@ -137,3 +137,12 @@ On your local server
     make requests from your local server
 
     ``$ curl -X POST -d "url=http://formhub.org/mberg/forms/good_eats/data.csv" http://localhost:8080/datasets``
+
+About
+-----
+Bamboo is an open source project. The project features the combined efforts of
+
+* Peter Lubell-Doughtie
+* Mark Johnston
+
+and other developers.
