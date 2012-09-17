@@ -180,11 +180,13 @@ class TestDatasets(TestBase):
 
         self._test_summary_built(result)
 
+    @requires_internet
     def test_POST_not_csv_url(self):
         result = json.loads(self.controller.POST(url='http://google.com/'))
         self.assertTrue(isinstance(result, dict))
         self.assertTrue(ERROR in result)
 
+    @requires_internet
     def test_POST_bad_url(self):
         result = json.loads(self.controller.POST(url='http://dsfskfjdks.com'))
         self.assertTrue(isinstance(result, dict))
