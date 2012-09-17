@@ -79,6 +79,7 @@ def recognize_dates(dframe):
         if dtype.type == np.object_:
             try:
                 column = dframe.columns[idx]
+                print 'dframe[%s][0] = %s' % (column, dframe[column][0])
                 if is_float_nan(dframe[column][0]):
                     raise ValueError
                 # attempt to parse first entry as a date
@@ -87,6 +88,9 @@ def recognize_dates(dframe):
                 dframe[column] = dframe[column].map(date_parse)
             except ValueError:
                 # it is not a correctly formatted date
+                pass
+            except OverflowError:
+                # it is a number that is too large to be a date
                 pass
     return dframe
 
