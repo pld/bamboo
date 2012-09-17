@@ -29,11 +29,11 @@ def summarize_df(dframe):
     ])
 
 
-def summarize_with_groups(dframe, stats, group):
+def summarize_with_groups(dframe, stats, group, groups):
     """
     Calculate summary statistics for group.
     """
     grouped_stats = series_to_jsondict(
-        dframe.groupby(group).apply(summarize_df))
+        dframe.groupby(groups).apply(summarize_df))
     stats.update({group: grouped_stats})
     return stats

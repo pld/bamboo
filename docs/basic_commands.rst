@@ -1,16 +1,16 @@
 Basic Commands
 ==============
 
-Check the Bamboo version:
--------------------------
+Check the Bamboo version
+------------------------
 
 ``curl http://bamboo.io/version``
 
-Storing data in Bamboo:
------------------------
+Storing data in Bamboo
+----------------------
 
-upload data from a URL to Bamboo:
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+upload data from a URL to Bamboo
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 ``curl -X POST -d "url=http://formhub.org/mberg/forms/good_eats/data.csv" http://bamboo.io/datasets``
 
@@ -20,8 +20,8 @@ returns::
         "id": "8a3d74711475d8a51c84484fe73f24bd151242ea"
     }
 
-upload data from a file to Bamboo:
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+upload data from a file to Bamboo
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 given the file ``/home/modilabs/good_eats.csv`` exists locally on your
 filesystem
@@ -34,8 +34,8 @@ returns::
         "id": "8a3d74711475d8a51c84484fe73f24bd151242ea"
     }
 
-Retrieve information about a dataset:
--------------------------------------
+Retrieve information about a dataset
+------------------------------------
 
 given the id is ``8a3d74711475d8a51c84484fe73f24bd151242ea``
 
@@ -70,13 +70,13 @@ returns::
     }
 
 
-Retrieve data:
---------------
+Retrieve data
+-------------
 
 given the id is ``8a3d74711475d8a51c84484fe73f24bd151242ea``
 
-by ID:
-^^^^^^
+by ID
+^^^^^
 
 ``curl http://bamboo.io/datasets/8a3d74711475d8a51c84484fe73f24bd151242ea``
 
@@ -97,8 +97,8 @@ returns::
         ...
     ]
 
-by ID with select:
-^^^^^^^^^^^^^^^^^^
+by ID with select
+^^^^^^^^^^^^^^^^^
 
 ``curl -g http://bamboo.io/datasets/8a3d74711475d8a51c84484fe73f24bd151242ea?select='{"rating":1}'``
 
@@ -132,8 +132,8 @@ returns::
     ]
 
 
-by ID and query:
-^^^^^^^^^^^^^^^^
+by ID and query
+^^^^^^^^^^^^^^^
 
 query must be valid MongoDB extended JSON
 
@@ -166,11 +166,11 @@ returns::
         ...
     ]
 
-Retrieve summary statistics for dataset:
-----------------------------------------
+Retrieve summary statistics for dataset
+---------------------------------------
 
-by ID:
-^^^^^^
+by ID
+^^^^^
 
 ``curl http://bamboo.io/datasets/8a3d74711475d8a51c84484fe73f24bd151242ea/summary``
 
@@ -202,8 +202,8 @@ returns::
         ...
     }
 
-with a query:
-^^^^^^^^^^^^^^^^
+with a query
+^^^^^^^^^^^^^
 
 ``curl -g http://bamboo.io/datasets/8a3d74711475d8a51c84484fe73f24bd151242ea/summary?query='{"food_type": "lunch"}'``
 
@@ -214,14 +214,14 @@ returns::
 
     {
         "rating": {
-			"summary": {
-				"delectible": 5,
+            "summary": {
+                "delectible": 5,
                 "epic_eat": 2
-			}
+            }
         },
         "amount": {
-			"summary": {
-				"count": 7.0,
+            "summary": {
+                "count": 7.0,
                 "std": 71.321017238959797,
                 "min": 4.25,
                 "max": 200.0,
@@ -229,23 +229,23 @@ returns::
                 "25%": 8.5,
                 "75%": 19.0,
                 "mean": 38.75
-			}
+            }
         },
         "risk_factor": {
-			"summary": {
-				"low_risk": 7
-			}
+            "summary": {
+                "low_risk": 7
+            }
         },
         "food_type": {
-			"summary": {
-				"lunch": 7
-			}
+            "summary": {
+                "lunch": 7
+            }
         },
         ...
     }
 
-with a grouping:
-^^^^^^^^^^^^^^^^
+with a grouping
+^^^^^^^^^^^^^^^
 
 ``curl http://bamboo.io/datasets/8a3d74711475d8a51c84484fe73f24bd151242ea/summary?group=food_type``
 
@@ -318,6 +318,80 @@ returns::
             ...
         }
     }
+
+with a multi-grouping
+^^^^^^^^^^^^^^^^^^^^^
+
+``curl http://bamboo.io/datasets/8a3d74711475d8a51c84484fe73f24bd151242ea/summary?group=food_type,rating``
+
+returns::
+
+    {
+        "food_type,rating": {
+            "(u'dinner', u'delectible')": { 
+                "rating": {
+                    "summary": {
+                        "delectible": 2
+                    }
+                },
+                "amount": {
+                    "summary": {
+                        "count": 2.0,
+                        "std": 1.4142135623730951,
+                        "min": 12.0,
+                        "max": 14.0,
+                        "50%": 13.0,
+                        "25%": 12.5,
+                        "75%": 13.5,
+                        "mean": 13.0
+                    }
+                },
+                "risk_factor": {
+                    "summary": {
+                        "low_risk": 2
+                    }
+                },
+                "food_type": {
+                    "summary": {
+                        "dinner": 2
+                    }
+                },
+                ...
+            }
+            "(u'deserts', u'epic_eat')": {
+                "rating": {
+                    "summary": {
+                        "epic_eat": 2
+                    }
+                }, 
+                "amount": {
+                    "summary": {
+                        "count": 2.0,
+                        "std": 2.2980970388562794,
+                        "min": 2.75,
+                        "max": 6.0,
+                        "50%": 4.375,
+                        "25%": 3.5625,
+                        "75%": 5.1875,
+                        "mean": 4.375
+                    }
+                },
+                "risk_factor": {
+                    "summary": {
+                        "low_risk": 2
+                    }
+                }, 
+                "food_type": {
+                    "summary": {
+                        "deserts": 2
+                    }
+                }, 
+                ...
+            }
+            ...
+        }
+    }
+
 
 Calculation formulas:
 ---------------------
@@ -452,58 +526,58 @@ returns::
             "sum_of_amount": 8.75
         },
         {
-			"rating": "delectible",
+            "rating": "delectible",
             "food_type": "dinner",
             "sum_of_amount": 26.0
-		},
+        },
         {
-			"rating": "epic_eat",
+            "rating": "epic_eat",
             "food_type": "lunch",
             "sum_of_amount": 22.25
-		},
+        },
         {
-			"rating": "delectible",
+            "rating": "delectible",
             "food_type": "street_meat",
             "sum_of_amount": 2.0
-		},
+        },
         {
-			"rating": "epic_eat",
+            "rating": "epic_eat",
             "food_type": "caffeination",
             "sum_of_amount": 2.5
-		},
+        },
         {
-			"rating": "epic_eat",
+            "rating": "epic_eat",
             "food_type": "dinner",
             "sum_of_amount": 1612.0
-		},
+        },
         {
-			"rating": "delectible",
+            "rating": "delectible",
             "food_type": "drunk_food",
             "sum_of_amount": 20.0
-		},
+        },
         {
-			"rating": "epic_eat",
+            "rating": "epic_eat",
             "food_type": "libations",
             "sum_of_amount": 9.5
-		},
+        },
         {
-			"rating": "delectible",
+            "rating": "delectible",
             "food_type": "lunch",
             "sum_of_amount": 249.0
-		},
+        },
         {
-			"rating": "delectible",
+            "rating": "delectible",
             "food_type": "morning_food",
             "sum_of_amount": 12.0
-		},
+        },
         {
-			"rating": "epic_eat",
+            "rating": "epic_eat",
             "food_type": "morning_food",
             "sum_of_amount": 28.0
-		},
+        },
         {
-			"rating": "delectible",
+            "rating": "delectible",
             "food_type": "streat_sweets",
             "sum_of_amount": 4.0
-		}
+        }
     ]

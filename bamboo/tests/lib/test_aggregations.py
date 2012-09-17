@@ -3,8 +3,7 @@ import pickle
 
 import numpy as np
 
-from lib.aggregator import Aggregator
-from lib.constants import SCHEMA
+from lib.constants import GROUP_DELIMITER, SCHEMA
 from models.dataset import Dataset
 from models.observation import Observation
 from test_calculator import TestCalculator
@@ -50,7 +49,7 @@ class TestAggregations(TestCalculator):
 
     def _test_calculation_results(self, name, formula):
         if self.group:
-            self.groups_list = self.group.split(Aggregator.GROUP_DELIMITER)
+            self.groups_list = self.group.split(GROUP_DELIMITER)
         else:
             self.group = ''
 

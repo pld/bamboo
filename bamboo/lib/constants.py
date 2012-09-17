@@ -85,3 +85,6 @@ DTYPE_TO_OLAP_TYPE_MAP = {
 
 # batch size for bulk inserts
 DB_BATCH_SIZE = 1000
+
+# delimiter when passing multiple groups as a string
+GROUP_DELIMITER = ','

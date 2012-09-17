@@ -1,13 +1,11 @@
 from pandas import DataFrame, Series
 
-from lib.constants import LINKED_DATASETS
+from lib.constants import GROUP_DELIMITER, LINKED_DATASETS
 from models.dataset import Dataset
 from models.observation import Observation
 
 
 class Aggregator(object):
-
-    GROUP_DELIMITER = ','
 
     def __init__(self, dataset, dframe, column, group_str, aggregation, name):
         """
@@ -21,7 +19,7 @@ class Aggregator(object):
 
         if group_str:
             # groupby on dframe then run aggregation on groupby obj
-            groups = group_str.split(self.GROUP_DELIMITER)
+            groups = group_str.split(GROUP_DELIMITER)
             self.new_dframe = dframe[groups].join(column).\
                 groupby(groups, as_index=False).agg(aggregation)
         else:
