@@ -6,6 +6,7 @@ from calendar import timegm
 
 from dateutil.parser import parse as date_parse
 import numpy as np
+from pandas import Series
 
 from constants import DATETIME, ERROR, JSON_NULL, LABEL, MONGO_RESERVED_KEYS,\
     MONGO_RESERVED_KEY_PREFIX, SIMPLETYPE
@@ -79,12 +80,10 @@ def recognize_dates(dframe):
         if dtype.type == np.object_:
             try:
                 column = dframe.columns[idx]
-                if is_float_nan(dframe[column][0]):
-                    raise ValueError
-                # attempt to parse first entry as a date
-                date_parse(dframe[column][0])
-                # it is parseable as a date, convert column to date
-                dframe[column] = dframe[column].map(date_parse)
+                new_column = Series([
+                    field if is_float_nan(field) else date_parse(field) for
+                    field in dframe[column].tolist()])
+                dframe[column] = new_column
             except ValueError:
                 # it is not a correctly formatted date
                 pass
@@ -103,8 +102,8 @@ def recognize_dates_from_schema(dataset, dframe):
 
 
 def type_for_data_and_dtypes(type_map, column, dtype_type):
-    field_type = type(column[0])
-    return type_map[field_type if field_type == datetime else dtype_type]
+    has_datetime = any([isinstance(field, datetime) for field in column])
+    return type_map[datetime if has_datetime else dtype_type]
 
 
 def parse_str_to_unix_time(value):

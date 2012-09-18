@@ -40,6 +40,8 @@ class TestDatasets(TestBase):
         ]
         self.cardinalities = pickle.load(
             open('tests/fixtures/good_eats_cardinalities.p', 'rb'))
+        self.simpletypes = pickle.load(
+            open('tests/fixtures/good_eats_simpletypes.p', 'rb'))
 
     def _post_file(self):
         self.dataset_id = create_dataset_from_url(self._file_uri,
@@ -162,7 +164,7 @@ class TestDatasets(TestBase):
     def test_POST_file_for_nan_float_cell(self):
         """First data row has one cell blank, which is usually interpreted
         as nan, a float value."""
-        _file_name = "nan_float_data.csv"
+        _file_name = 'good_eats_nan_float.csv'
         _file_path = self._file_path.replace(self._file_name, _file_name)
         _file = open(_file_path, 'r')
         mock_uploaded_file = MockUploadedFile(_file)
@@ -172,6 +174,12 @@ class TestDatasets(TestBase):
 
         results = self._test_summary_built(result)
         self._test_summary_no_group(results)
+        results = json.loads(self.controller.GET(self.dataset_id,
+                             mode=MODE_INFO))
+
+        for column_name, column_schema in results[SCHEMA].items():
+            self.assertEqual(
+                column_schema[SIMPLETYPE], self.simpletypes[column_name])
 
     def test_POST_file_as_url_failure(self):
         result = json.loads(self.controller.POST(url=self._file_uri))
@@ -219,6 +227,7 @@ class TestDatasets(TestBase):
         results = json.loads(self.controller.GET(self.dataset_id,
                              mode=MODE_INFO))
         self.assertTrue(isinstance(results, dict))
+        self.assertTrue(SCHEMA in results.keys())
         self.assertTrue(NUM_ROWS in results.keys())
         self.assertEqual(results[NUM_ROWS], self.NUM_ROWS)
         self.assertTrue(NUM_COLUMNS in results.keys())
