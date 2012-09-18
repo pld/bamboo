@@ -54,12 +54,14 @@ returns::
             "rating": {
                 "label": "Rating",
                 "olap_type": "dimension",
-                "simpletype": "string"
+                "simpletype": "string",
+                "cardinality": 2
             },
             "food_type": {
                 "label": "Food Type",
                 "olap_type": "dimension",
-                "simpletype": "string"
+                "simpletype": "string",
+                "cardinality": 8
             },
             ...
         },
