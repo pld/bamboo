@@ -35,13 +35,13 @@ echo $RET
 
 echo -e "\nCalculate summary statistics for School Zone RWIKA"
 # using slug for "School Zone", which is "school_zone"
-RET=$(curl -#g $HOST/datasets/$ID/summary?query='{"school_zone":"RWIKA"}')
+RET=$(curl -#g $HOST/datasets/$ID/summary?query='{"school_zone":"RWIKA"}'\&select=all)
 echo $RET
 
 echo -e "\nCalculate summary statistics with a grouping (truncated to 1000 characters)"
 echo -e "Group by District showing only PRIVATE schools"
 # using slug for "Public or Private", which is "public_or_private"
-RET=$(curl -#g $HOST/datasets/$ID/summary?query='{"public_or_private":"PRIVATE"}'\&group=district)
+RET=$(curl -#g $HOST/datasets/$ID/summary?query='{"public_or_private":"PRIVATE"}'\&select=all\&group=district)
 echo $RET | cut -c -1000
 
 echo -e "\nStore calculation named small_schools with formula acreage<10"
