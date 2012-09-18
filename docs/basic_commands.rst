@@ -174,11 +174,14 @@ Retrieve summary statistics for dataset
 by ID
 ^^^^^
 
-``curl http://bamboo.io/datasets/8a3d74711475d8a51c84484fe73f24bd151242ea/summary``
+``curl http://bamboo.io/datasets/8a3d74711475d8a51c84484fe73f24bd151242ea/summary?select=all``
 
 This returns a summary of the dataset.  Columns of type float and integer are
 show as summary statistics.  Columns of type string and boolean are shown as
 counts of unique values.
+
+The select argument is required.  It can either be ``all`` or a MongoDB JSON
+select query.
 
 returns::
 
@@ -207,7 +210,7 @@ returns::
 with a query
 ^^^^^^^^^^^^^
 
-``curl -g http://bamboo.io/datasets/8a3d74711475d8a51c84484fe73f24bd151242ea/summary?query='{"food_type": "lunch"}'``
+``curl -g http://bamboo.io/datasets/8a3d74711475d8a51c84484fe73f24bd151242ea/summary?query='{"food_type": "lunch"}'&select=all``
 
 Return the summary restricting to data that matches the Mongo query passed as
 *query*.
@@ -249,7 +252,7 @@ returns::
 with a grouping
 ^^^^^^^^^^^^^^^
 
-``curl http://bamboo.io/datasets/8a3d74711475d8a51c84484fe73f24bd151242ea/summary?group=food_type``
+``curl http://bamboo.io/datasets/8a3d74711475d8a51c84484fe73f24bd151242ea/summary?select=all&group=food_type``
 
 Return the summary grouping on the value passed as *group*.
 
@@ -324,7 +327,7 @@ returns::
 with a multi-grouping
 ^^^^^^^^^^^^^^^^^^^^^
 
-``curl http://bamboo.io/datasets/8a3d74711475d8a51c84484fe73f24bd151242ea/summary?group=food_type,rating``
+``curl http://bamboo.io/datasets/8a3d74711475d8a51c84484fe73f24bd151242ea/summary?select=all&group=food_type,rating``
 
 returns::
 

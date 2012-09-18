@@ -84,7 +84,10 @@ class TestDatasets(TestBase):
     def _test_summary_built(self, result):
         # check that summary is created
         self.dataset_id = result[ID]
-        results = self.controller.GET(self.dataset_id, mode=MODE_SUMMARY)
+        results = self.controller.GET(
+            self.dataset_id,
+            mode=MODE_SUMMARY,
+            select=self.controller.SELECT_ALL_FOR_SUMMARY)
         return self._test_summary_results(results)
 
     def _test_get_with_query_or_select(self, query='{}', select=None):
@@ -289,9 +292,17 @@ class TestDatasets(TestBase):
 
     def test_GET_summary(self):
         self._post_file()
-        results = self.controller.GET(self.dataset_id, mode=MODE_SUMMARY)
+        results = self.controller.GET(
+            self.dataset_id, mode=MODE_SUMMARY,
+            select=self.controller.SELECT_ALL_FOR_SUMMARY)
         results = self._test_summary_results(results)
         self._test_summary_no_group(results)
+
+    def test_GET_summary_no_select(self):
+        self._post_file()
+        results = self.controller.GET(self.dataset_id, mode=MODE_SUMMARY)
+        results = json.loads(results)
+        self.assertTrue(ERROR in results.keys())
 
     def test_GET_summary_with_query(self):
         self._post_file()
@@ -300,7 +311,8 @@ class TestDatasets(TestBase):
         results = self.controller.GET(
             self.dataset_id,
             mode=MODE_SUMMARY,
-            query='{"%s": "delectible"}' % query_column)
+            query='{"%s": "delectible"}' % query_column,
+            select=self.controller.SELECT_ALL_FOR_SUMMARY)
         results = self._test_summary_results(results)
         # ensure only returned results for this query column
         self.assertEqual(len(results[query_column][SUMMARY].keys()), 1)
@@ -314,8 +326,11 @@ class TestDatasets(TestBase):
         ]
 
         for group, column_values in groups:
-            json_results = self.controller.GET(self.dataset_id,
-                                               mode=MODE_SUMMARY, group=group)
+            json_results = self.controller.GET(
+                self.dataset_id,
+                mode=MODE_SUMMARY,
+                group=group,
+                select=self.controller.SELECT_ALL_FOR_SUMMARY)
             results = self._test_summary_results(json_results)
             result_keys = results.keys()
 
@@ -332,8 +347,11 @@ class TestDatasets(TestBase):
     def test_GET_summary_with_multigroup(self):
         self._post_file()
         group_columns = 'rating,food_type'
-        results = self.controller.GET(self.dataset_id, mode=MODE_SUMMARY,
-                                      group=group_columns)
+        results = self.controller.GET(
+            self.dataset_id,
+            mode=MODE_SUMMARY,
+            group=group_columns,
+            select=self.controller.SELECT_ALL_FOR_SUMMARY)
         results = self._test_summary_results(results)
         self.assertFalse(ERROR in results.keys())
         self.assertTrue(group_columns in results.keys())
@@ -344,16 +362,22 @@ class TestDatasets(TestBase):
     def test_GET_summary_multigroup_noncat_group(self):
         self._post_file()
         group_columns = 'rating,amount'
-        results = self.controller.GET(self.dataset_id, mode=MODE_SUMMARY,
-                                      group=group_columns)
+        results = self.controller.GET(
+            self.dataset_id,
+            mode=MODE_SUMMARY,
+            group=group_columns,
+            select=self.controller.SELECT_ALL_FOR_SUMMARY)
         results = self._test_summary_results(results)
         self.assertTrue(ERROR in results.keys())
 
     def test_GET_summary_nonexistent_group(self):
         self._post_file()
         group_columns = 'bongo'
-        results = self.controller.GET(self.dataset_id, mode=MODE_SUMMARY,
-                                      group=group_columns)
+        results = self.controller.GET(
+            self.dataset_id,
+            mode=MODE_SUMMARY,
+            group=group_columns,
+            select=self.controller.SELECT_ALL_FOR_SUMMARY)
         results = self._test_summary_results(results)
         self.assertTrue(ERROR in results.keys())
 
@@ -364,7 +388,8 @@ class TestDatasets(TestBase):
             self.dataset_id,
             mode=MODE_SUMMARY,
             group='rating',
-            query='{"%s": "delectible"}' % query_column)
+            query='{"%s": "delectible"}' % query_column,
+            select=self.controller.SELECT_ALL_FOR_SUMMARY)
         results = self._test_summary_results(results)
         self.assertEqual(len(results[query_column].keys()), 1)
 

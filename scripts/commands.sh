@@ -63,7 +63,7 @@ RET=$(curl -#g $HOST/datasets/$ID/summary?select='{"male_female_teacher_ratio":1
 echo $RET | cut -c -2000
 
 echo -e "\nRetrieve new calculated column male_female_teacher_ratio summary grouped by province (truncated to 2000 characters)"
-RET=$(curl -#g $HOST/datasets/$ID?group=province&select='{"male_female_teacher_ratio":1}')
+RET=$(curl -#g $HOST/datasets/$ID/summary?select='{"male_female_teacher_ratio":1}'&group=province)
 echo $RET | cut -c -2000
 
 echo -e "\nStore aggregation sum(tsc_male_teachers)"

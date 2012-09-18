@@ -16,6 +16,7 @@ from models.observation import Observation
 class Datasets(object):
     'Datasets controller'
 
+    SELECT_ALL_FOR_SUMMARY = 'all'
     exposed = True
 
     def DELETE(self, dataset_id):
@@ -40,6 +41,8 @@ class Datasets(object):
         - *related*: return the dataset_ids of linked datasets for the
         dataset.
         - *summary*: return summary statistics for the dataset.
+          - The *select* argument is required, it can be 'all' or a MongoDB
+            JSON query
           - If *group* is passed group the summary.
           - If *query* is passed restrict summary to rows matching query.
         - no mode passed: Return the raw data for the dataset.
@@ -60,13 +63,20 @@ class Datasets(object):
                 elif mode == MODE_RELATED:
                     result = dataset.linked_datasets
                 elif mode == MODE_SUMMARY:
-                    result = dataset.summarize(dataset, query, select, group)
+                    # for summary require a select
+                    if select is None:
+                        error = 'no select'
+                    else:
+                        if select == self.SELECT_ALL_FOR_SUMMARY:
+                            select = None
+                        result = dataset.summarize(
+                            dataset, query, select, group)
                 elif mode is False:
                     return mongo_to_json(dataset.observations(query, select))
                 else:
                     error = 'unsupported API call'
         except JSONError, e:
-            result = {ERROR: e.__str__()}
+            error = e.__str__()
 
         return dump_or_error(result, error)
 
