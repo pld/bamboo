@@ -5,6 +5,7 @@ from pandas import concat, DataFrame, Series
 
 from lib.aggregator import Aggregator
 from lib.parser import Parser
+from lib.utils import recognize_dates, recognize_dates_from_schema
 from models.observation import Observation
 from models.dataset import Dataset
 
@@ -59,7 +60,7 @@ def calculate_updates(dataset, new_data, calculations, FORMULA, NAME):
     # make a dataframe for the additional data to add
     filtered_data = [dict([(k, v) for k, v in new_data.iteritems()
                      if k in existing_dframe.columns])]
-    new_dframe = DataFrame(filtered_data)
+    new_dframe = recognize_dates_from_schema(dataset, DataFrame(filtered_data))
 
     # calculate columns
     parser = Parser(dataset.record)

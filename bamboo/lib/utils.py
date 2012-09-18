@@ -7,8 +7,8 @@ from calendar import timegm
 from dateutil.parser import parse as date_parse
 import numpy as np
 
-from constants import ERROR, JSON_NULL, LABEL, MONGO_RESERVED_KEYS,\
-    MONGO_RESERVED_KEY_PREFIX
+from constants import DATETIME, ERROR, JSON_NULL, LABEL, MONGO_RESERVED_KEYS,\
+    MONGO_RESERVED_KEY_PREFIX, SIMPLETYPE
 
 
 def is_float_nan(num):
@@ -79,7 +79,6 @@ def recognize_dates(dframe):
         if dtype.type == np.object_:
             try:
                 column = dframe.columns[idx]
-                print 'dframe[%s][0] = %s' % (column, dframe[column][0])
                 if is_float_nan(dframe[column][0]):
                     raise ValueError
                 # attempt to parse first entry as a date
@@ -92,6 +91,14 @@ def recognize_dates(dframe):
             except OverflowError:
                 # it is a number that is too large to be a date
                 pass
+    return dframe
+
+
+def recognize_dates_from_schema(dataset, dframe):
+    # if it is a date column, recognize dates
+    for column, column_schema in dataset.data_schema.items():
+        if column_schema[SIMPLETYPE] == DATETIME:
+            dframe[column] = dframe[column].map(date_parse)
     return dframe
 
 

@@ -4,11 +4,11 @@ from time import gmtime, strftime
 from celery.contrib.methods import task
 import numpy as np
 
-from lib.constants import ALL, ATTRIBUTION, CREATED_AT, DATASET_ID,\
-    DATASET_OBSERVATION_ID, DESCRIPTION, DTYPE_TO_OLAP_TYPE_MAP,\
-    DTYPE_TO_SIMPLETYPE_MAP, ERROR, GROUP_DELIMITER, ID, LABEL, LICENSE,\
-    LINKED_DATASETS, MONGO_RESERVED_KEY_STRS, NUM_COLUMNS, NUM_ROWS,\
-    OLAP_TYPE, SCHEMA, SIMPLETYPE, STATS, UPDATED_AT
+from lib.constants import ALL, ATTRIBUTION, CARDINALITY, CREATED_AT,\
+    DATASET_ID, DATASET_OBSERVATION_ID, DESCRIPTION, DIMENSION,\
+    DTYPE_TO_OLAP_TYPE_MAP, DTYPE_TO_SIMPLETYPE_MAP, ERROR, GROUP_DELIMITER,\
+    ID, LABEL, LICENSE, LINKED_DATASETS, MONGO_RESERVED_KEY_STRS, NUM_COLUMNS,\
+    NUM_ROWS, OLAP_TYPE, SCHEMA, SIMPLETYPE, STATS, UPDATED_AT
 from lib.summary import summarize_df, summarize_with_groups
 from lib.utils import reserve_encoded, slugify_columns,\
     type_for_data_and_dtypes
@@ -145,13 +145,21 @@ class Dataset(AbstractModel):
 
         encoded_names = dict(zip(column_names, slugify_columns(column_names)))
 
-        return dict([(encoded_names[name], {
-            LABEL: names_to_labels.get(name, name),
-            OLAP_TYPE: type_for_data_and_dtypes(DTYPE_TO_OLAP_TYPE_MAP,
-                                                dframe[name], dtype.type),
-            SIMPLETYPE: type_for_data_and_dtypes(DTYPE_TO_SIMPLETYPE_MAP,
-                                                 dframe[name], dtype.type),
-        }) for (name, dtype) in dtypes.items()])
+        schema = {}
+        for (name, dtype) in dtypes.items():
+            column_schema = {
+                LABEL: names_to_labels.get(name, name),
+                OLAP_TYPE: type_for_data_and_dtypes(DTYPE_TO_OLAP_TYPE_MAP,
+                                                    dframe[name], dtype.type),
+                SIMPLETYPE: type_for_data_and_dtypes(DTYPE_TO_SIMPLETYPE_MAP,
+                                                     dframe[name], dtype.type),
+            }
+
+            if column_schema[OLAP_TYPE] == DIMENSION:
+                column_schema[CARDINALITY] = dframe[name].nunique()
+            schema[encoded_names[name]] = column_schema
+
+        return schema
 
     def build_schema(self, dframe):
         """

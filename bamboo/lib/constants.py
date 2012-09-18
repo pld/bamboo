@@ -53,6 +53,7 @@ SCHEMA = 'schema'
 SIMPLETYPE = 'simpletype'
 SUMMARY = 'summary'
 UPDATED_AT = 'updated_at'
+CARDINALITY = 'cardinality'
 
 # simpletypes
 STRING = 'string'

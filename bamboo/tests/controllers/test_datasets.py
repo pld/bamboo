@@ -1,14 +1,16 @@
 import json
 import os
+import pickle
 
 import cherrypy
 
 from controllers.datasets import Datasets
 from controllers.calculations import Calculations
-from lib.constants import CREATED_AT, DATETIME, ERROR, ID, GROUP_DELIMITER,\
-    MODE_INFO, MODE_RELATED, MODE_SUMMARY, MONGO_RESERVED_KEYS,\
-    MONGO_RESERVED_KEY_PREFIX, NUM_COLUMNS, NUM_ROWS, SCHEMA, SIMPLETYPE,\
-    SUCCESS, SUMMARY, UPDATED_AT, MONGO_RESERVED_KEY_STRS
+from lib.constants import CARDINALITY, CREATED_AT, DATETIME, DIMENSION, ERROR,\
+    ID, GROUP_DELIMITER, MODE_INFO, MODE_RELATED, MODE_SUMMARY,\
+    MONGO_RESERVED_KEYS, MONGO_RESERVED_KEY_PREFIX, MONGO_RESERVED_KEY_STRS,\
+    NUM_COLUMNS, NUM_ROWS, OLAP_TYPE, SCHEMA, SIMPLETYPE, SUCCESS, SUMMARY,\
+    UPDATED_AT
 from lib.decorators import requires_internet
 from lib.io import create_dataset_from_url
 from models.dataset import Dataset
@@ -36,6 +38,8 @@ class TestDatasets(TestBase):
             'amount + 1',
             'amount - 5',
         ]
+        self.cardinalities = pickle.load(
+            open('tests/fixtures/good_eats_cardinalities.p', 'rb'))
 
     def _post_file(self):
         self.dataset_id = create_dataset_from_url(self._file_uri,
@@ -216,6 +220,20 @@ class TestDatasets(TestBase):
         self.assertEqual(results[NUM_ROWS], self.NUM_ROWS)
         self.assertTrue(NUM_COLUMNS in results.keys())
         self.assertEqual(results[NUM_COLUMNS], self.NUM_COLS)
+
+    def test_GET_info_cardinality(self):
+        self._post_file()
+        results = json.loads(self.controller.GET(self.dataset_id,
+                             mode=MODE_INFO))
+        self.assertTrue(isinstance(results, dict))
+        self.assertTrue(SCHEMA in results.keys())
+        schema = results[SCHEMA]
+        for key, column in schema.items():
+            if column[OLAP_TYPE] == DIMENSION:
+                self.assertTrue(CARDINALITY in column.keys())
+                self.assertEqual(column[CARDINALITY], self.cardinalities[key])
+            else:
+                self.assertFalse(CARDINALITY in column.keys())
 
     def test_GET_info_after_row_update(self):
         self._post_file()
