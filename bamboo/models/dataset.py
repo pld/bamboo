@@ -1,3 +1,4 @@
+import json
 import uuid
 from time import gmtime, strftime
 
@@ -85,25 +86,37 @@ class Dataset(AbstractModel):
 
         *group_str* may be a string of many comma separated groups.
         """
+        # split group in case of multigroups
+        groups = group_str.split(GROUP_DELIMITER)
+        group_key = ALL
+
+        # if select append groups to select
+        if select:
+            select = json.loads(select)
+            select.update(dict(zip(groups, [1] * len(groups))))
+            select = json.dumps(select)
+        if group_str != ALL:
+            group_key = '%s,%s' % (group_str, select)
+
         # narrow list of observations via query/select
         dframe = Observation.find(self, query, select, as_df=True)
 
-        # split group in case of multigroups
-        groups = group_str.split(GROUP_DELIMITER)
-
         # do not allow group by numeric types
         for group in groups:
+            group_type = self.data_schema.get(group)
             _type = dframe.dtypes.get(group)
-            if group != ALL and (_type is None or _type.type != np.object_):
-                return {ERROR: "group: '%s' is not categorical." % group}
+            if group != ALL and (
+                    group_type is None or group_type[OLAP_TYPE] != DIMENSION):
+                return {ERROR: "group: '%s' is not a dimension." % group}
 
         # check cached stats for group and update as necessary
         stats = self.stats
-        if query or not stats.get(group):
+        if query or not stats.get(group_key):
             stats = {ALL: summarize_df(dframe)} if group_str == ALL \
-                else summarize_with_groups(dframe, stats, group_str, groups)
+                else summarize_with_groups(
+                    dframe, stats, group_key, groups, select)
             self.update({STATS: stats})
-        stats_to_return = stats.get(group_str)
+        stats_to_return = stats.get(group_key)
 
         return stats_to_return if group_str == ALL else {
             group_str: stats_to_return}

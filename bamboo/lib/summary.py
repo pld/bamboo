@@ -15,7 +15,7 @@ def summarize_series(dtype, data):
     }.get(dtype.type, None)
 
 
-def summarize_df(dframe):
+def summarize_df(dframe, groups=[]):
     """
     Calculate summary statistics
     """
@@ -25,15 +25,15 @@ def summarize_df(dframe):
     return dict([
         (col, {
             SUMMARY: series_to_jsondict(summarize_series(dtypes[col], data))
-        }) for col, data in dframe.iteritems()
+        }) for col, data in dframe.iteritems() if not col in groups
     ])
 
 
-def summarize_with_groups(dframe, stats, group, groups):
+def summarize_with_groups(dframe, stats, group_str, groups, select):
     """
     Calculate summary statistics for group.
     """
     grouped_stats = series_to_jsondict(
-        dframe.groupby(groups).apply(summarize_df))
-    stats.update({group: grouped_stats})
+        dframe.groupby(groups).apply(summarize_df, groups))
+    stats.update({group_str: grouped_stats})
     return stats

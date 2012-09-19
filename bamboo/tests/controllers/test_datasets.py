@@ -69,12 +69,14 @@ class TestDatasets(TestBase):
         self.assertTrue(isinstance(results, dict))
         return results
 
-    def _test_summary_no_group(self, results):
+    def _test_summary_no_group(self, results, group=None):
+        group = [group] if group else []
         result_keys = results.keys()
-        self.assertEqual(len(result_keys), self.NUM_COLS)
+        # minus the column that we are grouping on
+        self.assertEqual(len(result_keys), self.NUM_COLS - len(group))
         columns = [col for col in
                    self.test_data[self._file_name].columns.tolist()
-                   if not col in MONGO_RESERVED_KEYS]
+                   if not col in MONGO_RESERVED_KEYS + group]
         dataset = Dataset.find_one(self.dataset_id)
         labels_to_slugs = dataset.build_labels_to_slugs()
         for col in columns:
@@ -348,10 +350,25 @@ class TestDatasets(TestBase):
                                 % (group, result_keys))
                 self.assertEqual(column_values, results[group].keys())
                 for column_value in column_values:
-                    self._test_summary_no_group(results[group][column_value])
+                    self._test_summary_no_group(
+                        results[group][column_value], group)
             else:
                 self.assertFalse(group in results.keys())
                 self.assertTrue(ERROR in results.keys())
+
+    def test_GET_summary_with_group_select(self):
+        self._post_file()
+        group = 'food_type'
+        json_select = {'rating': 1}
+        json_results = self.controller.GET(
+            self.dataset_id,
+            mode=MODE_SUMMARY,
+            group=group,
+            select=json.dumps(json_select))
+        results = self._test_summary_results(json_results)
+        self.assertTrue(group in results.keys())
+        for summary in results[group].values():
+            self.assertTrue(len(summary.keys()), 1)
 
     def test_GET_summary_with_multigroup(self):
         self._post_file()
