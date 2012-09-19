@@ -324,6 +324,36 @@ returns::
         }
     }
 
+with a grouping and a select
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+``curl -g http://bamboo.io/datasets/8a3d74711475d8a51c84484fe73f24bd151242ea/summary?select='{"rating":1}'&group=food_type``
+
+Return the summary grouping on the value passed as *group* and only showing the
+columns specified by the *select*.
+
+returns::
+
+    {
+        "food_type": {
+            "caffeination": {
+                "rating": {
+                    "summary": {
+                        "epic_eat": 1
+                    }
+                }
+            },
+            "deserts": {
+                "rating": {
+                    "summary": {
+                        "epic_eat": 2
+                    }
+                }
+            },
+            ...
+        }
+    }
+
 with a multi-grouping
 ^^^^^^^^^^^^^^^^^^^^^
 

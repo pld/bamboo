@@ -115,7 +115,8 @@ class Dataset(AbstractModel):
             stats = {ALL: summarize_df(dframe)} if group_str == ALL \
                 else summarize_with_groups(
                     dframe, stats, group_key, groups, select)
-            self.update({STATS: stats})
+            if not query:
+                self.update({STATS: stats})
         stats_to_return = stats.get(group_key)
 
         return stats_to_return if group_str == ALL else {
