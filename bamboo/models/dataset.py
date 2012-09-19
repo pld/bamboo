@@ -176,10 +176,10 @@ class Dataset(AbstractModel):
             SCHEMA: self.data_schema,
             LICENSE: '',
             ATTRIBUTION: '',
-            CREATED_AT: self.record[CREATED_AT],
-            UPDATED_AT: self.record[UPDATED_AT],
-            NUM_COLUMNS: self.record[NUM_COLUMNS],
-            NUM_ROWS: self.record[NUM_ROWS],
+            CREATED_AT: self.record.get(CREATED_AT),
+            UPDATED_AT: self.record.get(UPDATED_AT),
+            NUM_COLUMNS: self.record.get(NUM_COLUMNS),
+            NUM_ROWS: self.record.get(NUM_ROWS),
         }
 
     def build_labels_to_slugs(self):
