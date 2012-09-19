@@ -35,7 +35,10 @@ class TestCalculations(TestBase):
         self.assertFalse(DATASET_ID in response)
 
     def test_POST_remove_summary(self):
-        Datasets().GET(self.dataset_id, mode=MODE_SUMMARY)
+        Datasets().GET(
+            self.dataset_id,
+            mode=MODE_SUMMARY,
+            select=Datasets.SELECT_ALL_FOR_SUMMARY)
         dataset = Dataset.find_one(self.dataset_id)
         self.assertTrue(isinstance(dataset.stats, dict))
         self.assertTrue(isinstance(dataset.stats[ALL], dict))

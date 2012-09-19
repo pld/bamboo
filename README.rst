@@ -140,7 +140,8 @@ On your local server
 
 About
 -----
-Bamboo is an open source project. The project features the combined efforts of
+Bamboo is an open source project. The project features, in chronological order,
+the combined efforts of
 
 * Peter Lubell-Doughtie
 * Mark Johnston
