@@ -2,8 +2,8 @@ import json
 
 import cherrypy
 
-from lib.constants import ALL, ERROR, ID, MODE_RELATED,\
-    MODE_SUMMARY, MODE_INFO, SCHEMA, SUCCESS
+from controllers.abstract_controller import AbstractController
+from lib.constants import ALL, ERROR, ID
 from lib.exceptions import JSONError
 from lib.mongo import mongo_to_json
 from lib.io import create_dataset_from_url, create_dataset_from_csv
@@ -13,11 +13,15 @@ from models.dataset import Dataset
 from models.observation import Observation
 
 
-class Datasets(object):
+class Datasets(AbstractController):
     'Datasets controller'
 
     SELECT_ALL_FOR_SUMMARY = 'all'
-    exposed = True
+
+    # modes for dataset GET
+    MODE_INFO = 'info'
+    MODE_RELATED = 'related'
+    MODE_SUMMARY = 'summary'
 
     def DELETE(self, dataset_id):
         """
@@ -28,7 +32,7 @@ class Datasets(object):
 
         if dataset.record:
             task = dataset.delete.delay(dataset)
-            result = {SUCCESS: 'deleted dataset: %s' % dataset_id}
+            result = {self.SUCCESS: 'deleted dataset: %s' % dataset_id}
         return dump_or_error(result, 'id not found')
 
     def GET(self, dataset_id, mode=False, query=None, select=None,
@@ -58,11 +62,11 @@ class Datasets(object):
 
         try:
             if dataset.record:
-                if mode == MODE_INFO:
+                if mode == self.MODE_INFO:
                     result = dataset.schema()
-                elif mode == MODE_RELATED:
+                elif mode == self.MODE_RELATED:
                     result = dataset.linked_datasets
-                elif mode == MODE_SUMMARY:
+                elif mode == self.MODE_SUMMARY:
                     # for summary require a select
                     if select is None:
                         error = 'no select'

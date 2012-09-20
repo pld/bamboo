@@ -1,15 +1,14 @@
 import json
 
-from lib.constants import ID, SUCCESS
+from controllers.abstract_controller import AbstractController
+from lib.constants import ID
 from lib.mongo import dump_mongo_json
 from lib.utils import dump_or_error
 from models.calculation import Calculation
 from models.dataset import Dataset
 
 
-class Calculations(object):
-
-    exposed = True
+class Calculations(AbstractController):
 
     def DELETE(self, dataset_id, name):
         """
@@ -24,7 +23,7 @@ class Calculations(object):
         calculation = Calculation.find_one(dataset_id, name)
         if calculation:
             task = calculation.delete.delay(calculation)
-            result = {SUCCESS: 'deleted calculation: %s for dataset: %s' %
+            result = {self.SUCCESS: 'deleted calculation: %s for dataset: %s' %
                       (name, dataset_id)}
         return dump_or_error(result,
                              'name and dataset_id combination not found')

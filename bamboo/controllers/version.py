@@ -1,14 +1,16 @@
 import json
 
-from lib.constants import VERSION_DESCRIPTION, VERSION_NUMBER
+from controllers.abstract_controller import AbstractController
 
 
-class Version(object):
+class Version(AbstractController):
 
-    exposed = True
+    # versioning
+    VERSION_NUMBER = '0.1'
+    VERSION_DESCRIPTION = 'alpha'
 
     def GET(self):
         return json.dumps({
-            'version': VERSION_NUMBER,
-            'description': VERSION_DESCRIPTION
+            'version': self.VERSION_NUMBER,
+            'description': self.VERSION_DESCRIPTION
         })
