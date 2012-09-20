@@ -1,6 +1,6 @@
 import numpy as np
 
-from lib.constants import LABEL, SCHEMA, SIMPLETYPE
+from lib.constants import SCHEMA, SIMPLETYPE
 from lib.tasks.import_dataset import import_dataset
 from models.dataset import Dataset
 from models.observation import Observation
@@ -85,7 +85,7 @@ class TestCalculations(TestCalculator):
 
             # test column labels
             self.label_list.append(unslug_name)
-            labels = [schema[col][LABEL] for col in schema.keys()]
+            labels = [schema[col][Dataset.LABEL] for col in schema.keys()]
             self.assertEqual(sorted(labels), sorted(self.label_list))
 
             # test result of calculation

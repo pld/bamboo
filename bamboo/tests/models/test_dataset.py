@@ -6,8 +6,7 @@ from pymongo.cursor import Cursor
 from tests.test_base import TestBase
 from models.dataset import Dataset
 from models.observation import Observation
-from lib.constants import CREATED_AT, LABEL, MONGO_RESERVED_KEY_STRS,\
-    OLAP_TYPE, SCHEMA, SIMPLETYPE, UPDATED_AT
+from lib.constants import MONGO_RESERVED_KEY_STRS, SCHEMA, SIMPLETYPE
 from lib.mongo import mongo_decode_keys
 
 
@@ -63,7 +62,7 @@ class TestDataset(TestBase):
             # get dataset with new schema
             dataset = Dataset.find_one(self.test_dataset_ids[dataset_name])
 
-            for key in [CREATED_AT, SCHEMA, UPDATED_AT]:
+            for key in [Dataset.CREATED_AT, SCHEMA, Dataset.UPDATED_AT]:
                 self.assertTrue(key in dataset.record.keys())
 
             df_columns = self.test_data[dataset_name].columns.tolist()
@@ -79,12 +78,12 @@ class TestDataset(TestBase):
 
                 # check has require attributes
                 self.assertTrue(SIMPLETYPE in column_attributes)
-                self.assertTrue(OLAP_TYPE in column_attributes)
-                self.assertTrue(LABEL in column_attributes)
+                self.assertTrue(Dataset.OLAP_TYPE in column_attributes)
+                self.assertTrue(Dataset.LABEL in column_attributes)
 
                 # check label is an original column
-                self.assertTrue(column_attributes[LABEL] in df_columns)
-                df_columns.remove(column_attributes[LABEL])
+                self.assertTrue(column_attributes[Dataset.LABEL] in df_columns)
+                df_columns.remove(column_attributes[Dataset.LABEL])
 
                 # check not reserved key
                 self.assertFalse(column_name in MONGO_RESERVED_KEY_STRS)

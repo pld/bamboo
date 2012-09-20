@@ -5,8 +5,7 @@ import re
 from bson import json_util
 from pandas import DataFrame
 
-from lib.constants import DATASET_OBSERVATION_ID, DEFAULT_HASH_ALGORITHM,\
-    MONGO_RESERVED_KEYS
+from lib.constants import DATASET_OBSERVATION_ID, MONGO_RESERVED_KEYS
 from lib.utils import df_to_jsondict, get_json_value, prefix_reserved_key
 
 

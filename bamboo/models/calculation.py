@@ -1,6 +1,6 @@
 from celery.contrib.methods import task
 
-from lib.constants import DATASET_ID, ERROR, STATS
+from lib.constants import DATASET_ID, ERROR
 from lib.exceptions import ParseError
 from lib.parser import Parser, ParserContext
 from lib.tasks.calculator import calculate_column, calculate_updates

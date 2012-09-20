@@ -4,15 +4,15 @@ import pickle
 
 import cherrypy
 
+from controllers.abstract_controller import AbstractController
 from controllers.datasets import Datasets
 from controllers.calculations import Calculations
-from lib.constants import CARDINALITY, CREATED_AT, DATETIME, DIMENSION, ERROR,\
-    ID, GROUP_DELIMITER, MODE_INFO, MODE_RELATED, MODE_SUMMARY,\
-    MONGO_RESERVED_KEYS, MONGO_RESERVED_KEY_PREFIX, MONGO_RESERVED_KEY_STRS,\
-    NUM_COLUMNS, NUM_ROWS, OLAP_TYPE, SCHEMA, SIMPLETYPE, SUCCESS, SUMMARY,\
-    UPDATED_AT
+from lib.constants import DATETIME, DIMENSION, ERROR,\
+    ID, MONGO_RESERVED_KEYS, MONGO_RESERVED_KEY_PREFIX,\
+    MONGO_RESERVED_KEY_STRS, NUM_COLUMNS, NUM_ROWS, SCHEMA, SIMPLETYPE, SUMMARY
 from lib.decorators import requires_internet
 from lib.io import create_dataset_from_url
+from lib.utils import GROUP_DELIMITER
 from models.dataset import Dataset
 from models.calculation import Calculation
 from tests.test_base import TestBase
@@ -47,7 +47,7 @@ class TestDatasets(TestBase):
         self.dataset_id = create_dataset_from_url(self._file_uri,
                                                   allow_local_file=True)[ID]
         self.schema = json.loads(self.controller.GET(self.dataset_id,
-                                 mode=MODE_INFO))[SCHEMA]
+                                 mode=Datasets.MODE_INFO))[SCHEMA]
 
     def _post_calculations(self, formulae=[], group=None):
         # must call after _post_file
@@ -90,7 +90,7 @@ class TestDatasets(TestBase):
         self.dataset_id = result[ID]
         results = self.controller.GET(
             self.dataset_id,
-            mode=MODE_SUMMARY,
+            mode=Datasets.MODE_SUMMARY,
             select=self.controller.SELECT_ALL_FOR_SUMMARY)
         return self._test_summary_results(results)
 
@@ -107,7 +107,7 @@ class TestDatasets(TestBase):
 
     def _test_mode_related(self, groups=['']):
         results = json.loads(self.controller.GET(self.dataset_id,
-                             mode=MODE_RELATED))
+                             mode=Datasets.MODE_RELATED))
         self.assertTrue(isinstance(results, dict))
         self.assertEqual(len(results.keys()), len(groups))
         self.assertEqual(results.keys(), groups)
@@ -177,7 +177,7 @@ class TestDatasets(TestBase):
         results = self._test_summary_built(result)
         self._test_summary_no_group(results)
         results = json.loads(self.controller.GET(self.dataset_id,
-                             mode=MODE_INFO))
+                             mode=Datasets.MODE_INFO))
 
         for column_name, column_schema in results[SCHEMA].items():
             self.assertEqual(
@@ -198,7 +198,7 @@ class TestDatasets(TestBase):
 
     @requires_internet
     def test_POST_not_csv_url(self):
-        result = json.loads(self.controller.POST(url='http://google.com/'))
+        result = json.loads(self.controller.POST(url='http://74.125.228.110/'))
         self.assertTrue(isinstance(result, dict))
         self.assertTrue(ERROR in result)
 
@@ -227,7 +227,7 @@ class TestDatasets(TestBase):
     def test_GET_info(self):
         self._post_file()
         results = json.loads(self.controller.GET(self.dataset_id,
-                             mode=MODE_INFO))
+                             mode=Datasets.MODE_INFO))
         self.assertTrue(isinstance(results, dict))
         self.assertTrue(SCHEMA in results.keys())
         self.assertTrue(NUM_ROWS in results.keys())
@@ -238,39 +238,40 @@ class TestDatasets(TestBase):
     def test_GET_info_cardinality(self):
         self._post_file()
         results = json.loads(self.controller.GET(self.dataset_id,
-                             mode=MODE_INFO))
+                             mode=Datasets.MODE_INFO))
         self.assertTrue(isinstance(results, dict))
         self.assertTrue(SCHEMA in results.keys())
         schema = results[SCHEMA]
         for key, column in schema.items():
-            if column[OLAP_TYPE] == DIMENSION:
-                self.assertTrue(CARDINALITY in column.keys())
-                self.assertEqual(column[CARDINALITY], self.cardinalities[key])
+            if column[Dataset.OLAP_TYPE] == DIMENSION:
+                self.assertTrue(Dataset.CARDINALITY in column.keys())
+                self.assertEqual(
+                    column[Dataset.CARDINALITY], self.cardinalities[key])
             else:
-                self.assertFalse(CARDINALITY in column.keys())
+                self.assertFalse(Dataset.CARDINALITY in column.keys())
 
     def test_GET_info_after_row_update(self):
         self._post_file()
         self._post_row_updates()
         results = json.loads(self.controller.GET(self.dataset_id,
-                             mode=MODE_INFO))
+                             mode=Datasets.MODE_INFO))
         self.assertEqual(results[NUM_ROWS], self.NUM_ROWS + 1)
 
     def test_GET_info_after_adding_calculations(self):
         self._post_file()
         self._post_calculations(formulae=self.default_formulae)
         results = json.loads(self.controller.GET(self.dataset_id,
-                             mode=MODE_INFO))
+                             mode=Datasets.MODE_INFO))
         self.assertEqual(results[NUM_COLUMNS], self.NUM_COLS +
                          len(self.default_formulae))
 
     def test_GET_schema(self):
         self._post_file()
         results = json.loads(self.controller.GET(self.dataset_id,
-                             mode=MODE_INFO))
+                             mode=Datasets.MODE_INFO))
         self.assertTrue(isinstance(results, dict))
         result_keys = results.keys()
-        for key in [CREATED_AT, ID, SCHEMA, UPDATED_AT]:
+        for key in [Dataset.CREATED_AT, ID, SCHEMA, Dataset.UPDATED_AT]:
             self.assertTrue(key in result_keys)
         self.assertEqual(results[SCHEMA]['submit_date'][SIMPLETYPE], DATETIME)
 
@@ -304,14 +305,15 @@ class TestDatasets(TestBase):
     def test_GET_summary(self):
         self._post_file()
         results = self.controller.GET(
-            self.dataset_id, mode=MODE_SUMMARY,
+            self.dataset_id, mode=Datasets.MODE_SUMMARY,
             select=self.controller.SELECT_ALL_FOR_SUMMARY)
         results = self._test_summary_results(results)
         self._test_summary_no_group(results)
 
     def test_GET_summary_no_select(self):
         self._post_file()
-        results = self.controller.GET(self.dataset_id, mode=MODE_SUMMARY)
+        results = self.controller.GET(
+            self.dataset_id, mode=Datasets.MODE_SUMMARY)
         results = json.loads(results)
         self.assertTrue(ERROR in results.keys())
 
@@ -321,7 +323,7 @@ class TestDatasets(TestBase):
         query_column = 'rating'
         results = self.controller.GET(
             self.dataset_id,
-            mode=MODE_SUMMARY,
+            mode=Datasets.MODE_SUMMARY,
             query='{"%s": "delectible"}' % query_column,
             select=self.controller.SELECT_ALL_FOR_SUMMARY)
         results = self._test_summary_results(results)
@@ -339,7 +341,7 @@ class TestDatasets(TestBase):
         for group, column_values in groups:
             json_results = self.controller.GET(
                 self.dataset_id,
-                mode=MODE_SUMMARY,
+                mode=Datasets.MODE_SUMMARY,
                 group=group,
                 select=self.controller.SELECT_ALL_FOR_SUMMARY)
             results = self._test_summary_results(json_results)
@@ -362,7 +364,7 @@ class TestDatasets(TestBase):
         json_select = {'rating': 1}
         json_results = self.controller.GET(
             self.dataset_id,
-            mode=MODE_SUMMARY,
+            mode=Datasets.MODE_SUMMARY,
             group=group,
             select=json.dumps(json_select))
         results = self._test_summary_results(json_results)
@@ -375,7 +377,7 @@ class TestDatasets(TestBase):
         group_columns = 'rating,food_type'
         results = self.controller.GET(
             self.dataset_id,
-            mode=MODE_SUMMARY,
+            mode=Datasets.MODE_SUMMARY,
             group=group_columns,
             select=self.controller.SELECT_ALL_FOR_SUMMARY)
         results = self._test_summary_results(results)
@@ -390,7 +392,7 @@ class TestDatasets(TestBase):
         group_columns = 'rating,amount'
         results = self.controller.GET(
             self.dataset_id,
-            mode=MODE_SUMMARY,
+            mode=Datasets.MODE_SUMMARY,
             group=group_columns,
             select=self.controller.SELECT_ALL_FOR_SUMMARY)
         results = self._test_summary_results(results)
@@ -401,7 +403,7 @@ class TestDatasets(TestBase):
         group_columns = 'bongo'
         results = self.controller.GET(
             self.dataset_id,
-            mode=MODE_SUMMARY,
+            mode=Datasets.MODE_SUMMARY,
             group=group_columns,
             select=self.controller.SELECT_ALL_FOR_SUMMARY)
         results = self._test_summary_results(results)
@@ -412,7 +414,7 @@ class TestDatasets(TestBase):
         query_column = 'rating'
         results = self.controller.GET(
             self.dataset_id,
-            mode=MODE_SUMMARY,
+            mode=Datasets.MODE_SUMMARY,
             group='rating',
             query='{"%s": "delectible"}' % query_column,
             select=self.controller.SELECT_ALL_FOR_SUMMARY)
@@ -423,7 +425,7 @@ class TestDatasets(TestBase):
         self._post_file()
         self._post_calculations(formulae=self.default_formulae)
         results = json.loads(self.controller.GET(self.dataset_id,
-                             mode=MODE_RELATED))
+                             mode=Datasets.MODE_RELATED))
         self.assertTrue(isinstance(results, dict))
         self.assertEqual(len(results.keys()), 0)
 
@@ -488,7 +490,7 @@ class TestDatasets(TestBase):
 
         # get second linked dataset
         results = json.loads(self.controller.GET(self.dataset_id,
-                             mode=MODE_RELATED))
+                             mode=Datasets.MODE_RELATED))
         self.assertEqual(len(results.keys()), len(groups))
         self.assertEqual(results.keys(), groups)
         linked_dataset_id = results[group]
@@ -503,9 +505,10 @@ class TestDatasets(TestBase):
     def test_DELETE(self):
         self._post_file()
         result = json.loads(self.controller.DELETE(self.dataset_id))
-        self.assertTrue(SUCCESS in result)
-        self.assertEqual(result[SUCCESS], 'deleted dataset: %s' %
-                         self.dataset_id)
+        self.assertTrue(AbstractController.SUCCESS in result)
+        self.assertEqual(
+            result[AbstractController.SUCCESS],
+            'deleted dataset: %s' % self.dataset_id)
 
     def test_DELETE_bad_id(self):
         for dataset_name in self.TEST_DATASETS:

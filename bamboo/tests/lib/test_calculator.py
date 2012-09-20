@@ -1,6 +1,5 @@
 from tests.test_base import TestBase
 
-from lib.constants import LABEL
 from lib.parser import Parser
 from lib.tasks.calculator import calculate_column
 from lib.utils import recognize_dates
@@ -36,7 +35,7 @@ class TestCalculator(TestBase):
         self.added_num_cols = 0
 
         column_labels_to_slugs = dict([
-            (column_attrs[LABEL], (column_name)) for
+            (column_attrs[Dataset.LABEL], (column_name)) for
             (column_name, column_attrs) in self.dataset.data_schema.items()])
         self.label_list, self.slugified_key_list = [
             list(ary) for ary in zip(*column_labels_to_slugs.items())
