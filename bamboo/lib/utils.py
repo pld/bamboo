@@ -8,8 +8,18 @@ from dateutil.parser import parse as date_parse
 import numpy as np
 from pandas import Series
 
-from constants import DATETIME, ERROR, JSON_NULL, LABEL, MONGO_RESERVED_KEYS,\
+from constants import DATETIME, ERROR, MONGO_RESERVED_KEYS,\
     MONGO_RESERVED_KEY_PREFIX, SIMPLETYPE
+
+"""
+Constants for utils
+"""
+
+# JSON encoding string
+JSON_NULL = 'null'
+
+# delimiter when passing multiple groups as a string
+GROUP_DELIMITER = ','
 
 
 def is_float_nan(num):
@@ -117,3 +127,7 @@ def parse_date_to_unix_time(date):
 def reserve_encoded(string):
     return prefix_reserved_key(string) if string in MONGO_RESERVED_KEYS else\
         string
+
+
+def split_groups(group_str):
+    return group_str.split(GROUP_DELIMITER)
