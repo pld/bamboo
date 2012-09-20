@@ -5,14 +5,11 @@ from time import gmtime, strftime
 from celery.contrib.methods import task
 import numpy as np
 
-from lib.constants import ALL, ATTRIBUTION, CARDINALITY, CREATED_AT,\
-    DATASET_ID, DATASET_OBSERVATION_ID, DESCRIPTION, DIMENSION,\
-    DTYPE_TO_OLAP_TYPE_MAP, DTYPE_TO_SIMPLETYPE_MAP, ERROR, GROUP_DELIMITER,\
-    ID, LABEL, LICENSE, LINKED_DATASETS, MONGO_RESERVED_KEY_STRS, NUM_COLUMNS,\
-    NUM_ROWS, OLAP_TYPE, SCHEMA, SIMPLETYPE, STATS, UPDATED_AT
+from lib.constants import ALL, DATASET_ID, DATASET_OBSERVATION_ID, DIMENSION,\
+    ERROR, ID, LINKED_DATASETS, NUM_COLUMNS, NUM_ROWS, SCHEMA, SIMPLETYPE
+from lib.schema_builder import SchemaBuilder
 from lib.summary import summarize_df, summarize_with_groups
-from lib.utils import reserve_encoded, slugify_columns,\
-    type_for_data_and_dtypes
+from lib.utils import reserve_encoded, split_groups
 from models.abstract_model import AbstractModel
 from models.observation import Observation
 
@@ -20,6 +17,18 @@ from models.observation import Observation
 class Dataset(AbstractModel):
 
     __collectionname__ = 'datasets'
+
+    STATS = '_stats'
+
+    # metadata
+    ATTRIBUTION = 'attribution'
+    CARDINALITY = 'cardinality'
+    CREATED_AT = 'created_at'
+    DESCRIPTION = 'description'
+    LABEL = 'label'
+    LICENSE = 'license'
+    OLAP_TYPE = 'olap_type'
+    UPDATED_AT = 'updated_at'
 
     # commonly accessed variables
     @property
@@ -32,7 +41,7 @@ class Dataset(AbstractModel):
 
     @property
     def stats(self):
-        return self.record.get(STATS, {})
+        return self.record.get(self.STATS, {})
 
     @property
     def data_schema(self):
@@ -52,7 +61,7 @@ class Dataset(AbstractModel):
         stats = self.stats
         if stats:
             stats.pop(field, None)
-            self.update({STATS: stats})
+            self.update({self.STATS: stats})
 
     def save(self, dataset_id=None):
         """
@@ -63,7 +72,7 @@ class Dataset(AbstractModel):
             dataset_id = uuid.uuid4().hex
 
         record = {
-            CREATED_AT: strftime("%Y-%m-%d %H:%M:%S", gmtime()),
+            self.CREATED_AT: strftime("%Y-%m-%d %H:%M:%S", gmtime()),
             DATASET_ID: dataset_id,
             DATASET_OBSERVATION_ID: uuid.uuid4().hex,
             LINKED_DATASETS: {},
@@ -87,7 +96,7 @@ class Dataset(AbstractModel):
         *group_str* may be a string of many comma separated groups.
         """
         # split group in case of multigroups
-        groups = group_str.split(GROUP_DELIMITER)
+        groups = split_groups(group_str)
         group_key = ALL
 
         # if select append groups to select
@@ -105,8 +114,8 @@ class Dataset(AbstractModel):
         for group in groups:
             group_type = self.data_schema.get(group)
             _type = dframe.dtypes.get(group)
-            if group != ALL and (
-                    group_type is None or group_type[OLAP_TYPE] != DIMENSION):
+            if group != ALL and (group_type is None or
+                                 group_type[self.OLAP_TYPE] != DIMENSION):
                 return {ERROR: "group: '%s' is not a dimension." % group}
 
         # check cached stats for group and update as necessary
@@ -116,7 +125,7 @@ class Dataset(AbstractModel):
                 else summarize_with_groups(
                     dframe, stats, group_key, groups, select)
             if not query:
-                self.update({STATS: stats})
+                self.update({self.STATS: stats})
         stats_to_return = stats.get(group_key)
 
         return stats_to_return if group_str == ALL else {
@@ -134,64 +143,29 @@ class Dataset(AbstractModel):
         """
         Update dataset *dataset* with *_dict*.
         """
-        _dict[UPDATED_AT] = strftime("%Y-%m-%d %H:%M:%S", gmtime())
+        _dict[self.UPDATED_AT] = strftime("%Y-%m-%d %H:%M:%S", gmtime())
         self.record.update(_dict)
         self.collection.update({DATASET_ID: self.dataset_id}, self.record,
                                safe=True)
-
-    def _schema_from_data_and_dtypes(self, dframe):
-        """
-        Build schema from the dframe, *dframe*, and a dict of dtypes, *dtypes*.
-        """
-        dtypes = dframe.dtypes.to_dict()
-
-        column_names = list()
-        names_to_labels = dict()
-
-        # use existing labels for existing columns
-        for name in dtypes.keys():
-            if name not in MONGO_RESERVED_KEY_STRS:
-                column_names.append(name)
-                if self.data_schema:
-                    schema_for_name = self.data_schema.get(name)
-                    if schema_for_name:
-                        names_to_labels[name] = schema_for_name[LABEL]
-
-        encoded_names = dict(zip(column_names, slugify_columns(column_names)))
-
-        schema = {}
-        for (name, dtype) in dtypes.items():
-            column_schema = {
-                LABEL: names_to_labels.get(name, name),
-                OLAP_TYPE: type_for_data_and_dtypes(DTYPE_TO_OLAP_TYPE_MAP,
-                                                    dframe[name], dtype.type),
-                SIMPLETYPE: type_for_data_and_dtypes(DTYPE_TO_SIMPLETYPE_MAP,
-                                                     dframe[name], dtype.type),
-            }
-
-            if column_schema[OLAP_TYPE] == DIMENSION:
-                column_schema[CARDINALITY] = dframe[name].nunique()
-            schema[encoded_names[name]] = column_schema
-
-        return schema
 
     def build_schema(self, dframe):
         """
         Build schema for a dataset.
         """
-        schema = self._schema_from_data_and_dtypes(dframe)
+        schema_builder = SchemaBuilder(self)
+        schema = schema_builder.schema_from_data_and_dtypes(dframe)
         self.update({SCHEMA: schema})
 
     def schema(self):
         return {
             ID: self.dataset_id,
-            LABEL: '',
-            DESCRIPTION: '',
+            self.LABEL: '',
+            self.DESCRIPTION: '',
             SCHEMA: self.data_schema,
-            LICENSE: '',
-            ATTRIBUTION: '',
-            CREATED_AT: self.record.get(CREATED_AT),
-            UPDATED_AT: self.record.get(UPDATED_AT),
+            self.LICENSE: '',
+            self.ATTRIBUTION: '',
+            self.CREATED_AT: self.record.get(self.CREATED_AT),
+            self.UPDATED_AT: self.record.get(self.UPDATED_AT),
             NUM_COLUMNS: self.record.get(NUM_COLUMNS),
             NUM_ROWS: self.record.get(NUM_ROWS),
         }
@@ -200,8 +174,9 @@ class Dataset(AbstractModel):
         """
         Map the column labels back to their slugified versions
         """
-        return dict([(column_attrs[LABEL], reserve_encoded(column_name)) for
-                     (column_name, column_attrs) in self.data_schema.items()])
+        return dict([
+            (column_attrs[self.LABEL], reserve_encoded(column_name)) for
+            (column_name, column_attrs) in self.data_schema.items()])
 
     def observations(self, query, select):
         return Observation.find(self, query, select)
