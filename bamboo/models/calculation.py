@@ -96,5 +96,5 @@ class Calculation(AbstractModel):
         Update *dataset* with new *data*.
         """
         calculations = Calculation.find(dataset)
-        calculate_updates(dataset, data, calculations, cls.FORMULA,
+        calculate_updates.delay(dataset, data, calculations, cls.FORMULA,
                           cls.NAME)

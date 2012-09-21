@@ -30,10 +30,12 @@ class TestDatasets(TestBase):
         self._file_path = 'tests/fixtures/%s' % self._file_name
         self._file_uri = 'file://%s' % self._file_path
         self.url = 'http://formhub.org/mberg/forms/good_eats/data.csv'
+        self._file_name_with_slashes = 'good_eats_with_slashes.csv'
         self._update_file_name = 'good_eats_update.json'
         self._update_file_path = 'tests/fixtures/%s' % self._update_file_name
         self._update_check_file_name = 'good_eats_update_values.json'
-        self._update_check_file_path = 'tests/fixtures/%s' % self._update_check_file_name
+        self._update_check_file_path = 'tests/fixtures/%s' %\
+            self._update_check_file_name
         self.controller = Datasets()
         self.default_formulae = [
             'amount',
@@ -45,9 +47,11 @@ class TestDatasets(TestBase):
         self.simpletypes = pickle.load(
             open('tests/fixtures/good_eats_simpletypes.p', 'rb'))
 
-    def _post_file(self):
-        self.dataset_id = create_dataset_from_url(self._file_uri,
-                                                  allow_local_file=True)[ID]
+    def _post_file(self, file_name=None):
+        if file_name is None:
+            file_name = self._file_name
+        self.dataset_id = create_dataset_from_url('file://tests/fixtures/%s'
+            % file_name, allow_local_file=True)[ID]
         self.schema = json.loads(self.controller.GET(self.dataset_id,
                                  mode=Datasets.MODE_INFO))[SCHEMA]
 
@@ -127,7 +131,7 @@ class TestDatasets(TestBase):
         assert(ERROR in result)
 
     def test_POST_dataset_id_update(self):
-        self._post_file()
+        self._post_file(self._file_name_with_slashes)
         self._post_calculations(self.default_formulae)
         num_rows = len(json.loads(self.controller.GET(self.dataset_id)))
         self._post_row_updates()
@@ -141,7 +145,8 @@ class TestDatasets(TestBase):
                     "column %s not in %s" % (column, result.keys()))
         # compare the last column values with what we expect
         for key, value in results[-1].items():
-            self.assertEqual(value, self._update_values[key])
+            self.assertEqual(value, self._update_values[key],
+                'error in column: %s' % key)
 
     def test_POST_dataset_id_update_with_aggregation(self):
         self._post_file()
