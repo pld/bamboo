@@ -32,6 +32,8 @@ class TestDatasets(TestBase):
         self.url = 'http://formhub.org/mberg/forms/good_eats/data.csv'
         self._update_file_name = 'good_eats_update.json'
         self._update_file_path = 'tests/fixtures/%s' % self._update_file_name
+        self._update_check_file_name = 'good_eats_update_values.json'
+        self._update_check_file_path = 'tests/fixtures/%s' % self._update_check_file_name
         self.controller = Datasets()
         self.default_formulae = [
             'amount',
@@ -63,6 +65,9 @@ class TestDatasets(TestBase):
         result = json.loads(self.controller.POST(dataset_id=self.dataset_id))
         self.assertTrue(isinstance(result, dict))
         self.assertTrue(ID in result)
+        # set up the values to test against
+        with open(self._update_check_file_path, 'r') as f:
+            self._update_values = json.loads(f.read())
 
     def _test_summary_results(self, results):
         results = json.loads(results)
@@ -134,7 +139,9 @@ class TestDatasets(TestBase):
                 self.assertTrue(
                     column in result.keys(),
                     "column %s not in %s" % (column, result.keys()))
-                    # TODO: check value somehow?
+        # compare the last column values with what we expect
+        for key, value in results[-1].items():
+            self.assertEqual(value, self._update_values[key])
 
     def test_POST_dataset_id_update_with_aggregation(self):
         self._post_file()
