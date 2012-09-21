@@ -1,10 +1,11 @@
+from datetime import datetime
 import json
 
 from bson import json_util
 
 from config.db import Database
-from lib.constants import DATASET_OBSERVATION_ID, DB_BATCH_SIZE, NUM_COLUMNS,\
-    NUM_ROWS, SCHEMA
+from lib.constants import DATASET_OBSERVATION_ID, DATETIME, DB_BATCH_SIZE,\
+    NUM_COLUMNS, NUM_ROWS, SCHEMA, SIMPLETYPE
 from lib.exceptions import JSONError
 from lib.mongo import mongo_to_df
 from models.abstract_model import AbstractModel
@@ -32,6 +33,18 @@ class Observation(AbstractModel):
         try:
             query = (query and json.loads(
                 query, object_hook=json_util.object_hook)) or {}
+
+            if query != {}:
+                # interpret date column queries as JSON
+                datetime_columns = [
+                    column for (column, schema) in
+                    dataset.data_schema.items() if
+                    schema[SIMPLETYPE] == DATETIME and column in query.keys()]
+                for date_column in datetime_columns:
+                    query[date_column] = dict([(
+                        key,
+                        datetime.fromtimestamp(int(value))) for (key, value) in
+                        query[date_column].items()])
         except ValueError, e:
             raise JSONError('cannot decode query: %s' % e.__str__())
 

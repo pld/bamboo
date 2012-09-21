@@ -108,7 +108,7 @@ class Dataset(AbstractModel):
             group_key = '%s,%s' % (group_str, select)
 
         # narrow list of observations via query/select
-        dframe = Observation.find(self, query, select, as_df=True)
+        dframe = self.observations(query, select, as_df=True)
 
         # do not allow group by numeric types
         for group in groups:
@@ -178,5 +178,5 @@ class Dataset(AbstractModel):
             (column_attrs[self.LABEL], reserve_encoded(column_name)) for
             (column_name, column_attrs) in self.data_schema.items()])
 
-    def observations(self, query, select):
-        return Observation.find(self, query, select)
+    def observations(self, query, select, as_df=False):
+        return Observation.find(self, query, select, as_df)

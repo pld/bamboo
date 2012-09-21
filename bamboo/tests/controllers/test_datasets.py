@@ -1,6 +1,8 @@
-import json
+from datetime import datetime
 import os
 import pickle
+import simplejson as json
+from time import mktime
 
 import cherrypy
 
@@ -94,16 +96,18 @@ class TestDatasets(TestBase):
             select=self.controller.SELECT_ALL_FOR_SUMMARY)
         return self._test_summary_results(results)
 
-    def _test_get_with_query_or_select(self, query='{}', select=None):
+    def _test_get_with_query_or_select(self, query='{}', select=None,
+                                       num_results=None, result_keys=None):
         self._post_file()
         results = json.loads(self.controller.GET(self.dataset_id, query=query,
                              select=select))
         self.assertTrue(isinstance(results, list))
-        self.assertTrue(isinstance(results[3], dict))
+        if num_results > 3:
+            self.assertTrue(isinstance(results[3], dict))
         if select:
-            self.assertEqual(sorted(results[0].keys()), ['rating'])
+            self.assertEqual(sorted(results[0].keys()), result_keys)
         if query != '{}':
-            self.assertEqual(len(results), 11)
+            self.assertEqual(len(results), num_results)
 
     def _test_mode_related(self, groups=['']):
         results = json.loads(self.controller.GET(self.dataset_id,
@@ -287,7 +291,8 @@ class TestDatasets(TestBase):
 
     def test_GET_with_query(self):
         # (sic)
-        self._test_get_with_query_or_select('{"rating": "delectible"}')
+        self._test_get_with_query_or_select('{"rating": "delectible"}',
+                                            num_results=11)
 
     def test_GET_with_bad_query(self):
         self._post_file()
@@ -295,12 +300,36 @@ class TestDatasets(TestBase):
                              query='bad json'))
         self.assertTrue('JSON' in results[ERROR])
 
+    def test_GET_with_date_query(self):
+        query = {
+            'submit_date': {'$lt': mktime(datetime.now().timetuple())}
+        }
+        self._test_get_with_query_or_select(
+            query=json.dumps(query),
+            num_results=self.NUM_ROWS)
+        query = {
+            'submit_date': {'$gt': mktime(datetime.now().timetuple())}
+        }
+        self._test_get_with_query_or_select(
+            query=json.dumps(query),
+            num_results=0)
+        date = mktime(datetime(2012, 2, 1, 0).timetuple())
+        query = {
+            'submit_date': {'$gt': date}
+        }
+        self._test_get_with_query_or_select(
+            query=json.dumps(query),
+            num_results=4)
+
     def test_GET_with_select(self):
-        self._test_get_with_query_or_select(select='{"rating": 1}')
+        self._test_get_with_query_or_select(select='{"rating": 1}',
+                                            result_keys=['rating'])
 
     def test_GET_with_select_and_query(self):
         self._test_get_with_query_or_select('{"rating": "delectible"}',
-                                            '{"rating": 1}')
+                                            '{"rating": 1}',
+                                            num_results=11,
+                                            result_keys=['rating'])
 
     def test_GET_summary(self):
         self._post_file()
