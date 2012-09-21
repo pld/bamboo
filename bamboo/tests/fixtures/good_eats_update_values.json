@@ -1,0 +1,22 @@
+{
+    "_id": 231324.0, 
+    "_percentage_complete": "null", 
+    "amount": 2.0, 
+    "amount___1": 3.0, 
+    "amount___5": -3.0, 
+    "calc_0": 2.0, 
+    "comments": "null", 
+    "food_photo": "null", 
+    "food_type": "baked_goods", 
+    "gps": "38.691816622303804 -78.75 0.0", 
+    "gps_alt": "null", 
+    "gps_latitude": "null", 
+    "gps_longitude": "null", 
+    "gps_precision": "null", 
+    "location_name": "here", 
+    "rating": "delectible", 
+    "risk_factor": "medium_risk", 
+    "submit_date": {
+        "$date": 1344816000000
+    }
+}

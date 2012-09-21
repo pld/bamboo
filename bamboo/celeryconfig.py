@@ -10,3 +10,7 @@ CELERY_MONGODB_BACKEND_SETTINGS = {
 }
 CELERY_IMPORTS = ('lib.calculator', )
 CELERY_ALWAYS_EAGER = True
+
+# poor man's synchonization
+# TODO: proper synchronization!
+CELERYD_CONCURRENCY = 1
