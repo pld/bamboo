@@ -3,7 +3,7 @@ import numpy as np
 
 from lib.constants import DATETIME, DIMENSION, MEASURE,\
     MONGO_RESERVED_KEY_STRS, SIMPLETYPE
-from lib.utils import slugify_columns, type_for_data_and_dtypes
+from lib.utils import slugify_columns
 
 
 class SchemaBuilder(object):
@@ -73,9 +73,13 @@ class SchemaBuilder(object):
         return schema
 
     def _olap_type_for_data_and_dtype(self, column, dtype):
-        return type_for_data_and_dtypes(
+        return self._type_for_data_and_dtypes(
             self.DTYPE_TO_OLAP_TYPE_MAP, column, dtype.type)
 
     def _simpletype_for_data_and_dtype(self, column, dtype):
-        return type_for_data_and_dtypes(
+        return self._type_for_data_and_dtypes(
             self.DTYPE_TO_SIMPLETYPE_MAP, column, dtype.type)
+
+    def _type_for_data_and_dtypes(self, type_map, column, dtype_type):
+        has_datetime = any([isinstance(field, datetime) for field in column])
+        return type_map[datetime if has_datetime else dtype_type]

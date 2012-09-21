@@ -1,4 +1,3 @@
-from datetime import datetime
 import simplejson as json
 from math import isnan
 import re
@@ -109,11 +108,6 @@ def recognize_dates_from_schema(dataset, dframe):
         if column_schema[SIMPLETYPE] == DATETIME:
             dframe[column] = dframe[column].map(date_parse)
     return dframe
-
-
-def type_for_data_and_dtypes(type_map, column, dtype_type):
-    has_datetime = any([isinstance(field, datetime) for field in column])
-    return type_map[datetime if has_datetime else dtype_type]
 
 
 def parse_str_to_unix_time(value):
