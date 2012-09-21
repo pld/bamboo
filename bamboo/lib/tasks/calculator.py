@@ -4,6 +4,7 @@ from celery.task import task
 from pandas import concat, DataFrame, Series
 
 from lib.aggregator import Aggregator
+from lib.constants import MONGO_RESERVED_KEYS
 from lib.parser import Parser
 from lib.utils import recognize_dates, recognize_dates_from_schema
 from models.observation import Observation
@@ -57,18 +58,25 @@ def calculate_updates(dataset, new_data, calculations, FORMULA, NAME):
     # get the dataframe for this dataset
     existing_dframe = Observation.find(dataset, as_df=True)
 
-    # make a dataframe for the additional data to add
-    filtered_data = [dict([(k, v) for k, v in new_data.iteritems()
-                     if k in existing_dframe.columns])]
-    new_dframe = recognize_dates_from_schema(dataset, DataFrame(filtered_data))
+    # make a single-row dataframe for the additional data to add
+    labels_to_slugs = dataset.build_labels_to_slugs()
+    filtered_data = dict()
+    for col, val in new_data.iteritems():
+        if labels_to_slugs.get(col, None) in existing_dframe.columns:
+            filtered_data[labels_to_slugs[col]] = val
+        # special case for reserved keys (e.g. _id)
+        if col in MONGO_RESERVED_KEYS and\
+            col in existing_dframe.columns and\
+            col not in filtered_data.keys():
+            filtered_data[col] = val
+    new_dframe = recognize_dates_from_schema(dataset,
+        DataFrame([filtered_data]))
 
     # calculate columns
     parser = Parser(dataset.record)
-    labels_to_slugs = dataset.build_labels_to_slugs()
-
-    labels_to_slugs_and_groups = dict()
 
     # extract info from linked datasets
+    labels_to_slugs_and_groups = dict()
     for group, dataset_id in dataset.linked_datasets.items():
         linked_dataset = Dataset.find_one(dataset_id)
         for label, slug in linked_dataset.build_labels_to_slugs().items():
