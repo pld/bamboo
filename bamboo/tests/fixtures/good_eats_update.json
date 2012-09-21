@@ -11,7 +11,7 @@
     "_userform_id": "mejymejy_good_eats", 
     "_uuid": "928a5547b57e4327af4c65c9cb1e69b3", 
     "_xform_id_string": "good_eats", 
-    "amount": "2.0", 
+    "amount": 2.0, 
     "description": "donut", 
     "food/type": "baked_goods", 
     "formhub/uuid": "d4e144776e00452c874c5b36093ac91d", 
