@@ -2,6 +2,7 @@ from pyparsing import alphanums, nums, oneOf, opAssoc, operatorPrecedence,\
     CaselessLiteral, Combine, Forward, Keyword, Literal, MatchFirst,\
     OneOrMore, Optional, ParseException, Regex, Word, ZeroOrMore
 
+from lib.aggregator import Aggregator
 from lib.constants import SCHEMA
 from lib.exceptions import ParseError
 from lib.operations import EvalAndOp, EvalCaseOp, EvalComparisonOp,\
@@ -25,7 +26,7 @@ class Parser(object):
 
     aggregation = None
     bnf = None
-    aggregation_names = ['sum']
+    aggregation_names = Aggregator.AGGREGATIONS.keys()
     function_names = ['date', 'years']
     operator_names = ['and', 'or', 'not', 'in']
     special_names = ['default']
@@ -136,7 +137,12 @@ class Parser(object):
         date_func = CaselessLiteral('date')
 
         # aggregation functions
-        sum_agg = CaselessLiteral('sum').setParseAction(self.set_aggregation)
+        aggregations = [
+            CaselessLiteral(aggregation).setParseAction(
+                self.set_aggregation) for aggregation in self.aggregation_names
+        ]
+
+        aggregations = reduce(lambda x, y: x | y, aggregations)
 
         # literal syntactic
         open_bracket = Literal('[').suppress()
@@ -199,8 +205,9 @@ class Parser(object):
             (case_op, 1, opAssoc.RIGHT, EvalCaseOp),
         ]) | prop_expr
 
-        agg_expr = (sum_agg.suppress() + open_paren + case_expr + close_paren
-                    ) | case_expr
+        agg_expr = (
+            aggregations.suppress() + open_paren + case_expr + close_paren
+        ) | case_expr
 
         # top level bnf
         self.bnf = agg_expr

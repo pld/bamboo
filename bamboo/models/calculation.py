@@ -97,4 +97,4 @@ class Calculation(AbstractModel):
         """
         calculations = Calculation.find(dataset)
         calculate_updates.delay(dataset, data, calculations, cls.FORMULA,
-                          cls.NAME)
+                                cls.NAME)

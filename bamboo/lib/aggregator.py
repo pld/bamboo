@@ -1,5 +1,6 @@
 from pandas import DataFrame, Series
 
+from lib.aggregations import Aggregation
 from lib.constants import LINKED_DATASETS
 from lib.utils import split_groups
 from models.dataset import Dataset
@@ -8,7 +9,11 @@ from models.observation import Observation
 
 class Aggregator(object):
 
-    def __init__(self, dataset, dframe, column, group_str, aggregation, name):
+    AGGREGATIONS = dict([(cls.name, cls()) for cls in
+                         Aggregation.__subclasses__()])
+
+    def __init__(self, dataset, dframe, column, group_str, _type,
+                 name):
         """
         Apply the *aggregation* to group columns in *group_str* and the *column
         of the *dframe*.
@@ -16,21 +21,13 @@ class Aggregator(object):
         If a linked dataset with the same groups already exists update this
         dataset.  Otherwise create a new linked dataset.
         """
-        self.column = column
+        self.new_dframe = self._eval(_type, group_str, name, dframe, column)
 
-        if group_str:
-            # groupby on dframe then run aggregation on groupby obj
-            groups = split_groups(group_str)
-            self.new_dframe = dframe[groups].join(column).\
-                groupby(groups, as_index=False).agg(aggregation)
-        else:
-            result = self.function_map(aggregation)
-            self.new_dframe = DataFrame({name: Series([result])})
+        if not group_str:
+            # MongoDB does not allow None as a key
             group_str = ''
 
         linked_datasets = dataset.linked_datasets
-
-        # MongoDB does not allow None as a key
         agg_dataset_id = linked_datasets.get(group_str, None)
 
         if agg_dataset_id is None:
@@ -50,10 +47,14 @@ class Aggregator(object):
             self.new_dframe = agg_dframe.join(self.new_dframe[name])
             Observation.update(self.new_dframe, agg_dataset)
 
-    def function_map(self, function):
-        return {
-            'sum': self.sum_dframe,
-        }[function]()
+    def _eval(self, _type, group_str, name, dframe, column):
+        aggregation = self.AGGREGATIONS.get(_type)
 
-    def sum_dframe(self):
-        return float(self.column.sum())
+        if group_str:
+            # groupby on dframe then run aggregation on groupby obj
+            groups = split_groups(group_str)
+            return aggregation.group_aggregation(dframe[groups].join(
+                column).groupby(groups, as_index=False))
+        else:
+            result = aggregation.column_aggregation(column)
+            return DataFrame({name: Series([result])})

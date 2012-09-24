@@ -67,10 +67,10 @@ def calculate_updates(dataset, new_data, calculations, FORMULA, NAME):
         # special case for reserved keys (e.g. _id)
         if col in MONGO_RESERVED_KEYS and\
             col in existing_dframe.columns and\
-            col not in filtered_data.keys():
+                col not in filtered_data.keys():
             filtered_data[col] = val
     new_dframe = recognize_dates_from_schema(dataset,
-        DataFrame([filtered_data]))
+                                             DataFrame([filtered_data]))
 
     # calculate columns
     parser = Parser(dataset.record)

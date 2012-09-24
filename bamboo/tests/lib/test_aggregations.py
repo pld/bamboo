@@ -13,8 +13,12 @@ from test_calculator import TestCalculator
 class TestAggregations(TestCalculator):
 
     AGGREGATION_RESULTS = {
-        'amount': 2007.5,
-        'gps_latitude': 624.089497667,
+        'max(amount)': 1600,
+        'mean(amount)': 105.65789473684211,
+        'median(amount)': 12,
+        'min(amount)': 2.0,
+        'sum(amount)': 2007.5,
+        'sum(gps_latitude)': 624.089497667,
     }
 
     GROUP_TO_RESULTS = {
@@ -29,16 +33,19 @@ class TestAggregations(TestCalculator):
 
     def setUp(self):
         TestCalculator.setUp(self)
-        self.calculations_to_columns = {
-            'sum(amount)': 'amount',
-            'sum(gps_latitude)': 'gps_latitude',
-        }
-        self.calculations = self.calculations_to_columns.keys()
+        self.calculations = [
+            'max(amount)',
+            'mean(amount)',
+            'median(amount)',
+            'min(amount)',
+            'sum(amount)',
+            'sum(gps_latitude)',
+        ]
         self.expected_length = defaultdict(int)
         self.groups_list = None
 
     def _calculations_to_results(self, formula, row):
-        name = self.calculations_to_columns[formula]
+        name = formula
         if self.group:
             res = self.GROUP_TO_RESULTS[self.group][name]
             column = row[self.groups_list[0]] if len(self.groups_list) <= 1\

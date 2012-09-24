@@ -52,8 +52,8 @@ class TestDatasets(TestBase):
     def _post_file(self, file_name=None):
         if file_name is None:
             file_name = self._file_name
-        self.dataset_id = create_dataset_from_url('file://tests/fixtures/%s'
-            % file_name, allow_local_file=True)[ID]
+        self.dataset_id = create_dataset_from_url(
+            'file://tests/fixtures/%s' % file_name, allow_local_file=True)[ID]
         self.schema = json.loads(self.controller.GET(self.dataset_id,
                                  mode=Datasets.MODE_INFO))[SCHEMA]
 
@@ -150,7 +150,7 @@ class TestDatasets(TestBase):
         # compare the last column values with what we expect
         for key, value in results[-1].items():
             self.assertEqual(value, self._update_values[key],
-                'error in column: %s' % key)
+                             'error in column: %s' % key)
 
     def test_POST_dataset_id_update_with_aggregation(self):
         self._post_file()
