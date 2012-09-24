@@ -172,6 +172,17 @@ returns::
         ...
     ]
 
+query with dates
+^^^^^^^^^^^^^^^^
+
+To query with dates use the MongoDB query format and specify dates as Unix
+epochs.
+
+``curl -g http://bamboo.io/datasets/8a3d74711475d8a51c84484fe73f24bd151242ea?query='{"submit_date": {"$lt": 1320000000}'``
+
+Returns the rows with a time stamp less than 1320000000, which is October 30th
+2011.
+
 Retrieve summary statistics for dataset
 ---------------------------------------
 
