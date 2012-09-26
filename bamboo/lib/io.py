@@ -49,7 +49,7 @@ def create_dataset_from_url(url, allow_local_file=False):
 
     dataset = Dataset()
     dataset.save()
-    import_dataset(_file, dataset)
+    import_dataset(dataset, _file=_file)
 
     return {ID: dataset.dataset_id}
 
@@ -67,7 +67,7 @@ def create_dataset_from_csv(csv_file):
     tmpfile.write(csv_file.file.read())
     # pandas needs a closed file for *read_csv*
     tmpfile.close()
-    import_dataset(tmpfile.name, dataset)
+    import_dataset(dataset, _file=tmpfile.name)
     os.unlink(tmpfile.name)
 
     return {ID: dataset.dataset_id}
