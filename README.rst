@@ -42,32 +42,31 @@ Running the server
     $ python run_server.py
 
 Running the server as a daemon
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-------------------------------
+start mongodb on localhost and standard port
 
-    start mongodb on localhost and standard port
+1. create a user named 'bamboo', with home directory ``/home/bamboo``
+2. create a virtualenv using virtualenvwrapper called 'bamboo'
+3. place the bamboo root directory in ``/var/www/bamboo/current``
 
-    1. create a user named 'bamboo', with home directory ``/home/bamboo``
-    2. create a virtualenv using virtualenvwrapper called 'bamboo'
-    3. place the bamboo root directory in ``/var/www/bamboo/current``
+start the daemon using:
 
-    start the daemon using:
+``$ /var/www/bamboo/current/scripts/bamboo.sh start``
 
-    ``$ /var/www/bamboo/current/scripts/bamboo.sh start``
+stop the daemon using:
 
-    stop the daemon using:
-
-    ``$ /var/www/bamboo/current/scripts/bamboo.sh stop``
+``$ /var/www/bamboo/current/scripts/bamboo.sh stop``
 
 
 Testing
 -------
 
-    install nose testing requirements
-    
-    ``$ pip install -r requirements-test.pip``
+install nose testing requirements
 
-    run tests
+``$ pip install -r requirements-test.pip``
+
+run tests
 
 ::
 
@@ -80,7 +79,7 @@ Documentation
 Viewing Documentation
 ^^^^^^^^^^^^^^^^^^^^^
 
-    The latest docs are available at http://bamboo.io/
+The latest docs are available at http://bamboo.io/
     
 Building Documentation
 ^^^^^^^^^^^^^^^^^^^^^^
@@ -101,13 +100,13 @@ To work on the code:
 3. add the code for your new feature
 4. ensure it is pep8
 
-    ``$ pip install pep8``
-    
-    ``$ pep8 bamboo``
+::
+  $ pip install pep8
+  $ pep8 bamboo
 
 5. ensure all existing tests and your new tests are passing
 
-    ``$ cd bamboo && ./test.sh``
+``$ cd bamboo && ./test.sh``
 
 6. submit a pull request
 
@@ -117,26 +116,26 @@ Example Usage
 On the remote server
 ^^^^^^^^^^^^^^^^^^^^
 
-    running the example basic commands
+running the example basic commands
 
-    ``$ ./scripts/commands.sh``
+``$ ./scripts/commands.sh``
 
-    posting a dataset
+posting a dataset
 
-    ``$ curl -X POST -d "url=http://formhub.org/mberg/forms/good_eats/data.csv" http://bamboo.io/datasets``
+``$ curl -X POST -d "url=http://formhub.org/mberg/forms/good_eats/data.csv" http://bamboo.io/datasets``
 
 On your local server
 ^^^^^^^^^^^^^^^^^^^
 
-    start the bamboo server as above, then
+start the bamboo server as above, then
 
-    run the example basic commands
+run the example basic commands
 
-    ``$ ./scripts/commands.sh -l``
+``$ ./scripts/commands.sh -l``
 
-    make requests from your local server
+make requests from your local server
 
-    ``$ curl -X POST -d "url=http://formhub.org/mberg/forms/good_eats/data.csv" http://localhost:8080/datasets``
+``$ curl -X POST -d "url=http://formhub.org/mberg/forms/good_eats/data.csv" http://localhost:8080/datasets``
 
 About
 -----
