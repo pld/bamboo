@@ -101,6 +101,7 @@ To work on the code:
 4. ensure it is pep8
 
 ::
+
   $ pip install pep8
   $ pep8 bamboo
 
