@@ -16,7 +16,7 @@ per district) from datasets. These are updated as new data is received.
 Dependencies
 ------------
 
-* python
+* python (tested on version 2.7)
 * mongodb
 
 for numpy, pandas, and scipy (in requirements.pip):
