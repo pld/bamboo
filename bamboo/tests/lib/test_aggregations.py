@@ -20,6 +20,10 @@ class TestAggregations(TestCalculator):
         'sum(amount)': 2007.5,
         'sum(gps_latitude)': 624.089497667,
         'ratio(amount, gps_latitude)': 3.184639,
+        'sum(risk_factor in ["low_risk"])': 18,
+        'ratio(risk_factor in ["low_risk"], risk_factor in ["low_risk",'
+        ' "medium_risk"])': 18.0 / 19,
+        'ratio(risk_factor in ["low_risk"], 1)': 18.0 / 19,
     }
 
     GROUP_TO_RESULTS = {
@@ -42,6 +46,10 @@ class TestAggregations(TestCalculator):
             'sum(amount)',
             'sum(gps_latitude)',
             'ratio(amount, gps_latitude)',
+            'sum(risk_factor in ["low_risk"])',
+            'ratio(risk_factor in ["low_risk"], risk_factor in ["low_risk",'
+            ' "medium_risk"])',
+            'ratio(risk_factor in ["low_risk"], 1)',
         ]
         self.expected_length = defaultdict(int)
         self.groups_list = None

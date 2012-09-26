@@ -123,7 +123,7 @@ class EvalComparisonOp(EvalTerm):
         ">": lambda a, b: a > b,
         ">=": lambda a, b: a >= b,
         "!=": lambda a, b: a != b,
-        "=": lambda a, b: a == b,
+        "==": lambda a, b: a == b,
     }
 
     def _eval(self, row, context):

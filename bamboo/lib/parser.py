@@ -55,7 +55,7 @@ class Parser(object):
         addop       '+' | '-'
         multop      '*' | '/'
         expop       '^'
-        compop      '=' | '<' | '>' | '<=' | '>='
+        compop      '==' | '<' | '>' | '<=' | '>='
         notop       'not'
         andop       'and'
         orop        'or'
@@ -135,7 +135,7 @@ class Parser(object):
         and_op = CaselessLiteral('and')
         or_op = CaselessLiteral('or')
         in_op = CaselessLiteral('in').suppress()
-        comparison_op = oneOf('< <= > >= != =')
+        comparison_op = oneOf('< <= > >= != ==')
         case_op = CaselessLiteral('case').suppress()
 
         # functions
