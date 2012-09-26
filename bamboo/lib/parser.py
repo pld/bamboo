@@ -238,7 +238,7 @@ class Parser(object):
             for column_function in self.column_functions:
                 functions.append(partial(column_function._eval))
         else:
-            functions.append(partial(parser.parsed_expr._eval))
+            functions.append(partial(self.parsed_expr._eval))
         return self.aggregation, functions
 
     def validate_formula(self, formula, row):

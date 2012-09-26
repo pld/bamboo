@@ -42,7 +42,7 @@ def calculate_column(parser, dataset, dframe, formula, name, group_str=None):
         ).new_dframe
 
     else:
-        new_dframe = Observation.update(dframe.join(new_columns[0], dataset))
+        new_dframe = Observation.update(dframe.join(new_columns[0]), dataset)
 
     return new_dframe
 
