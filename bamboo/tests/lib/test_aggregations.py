@@ -64,8 +64,6 @@ class TestAggregations(TestCalculator):
             res = self.GROUP_TO_RESULTS[self.group][formula]
             column = row[self.groups_list[0]] if len(self.groups_list) <= 1\
                 else tuple([row[group] for group in self.groups_list])
-            if np.isnan(res[column]):
-                print 'column: %s, res:\n%s' % (column, res)
             res = res[column]
             return res
         else:
@@ -80,10 +78,12 @@ class TestAggregations(TestCalculator):
         linked_dataset_id = self.dataset.linked_datasets[self.group]
 
         if not self.group in self.expected_length:
-            self.expected_length[self.group] = self._get_initial_len(formula, self.groups_list)
+            self.expected_length[self.group] = self._get_initial_len(
+                formula, self.groups_list)
 
         # add an extra column for the group names
-        self.expected_length[self.group] += self._columns_per_aggregation(formula)
+        self.expected_length[self.group] += self._columns_per_aggregation(
+            formula)
 
         # retrieve linked dataset
         self.assertFalse(linked_dataset_id is None)
@@ -119,8 +119,8 @@ class TestAggregations(TestCalculator):
             msg = self._equal_msg(result, stored, formula)
             self.assertAlmostEqual(result, stored, self.places, msg)
 
-#    def test_calculator_with_delay(self):
-#        self._test_calculator()
+    def test_calculator_with_delay(self):
+        self._test_calculator()
 
     def test_calculator_without_delay(self):
         self._test_calculator(delay=False)

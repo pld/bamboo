@@ -56,7 +56,11 @@ class Aggregator(object):
                 agg_dframe = agg_dframe.set_index(self.groups)
 
             # attach new column to aggregation data frame and remove index
-            new_dframe = agg_dframe.join(new_dframe).reset_index()
+            new_dframe = agg_dframe.join(new_dframe)
+
+            if self.groups:
+                new_dframe = new_dframe.reset_index()
+
             Observation.update(new_dframe, agg_dataset)
         self.new_dframe = new_dframe
 
