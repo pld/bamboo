@@ -72,7 +72,7 @@ class RatioAggregation(Aggregation):
         return dframe.join(column)
 
     def _agg_dframe(self, dframe, column_names):
-        return dframe[column_names[0]] / dframe[column_names[1]]
+        return dframe[column_names[0]].apply(float) / dframe[column_names[1]]
 
     def _build_dframe(self, dframe, name, columns):
         column_names = []
