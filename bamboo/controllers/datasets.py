@@ -84,7 +84,7 @@ class Datasets(AbstractController):
 
         return dump_or_error(result, error)
 
-    def POST(self, dataset_id=None, url=None, csv_file=None):
+    def POST(self, url=None, csv_file=None):
         """
         If *url* is provided read data from URL *url*.
         If *csv_file* is provided read data from *csv_file*.
@@ -105,30 +105,31 @@ class Datasets(AbstractController):
             - default
 
         """
-        # if we have a dataset_id then try to update
-        if dataset_id:
-            dataset = Dataset.find_one(dataset_id)
-            if dataset:
-                Calculation.update(
-                    dataset,
-                    data=json.loads(cherrypy.request.body.read()))
-                # return some success value
-                return json.dumps({ID: dataset_id})
-            else:
-                return json.dumps({ERROR:
-                                   'dataset for this id does not exist'})
-        else:
-            # no dataset_id, try to load from file handle
-            result = None
-            error = 'url or csv_file required'
+        result = None
+        error = 'url or csv_file required'
 
-            try:
-                if url:
-                    result = create_dataset_from_url(url)
+        try:
+            if url:
+                result = create_dataset_from_url(url)
 
-                if csv_file:
-                    result = create_dataset_from_csv(csv_file)
-            except ValueError as e:
-                error = e.__str__()
+            if csv_file:
+                result = create_dataset_from_csv(csv_file)
+        except ValueError as e:
+            error = e.__str__()
 
         return dump_or_error(result, error)
+
+    def PUT(self, dataset_id):
+        """
+        Update the *dataset_id* with the body as JSON.
+        """
+        dataset = Dataset.find_one(dataset_id)
+        if dataset:
+            Calculation.update(
+                dataset,
+                data=json.loads(cherrypy.request.body.read()))
+            # return some success value
+            return json.dumps({ID: dataset_id})
+        else:
+            return json.dumps({ERROR:
+                               'dataset for this id does not exist'})

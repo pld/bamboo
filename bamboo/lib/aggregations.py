@@ -91,4 +91,3 @@ class RatioAggregation(Aggregation):
             0: 'numerator',
             1: 'denominator',
         }[idx])
-

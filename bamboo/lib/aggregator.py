@@ -12,8 +12,7 @@ class Aggregator(object):
     AGGREGATIONS = dict([(cls.name, cls()) for cls in
                          Aggregation.__subclasses__()])
 
-    def __init__(
-        self, dataset, dframe, column, group_str, _type, name):
+    def __init__(self, dataset, dframe, column, group_str, _type, name):
         """
         Apply the *aggregation* to group columns in *group_str* and the *column
         of the *dframe*.
@@ -69,6 +68,7 @@ class Aggregator(object):
 
         if self.group_str:
             # groupby on dframe then run aggregation on groupby obj
-            return aggregation.group_aggregation(self.dframe, self.groups, self.column)
+            return aggregation.group_aggregation(self.dframe, self.groups,
+                                                 self.column)
         else:
             return aggregation.column_aggregation(self.column, self.name)

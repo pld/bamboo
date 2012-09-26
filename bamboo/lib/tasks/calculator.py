@@ -11,6 +11,20 @@ from models.observation import Observation
 from models.dataset import Dataset
 
 
+def _make_columns(formula, parser, dframe, name):
+    # parse formula into function and variables
+    aggregation, functions = parser.parse_formula(formula)
+
+    new_columns = []
+    for function in functions:
+        new_column = dframe.apply(function, axis=1, args=(parser.context, ))
+        new_columns.append(new_column)
+
+    new_columns[0].name = name
+
+    return aggregation, new_columns
+
+
 @task
 def calculate_column(parser, dataset, dframe, formula, name, group_str=None):
     """
@@ -26,15 +40,8 @@ def calculate_column(parser, dataset, dframe, formula, name, group_str=None):
 
     Therefore, perform these actions asychronously.
     """
-    # parse formula into function and variables
-    aggregation, functions = parser.parse_formula(formula)
 
-    new_columns = []
-    for function in functions:
-        new_column = dframe.apply(function, axis=1, args=(parser.context, ))
-        new_columns.append(new_column)
-
-    new_columns[0].name = name
+    aggregation, new_columns = _make_columns(formula, parser, dframe, name)
 
     if aggregation:
         new_dframe = Aggregator(
@@ -93,8 +100,8 @@ def calculate_updates(dataset, new_data, calculations, FORMULA, NAME):
     for calculation in calculations:
         aggregation, function = \
             parser.parse_formula(calculation.record[FORMULA])
-        new_column = new_dframe.apply(function, axis=1,
-                                      args=(parser, ))
+        new_column = new_dframe.apply(function[0], axis=1,
+                                      args=(parser.context, ))
         potential_name = calculation.name
         if potential_name not in existing_dframe.columns:
             if potential_name not in labels_to_slugs:

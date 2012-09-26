@@ -212,8 +212,9 @@ class Parser(object):
 
         agg_expr = (
             aggregations.suppress() + open_paren + (
-                case_expr + ZeroOrMore(comma +
-                    case_expr)).setParseAction(self.store_columns) + close_paren
+                case_expr + ZeroOrMore(
+                    comma + case_expr)
+            ).setParseAction(self.store_columns) + close_paren
         ) | case_expr
 
         # top level bnf
@@ -252,7 +253,6 @@ class Parser(object):
         aggregation, functions = self.parse_formula(formula)
         try:
             for function in functions:
-                pass
-                #function(row, self)
+                function(row, self.context)
         except KeyError, err:
             raise ParseError('Missing column reference: %s' % err)
