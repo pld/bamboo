@@ -27,18 +27,22 @@ def calculate_column(parser, dataset, dframe, formula, name, group_str=None):
     Therefore, perform these actions asychronously.
     """
     # parse formula into function and variables
-    aggregation, function = parser.parse_formula(formula)
+    aggregation, functions = parser.parse_formula(formula)
 
-    new_column = dframe.apply(function, axis=1, args=(parser, ))
-    new_column.name = name
+    new_columns = []
+    for function in functions:
+        new_column = dframe.apply(function, axis=1, args=(parser.context, ))
+        new_columns.append(new_column)
+
+    new_columns[0].name = name
 
     if aggregation:
         new_dframe = Aggregator(
-            dataset, dframe, new_column, group_str, aggregation, name
+            dataset, dframe, new_columns, group_str, aggregation, name
         ).new_dframe
 
     else:
-        new_dframe = Observation.update(dframe.join(new_column), dataset)
+        new_dframe = Observation.update(dframe.join(new_columns[0], dataset))
 
     return new_dframe
 
