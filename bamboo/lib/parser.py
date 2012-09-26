@@ -1,3 +1,5 @@
+from functools import partial
+
 from pyparsing import alphanums, nums, oneOf, opAssoc, operatorPrecedence,\
     CaselessLiteral, Combine, Forward, Keyword, Literal, MatchFirst,\
     OneOrMore, Optional, ParseException, Regex, Word, ZeroOrMore
@@ -39,6 +41,9 @@ class Parser(object):
 
     def set_aggregation(self, string, location, tokens):
         self.aggregation = tokens[0]
+
+    def store_columns(self, string, location, tokens):
+        self.column_functions = tokens
 
     def BNF(self):
         """
@@ -206,7 +211,10 @@ class Parser(object):
         ]) | prop_expr
 
         agg_expr = (
-            aggregations.suppress() + open_paren + case_expr + close_paren
+            aggregations.suppress() + open_paren + (
+                case_expr + ZeroOrMore(
+                    comma + case_expr)
+            ).setParseAction(self.store_columns) + close_paren
         ) | case_expr
 
         # top level bnf
@@ -225,10 +233,14 @@ class Parser(object):
             raise ParseError('Parse Failure for string "%s": %s' % (input_str,
                              err))
 
-        def function(row, parser):
-            return parser.parsed_expr._eval(row, parser.context)
+        functions = []
 
-        return self.aggregation, function
+        if self.aggregation:
+            for column_function in self.column_functions:
+                functions.append(partial(column_function._eval))
+        else:
+            functions.append(partial(self.parsed_expr._eval))
+        return self.aggregation, functions
 
     def validate_formula(self, formula, row):
         """
@@ -238,8 +250,9 @@ class Parser(object):
         self.aggregation = None
 
         # check valid formula
-        aggregation, function = self.parse_formula(formula)
+        aggregation, functions = self.parse_formula(formula)
         try:
-            function(row, self)
+            for function in functions:
+                function(row, self.context)
         except KeyError, err:
             raise ParseError('Missing column reference: %s' % err)

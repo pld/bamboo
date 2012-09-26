@@ -68,7 +68,7 @@ class TestDatasets(TestBase):
     def _post_row_updates(self):
         # mock the cherrypy server by setting the POST request body
         cherrypy.request.body = open(self._update_file_path, 'r')
-        result = json.loads(self.controller.POST(dataset_id=self.dataset_id))
+        result = json.loads(self.controller.PUT(dataset_id=self.dataset_id))
         self.assertTrue(isinstance(result, dict))
         self.assertTrue(ID in result)
         # set up the values to test against
@@ -131,7 +131,7 @@ class TestDatasets(TestBase):
         return json.loads(self.controller.GET(linked_dataset_id))
 
     def test_POST_dataset_id_update_bad_dataset_id(self):
-        result = json.loads(self.controller.POST(dataset_id=111))
+        result = json.loads(self.controller.PUT(dataset_id=111))
         assert(ERROR in result)
 
     def test_POST_dataset_id_update(self):

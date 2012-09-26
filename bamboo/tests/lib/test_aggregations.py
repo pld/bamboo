@@ -19,6 +19,7 @@ class TestAggregations(TestCalculator):
         'min(amount)': 2.0,
         'sum(amount)': 2007.5,
         'sum(gps_latitude)': 624.089497667,
+        'ratio(amount, gps_latitude)': 3.184639,
     }
 
     GROUP_TO_RESULTS = {
@@ -40,20 +41,33 @@ class TestAggregations(TestCalculator):
             'min(amount)',
             'sum(amount)',
             'sum(gps_latitude)',
+            'ratio(amount, gps_latitude)',
         ]
         self.expected_length = defaultdict(int)
         self.groups_list = None
 
+    def _offset_for_ratio(self, formula, _int):
+        if formula[0:5] == 'ratio':
+            _int += 2
+        return _int
+
+    def _get_initial_len(self, formula, groups_list):
+        initial_len = 0 if self.group == '' else len(groups_list)
+        return self._offset_for_ratio(formula, initial_len)
+
+    def _columns_per_aggregation(self, formula):
+        initial_len = 1
+        return self._offset_for_ratio(formula, initial_len)
+
     def _calculations_to_results(self, formula, row):
-        name = formula
         if self.group:
-            res = self.GROUP_TO_RESULTS[self.group][name]
+            res = self.GROUP_TO_RESULTS[self.group][formula]
             column = row[self.groups_list[0]] if len(self.groups_list) <= 1\
                 else tuple([row[group] for group in self.groups_list])
             res = res[column]
             return res
         else:
-            return self.AGGREGATION_RESULTS[name]
+            return self.AGGREGATION_RESULTS[formula]
 
     def _test_calculation_results(self, name, formula):
         if self.group:
@@ -63,11 +77,13 @@ class TestAggregations(TestCalculator):
 
         linked_dataset_id = self.dataset.linked_datasets[self.group]
 
-        if not (self.group in self.expected_length or self.group == ''):
-            self.expected_length[self.group] = len(self.groups_list)
+        if not self.group in self.expected_length:
+            self.expected_length[self.group] = self._get_initial_len(
+                formula, self.groups_list)
 
         # add an extra column for the group names
-        self.expected_length[self.group] += 1
+        self.expected_length[self.group] += self._columns_per_aggregation(
+            formula)
 
         # retrieve linked dataset
         self.assertFalse(linked_dataset_id is None)

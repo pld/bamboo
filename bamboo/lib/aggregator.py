@@ -12,8 +12,7 @@ class Aggregator(object):
     AGGREGATIONS = dict([(cls.name, cls()) for cls in
                          Aggregation.__subclasses__()])
 
-    def __init__(self, dataset, dframe, column, group_str, _type,
-                 name):
+    def __init__(self, dataset, dframe, column, group_str, _type, name):
         """
         Apply the *aggregation* to group columns in *group_str* and the *column
         of the *dframe*.
@@ -21,40 +20,55 @@ class Aggregator(object):
         If a linked dataset with the same groups already exists update this
         dataset.  Otherwise create a new linked dataset.
         """
-        self.new_dframe = self._eval(_type, group_str, name, dframe, column)
+        self.dataset = dataset
+        self.dframe = dframe
+        self.column = column
+        # MongoDB does not allow None as a key
+        self.group_str = group_str if group_str else ''
+        self.groups = split_groups(self.group_str) if group_str else None
+        self.name = name
+        self._type = _type
+        self.save_aggregation()
 
-        if not group_str:
-            # MongoDB does not allow None as a key
-            group_str = ''
+    def save_aggregation(self):
+        new_dframe = self._eval()
 
-        linked_datasets = dataset.linked_datasets
-        agg_dataset_id = linked_datasets.get(group_str, None)
+        linked_datasets = self.dataset.linked_datasets
+        agg_dataset_id = linked_datasets.get(self.group_str, None)
 
         if agg_dataset_id is None:
             agg_dataset = Dataset()
             agg_dataset.save()
 
-            Observation().save(self.new_dframe, agg_dataset)
+            Observation().save(new_dframe, agg_dataset)
 
             # store a link to the new dataset
-            linked_datasets[group_str] = agg_dataset.dataset_id
-            dataset.update({LINKED_DATASETS: linked_datasets})
+            linked_datasets[self.group_str] = agg_dataset.dataset_id
+            self.dataset.update({LINKED_DATASETS: linked_datasets})
         else:
             agg_dataset = Dataset.find_one(agg_dataset_id)
             agg_dframe = Observation.find(agg_dataset, as_df=True)
 
-            # attach new column to aggregation data frame
-            self.new_dframe = agg_dframe.join(self.new_dframe[name])
-            Observation.update(self.new_dframe, agg_dataset)
+            if self.groups:
+                # set indexes on new dataframes to merge correctly
+                new_dframe = new_dframe.set_index(self.groups)
+                agg_dframe = agg_dframe.set_index(self.groups)
 
-    def _eval(self, _type, group_str, name, dframe, column):
-        aggregation = self.AGGREGATIONS.get(_type)
+            # attach new column to aggregation data frame and remove index
+            new_dframe = agg_dframe.join(new_dframe)
 
-        if group_str:
+            if self.groups:
+                new_dframe = new_dframe.reset_index()
+
+            Observation.update(new_dframe, agg_dataset)
+        self.new_dframe = new_dframe
+
+    def _eval(self):
+        aggregation = self.AGGREGATIONS.get(self._type)
+
+        if self.group_str:
             # groupby on dframe then run aggregation on groupby obj
-            groups = split_groups(group_str)
-            return aggregation.group_aggregation(dframe[groups].join(
-                column).groupby(groups, as_index=False))
+            return aggregation.group_aggregation(self.dframe, self.groups,
+                                                 self.column)
         else:
-            result = aggregation.column_aggregation(column)
-            return DataFrame({name: Series([result])})
+            return aggregation.column_aggregation(self.column, self.name)
