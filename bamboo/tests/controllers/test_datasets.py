@@ -5,6 +5,8 @@ import simplejson as json
 from time import mktime
 
 import cherrypy
+import numpy as np
+from pandas import concat
 
 from controllers.abstract_controller import AbstractController
 from controllers.datasets import Datasets
@@ -14,7 +16,7 @@ from lib.constants import DATETIME, DIMENSION, ERROR,\
     MONGO_RESERVED_KEY_STRS, NUM_COLUMNS, NUM_ROWS, SCHEMA, SIMPLETYPE, SUMMARY
 from lib.decorators import requires_internet
 from lib.io import create_dataset_from_url
-from lib.utils import GROUP_DELIMITER
+from lib.utils import GROUP_DELIMITER, series_to_jsondict
 from models.dataset import Dataset
 from models.calculation import Calculation
 from tests.test_base import TestBase
@@ -223,6 +225,36 @@ class TestDatasets(TestBase):
         result = json.loads(self.controller.POST(url='http://dsfskfjdks.com'))
         self.assertTrue(isinstance(result, dict))
         self.assertTrue(ERROR in result)
+
+    def test_POST_merge_datasets(self):
+        self._post_file()
+        first_dataset_id = self.dataset_id
+        self._post_file()
+        second_dataset_id = self.dataset_id
+        result = json.loads(self.controller.POST(
+            merge=True,
+            datasets=json.dumps([first_dataset_id, second_dataset_id])))
+        self.assertTrue(isinstance(result, dict))
+        self.assertTrue(ID in result)
+        original_dframe = Dataset.find_one(
+            first_dataset_id).observations(as_df=True)
+        merged_dframe = Dataset.find_one(result[ID]).observations(as_df=True)
+        self.assertEqual(len(merged_dframe), 2 * len(original_dframe))
+        expected_dframe = concat([original_dframe, original_dframe],
+            ignore_index=True)
+        self.assertEqual(list(merged_dframe.columns),
+                         list(expected_dframe.columns))
+
+        expected_rows = [series_to_jsondict(row[1]) for row in expected_dframe.iterrows()]
+        merged_rows = [series_to_jsondict(row[1]) for row in merged_dframe.iterrows()]
+
+        for row in merged_dframe.iterrows():
+            merged_row = series_to_jsondict(row[1])
+            self.assertTrue(merged_row in expected_rows)
+
+        for row in expected_dframe.iterrows():
+            expected_row = series_to_jsondict(row[1])
+            self.assertTrue(expected_row in merged_rows)
 
     def test_GET(self):
         self._post_file()

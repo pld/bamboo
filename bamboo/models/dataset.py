@@ -178,5 +178,5 @@ class Dataset(AbstractModel):
             (column_attrs[self.LABEL], reserve_encoded(column_name)) for
             (column_name, column_attrs) in self.data_schema.items()])
 
-    def observations(self, query, select, as_df=False):
+    def observations(self, query=None, select=None, as_df=False):
         return Observation.find(self, query, select, as_df)

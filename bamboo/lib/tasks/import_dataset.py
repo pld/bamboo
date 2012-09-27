@@ -8,9 +8,10 @@ from models.observation import Observation
 
 
 @task
-def import_dataset(_file, dataset):
+def import_dataset(dataset, dframe=None, _file=None):
     """
     For reading a URL and saving the corresponding dataset.
     """
-    dframe = recognize_dates(read_csv(_file))
+    if _file:
+        dframe = recognize_dates(read_csv(_file))
     Observation().save(dframe, dataset)

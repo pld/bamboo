@@ -1,12 +1,14 @@
 import json
 
 import cherrypy
+from pandas import concat
 
 from controllers.abstract_controller import AbstractController
 from lib.constants import ALL, ERROR, ID
-from lib.exceptions import JSONError
+from lib.exceptions import JSONError, MergeError
 from lib.mongo import mongo_to_json
 from lib.io import create_dataset_from_url, create_dataset_from_csv
+from lib.tasks.import_dataset import import_dataset
 from lib.utils import dump_or_error
 from models.calculation import Calculation
 from models.dataset import Dataset
@@ -79,12 +81,12 @@ class Datasets(AbstractController):
                     return mongo_to_json(dataset.observations(query, select))
                 else:
                     error = 'unsupported API call'
-        except JSONError, e:
+        except JSONError as e:
             error = e.__str__()
 
         return dump_or_error(result, error)
 
-    def POST(self, url=None, csv_file=None):
+    def POST(self, merge=None, url=None, csv_file=None, datasets=None):
         """
         If *url* is provided read data from URL *url*.
         If *csv_file* is provided read data from *csv_file*.
@@ -109,12 +111,13 @@ class Datasets(AbstractController):
         error = 'url or csv_file required'
 
         try:
-            if url:
+            if merge:
+                result = self._merge(datasets)
+            elif url:
                 result = create_dataset_from_url(url)
-
-            if csv_file:
+            elif csv_file:
                 result = create_dataset_from_csv(csv_file)
-        except ValueError as e:
+        except (ValueError, MergeError) as e:
             error = e.__str__()
 
         return dump_or_error(result, error)
@@ -133,3 +136,28 @@ class Datasets(AbstractController):
         else:
             return json.dumps({ERROR:
                                'dataset for this id does not exist'})
+
+    def _merge(self, datasets):
+        # try to get each of the datasets
+        dataset_ids = json.loads(datasets)
+        result = None
+
+        if len(dataset_ids) < 2:
+            raise MergeError(
+                'merge requires 2 datasets (found %s)' % len(dataset_ids))
+
+        dframes = [
+            Dataset.find_one(dataset_id).observations(as_df=True)
+            for dataset_id in dataset_ids
+        ]
+
+        # concat them
+        new_dframe = concat(dframes, ignore_index=True)
+
+        # save the resulting dframe as a new dataset
+        new_dataset = Dataset()
+        new_dataset.save()
+        import_dataset.delay(new_dataset, dframe=new_dframe)
+
+        # return the new dataset ID
+        return {ID: new_dataset.dataset_id}
