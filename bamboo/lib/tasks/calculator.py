@@ -5,8 +5,9 @@ from pandas import concat, DataFrame, Series
 
 from lib.aggregator import Aggregator
 from lib.constants import MONGO_RESERVED_KEYS
+from lib.exceptions import ParseError
 from lib.parser import Parser
-from lib.utils import recognize_dates, recognize_dates_from_schema
+from lib.utils import recognize_dates, recognize_dates_from_schema, split_groups
 from models.observation import Observation
 from models.dataset import Dataset
 
@@ -18,7 +19,7 @@ class Calculator(object):
         self.dframe = Observation.find(dataset, as_df=True)
         self.parser = Parser(dataset.record)
 
-    def validate(self, formula):
+    def validate(self, formula, group_str):
         # attempt to get a row from the dataframe
         try:
             row = self.dframe.irow(0)
@@ -26,6 +27,12 @@ class Calculator(object):
             row = {}
 
         self.parser.validate_formula(formula, row)
+
+        if group_str:
+            groups = split_groups(group_str)
+            for group in groups:
+                if not group in self.dframe.columns:
+                    raise ParseError('Group %s not in dataset columns.' % group)
 
     @task
     def calculate_column(self, formula, name, group_str=None):

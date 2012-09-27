@@ -16,10 +16,14 @@ class TestCalculation(TestBase):
         self.formula = 'rating'
         self.name = 'test'
 
+
+    def _save_observations(self):
+        Observation().save(self.test_data['good_eats.csv'], self.dataset)
+
     def _save_observations_and_calculation(self, formula=None):
         if not formula:
             formula = self.formula
-        Observation().save(self.test_data['good_eats.csv'], self.dataset)
+        self._save_observations()
         calculation = Calculation()
         return calculation.save(self.dataset, formula, self.name)
 
@@ -54,6 +58,14 @@ class TestCalculation(TestBase):
         self.assertTrue(isinstance(record, dict))
         self.assertTrue(ERROR in record.keys())
         self.assertTrue('Parse Failure' in record[ERROR].__str__())
+
+    def test_save_non_existent_group(self):
+        self._save_observations()
+        record = Calculation().save(
+            self.dataset, self.formula, self.name, group='NON_EXISTENT_GROUP')
+        self.assertTrue(isinstance(record, dict))
+        self.assertTrue(ERROR in record.keys())
+        self.assertTrue('Group' in record[ERROR].__str__())
 
     def test_find(self):
         record = self._save_observations_and_calculation()

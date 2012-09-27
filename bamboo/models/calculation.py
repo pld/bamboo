@@ -48,8 +48,7 @@ class Calculation(AbstractModel):
 
         # ensure that the formula is parsable
         try:
-            # TODO return error if group not in dataframe
-            calculator.validate(formula)
+            calculator.validate(formula, group)
         except ParseError, err:
             # do not save record, return error
             return {ERROR: err}
