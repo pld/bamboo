@@ -16,7 +16,6 @@ class TestCalculation(TestBase):
         self.formula = 'rating'
         self.name = 'test'
 
-
     def _save_observations(self):
         Observation().save(self.test_data['good_eats.csv'], self.dataset)
 

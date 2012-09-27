@@ -241,12 +241,14 @@ class TestDatasets(TestBase):
         merged_dframe = Dataset.find_one(result[ID]).observations(as_df=True)
         self.assertEqual(len(merged_dframe), 2 * len(original_dframe))
         expected_dframe = concat([original_dframe, original_dframe],
-            ignore_index=True)
+                                 ignore_index=True)
         self.assertEqual(list(merged_dframe.columns),
                          list(expected_dframe.columns))
 
-        expected_rows = [series_to_jsondict(row[1]) for row in expected_dframe.iterrows()]
-        merged_rows = [series_to_jsondict(row[1]) for row in merged_dframe.iterrows()]
+        expected_rows = [
+            series_to_jsondict(row[1]) for row in expected_dframe.iterrows()]
+        merged_rows = [
+            series_to_jsondict(row[1]) for row in merged_dframe.iterrows()]
 
         for row in merged_dframe.iterrows():
             merged_row = series_to_jsondict(row[1])

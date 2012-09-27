@@ -54,7 +54,8 @@ class TestCalculator(TestBase):
                 self.assertTrue(task.ready())
                 self.assertTrue(task.successful())
             else:
-                task = calculator.calculate_column(calculator, formula, name, self.group)
+                task = calculator.calculate_column(
+                    calculator, formula, name, self.group)
 
             self.column_labels_to_slugs = self.dataset.build_labels_to_slugs()
 

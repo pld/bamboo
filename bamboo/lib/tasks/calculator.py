@@ -7,7 +7,8 @@ from lib.aggregator import Aggregator
 from lib.constants import MONGO_RESERVED_KEYS
 from lib.exceptions import ParseError
 from lib.parser import Parser
-from lib.utils import recognize_dates, recognize_dates_from_schema, split_groups
+from lib.utils import recognize_dates, recognize_dates_from_schema,\
+    split_groups
 from models.observation import Observation
 from models.dataset import Dataset
 
@@ -32,7 +33,8 @@ class Calculator(object):
             groups = split_groups(group_str)
             for group in groups:
                 if not group in self.dframe.columns:
-                    raise ParseError('Group %s not in dataset columns.' % group)
+                    raise ParseError(
+                        'Group %s not in dataset columns.' % group)
 
     @task
     def calculate_column(self, formula, name, group_str=None):
@@ -56,7 +58,7 @@ class Calculator(object):
         if aggregation:
             new_dframe = Aggregator(self.dataset, self.dframe, new_columns,
                                     group_str, aggregation, name
-            ).new_dframe
+                                    ).new_dframe
 
         else:
             new_dframe = Observation.update(
