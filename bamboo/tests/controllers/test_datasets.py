@@ -4,7 +4,6 @@ import pickle
 import simplejson as json
 from time import mktime
 
-import cherrypy
 import numpy as np
 from pandas import concat
 
@@ -15,32 +14,24 @@ from lib.constants import DATETIME, DIMENSION, ERROR,\
     ID, MONGO_RESERVED_KEYS, MONGO_RESERVED_KEY_PREFIX,\
     MONGO_RESERVED_KEY_STRS, NUM_COLUMNS, NUM_ROWS, SCHEMA, SIMPLETYPE, SUMMARY
 from lib.decorators import requires_internet
-from lib.io import create_dataset_from_url
-from lib.utils import GROUP_DELIMITER, series_to_jsondict
+from lib.utils import GROUP_DELIMITER
 from models.dataset import Dataset
 from models.calculation import Calculation
-from tests.test_base import TestBase
+from tests.controllers.test_abstract_datasets import TestAbstractDatasets
 from tests.mock import MockUploadedFile
 
 
-class TestDatasets(TestBase):
+class TestDatasets(TestAbstractDatasets):
 
     NUM_COLS = 15
     NUM_ROWS = 19
 
     def setUp(self):
-        TestBase.setUp(self)
-        self._file_name = 'good_eats.csv'
+        TestAbstractDatasets.setUp(self)
         self._file_path = 'tests/fixtures/%s' % self._file_name
         self._file_uri = 'file://%s' % self._file_path
         self.url = 'http://formhub.org/mberg/forms/good_eats/data.csv'
         self._file_name_with_slashes = 'good_eats_with_slashes.csv'
-        self._update_file_name = 'good_eats_update.json'
-        self._update_file_path = 'tests/fixtures/%s' % self._update_file_name
-        self._update_check_file_name = 'good_eats_update_values.json'
-        self._update_check_file_path = 'tests/fixtures/%s' %\
-            self._update_check_file_name
-        self.controller = Datasets()
         self.default_formulae = [
             'amount',
             'amount + 1',
@@ -51,14 +42,6 @@ class TestDatasets(TestBase):
         self.simpletypes = pickle.load(
             open('tests/fixtures/good_eats_simpletypes.p', 'rb'))
 
-    def _post_file(self, file_name=None):
-        if file_name is None:
-            file_name = self._file_name
-        self.dataset_id = create_dataset_from_url(
-            'file://tests/fixtures/%s' % file_name, allow_local_file=True)[ID]
-        self.schema = json.loads(self.controller.GET(self.dataset_id,
-                                 mode=Datasets.MODE_INFO))[SCHEMA]
-
     def _post_calculations(self, formulae=[], group=None):
         # must call after _post_file
         controller = Calculations()
@@ -66,16 +49,6 @@ class TestDatasets(TestBase):
             name = 'calc_%d' % idx if formula in self.schema.keys()\
                 else formula
             controller.POST(self.dataset_id, formula, name, group)
-
-    def _post_row_updates(self):
-        # mock the cherrypy server by setting the POST request body
-        cherrypy.request.body = open(self._update_file_path, 'r')
-        result = json.loads(self.controller.PUT(dataset_id=self.dataset_id))
-        self.assertTrue(isinstance(result, dict))
-        self.assertTrue(ID in result)
-        # set up the values to test against
-        with open(self._update_check_file_path, 'r') as f:
-            self._update_values = json.loads(f.read())
 
     def _test_summary_results(self, results):
         results = json.loads(results)
@@ -245,18 +218,7 @@ class TestDatasets(TestBase):
         self.assertEqual(list(merged_dframe.columns),
                          list(expected_dframe.columns))
 
-        expected_rows = [
-            series_to_jsondict(row[1]) for row in expected_dframe.iterrows()]
-        merged_rows = [
-            series_to_jsondict(row[1]) for row in merged_dframe.iterrows()]
-
-        for row in merged_dframe.iterrows():
-            merged_row = series_to_jsondict(row[1])
-            self.assertTrue(merged_row in expected_rows)
-
-        for row in expected_dframe.iterrows():
-            expected_row = series_to_jsondict(row[1])
-            self.assertTrue(expected_row in merged_rows)
+        self._check_dframes_are_equal(merged_dframe, expected_dframe)
 
     def test_GET(self):
         self._post_file()
