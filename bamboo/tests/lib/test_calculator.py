@@ -1,7 +1,7 @@
 from tests.test_base import TestBase
 
 from lib.parser import Parser
-from lib.tasks.calculator import calculate_column
+from lib.tasks.calculator import Calculator
 from lib.utils import recognize_dates
 from models.dataset import Dataset
 from models.observation import Observation
@@ -45,16 +45,16 @@ class TestCalculator(TestBase):
             name = 'test-%s' % idx
             self.parser.validate_formula(formula, row)
 
+            calculator = Calculator(self.dataset)
+
             if delay:
-                task = calculate_column.delay(self.parser, self.dataset,
-                                              self.dframe, formula, name,
-                                              self.group)
+                task = calculator.calculate_column.delay(
+                    calculator, formula, name, self.group)
                 # test that task has completed
                 self.assertTrue(task.ready())
                 self.assertTrue(task.successful())
             else:
-                task = calculate_column(self.parser, self.dataset, self.dframe,
-                                        formula, name, self.group)
+                task = calculator.calculate_column(calculator, formula, name, self.group)
 
             self.column_labels_to_slugs = self.dataset.build_labels_to_slugs()
 

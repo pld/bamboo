@@ -3,7 +3,7 @@ from celery.contrib.methods import task
 from lib.constants import DATASET_ID, ERROR
 from lib.exceptions import ParseError
 from lib.parser import Parser, ParserContext
-from lib.tasks.calculator import calculate_column, calculate_updates
+from lib.tasks.calculator import Calculator
 from models.abstract_model import AbstractModel
 from models.dataset import Dataset
 from models.observation import Observation
@@ -44,20 +44,12 @@ class Calculation(AbstractModel):
         Attempt to parse formula, then save formula, and add a task to
         calculate formula.
         """
-        dframe = Observation.find(dataset, as_df=True)
-
-        # attempt to get a row from the dataframe
-        try:
-            row = dframe.irow(0)
-        except IndexError, err:
-            row = {}
-
-        self.parser.context = ParserContext(dataset.record)
+        calculator = Calculator(dataset)
 
         # ensure that the formula is parsable
         try:
-            # TODO raise ParseError if group not in dataframe
-            self.parser.validate_formula(formula, row)
+            # TODO return error if group not in dataframe
+            calculator.validate(formula)
         except ParseError, err:
             # do not save record, return error
             return {ERROR: err}
@@ -72,9 +64,8 @@ class Calculation(AbstractModel):
 
         dataset.clear_summary_stats()
 
-        # call remote calculate and pass calculation id
-        calculate_column.delay(self.parser, dataset, dframe, formula, name,
-                               group)
+        # call async calculate
+        calculator.calculate_column.delay(calculator, formula, name, group)
 
         self.record = record
         return self.record
@@ -96,5 +87,6 @@ class Calculation(AbstractModel):
         Update *dataset* with new *data*.
         """
         calculations = Calculation.find(dataset)
-        calculate_updates.delay(dataset, data, calculations, cls.FORMULA,
-                                cls.NAME)
+        calculator = Calculator(dataset)
+        calculator.calculate_updates.delay(
+            calculator, data, calculations, cls.FORMULA)
