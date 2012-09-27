@@ -1,7 +1,6 @@
 from pandas import DataFrame, Series
 
 from lib.aggregations import Aggregation
-from lib.constants import LINKED_DATASETS
 from lib.utils import split_groups
 from models.dataset import Dataset
 from models.observation import Observation
@@ -44,7 +43,7 @@ class Aggregator(object):
 
             # store a link to the new dataset
             linked_datasets[self.group_str] = agg_dataset.dataset_id
-            self.dataset.update({LINKED_DATASETS: linked_datasets})
+            self.dataset.update({Dataset.LINKED_DATASETS: linked_datasets})
         else:
             agg_dataset = Dataset.find_one(agg_dataset_id)
             agg_dframe = Observation.find(agg_dataset, as_df=True)

@@ -5,8 +5,8 @@ from time import gmtime, strftime
 from celery.contrib.methods import task
 import numpy as np
 
-from lib.constants import ALL, DATASET_ID, DATASET_OBSERVATION_ID, DIMENSION,\
-    ERROR, ID, LINKED_DATASETS, NUM_COLUMNS, NUM_ROWS, SCHEMA, SIMPLETYPE
+from lib.constants import ALL, BAMBOO_RESERVED_KEY_PREFIX, DATASET_ID, DATASET_OBSERVATION_ID, DIMENSION,\
+    ERROR, ID, NUM_COLUMNS, NUM_ROWS, SCHEMA, SIMPLETYPE
 from lib.schema_builder import SchemaBuilder
 from lib.summary import summarize_df, summarize_with_groups
 from lib.utils import reserve_encoded, split_groups
@@ -27,6 +27,8 @@ class Dataset(AbstractModel):
     DESCRIPTION = 'description'
     LABEL = 'label'
     LICENSE = 'license'
+    LINKED_DATASETS = BAMBOO_RESERVED_KEY_PREFIX + 'linked_datasets'
+    MERGED_DATASETS = 'merged_datasets'
     OLAP_TYPE = 'olap_type'
     UPDATED_AT = 'updated_at'
 
@@ -49,10 +51,19 @@ class Dataset(AbstractModel):
 
     @property
     def linked_datasets(self):
-        return self.record.get(LINKED_DATASETS, {})
+        return self.record.get(self.LINKED_DATASETS, {})
+
+    @property
+    def merged_datasets(self):
+        return self.record.get(self.MERGED_DATASETS, [])
+
+    def add_merged_dataset(self, new_dataset):
+        self.update({
+            self.MERGED_DATASETS: self.merged_datasets +
+            [new_dataset.dataset_id]})
 
     def clear_linked_datasets(self):
-        self.update({LINKED_DATASETS: {}})
+        self.update({self.LINKED_DATASETS: {}})
 
     def clear_summary_stats(self, field=ALL):
         """
@@ -75,7 +86,7 @@ class Dataset(AbstractModel):
             self.CREATED_AT: strftime("%Y-%m-%d %H:%M:%S", gmtime()),
             DATASET_ID: dataset_id,
             DATASET_OBSERVATION_ID: uuid.uuid4().hex,
-            LINKED_DATASETS: {},
+            self.LINKED_DATASETS: {},
         }
         self.collection.insert(record, safe=True)
         self.record = record

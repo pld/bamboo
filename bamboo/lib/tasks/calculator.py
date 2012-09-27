@@ -123,6 +123,7 @@ class Calculator(object):
 
         # merge the two
         updated_dframe = concat([self.dframe, new_dframe])
+        # TODO update the merged datasets with new_dframe
 
         # update (overwrite) the dataset with the new merged version
         updated_dframe = Observation.update(updated_dframe, self.dataset)

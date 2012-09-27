@@ -201,19 +201,25 @@ class TestDatasets(TestAbstractDatasets):
 
     def test_POST_merge_datasets(self):
         self._post_file()
-        first_dataset_id = self.dataset_id
+        dataset_id1 = self.dataset_id
         self._post_file()
-        second_dataset_id = self.dataset_id
+        dataset_id2 = self.dataset_id
         result = json.loads(self.controller.POST(
             merge=True,
-            datasets=json.dumps([first_dataset_id, second_dataset_id])))
+            datasets=json.dumps([dataset_id1, dataset_id2])))
         self.assertTrue(isinstance(result, dict))
         self.assertTrue(ID in result)
-        original_dframe = Dataset.find_one(
-            first_dataset_id).observations(as_df=True)
+
+        datasets = [Dataset.find_one(dataset_id) for dataset_id in [dataset_id1, dataset_id2]]
+
+        for dataset in datasets:
+            self.assertTrue(result[ID] in dataset.merged_datasets)
+
+        dframe1 = datasets[0].observations(as_df=True)
         merged_dframe = Dataset.find_one(result[ID]).observations(as_df=True)
-        self.assertEqual(len(merged_dframe), 2 * len(original_dframe))
-        expected_dframe = concat([original_dframe, original_dframe],
+
+        self.assertEqual(len(merged_dframe), 2 * len(dframe1))
+        expected_dframe = concat([dframe1, dframe1],
                                  ignore_index=True)
         self.assertEqual(list(merged_dframe.columns),
                          list(expected_dframe.columns))

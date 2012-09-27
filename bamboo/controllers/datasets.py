@@ -146,10 +146,8 @@ class Datasets(AbstractController):
             raise MergeError(
                 'merge requires 2 datasets (found %s)' % len(dataset_ids))
 
-        dframes = [
-            Dataset.find_one(dataset_id).observations(as_df=True)
-            for dataset_id in dataset_ids
-        ]
+        datasets = [Dataset.find_one(dataset_id) for dataset_id in dataset_ids]
+        dframes = [dataset.observations(as_df=True) for dataset in datasets]
 
         # concat them
         new_dframe = concat(dframes, ignore_index=True)
@@ -158,6 +156,10 @@ class Datasets(AbstractController):
         new_dataset = Dataset()
         new_dataset.save()
         import_dataset.delay(new_dataset, dframe=new_dframe)
+
+        # store the child dataset ID with each parent
+        for dataset in datasets:
+            dataset.add_merged_dataset(new_dataset)
 
         # return the new dataset ID
         return {ID: new_dataset.dataset_id}

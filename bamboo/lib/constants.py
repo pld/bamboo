@@ -7,7 +7,6 @@ This stores constants used in multiple files.
 # common MongoDB keys
 BAMBOO_RESERVED_KEY_PREFIX = 'BAMBOO_RESERVED_KEY_'
 DATASET_ID = BAMBOO_RESERVED_KEY_PREFIX + 'dataset_id'
-LINKED_DATASETS = BAMBOO_RESERVED_KEY_PREFIX + 'linked_datasets'
 DATASET_OBSERVATION_ID = BAMBOO_RESERVED_KEY_PREFIX + 'dataset_observation_id'
 
 # special MongoDB keys
