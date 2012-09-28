@@ -4,13 +4,16 @@ from time import gmtime, strftime
 
 from celery.contrib.methods import task
 import numpy as np
+from pandas import concat, Series
 
 from lib.constants import ALL, BAMBOO_RESERVED_KEY_PREFIX, DATASET_ID, DATASET_OBSERVATION_ID, DIMENSION,\
-    ERROR, ID, NUM_COLUMNS, NUM_ROWS, SCHEMA, SIMPLETYPE
+    ERROR, ID, NUM_COLUMNS, NUM_ROWS, PARENT_DATASET_ID, SCHEMA, SIMPLETYPE
+from lib.exceptions import MergeError
 from lib.schema_builder import SchemaBuilder
 from lib.summary import summarize_df, summarize_with_groups
 from lib.utils import reserve_encoded, split_groups
 from models.abstract_model import AbstractModel
+from models.calculation import Calculation
 from models.observation import Observation
 
 
@@ -50,12 +53,21 @@ class Dataset(AbstractModel):
         return self.record.get(SCHEMA)
 
     @property
-    def linked_datasets(self):
+    def linked_datasets_dict(self):
         return self.record.get(self.LINKED_DATASETS, {})
 
     @property
-    def merged_datasets(self):
+    def linked_datasets(self):
+        return dict([(group, self.find_one(_id)) for (group, _id) in
+                self.linked_datasets_dict.items()])
+
+    @property
+    def merged_dataset_ids(self):
         return self.record.get(self.MERGED_DATASETS, [])
+
+    @property
+    def merged_datasets(self):
+        return [self.find_one(_id) for _id in self.merged_dataset_ids]
 
     def add_merged_dataset(self, new_dataset):
         self.update({
@@ -191,3 +203,24 @@ class Dataset(AbstractModel):
 
     def observations(self, query=None, select=None, as_df=False):
         return Observation.find(self, query, select, as_df)
+
+    def calculations(self):
+        return Calculation.find(self)
+
+    def remove_parent_observations(self, parent_id):
+        Observation.delete_all(self, {PARENT_DATASET_ID: parent_id})
+
+    @classmethod
+    def merge(cls, datasets):
+        if len(datasets) < 2:
+            raise MergeError(
+                'merge requires 2 datasets (found %s)' % len(datasets))
+
+        dframes = []
+        for dataset in datasets:
+            dframe = dataset.observations(as_df=True)
+            column = Series([dataset.dataset_id] * len(dframe))
+            column.name = PARENT_DATASET_ID
+            dframes.append(dframe.join(column))
+
+        return concat(dframes, ignore_index=True)

@@ -35,5 +35,5 @@ class Database(object):
         database.
         """
         if not cls._db or name:
-            cls.create_db(name or settings.database_name)
+            cls.create_db(name or settings.DATABASE_NAME)
         return cls._db

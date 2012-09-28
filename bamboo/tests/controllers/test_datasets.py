@@ -212,7 +212,7 @@ class TestDatasets(TestAbstractDatasets):
         datasets = [Dataset.find_one(dataset_id) for dataset_id in [dataset_id1, dataset_id2]]
 
         for dataset in datasets:
-            self.assertTrue(result[ID] in dataset.merged_datasets)
+            self.assertTrue(result[ID] in dataset.merged_dataset_ids)
 
         dframe1 = datasets[0].observations(as_df=True)
         merged_dframe = Dataset.find_one(result[ID]).observations(as_df=True)

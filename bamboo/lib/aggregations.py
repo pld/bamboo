@@ -91,3 +91,7 @@ class RatioAggregation(Aggregation):
             0: 'numerator',
             1: 'denominator',
         }[idx])
+
+
+AGGREGATIONS = dict([(cls.name, cls()) for cls in
+                     Aggregation.__subclasses__()])

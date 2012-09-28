@@ -1,15 +1,14 @@
 import json
 
 import cherrypy
-from pandas import concat, Series
 
 from controllers.abstract_controller import AbstractController
-from lib.constants import ALL, ERROR, ID, PARENT_DATASET_ID
+from lib.constants import ALL, ERROR, ID
 from lib.exceptions import JSONError, MergeError
 from lib.mongo import mongo_to_json
 from lib.io import create_dataset_from_url, create_dataset_from_csv
 from lib.tasks.import_dataset import import_dataset
-from lib.utils import dump_or_error
+from lib.utils import call_async, dump_or_error
 from models.calculation import Calculation
 from models.dataset import Dataset
 from models.observation import Observation
@@ -33,7 +32,7 @@ class Datasets(AbstractController):
         result = None
 
         if dataset.record:
-            task = dataset.delete.delay(dataset)
+            task = call_async(dataset.delete, dataset)
             result = {self.SUCCESS: 'deleted dataset: %s' % dataset_id}
         return dump_or_error(result, 'id not found')
 
@@ -67,7 +66,7 @@ class Datasets(AbstractController):
                 if mode == self.MODE_INFO:
                     result = dataset.schema()
                 elif mode == self.MODE_RELATED:
-                    result = dataset.linked_datasets
+                    result = dataset.linked_datasets_dict
                 elif mode == self.MODE_SUMMARY:
                     # for summary require a select
                     if select is None:
@@ -142,26 +141,13 @@ class Datasets(AbstractController):
         dataset_ids = json.loads(datasets)
         result = None
 
-        if len(dataset_ids) < 2:
-            raise MergeError(
-                'merge requires 2 datasets (found %s)' % len(dataset_ids))
-
         datasets = [Dataset.find_one(dataset_id) for dataset_id in dataset_ids]
-
-        dframes = []
-        for dataset in datasets:
-            dframe = dataset.observations(as_df=True)
-            column = Series([dataset.dataset_id] * len(dframe))
-            column.name = PARENT_DATASET_ID
-            dframes.append(dframe.join(column))
-
-        # concat them
-        new_dframe = concat(dframes, ignore_index=True)
+        new_dframe = Dataset.merge(datasets)
 
         # save the resulting dframe as a new dataset
         new_dataset = Dataset()
         new_dataset.save()
-        import_dataset.delay(new_dataset, dframe=new_dframe)
+        call_async(import_dataset, new_dataset, dframe=new_dframe)
 
         # store the child dataset ID with each parent
         for dataset in datasets:

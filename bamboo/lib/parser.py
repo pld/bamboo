@@ -4,7 +4,7 @@ from pyparsing import alphanums, nums, oneOf, opAssoc, operatorPrecedence,\
     CaselessLiteral, Combine, Forward, Keyword, Literal, MatchFirst,\
     OneOrMore, Optional, ParseException, Regex, Word, ZeroOrMore
 
-from lib.aggregator import Aggregator
+from lib.aggregations import AGGREGATIONS
 from lib.constants import SCHEMA
 from lib.exceptions import ParseError
 from lib.operations import EvalAndOp, EvalCaseOp, EvalComparisonOp,\
@@ -28,7 +28,7 @@ class Parser(object):
 
     aggregation = None
     bnf = None
-    aggregation_names = Aggregator.AGGREGATIONS.keys()
+    aggregation_names = AGGREGATIONS.keys()
     function_names = ['date', 'years']
     operator_names = ['and', 'or', 'not', 'in']
     special_names = ['default']

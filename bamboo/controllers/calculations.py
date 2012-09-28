@@ -3,7 +3,7 @@ import json
 from controllers.abstract_controller import AbstractController
 from lib.constants import ID
 from lib.mongo import dump_mongo_json
-from lib.utils import dump_or_error
+from lib.utils import call_async, dump_or_error
 from models.calculation import Calculation
 from models.dataset import Dataset
 
@@ -22,7 +22,8 @@ class Calculations(AbstractController):
 
         calculation = Calculation.find_one(dataset_id, name)
         if calculation:
-            task = calculation.delete.delay(calculation)
+            dataset = Dataset.find_one(dataset_id)
+            task = call_async(calculation.delete, calculation, dataset)
             result = {self.SUCCESS: 'deleted calculation: %s for dataset: %s' %
                       (name, dataset_id)}
         return dump_or_error(result,

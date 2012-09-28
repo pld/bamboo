@@ -4,13 +4,12 @@ from celery.task import task
 from pandas import concat, DataFrame, Series
 
 from lib.aggregator import Aggregator
-from lib.constants import MONGO_RESERVED_KEYS
+from lib.constants import MONGO_RESERVED_KEYS, PARENT_DATASET_ID
 from lib.exceptions import ParseError
 from lib.parser import Parser
-from lib.utils import recognize_dates, recognize_dates_from_schema,\
+from lib.utils import df_to_jsondict, recognize_dates, recognize_dates_from_schema,\
     split_groups
 from models.observation import Observation
-from models.dataset import Dataset
 
 
 class Calculator(object):
@@ -69,7 +68,7 @@ class Calculator(object):
         return new_dframe
 
     @task
-    def calculate_updates(self, new_data, calculations, FORMULA):
+    def calculate_updates(self, new_data):
         """
         Update dataset with *new_data*.
 
@@ -80,6 +79,7 @@ class Calculator(object):
 
         Therefore, perform these actions asychronously.
         """
+        calculations = self.dataset.calculations()
         labels_to_slugs = self.dataset.build_labels_to_slugs()
         new_dframe = self._dframe_from_update(new_data, labels_to_slugs)
 
@@ -87,7 +87,7 @@ class Calculator(object):
 
         for calculation in calculations:
             aggregation, function = \
-                self.parser.parse_formula(calculation.record[FORMULA])
+                self.parser.parse_formula(calculation.formula)
             new_column = new_dframe.apply(function[0], axis=1,
                                           args=(self.parser.context, ))
             potential_name = calculation.name
@@ -112,13 +112,10 @@ class Calculator(object):
         self._update_linked_datasets(aggregate_calculations)
 
         # update the merged datasets with new_dframe
-        for dataset_id in self.dataset.merged_datasets:
-            merged_dataset = Dataset.find_one(dataset_id)
+        for merged_dataset in self.dataset.merged_datasets:
             merged_calculator = Calculator(merged_dataset)
-            print 'recurring on merge'
             merged_calculator.calculate_updates(
-                merged_calculator, new_data, calculations, FORMULA)
-            print 'done recurring'
+                merged_calculator, new_data)
 
     def _make_columns(self, formula, name):
         # parse formula into function and variables
@@ -138,17 +135,23 @@ class Calculator(object):
         """
         Make a single-row dataframe for the additional data to add
         """
-        filtered_data = dict()
-        for col, val in new_data.iteritems():
-            if labels_to_slugs.get(col, None) in self.dframe.columns:
-                filtered_data[labels_to_slugs[col]] = val
-            # special case for reserved keys (e.g. _id)
-            if col in MONGO_RESERVED_KEYS and\
-                col in self.dframe.columns and\
-                    col not in filtered_data.keys():
-                filtered_data[col] = val
+        if not isinstance(new_data, list):
+            new_data = [new_data]
+
+        filtered_data = []
+        for row in new_data:
+            filtered_row = dict()
+            for col, val in row.iteritems():
+                if labels_to_slugs.get(col, None) in self.dframe.columns:
+                    filtered_row[labels_to_slugs[col]] = val
+                # special case for reserved keys (e.g. _id)
+                if col in MONGO_RESERVED_KEYS and\
+                    col in self.dframe.columns and\
+                        col not in filtered_row.keys():
+                    filtered_row[col] = val
+            filtered_data.append(filtered_row)
         return recognize_dates_from_schema(self.dataset,
-                                           DataFrame([filtered_data]))
+                                           DataFrame(filtered_data))
 
     def _update_linked_datasets(self, aggregate_calculations):
         for formula in aggregate_calculations:
@@ -160,24 +163,41 @@ class Calculator(object):
         data = self.labels_to_slugs_and_groups.get(formula)
         if not data:
             return
-        slug, group, linked_dataset = data
+        name, group, linked_dataset = data
 
-        # recalculate
+        # recalculate linked dataframe from aggregation
         linked_dframe = linked_dataset.observations(as_df=True)
-        aggregation, new_columns = self._make_columns(formula, slug)
+        aggregation, new_columns = self._make_columns(formula, name)
         agg = Aggregator(linked_dataset, linked_dframe, new_columns,
-                         group, aggregation, slug)
+                         group, aggregation, name)
         new_dframe = agg.eval_dframe()
 
-        Observation.update(new_dframe, linked_dataset)
+        # update linked dataset with new dataframe
+        new_linked_dframe = Observation.update(new_dframe, linked_dataset)
+
+        # add parent id column to new dframe
+        column = Series([linked_dataset.dataset_id] * len(new_linked_dframe))
+        column.name = PARENT_DATASET_ID
+        new_linked_dframe = new_linked_dframe.join(column)
+
+        # jsondict from new dframe
+        new_data = df_to_jsondict(new_linked_dframe)
+
+        for merged_dataset in linked_dataset.merged_datasets:
+            # remove rows in child from this merged dataset
+            merged_dataset.remove_parent_observations(linked_dataset.dataset_id)
+
+            # calculate updates on the child
+            merged_calculator = Calculator(merged_dataset)
+            merged_calculator.calculate_updates(
+                merged_calculator, new_data)
 
     def _create_labels_to_slugs_and_groups(self):
         """
         Extract info from linked datasets
         """
         self.labels_to_slugs_and_groups = dict()
-        for group, dataset_id in self.dataset.linked_datasets.items():
-            linked_dataset = Dataset.find_one(dataset_id)
-            for label, slug in linked_dataset.build_labels_to_slugs().items():
+        for group, dataset in self.dataset.linked_datasets.items():
+            for label, slug in dataset.build_labels_to_slugs().items():
                 self.labels_to_slugs_and_groups[label] = (
-                    slug, group, linked_dataset)
+                    slug, group, dataset)
