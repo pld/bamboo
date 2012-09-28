@@ -4,8 +4,8 @@ from lib.constants import DATASET_ID, ERROR
 from lib.exceptions import ParseError
 from lib.parser import Parser, ParserContext
 from lib.tasks.calculator import Calculator
+from lib.utils import call_async
 from models.abstract_model import AbstractModel
-from models.dataset import Dataset
 from models.observation import Observation
 
 
@@ -27,10 +27,13 @@ class Calculation(AbstractModel):
     def name(self):
         return self.record[self.NAME]
 
+    @property
+    def formula(self):
+        return self.record[self.FORMULA]
+
     @task
-    def delete(self):
-        dataset = Dataset.find_one(self.dataset_id)
-        dframe = Observation.find(dataset, as_df=True)
+    def delete(self, dataset):
+        dframe = dataset.observations(as_df=True)
         slug = dataset.build_labels_to_slugs()[self.name]
         del dframe[slug]
         Observation.update(dframe, dataset)
@@ -64,7 +67,8 @@ class Calculation(AbstractModel):
         dataset.clear_summary_stats()
 
         # call async calculate
-        calculator.calculate_column.delay(calculator, formula, name, group)
+        call_async(
+            calculator.calculate_column, calculator, formula, name, group)
 
         self.record = record
         return self.record
@@ -85,7 +89,5 @@ class Calculation(AbstractModel):
         """
         Update *dataset* with new *data*.
         """
-        calculations = Calculation.find(dataset)
         calculator = Calculator(dataset)
-        calculator.calculate_updates.delay(
-            calculator, data, calculations, cls.FORMULA)
+        call_async(calculator.calculate_updates, calculator, data)

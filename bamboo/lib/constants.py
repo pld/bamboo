@@ -1,14 +1,18 @@
-import re
-
 """
 This stores constants used in multiple files.
 """
 
-# common MongoDB keys
+# reserved bamboo keys
 BAMBOO_RESERVED_KEY_PREFIX = 'BAMBOO_RESERVED_KEY_'
+# TODO remove bamboo reserved key prefix from dataset_id,
+# when we can migrate live db
 DATASET_ID = BAMBOO_RESERVED_KEY_PREFIX + 'dataset_id'
-LINKED_DATASETS = BAMBOO_RESERVED_KEY_PREFIX + 'linked_datasets'
 DATASET_OBSERVATION_ID = BAMBOO_RESERVED_KEY_PREFIX + 'dataset_observation_id'
+PARENT_DATASET_ID = BAMBOO_RESERVED_KEY_PREFIX + 'parent_dataset_id'
+BAMBOO_RESERVED_KEYS = [
+    DATASET_OBSERVATION_ID,
+    PARENT_DATASET_ID,
+]
 
 # special MongoDB keys
 MONGO_RESERVED_KEYS = ['_id']

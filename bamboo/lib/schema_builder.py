@@ -1,7 +1,7 @@
 from datetime import datetime
 import numpy as np
 
-from lib.constants import DATETIME, DIMENSION, MEASURE,\
+from lib.constants import BAMBOO_RESERVED_KEYS, DATETIME, DIMENSION, MEASURE,\
     MONGO_RESERVED_KEY_STRS, SIMPLETYPE
 from lib.utils import slugify_columns
 
@@ -42,10 +42,11 @@ class SchemaBuilder(object):
 
         column_names = list()
         names_to_labels = dict()
+        reserved_keys = MONGO_RESERVED_KEY_STRS + BAMBOO_RESERVED_KEYS
 
         # use existing labels for existing columns
         for name in dtypes.keys():
-            if name not in MONGO_RESERVED_KEY_STRS:
+            if name not in reserved_keys:
                 column_names.append(name)
                 if self.dataset.data_schema:
                     schema_for_name = self.dataset.data_schema.get(name)
@@ -57,18 +58,19 @@ class SchemaBuilder(object):
 
         schema = {}
         for (name, dtype) in dtypes.items():
-            column_schema = {
-                self.dataset.LABEL: names_to_labels.get(name, name),
-                self.dataset.OLAP_TYPE: self._olap_type_for_data_and_dtype(
-                    dframe[name], dtype),
-                SIMPLETYPE: self._simpletype_for_data_and_dtype(
-                    dframe[name], dtype),
-            }
+            if name not in BAMBOO_RESERVED_KEYS:
+                column_schema = {
+                    self.dataset.LABEL: names_to_labels.get(name, name),
+                    self.dataset.OLAP_TYPE: self._olap_type_for_data_and_dtype(
+                        dframe[name], dtype),
+                    SIMPLETYPE: self._simpletype_for_data_and_dtype(
+                        dframe[name], dtype),
+                }
 
-            if column_schema[self.dataset.OLAP_TYPE] == DIMENSION:
-                column_schema[self.dataset.CARDINALITY] = dframe[name].nunique(
-                )
-            schema[encoded_names[name]] = column_schema
+                if column_schema[self.dataset.OLAP_TYPE] == DIMENSION:
+                    column_schema[self.dataset.CARDINALITY] = dframe[
+                        name].nunique()
+                schema[encoded_names[name]] = column_schema
 
         return schema
 

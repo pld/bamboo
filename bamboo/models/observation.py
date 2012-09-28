@@ -8,6 +8,7 @@ from lib.constants import DATASET_OBSERVATION_ID, DATETIME, DB_BATCH_SIZE,\
     NUM_COLUMNS, NUM_ROWS, SCHEMA, SIMPLETYPE
 from lib.exceptions import JSONError
 from lib.mongo import mongo_to_df
+from lib.utils import call_async
 from models.abstract_model import AbstractModel
 
 
@@ -16,13 +17,14 @@ class Observation(AbstractModel):
     __collectionname__ = 'observations'
 
     @classmethod
-    def delete_all(cls, dataset):
+    def delete_all(cls, dataset, query={}):
         """
         Delete the observations for *dataset*.
         """
-        cls.collection.remove({
+        query.update({
             DATASET_OBSERVATION_ID: dataset.dataset_observation_id
-        }, safe=True)
+        })
+        cls.collection.remove(query, safe=True)
 
     @classmethod
     def find(cls, dataset, query=None, select=None, as_df=False):
@@ -98,7 +100,7 @@ class Observation(AbstractModel):
         if len(rows):
             self.collection.insert(rows, safe=True)
 
-        dataset.summarize.delay(dataset)
+        call_async(dataset.summarize, dataset)
 
     @classmethod
     def update(cls, dframe, dataset):

@@ -1,16 +1,11 @@
 from pandas import DataFrame, Series
 
-from lib.aggregations import Aggregation
-from lib.constants import LINKED_DATASETS
+from lib.aggregations import Aggregation, AGGREGATIONS
 from lib.utils import split_groups
-from models.dataset import Dataset
 from models.observation import Observation
 
 
 class Aggregator(object):
-
-    AGGREGATIONS = dict([(cls.name, cls()) for cls in
-                         Aggregation.__subclasses__()])
 
     def __init__(self, dataset, dframe, column, group_str, _type, name):
         """
@@ -28,25 +23,25 @@ class Aggregator(object):
         self.groups = split_groups(self.group_str) if group_str else None
         self.name = name
         self._type = _type
-        self.save_aggregation()
 
     def save_aggregation(self):
-        new_dframe = self._eval()
+        new_dframe = self.eval_dframe()
 
         linked_datasets = self.dataset.linked_datasets
-        agg_dataset_id = linked_datasets.get(self.group_str, None)
+        agg_dataset = linked_datasets.get(self.group_str, None)
 
-        if agg_dataset_id is None:
-            agg_dataset = Dataset()
+        if agg_dataset is None:
+            agg_dataset = self.dataset.__class__()
             agg_dataset.save()
 
             Observation().save(new_dframe, agg_dataset)
 
             # store a link to the new dataset
-            linked_datasets[self.group_str] = agg_dataset.dataset_id
-            self.dataset.update({LINKED_DATASETS: linked_datasets})
+            linked_datasets_dict = self.dataset.linked_datasets_dict
+            linked_datasets_dict[self.group_str] = agg_dataset.dataset_id
+            self.dataset.update({
+                self.dataset.__class__.LINKED_DATASETS: linked_datasets_dict})
         else:
-            agg_dataset = Dataset.find_one(agg_dataset_id)
             agg_dframe = Observation.find(agg_dataset, as_df=True)
 
             if self.groups:
@@ -63,8 +58,8 @@ class Aggregator(object):
             Observation.update(new_dframe, agg_dataset)
         self.new_dframe = new_dframe
 
-    def _eval(self):
-        aggregation = self.AGGREGATIONS.get(self._type)
+    def eval_dframe(self):
+        aggregation = AGGREGATIONS.get(self._type)
 
         if self.group_str:
             # groupby on dframe then run aggregation on groupby obj

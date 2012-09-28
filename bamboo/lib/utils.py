@@ -9,6 +9,7 @@ from pandas import Series
 
 from constants import DATETIME, ERROR, MONGO_RESERVED_KEYS,\
     MONGO_RESERVED_KEY_PREFIX, SIMPLETYPE
+from config.settings import ASYNCHRONOUS_TASKS
 
 """
 Constants for utils
@@ -52,11 +53,11 @@ def dump_or_error(data, error_message):
     return json.dumps(data)
 
 
-def prefix_reserved_key(key):
+def prefix_reserved_key(key, prefix=MONGO_RESERVED_KEY_PREFIX):
     """
     Prefix reserved key
     """
-    return '%s%s' % (MONGO_RESERVED_KEY_PREFIX, key)
+    return '%s%s' % (prefix, key)
 
 
 def slugify_columns(column_names):
@@ -105,7 +106,7 @@ def recognize_dates(dframe):
 def recognize_dates_from_schema(dataset, dframe):
     # if it is a date column, recognize dates
     for column, column_schema in dataset.data_schema.items():
-        if column_schema[SIMPLETYPE] == DATETIME:
+        if dframe.get(column) and column_schema[SIMPLETYPE] == DATETIME:
             dframe[column] = dframe[column].map(date_parse)
     return dframe
 
@@ -125,3 +126,10 @@ def reserve_encoded(string):
 
 def split_groups(group_str):
     return group_str.split(GROUP_DELIMITER)
+
+
+def call_async(function, *args, **kwargs):
+    if ASYNCHRONOUS_TASKS:
+        function.__getattribute__('delay')(*args, **kwargs)
+    else:
+        function(*args, **kwargs)

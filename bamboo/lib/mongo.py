@@ -5,7 +5,7 @@ import re
 from bson import json_util
 from pandas import DataFrame
 
-from lib.constants import DATASET_OBSERVATION_ID, MONGO_RESERVED_KEYS
+from lib.constants import BAMBOO_RESERVED_KEYS, MONGO_RESERVED_KEYS
 from lib.utils import df_to_jsondict, get_json_value, prefix_reserved_key
 
 
@@ -34,13 +34,19 @@ def mongo_decode_keys(observations):
     Decode keys that were encoded for mongo.
     """
     for observation in observations:
-        observation.pop(DATASET_OBSERVATION_ID, None)
-        observation = mongo_remove_reserved_keys(observation)
+        observation = remove_bamboo_reserved_keys(observation)
+        observation = remove_mongo_reserved_keys(observation)
 
     return observations
 
 
-def mongo_remove_reserved_keys(_dict):
+def remove_bamboo_reserved_keys(_dict):
+    for reserved_key in BAMBOO_RESERVED_KEYS:
+        _dict.pop(reserved_key, None)
+    return _dict
+
+
+def remove_mongo_reserved_keys(_dict):
     """
     Check for *MONGO_RESERVED_KEYS* in stored dictionary.  If found replace
     with unprefixed, if not found remove reserved key from dictionary.

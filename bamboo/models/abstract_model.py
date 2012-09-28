@@ -1,7 +1,7 @@
 from config.db import Database
 from lib.constants import DATASET_ID
 from lib.decorators import classproperty
-from lib.mongo import mongo_remove_reserved_keys
+from lib.mongo import remove_mongo_reserved_keys
 
 
 class AbstractModel(object):
@@ -51,6 +51,6 @@ class AbstractModel(object):
         """
         Remove reserved keys from records.
         """
-        _dict = mongo_remove_reserved_keys(self.record)
+        _dict = remove_mongo_reserved_keys(self.record)
         _dict.pop(DATASET_ID, None)
         return _dict

@@ -1,1 +1,2 @@
-database_name = 'bamboo_dev'
+ASYNCHRONOUS_TASKS = False
+DATABASE_NAME = 'bamboo_dev'

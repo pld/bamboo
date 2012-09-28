@@ -28,18 +28,20 @@ on Debian based: ``# apt-get install gfortran libatlas-base-dev``
 
 Installation
 ------------
-    
-    ``$ ./scripts/install.sh``
+
+::
+
+  $ ./scripts/install.sh
 
 Running the server
 ------------------
 
-    start mongodb on localhost and standard port
+start mongodb on localhost and standard port
 
 ::
 
-    $ cd bamboo
-    $ python run_server.py
+  $ cd bamboo
+  $ python run_server.py
 
 Running the server as a daemon
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -52,11 +54,15 @@ start mongodb on localhost and standard port
 
 start the daemon using:
 
-``$ /var/www/bamboo/current/scripts/bamboo.sh start``
+::
+
+  $ /var/www/bamboo/current/scripts/bamboo.sh start
 
 stop the daemon using:
 
-``$ /var/www/bamboo/current/scripts/bamboo.sh stop``
+::
+
+  $ /var/www/bamboo/current/scripts/bamboo.sh stop
 
 
 Testing
@@ -64,14 +70,16 @@ Testing
 
 install nose testing requirements
 
-``$ pip install -r requirements-test.pip``
+::
+
+  $ pip install -r requirements-test.pip
 
 run tests
 
 ::
 
-    $ cd bamboo
-    $ ./test.sh
+  $ cd bamboo
+  $ ./test.sh
 
 Documentation
 -------------
@@ -86,9 +94,9 @@ Building Documentation
 
 ::
 
-    $ pip install -r requirements-docs.pip
-    $ cd docs
-    $ make html
+  $ pip install -r requirements-docs.pip
+  $ cd docs
+  $ make html
 
 Contributing Code
 -----------------
@@ -107,7 +115,9 @@ To work on the code:
 
 5. ensure all existing tests and your new tests are passing
 
-``$ cd bamboo && ./test.sh``
+::
+
+  $ cd bamboo && ./test.sh
 
 6. submit a pull request
 
@@ -119,11 +129,27 @@ On the remote server
 
 running the example basic commands
 
-``$ ./scripts/commands.sh``
+::
+
+  $ ./scripts/commands.sh
+
+using `pybamboo <https://github.com/modilabs/pybamboo>`_
+
+::
+
+  $ pip install pybamboo
+  $ python
+  >>> from pybamboo import PyBamboo
+  >>> pybamboo = PyBamboo()
+  >>> response = pybamboo.store_csv_file('http://formhub.org/mberg/forms/good_eats/data.csv')
+  >>> dataset_id = response['id']
+ ...
 
 posting a dataset
 
-``$ curl -X POST -d "url=http://formhub.org/mberg/forms/good_eats/data.csv" http://bamboo.io/datasets``
+::
+
+  $ curl -X POST -d "url=http://formhub.org/mberg/forms/good_eats/data.csv" http://bamboo.io/datasets
 
 On your local server
 ^^^^^^^^^^^^^^^^^^^
@@ -132,11 +158,15 @@ start the bamboo server as above, then
 
 run the example basic commands
 
-``$ ./scripts/commands.sh -l``
+::
+
+  $ ./scripts/commands.sh -l
 
 make requests from your local server
 
-``$ curl -X POST -d "url=http://formhub.org/mberg/forms/good_eats/data.csv" http://localhost:8080/datasets``
+::
+
+  $ curl -X POST -d "url=http://formhub.org/mberg/forms/good_eats/data.csv" http://localhost:8080/datasets
 
 About
 -----
