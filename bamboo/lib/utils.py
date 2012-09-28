@@ -52,11 +52,11 @@ def dump_or_error(data, error_message):
     return json.dumps(data)
 
 
-def prefix_reserved_key(key):
+def prefix_reserved_key(key, prefix=MONGO_RESERVED_KEY_PREFIX):
     """
     Prefix reserved key
     """
-    return '%s%s' % (MONGO_RESERVED_KEY_PREFIX, key)
+    return '%s%s' % (prefix, key)
 
 
 def slugify_columns(column_names):

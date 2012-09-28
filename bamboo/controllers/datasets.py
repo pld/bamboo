@@ -1,10 +1,10 @@
 import json
 
 import cherrypy
-from pandas import concat
+from pandas import concat, Series
 
 from controllers.abstract_controller import AbstractController
-from lib.constants import ALL, ERROR, ID
+from lib.constants import ALL, ERROR, ID, PARENT_DATASET_ID
 from lib.exceptions import JSONError, MergeError
 from lib.mongo import mongo_to_json
 from lib.io import create_dataset_from_url, create_dataset_from_csv
@@ -147,7 +147,13 @@ class Datasets(AbstractController):
                 'merge requires 2 datasets (found %s)' % len(dataset_ids))
 
         datasets = [Dataset.find_one(dataset_id) for dataset_id in dataset_ids]
-        dframes = [dataset.observations(as_df=True) for dataset in datasets]
+
+        dframes = []
+        for dataset in datasets:
+            dframe = dataset.observations(as_df=True)
+            column = Series([dataset.dataset_id] * len(dframe))
+            column.name = PARENT_DATASET_ID
+            dframes.append(dframe.join(column))
 
         # concat them
         new_dframe = concat(dframes, ignore_index=True)

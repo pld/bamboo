@@ -89,5 +89,6 @@ class Calculation(AbstractModel):
         calculator = Calculator(dataset)
         calculator.calculate_updates(
             calculator, data, calculations, cls.FORMULA)
+#       XXXXXXXXXXXXXXXXX
 #        calculator.calculate_updates.delay
 #            calculator, data, calculations, cls.FORMULA)
