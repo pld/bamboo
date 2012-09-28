@@ -7,8 +7,8 @@ from lib.aggregator import Aggregator
 from lib.constants import MONGO_RESERVED_KEYS, PARENT_DATASET_ID
 from lib.exceptions import ParseError
 from lib.parser import Parser
-from lib.utils import df_to_jsondict, recognize_dates, recognize_dates_from_schema,\
-    split_groups
+from lib.utils import df_to_jsondict, recognize_dates,\
+    recognize_dates_from_schema, split_groups
 from models.observation import Observation
 
 
@@ -58,7 +58,7 @@ class Calculator(object):
 
         if aggregation:
             agg = Aggregator(self.dataset, self.dframe, new_columns,
-                       group_str, aggregation, name)
+                             group_str, aggregation, name)
             agg.save_aggregation()
             new_dframe = agg.new_dframe
         else:
@@ -103,7 +103,8 @@ class Calculator(object):
             new_dframe = new_dframe.join(new_column)
 
         # get parent id from existing dataset
-        parent_dataset_id = self.dataset.observations()[0].get(PARENT_DATASET_ID)
+        parent_dataset_id = self.dataset.observations()[0].get(
+            PARENT_DATASET_ID)
         if parent_dataset_id:
             new_dframe = self._add_parent_column(
                 parent_dataset_id, new_dframe)
@@ -197,7 +198,8 @@ class Calculator(object):
 
         for merged_dataset in linked_dataset.merged_datasets:
             # remove rows in child from this merged dataset
-            merged_dataset.remove_parent_observations(linked_dataset.dataset_id)
+            merged_dataset.remove_parent_observations(
+                linked_dataset.dataset_id)
 
             # calculate updates on the child
             merged_calculator = Calculator(merged_dataset)

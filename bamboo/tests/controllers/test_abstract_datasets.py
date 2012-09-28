@@ -8,6 +8,7 @@ from lib.io import create_dataset_from_url
 from lib.utils import df_to_jsondict, series_to_jsondict
 from tests.test_base import TestBase
 
+
 class TestAbstractDatasets(TestBase):
 
     def setUp(self):
@@ -49,5 +50,5 @@ class TestAbstractDatasets(TestBase):
         for row in dframe1.iterrows():
             dframe1_row = series_to_jsondict(row[1])
             self.assertTrue(dframe1_row in dframe2_rows,
-                    'dframe1_row: %s\n\ndframe2_rows: %s' % (dframe1_row,
-                        dframe2_rows))
+                            'dframe1_row: %s\n\ndframe2_rows: %s' % (
+                                dframe1_row, dframe2_rows))

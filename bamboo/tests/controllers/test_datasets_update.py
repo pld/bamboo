@@ -52,12 +52,14 @@ class TestDatasetsUpdate(TestAbstractDatasets):
 
         result = json.loads(self.controller.POST(
             merge=True,
-            datasets=json.dumps([self.merged_dataset1_id, self.linked_dataset1_id])))
+            datasets=json.dumps(
+                [self.merged_dataset1_id, self.linked_dataset1_id])))
         self.merged_dataset2_id = result[ID]
 
     def _verify_dataset(self, dataset_id, fixture_path):
         dframe = Dataset.find_one(dataset_id).observations(as_df=True)
-        expected_dframe = recognize_dates(pickle.load(open(fixture_path, 'rb')))
+        expected_dframe = recognize_dates(
+            pickle.load(open(fixture_path, 'rb')))
         self._check_dframes_are_equal(dframe, expected_dframe)
 
     def test_setup_datasets(self):
@@ -65,12 +67,15 @@ class TestDatasetsUpdate(TestAbstractDatasets):
                              'tests/fixtures/updates/originals/dataset1.p')
         self._verify_dataset(self.dataset2_id,
                              'tests/fixtures/updates/originals/dataset2.p')
-        self._verify_dataset(self.linked_dataset1_id,
-                             'tests/fixtures/updates/originals/linked_dataset1.p')
-        self._verify_dataset(self.merged_dataset1_id,
-                             'tests/fixtures/updates/originals/merged_dataset1.p')
-        self._verify_dataset(self.merged_dataset2_id,
-                             'tests/fixtures/updates/originals/merged_dataset2.p')
+        self._verify_dataset(
+            self.linked_dataset1_id,
+            'tests/fixtures/updates/originals/linked_dataset1.p')
+        self._verify_dataset(
+            self.merged_dataset1_id,
+            'tests/fixtures/updates/originals/merged_dataset1.p')
+        self._verify_dataset(
+            self.merged_dataset2_id,
+            'tests/fixtures/updates/originals/merged_dataset2.p')
 
     def _test_update1(self):
         for dataset_id in [self.merged_dataset1_id, self.merged_dataset2_id]:
@@ -81,10 +86,12 @@ class TestDatasetsUpdate(TestAbstractDatasets):
 
         self._verify_dataset(self.dataset1_id,
                              'tests/fixtures/updates/update1/dataset1.p')
-        self._verify_dataset(self.merged_dataset1_id,
-                             'tests/fixtures/updates/update1/merged_dataset1.p')
-        self._verify_dataset(self.merged_dataset2_id,
-                             'tests/fixtures/updates/update1/merged_dataset2.p')
+        self._verify_dataset(
+            self.merged_dataset1_id,
+            'tests/fixtures/updates/update1/merged_dataset1.p')
+        self._verify_dataset(
+            self.merged_dataset2_id,
+            'tests/fixtures/updates/update1/merged_dataset2.p')
 
     def test_datasets_update1(self):
         self._post_row_updates(self.dataset1_id)
@@ -94,9 +101,12 @@ class TestDatasetsUpdate(TestAbstractDatasets):
         self._post_row_updates(self.dataset1_id)
         self._test_update1()
         self._post_row_updates(self.dataset2_id)
-        self._verify_dataset(self.merged_dataset1_id,
-                             'tests/fixtures/updates/update2/merged_dataset1.p')
-        self._verify_dataset(self.linked_dataset1_id,
-                             'tests/fixtures/updates/update2/linked_dataset1.p')
-        self._verify_dataset(self.merged_dataset2_id,
-                             'tests/fixtures/updates/update2/merged_dataset2.p')
+        self._verify_dataset(
+            self.merged_dataset1_id,
+            'tests/fixtures/updates/update2/merged_dataset1.p')
+        self._verify_dataset(
+            self.linked_dataset1_id,
+            'tests/fixtures/updates/update2/linked_dataset1.p')
+        self._verify_dataset(
+            self.merged_dataset2_id,
+            'tests/fixtures/updates/update2/merged_dataset2.p')

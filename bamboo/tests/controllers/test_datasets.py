@@ -210,8 +210,8 @@ class TestDatasets(TestAbstractDatasets):
         self.assertTrue(isinstance(result, dict))
         self.assertTrue(ID in result)
 
-        datasets = [Dataset.find_one(dataset_id)\
-            for dataset_id in [dataset_id1, dataset_id2]]
+        datasets = [Dataset.find_one(dataset_id)
+                    for dataset_id in [dataset_id1, dataset_id2]]
 
         for dataset in datasets:
             self.assertTrue(result[ID] in dataset.merged_dataset_ids)

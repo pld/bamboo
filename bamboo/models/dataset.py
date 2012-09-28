@@ -6,8 +6,9 @@ from celery.contrib.methods import task
 import numpy as np
 from pandas import concat, Series
 
-from lib.constants import ALL, BAMBOO_RESERVED_KEY_PREFIX, DATASET_ID, DATASET_OBSERVATION_ID, DIMENSION,\
-    ERROR, ID, NUM_COLUMNS, NUM_ROWS, PARENT_DATASET_ID, SCHEMA, SIMPLETYPE
+from lib.constants import ALL, BAMBOO_RESERVED_KEY_PREFIX, DATASET_ID,\
+    DATASET_OBSERVATION_ID, DIMENSION, ERROR, ID, NUM_COLUMNS, NUM_ROWS,\
+    PARENT_DATASET_ID, SCHEMA, SIMPLETYPE
 from lib.exceptions import MergeError
 from lib.schema_builder import SchemaBuilder
 from lib.summary import summarize_df, summarize_with_groups
@@ -59,7 +60,7 @@ class Dataset(AbstractModel):
     @property
     def linked_datasets(self):
         return dict([(group, self.find_one(_id)) for (group, _id) in
-                self.linked_datasets_dict.items()])
+                     self.linked_datasets_dict.items()])
 
     @property
     def merged_dataset_ids(self):

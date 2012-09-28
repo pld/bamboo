@@ -68,8 +68,8 @@ class SchemaBuilder(object):
                 }
 
                 if column_schema[self.dataset.OLAP_TYPE] == DIMENSION:
-                    column_schema[self.dataset.CARDINALITY] = dframe[name].nunique(
-                    )
+                    column_schema[self.dataset.CARDINALITY] = dframe[
+                        name].nunique()
                 schema[encoded_names[name]] = column_schema
 
         return schema
