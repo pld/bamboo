@@ -27,10 +27,9 @@ class Aggregator(object):
         self.groups = split_groups(self.group_str) if group_str else None
         self.name = name
         self._type = _type
-        self.save_aggregation()
 
     def save_aggregation(self):
-        new_dframe = self._eval()
+        new_dframe = self.eval_dframe()
 
         linked_datasets = self.dataset.linked_datasets
         agg_dataset_id = linked_datasets.get(self.group_str, None)
@@ -62,7 +61,7 @@ class Aggregator(object):
             Observation.update(new_dframe, agg_dataset)
         self.new_dframe = new_dframe
 
-    def _eval(self):
+    def eval_dframe(self):
         aggregation = self.AGGREGATIONS.get(self._type)
 
         if self.group_str:
