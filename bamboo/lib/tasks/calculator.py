@@ -102,8 +102,21 @@ class Calculator(object):
                 new_column.name = potential_name
             new_dframe = new_dframe.join(new_column)
 
+        # get parent id from existing dataset
+        parent_dataset_id = self.dataset.observations()[0].get(PARENT_DATASET_ID)
+        if parent_dataset_id:
+            new_dframe = self._add_parent_column(
+                parent_dataset_id, new_dframe)
+
+        existing_observations = self.dataset.observations()
+        existing_dframe = self.dframe
+        old_dframe = DataFrame(existing_observations)
+        if PARENT_DATASET_ID in old_dframe.columns.tolist():
+            parent_column = old_dframe[PARENT_DATASET_ID]
+            existing_dframe = self.dframe.join(parent_column)
+
         # merge the two
-        updated_dframe = concat([self.dframe, new_dframe])
+        updated_dframe = concat([existing_dframe, new_dframe])
 
         # update (overwrite) the dataset with the new merged version
         self.dframe = Observation.update(updated_dframe, self.dataset)
@@ -176,9 +189,8 @@ class Calculator(object):
         new_linked_dframe = Observation.update(new_dframe, linked_dataset)
 
         # add parent id column to new dframe
-        column = Series([linked_dataset.dataset_id] * len(new_linked_dframe))
-        column.name = PARENT_DATASET_ID
-        new_linked_dframe = new_linked_dframe.join(column)
+        new_linked_dframe = self._add_parent_column(
+            linked_dataset.dataset_id, new_linked_dframe)
 
         # jsondict from new dframe
         new_data = df_to_jsondict(new_linked_dframe)
@@ -201,3 +213,8 @@ class Calculator(object):
             for label, slug in dataset.build_labels_to_slugs().items():
                 self.labels_to_slugs_and_groups[label] = (
                     slug, group, dataset)
+
+    def _add_parent_column(self, parent_dataset_id, child_dframe):
+        column = Series([parent_dataset_id] * len(child_dframe))
+        column.name = PARENT_DATASET_ID
+        return child_dframe.join(column)

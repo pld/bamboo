@@ -83,8 +83,6 @@ class TestAggregations(TestCalculator):
         else:
             self.group = ''
 
-        linked_dataset_id = self.dataset.linked_datasets[self.group]
-
         if not self.group in self.expected_length:
             self.expected_length[self.group] = self._get_initial_len(
                 formula, self.groups_list)
@@ -94,8 +92,8 @@ class TestAggregations(TestCalculator):
             formula)
 
         # retrieve linked dataset
-        self.assertFalse(linked_dataset_id is None)
-        linked_dataset = Dataset.find_one(linked_dataset_id)
+        linked_dataset = self.dataset.linked_datasets[self.group]
+        self.assertFalse(linked_dataset is None)
         linked_dframe = Observation.find(linked_dataset, as_df=True)
 
         column_labels_to_slugs = linked_dataset.build_labels_to_slugs()

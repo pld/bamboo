@@ -4,7 +4,7 @@ import pickle
 from controllers.calculations import Calculations
 from controllers.datasets import Datasets
 from models.dataset import Dataset
-from lib.constants import ID
+from lib.constants import ID, PARENT_DATASET_ID
 from lib.utils import recognize_dates
 from tests.controllers.test_abstract_datasets import TestAbstractDatasets
 
@@ -73,6 +73,12 @@ class TestDatasetsUpdate(TestAbstractDatasets):
                              'tests/fixtures/updates/originals/merged_dataset2.p')
 
     def _test_update1(self):
+        for dataset_id in [self.merged_dataset1_id, self.merged_dataset2_id]:
+            merged_dataset = Dataset.find_one(dataset_id)
+            merged_rows = merged_dataset.observations()
+            for row in merged_rows:
+                self.assertTrue(PARENT_DATASET_ID in row.keys())
+
         self._verify_dataset(self.dataset1_id,
                              'tests/fixtures/updates/update1/dataset1.p')
         self._verify_dataset(self.merged_dataset1_id,

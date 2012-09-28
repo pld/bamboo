@@ -12,7 +12,8 @@ from controllers.datasets import Datasets
 from controllers.calculations import Calculations
 from lib.constants import DATETIME, DIMENSION, ERROR,\
     ID, MONGO_RESERVED_KEYS, MONGO_RESERVED_KEY_PREFIX,\
-    MONGO_RESERVED_KEY_STRS, NUM_COLUMNS, NUM_ROWS, SCHEMA, SIMPLETYPE, SUMMARY
+    MONGO_RESERVED_KEY_STRS, NUM_COLUMNS, NUM_ROWS,\
+    PARENT_DATASET_ID, SCHEMA, SIMPLETYPE, SUMMARY
 from lib.decorators import requires_internet
 from lib.utils import GROUP_DELIMITER
 from models.dataset import Dataset
@@ -209,13 +210,18 @@ class TestDatasets(TestAbstractDatasets):
         self.assertTrue(isinstance(result, dict))
         self.assertTrue(ID in result)
 
-        datasets = [Dataset.find_one(dataset_id) for dataset_id in [dataset_id1, dataset_id2]]
+        datasets = [Dataset.find_one(dataset_id)\
+            for dataset_id in [dataset_id1, dataset_id2]]
 
         for dataset in datasets:
             self.assertTrue(result[ID] in dataset.merged_dataset_ids)
 
         dframe1 = datasets[0].observations(as_df=True)
-        merged_dframe = Dataset.find_one(result[ID]).observations(as_df=True)
+        merged_dataset = Dataset.find_one(result[ID])
+        merged_rows = merged_dataset.observations()
+        for row in merged_rows:
+            self.assertTrue(PARENT_DATASET_ID in row.keys())
+        merged_dframe = merged_dataset.observations(as_df=True)
 
         self.assertEqual(len(merged_dframe), 2 * len(dframe1))
         expected_dframe = concat([dframe1, dframe1],
