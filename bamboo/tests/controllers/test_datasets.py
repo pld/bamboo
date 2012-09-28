@@ -141,7 +141,6 @@ class TestDatasets(TestAbstractDatasets):
                 self.assertTrue(
                     column in result.keys(),
                     "column %s not in %s" % (column, result.keys()))
-                    # TODO: check value somehow?
         self._test_mode_related()
 
     def test_POST_file(self):

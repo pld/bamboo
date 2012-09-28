@@ -93,4 +93,4 @@ class TestDatasetsUpdate(TestAbstractDatasets):
         self._verify_dataset(self.linked_dataset1_id,
                              'tests/fixtures/updates/update2/linked_dataset1.p')
         self._verify_dataset(self.merged_dataset2_id,
-                             'tests/fixtures/updates/update2_merged_dataset2.p')
+                             'tests/fixtures/updates/update2/merged_dataset2.p')

@@ -83,6 +83,8 @@ class Calculator(object):
         labels_to_slugs = self.dataset.build_labels_to_slugs()
         new_dframe = self._dframe_from_update(new_data, labels_to_slugs)
 
+        aggregate_calculations = []
+
         for calculation in calculations:
             aggregation, function = \
                 self.parser.parse_formula(calculation.record[FORMULA])
@@ -91,8 +93,8 @@ class Calculator(object):
             potential_name = calculation.name
             if potential_name not in self.dframe.columns:
                 if potential_name not in labels_to_slugs:
-                    # it is a linked calculation
-                    self._update_linked_dataset(potential_name)
+                    # it is an aggregation calculation, update after
+                    aggregate_calculations.append(potential_name)
                     continue
                 else:
                     new_column.name = labels_to_slugs[potential_name]
@@ -104,9 +106,10 @@ class Calculator(object):
         updated_dframe = concat([self.dframe, new_dframe])
 
         # update (overwrite) the dataset with the new merged version
-        updated_dframe = Observation.update(updated_dframe, self.dataset)
-
+        self.dframe = Observation.update(updated_dframe, self.dataset)
         self.dataset.clear_summary_stats()
+
+        self._update_linked_datasets(aggregate_calculations)
 
         # update the merged datasets with new_dframe
         for dataset_id in self.dataset.merged_datasets:
@@ -147,22 +150,17 @@ class Calculator(object):
         return recognize_dates_from_schema(self.dataset,
                                            DataFrame([filtered_data]))
 
+    def _update_linked_datasets(self, aggregate_calculations):
+        for formula in aggregate_calculations:
+            self._update_linked_dataset(formula)
+
     def _update_linked_dataset(self, formula):
         if not self.labels_to_slugs_and_groups:
             self._create_labels_to_slugs_and_groups()
         data = self.labels_to_slugs_and_groups.get(formula)
         if not data:
             return
-        print 'lsg %s' % self.labels_to_slugs_and_groups
-        print 'formula: %s' % formula
-        print 'linked_datasets: %s' % self.dataset.linked_datasets
-        print 'columns: %s' % self.dframe.columns
-        print 'num rows: %s' % len(self.dframe)
         slug, group, linked_dataset = data
-
-
-        # remove all exisiting rows
-        Observation.update(DataFrame(), linked_dataset)
 
         # recalculate
         linked_dframe = linked_dataset.observations(as_df=True)
@@ -181,8 +179,5 @@ class Calculator(object):
         for group, dataset_id in self.dataset.linked_datasets.items():
             linked_dataset = Dataset.find_one(dataset_id)
             for label, slug in linked_dataset.build_labels_to_slugs().items():
-                self.labels_to_slugs_and_groups[label] = (slug, group, linked_dataset)
-#            linked_dataset.delete(linked_dataset)
-
-#        # remove linked datasets
-#        self.dataset.clear_linked_datasets()
+                self.labels_to_slugs_and_groups[label] = (
+                    slug, group, linked_dataset)
