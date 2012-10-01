@@ -192,7 +192,9 @@ class TestDatasets(TestAbstractDatasets):
     def test_POST_not_csv_url(self):
         result = json.loads(self.controller.POST(url='http://74.125.228.110/'))
         self.assertTrue(isinstance(result, dict))
-        self.assertTrue(ERROR in result)
+        self.assertTrue(ID in result)
+        results = json.loads(self.controller.GET(result[ID]))
+        self.assertEqual(len(results), 0)
 
     @requires_internet
     def test_POST_bad_url(self):
