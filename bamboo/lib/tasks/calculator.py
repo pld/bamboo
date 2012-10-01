@@ -7,7 +7,7 @@ from lib.aggregator import Aggregator
 from lib.constants import MONGO_RESERVED_KEYS, PARENT_DATASET_ID
 from lib.exceptions import ParseError
 from lib.parser import Parser
-from lib.utils import df_to_jsondict, recognize_dates,\
+from lib.utils import call_async, df_to_jsondict, recognize_dates,\
     recognize_dates_from_schema, split_groups
 from models.observation import Observation
 
@@ -128,8 +128,8 @@ class Calculator(object):
         # update the merged datasets with new_dframe
         for merged_dataset in self.dataset.merged_datasets:
             merged_calculator = Calculator(merged_dataset)
-            merged_calculator.calculate_updates(
-                merged_calculator, new_data)
+            call_async(merged_calculator.calculate_updates,
+                       merged_dataset, merged_calculator, new_data)
 
     def _make_columns(self, formula, name):
         # parse formula into function and variables
@@ -175,8 +175,6 @@ class Calculator(object):
         if not self.labels_to_slugs_and_groups:
             self._create_labels_to_slugs_and_groups()
         data = self.labels_to_slugs_and_groups.get(formula)
-        if not data:
-            return
         name, group, linked_dataset = data
 
         # recalculate linked dataframe from aggregation
@@ -203,8 +201,8 @@ class Calculator(object):
 
             # calculate updates on the child
             merged_calculator = Calculator(merged_dataset)
-            merged_calculator.calculate_updates(
-                merged_calculator, new_data)
+            call_async(merged_calculator.calculate_updates,
+                       merged_dataset, merged_calculator, new_data)
 
     def _create_labels_to_slugs_and_groups(self):
         """

@@ -32,7 +32,7 @@ class Datasets(AbstractController):
         result = None
 
         if dataset.record:
-            task = call_async(dataset.delete, dataset)
+            task = call_async(dataset.delete, dataset, dataset)
             result = {self.SUCCESS: 'deleted dataset: %s' % dataset_id}
         return dump_or_error(result, 'id not found')
 
@@ -147,7 +147,7 @@ class Datasets(AbstractController):
         # save the resulting dframe as a new dataset
         new_dataset = Dataset()
         new_dataset.save()
-        call_async(import_dataset, new_dataset, dframe=new_dframe)
+        call_async(import_dataset, new_dataset, new_dataset, dframe=new_dframe)
 
         # store the child dataset ID with each parent
         for dataset in datasets:
