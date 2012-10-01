@@ -75,9 +75,6 @@ class Dataset(AbstractModel):
             self.MERGED_DATASETS: self.merged_datasets +
             [new_dataset.dataset_id]})
 
-    def clear_linked_datasets(self):
-        self.update({self.LINKED_DATASETS: {}})
-
     def clear_summary_stats(self, field=ALL):
         """
         Invalidate summary stats for *field*.
