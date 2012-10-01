@@ -2,11 +2,11 @@ import json
 
 import cherrypy
 
-from controllers.datasets import Datasets
-from lib.constants import ID, SCHEMA
-from lib.io import create_dataset_from_url
-from lib.utils import df_to_jsondict, series_to_jsondict
-from tests.test_base import TestBase
+from bamboo.controllers.datasets import Datasets
+from bamboo.lib.constants import ID, SCHEMA
+from bamboo.lib.io import create_dataset_from_url
+from bamboo.lib.utils import df_to_jsondict, series_to_jsondict
+from bamboo.tests.test_base import TestBase
 
 
 class TestAbstractDatasets(TestBase):

@@ -1,6 +1,5 @@
-from tests.test_base import TestBase
-
-from lib.io import open_data_file
+from bamboo.lib.io import open_data_file
+from bamboo.tests.test_base import TestBase
 
 
 class TestParser(TestBase):

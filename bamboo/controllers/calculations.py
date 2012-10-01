@@ -1,11 +1,11 @@
 import json
 
-from controllers.abstract_controller import AbstractController
-from lib.constants import ID
-from lib.mongo import dump_mongo_json
-from lib.utils import call_async, dump_or_error
-from models.calculation import Calculation
-from models.dataset import Dataset
+from bamboo.controllers.abstract_controller import AbstractController
+from bamboo.lib.constants import ID
+from bamboo.lib.mongo import dump_mongo_json
+from bamboo.lib.utils import call_async, dump_or_error
+from bamboo.models.calculation import Calculation
+from bamboo.models.dataset import Dataset
 
 
 class Calculations(AbstractController):

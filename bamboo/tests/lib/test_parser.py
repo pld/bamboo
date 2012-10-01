@@ -1,7 +1,6 @@
-from tests.test_base import TestBase
-
-from lib.exceptions import ParseError
-from lib.parser import Parser
+from bamboo.lib.exceptions import ParseError
+from bamboo.lib.parser import Parser
+from bamboo.tests.test_base import TestBase
 
 
 class TestParser(TestBase):

@@ -6,16 +6,16 @@ from celery.contrib.methods import task
 import numpy as np
 from pandas import concat, Series
 
-from lib.constants import ALL, BAMBOO_RESERVED_KEY_PREFIX, DATASET_ID,\
+from bamboo.lib.constants import ALL, BAMBOO_RESERVED_KEY_PREFIX, DATASET_ID,\
     DATASET_OBSERVATION_ID, DIMENSION, ERROR, ID, NUM_COLUMNS, NUM_ROWS,\
     PARENT_DATASET_ID, SCHEMA, SIMPLETYPE
-from lib.exceptions import MergeError
-from lib.schema_builder import SchemaBuilder
-from lib.summary import summarize_df, summarize_with_groups
-from lib.utils import reserve_encoded, split_groups
-from models.abstract_model import AbstractModel
-from models.calculation import Calculation
-from models.observation import Observation
+from bamboo.lib.exceptions import MergeError
+from bamboo.lib.schema_builder import SchemaBuilder
+from bamboo.lib.summary import summarize_df, summarize_with_groups
+from bamboo.lib.utils import reserve_encoded, split_groups
+from bamboo.models.abstract_model import AbstractModel
+from bamboo.models.calculation import Calculation
+from bamboo.models.observation import Observation
 
 
 class Dataset(AbstractModel):

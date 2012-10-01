@@ -3,11 +3,11 @@ import re
 from pandas import DataFrame
 from pymongo.cursor import Cursor
 
-from tests.test_base import TestBase
-from models.dataset import Dataset
-from models.observation import Observation
-from lib.constants import MONGO_RESERVED_KEY_STRS, SCHEMA, SIMPLETYPE
-from lib.mongo import mongo_decode_keys
+from bamboo.tests.test_base import TestBase
+from bamboo.models.dataset import Dataset
+from bamboo.models.observation import Observation
+from bamboo.lib.constants import MONGO_RESERVED_KEY_STRS, SCHEMA, SIMPLETYPE
+from bamboo.lib.mongo import mongo_decode_keys
 
 
 class TestDataset(TestBase):

@@ -1,6 +1,6 @@
 import json
 
-from controllers.abstract_controller import AbstractController
+from bamboo.controllers.abstract_controller import AbstractController
 
 
 class Version(AbstractController):

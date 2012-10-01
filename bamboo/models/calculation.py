@@ -1,12 +1,12 @@
 from celery.contrib.methods import task
 
-from lib.constants import DATASET_ID, ERROR
-from lib.exceptions import ParseError
-from lib.parser import Parser, ParserContext
-from lib.tasks.calculator import Calculator
-from lib.utils import call_async
-from models.abstract_model import AbstractModel
-from models.observation import Observation
+from bamboo.lib.constants import DATASET_ID, ERROR
+from bamboo.lib.exceptions import ParseError
+from bamboo.lib.parser import Parser, ParserContext
+from bamboo.lib.tasks.calculator import Calculator
+from bamboo.lib.utils import call_async
+from bamboo.models.abstract_model import AbstractModel
+from bamboo.models.observation import Observation
 
 
 class Calculation(AbstractModel):

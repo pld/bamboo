@@ -7,9 +7,9 @@ from dateutil.parser import parse as date_parse
 import numpy as np
 from pandas import Series
 
-from constants import DATETIME, ERROR, MONGO_RESERVED_KEYS,\
+from bamboo.lib.constants import DATETIME, ERROR, MONGO_RESERVED_KEYS,\
     MONGO_RESERVED_KEY_PREFIX, SIMPLETYPE
-from config.settings import ASYNCHRONOUS_TASKS
+from bamboo.config.settings import ASYNCHRONOUS_TASKS
 
 """
 Constants for utils

@@ -1,7 +1,7 @@
-from config.db import Database
-from lib.constants import DATASET_ID
-from lib.decorators import classproperty
-from lib.mongo import remove_mongo_reserved_keys
+from bamboo.config.db import Database
+from bamboo.lib.constants import DATASET_ID
+from bamboo.lib.decorators import classproperty
+from bamboo.lib.mongo import remove_mongo_reserved_keys
 
 
 class AbstractModel(object):

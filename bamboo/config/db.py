@@ -2,7 +2,7 @@ from os import getenv
 
 from pymongo import Connection
 
-from config import settings
+from bamboo.config import settings
 
 
 class Database(object):

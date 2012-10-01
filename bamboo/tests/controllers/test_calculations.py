@@ -1,13 +1,13 @@
 import json
 
-from controllers.abstract_controller import AbstractController
-from controllers.calculations import Calculations
-from controllers.datasets import Datasets
-from lib.constants import ALL, DATASET_ID, ERROR, ID
-from lib.io import create_dataset_from_url
-from models.calculation import Calculation
-from models.dataset import Dataset
-from tests.test_base import TestBase
+from bamboo.controllers.abstract_controller import AbstractController
+from bamboo.controllers.calculations import Calculations
+from bamboo.controllers.datasets import Datasets
+from bamboo.lib.constants import ALL, DATASET_ID, ERROR, ID
+from bamboo.lib.io import create_dataset_from_url
+from bamboo.models.calculation import Calculation
+from bamboo.models.dataset import Dataset
+from bamboo.tests.test_base import TestBase
 
 
 class TestCalculations(TestBase):

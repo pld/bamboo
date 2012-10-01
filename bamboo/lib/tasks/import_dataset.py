@@ -1,10 +1,10 @@
 from celery.task import task
 from pandas import read_csv
 
-from lib.constants import DATASET_ID
-from lib.utils import recognize_dates
-from models.dataset import Dataset
-from models.observation import Observation
+from bamboo.lib.constants import DATASET_ID
+from bamboo.lib.utils import recognize_dates
+from bamboo.models.dataset import Dataset
+from bamboo.models.observation import Observation
 
 
 @task

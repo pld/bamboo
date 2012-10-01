@@ -7,19 +7,20 @@ from time import mktime
 import numpy as np
 from pandas import concat
 
-from controllers.abstract_controller import AbstractController
-from controllers.datasets import Datasets
-from controllers.calculations import Calculations
-from lib.constants import DATETIME, DIMENSION, ERROR,\
+from bamboo.controllers.abstract_controller import AbstractController
+from bamboo.controllers.datasets import Datasets
+from bamboo.controllers.calculations import Calculations
+from bamboo.lib.constants import DATETIME, DIMENSION, ERROR,\
     ID, MONGO_RESERVED_KEYS, MONGO_RESERVED_KEY_PREFIX,\
     MONGO_RESERVED_KEY_STRS, NUM_COLUMNS, NUM_ROWS,\
     PARENT_DATASET_ID, SCHEMA, SIMPLETYPE, SUMMARY
-from lib.decorators import requires_internet
-from lib.utils import GROUP_DELIMITER
-from models.dataset import Dataset
-from models.calculation import Calculation
-from tests.controllers.test_abstract_datasets import TestAbstractDatasets
-from tests.mock import MockUploadedFile
+from bamboo.lib.decorators import requires_internet
+from bamboo.lib.utils import GROUP_DELIMITER
+from bamboo.models.dataset import Dataset
+from bamboo.models.calculation import Calculation
+from bamboo.tests.controllers.test_abstract_datasets import\
+    TestAbstractDatasets
+from bamboo.tests.mock import MockUploadedFile
 
 
 class TestDatasets(TestAbstractDatasets):

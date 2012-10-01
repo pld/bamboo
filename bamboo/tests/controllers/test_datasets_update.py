@@ -1,12 +1,13 @@
 import json
 import pickle
 
-from controllers.calculations import Calculations
-from controllers.datasets import Datasets
-from models.dataset import Dataset
-from lib.constants import ID, PARENT_DATASET_ID
-from lib.utils import recognize_dates
-from tests.controllers.test_abstract_datasets import TestAbstractDatasets
+from bamboo.controllers.calculations import Calculations
+from bamboo.controllers.datasets import Datasets
+from bamboo.models.dataset import Dataset
+from bamboo.lib.constants import ID, PARENT_DATASET_ID
+from bamboo.lib.utils import recognize_dates
+from bamboo.tests.controllers.test_abstract_datasets import\
+    TestAbstractDatasets
 
 
 class TestDatasetsUpdate(TestAbstractDatasets):
