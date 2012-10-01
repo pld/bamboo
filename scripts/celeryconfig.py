@@ -1,0 +1,1 @@
+../bamboo/celeryconfig.py

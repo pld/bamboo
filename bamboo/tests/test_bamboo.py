@@ -1,6 +1,7 @@
 from bamboo.tests.test_base import TestBase
 from bamboo import bambooapp
 
+
 class TestBamboo(TestBase):
 
     def setUp(self):
@@ -8,4 +9,3 @@ class TestBamboo(TestBase):
 
     def test_bambooapp(self):
         pass
-
