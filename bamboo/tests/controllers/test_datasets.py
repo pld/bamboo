@@ -199,6 +199,21 @@ class TestDatasets(TestAbstractDatasets):
         self.assertTrue(isinstance(result, dict))
         self.assertTrue(ERROR in result)
 
+    def test_POST_merge_datasets_0_not_enough(self):
+        result = json.loads(self.controller.POST(
+            merge=True,
+            datasets=json.dumps([])))
+        self.assertTrue(isinstance(result, dict))
+        self.assertTrue(ERROR in result)
+
+    def test_POST_merge_datasets_1_not_enough(self):
+        self._post_file()
+        result = json.loads(self.controller.POST(
+            merge=True,
+            datasets=json.dumps([self.dataset_id])))
+        self.assertTrue(isinstance(result, dict))
+        self.assertTrue(ERROR in result)
+
     def test_POST_merge_datasets(self):
         self._post_file()
         dataset_id1 = self.dataset_id

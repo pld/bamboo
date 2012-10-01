@@ -67,8 +67,8 @@ class Calculation(AbstractModel):
         dataset.clear_summary_stats()
 
         # call async calculate
-        call_async(
-            calculator.calculate_column, calculator, formula, name, group)
+        call_async(calculator.calculate_column,
+                   dataset, calculator, formula, name, group)
 
         self.record = record
         return self.record
@@ -90,4 +90,4 @@ class Calculation(AbstractModel):
         Update *dataset* with new *data*.
         """
         calculator = Calculator(dataset)
-        call_async(calculator.calculate_updates, calculator, data)
+        call_async(calculator.calculate_updates, dataset, calculator, data)

@@ -100,7 +100,7 @@ class Observation(AbstractModel):
         if len(rows):
             self.collection.insert(rows, safe=True)
 
-        call_async(dataset.summarize, dataset)
+        call_async(dataset.summarize, dataset, dataset)
 
     @classmethod
     def update(cls, dframe, dataset):

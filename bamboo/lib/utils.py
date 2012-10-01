@@ -128,8 +128,11 @@ def split_groups(group_str):
     return group_str.split(GROUP_DELIMITER)
 
 
-def call_async(function, *args, **kwargs):
+def call_async(function, dataset, *args, **kwargs):
     if ASYNCHRONOUS_TASKS:
+#        print dataset.dataset_id
+#        function.__getattribute__('delay')(
+#            *args, queue=dataset.dataset_id, **kwargs)
         function.__getattribute__('delay')(*args, **kwargs)
     else:
         function(*args, **kwargs)

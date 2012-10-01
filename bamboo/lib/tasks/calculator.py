@@ -175,8 +175,6 @@ class Calculator(object):
         if not self.labels_to_slugs_and_groups:
             self._create_labels_to_slugs_and_groups()
         data = self.labels_to_slugs_and_groups.get(formula)
-        if not data:
-            return
         name, group, linked_dataset = data
 
         # recalculate linked dataframe from aggregation
