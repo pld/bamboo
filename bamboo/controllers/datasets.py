@@ -147,7 +147,7 @@ class Datasets(AbstractController):
         # save the resulting dframe as a new dataset
         new_dataset = Dataset()
         new_dataset.save()
-        call_async(import_dataset, new_dataset, dframe=new_dframe)
+        call_async(import_dataset, new_dataset, new_dataset, dframe=new_dframe)
 
         # store the child dataset ID with each parent
         for dataset in datasets:
