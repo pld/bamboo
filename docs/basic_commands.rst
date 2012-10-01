@@ -443,7 +443,7 @@ returns::
     }
 
 
-Calculation formulas:
+Calculation formulas
 ---------------------
 
 Calculations are specified by a *name*, which is the label and a *formula*,
@@ -631,3 +631,9 @@ returns::
             "sum_of_amount": 4.0
         }
     ]
+
+Updating your data
+------------------
+
+You can post updates as JSON rows to any dataset by referring to its dataset id
+.

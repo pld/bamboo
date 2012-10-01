@@ -21,8 +21,8 @@ Contents:
    basic_commands
    config
    controllers
-   models
    lib
+   models
 
 Indices and tables
 ==================
