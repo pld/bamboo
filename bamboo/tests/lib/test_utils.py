@@ -9,4 +9,6 @@ class TestUtils(TestBase):
         self.dframe = self.test_data['soil_samples.csv']
 
     def test_recognize_dates(self):
-        print self.dframe
+        with_dates = recognize_dates(self.dframe)
+        for field in with_dates['single_letter']:
+            self.assertTrue(isinstance(field, basestring))
