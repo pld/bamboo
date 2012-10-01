@@ -3,13 +3,13 @@ from datetime import datetime
 from pandas import DataFrame, read_csv
 from pymongo.cursor import Cursor
 
-from lib.constants import MONGO_RESERVED_KEYS
-from lib.exceptions import JSONError
-from lib.mongo import mongo_decode_keys
-from lib.utils import prefix_reserved_key, recognize_dates
-from models.dataset import Dataset
-from models.observation import Observation
-from tests.test_base import TestBase
+from bamboo.lib.constants import MONGO_RESERVED_KEYS
+from bamboo.lib.exceptions import JSONError
+from bamboo.lib.mongo import mongo_decode_keys
+from bamboo.lib.utils import prefix_reserved_key, recognize_dates
+from bamboo.models.dataset import Dataset
+from bamboo.models.observation import Observation
+from bamboo.tests.test_base import TestBase
 
 
 class TestObservation(TestBase):

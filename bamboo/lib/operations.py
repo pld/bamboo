@@ -1,11 +1,11 @@
 # future must be first
 from __future__ import division
 import datetime
-from lib.constants import DATETIME, SIMPLETYPE
 import operator
 
 import numpy as np
 
+from bamboo.lib.constants import DATETIME, SIMPLETYPE
 from utils import parse_date_to_unix_time, parse_str_to_unix_time
 
 

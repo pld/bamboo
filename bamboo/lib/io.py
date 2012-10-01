@@ -3,9 +3,9 @@ import re
 import tempfile
 import urllib2
 
-from lib.constants import ERROR, ID
-from lib.tasks.import_dataset import import_dataset
-from models.dataset import Dataset
+from bamboo.lib.constants import ERROR, ID
+from bamboo.lib.tasks.import_dataset import import_dataset
+from bamboo.models.dataset import Dataset
 
 
 def open_data_file(url, allow_local_file=False):

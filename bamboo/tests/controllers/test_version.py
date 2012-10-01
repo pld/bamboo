@@ -2,8 +2,8 @@ import json
 
 from cherrypy import HTTPRedirect
 
-from controllers.version import Version
-from tests.test_base import TestBase
+from bamboo.controllers.version import Version
+from bamboo.tests.test_base import TestBase
 
 
 class TestRoot(TestBase):

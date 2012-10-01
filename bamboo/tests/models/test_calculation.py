@@ -1,10 +1,10 @@
 from pymongo.cursor import Cursor
 
-from lib.constants import ERROR
-from models.calculation import Calculation
-from models.dataset import Dataset
-from models.observation import Observation
-from tests.test_base import TestBase
+from bamboo.lib.constants import ERROR
+from bamboo.models.calculation import Calculation
+from bamboo.models.dataset import Dataset
+from bamboo.models.observation import Observation
+from bamboo.tests.test_base import TestBase
 
 
 class TestCalculation(TestBase):

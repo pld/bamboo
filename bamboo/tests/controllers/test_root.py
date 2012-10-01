@@ -1,7 +1,7 @@
 from cherrypy import HTTPRedirect
 
-from controllers.root import Root
-from tests.test_base import TestBase
+from bamboo.controllers.root import Root
+from bamboo.tests.test_base import TestBase
 
 
 class TestRoot(TestBase):

@@ -1,9 +1,9 @@
 from datetime import datetime
 import numpy as np
 
-from lib.constants import BAMBOO_RESERVED_KEYS, DATETIME, DIMENSION, MEASURE,\
-    MONGO_RESERVED_KEY_STRS, SIMPLETYPE
-from lib.utils import slugify_columns
+from bamboo.lib.constants import BAMBOO_RESERVED_KEYS, DATETIME, DIMENSION,\
+    MEASURE, MONGO_RESERVED_KEY_STRS, SIMPLETYPE
+from bamboo.lib.utils import slugify_columns
 
 
 class SchemaBuilder(object):

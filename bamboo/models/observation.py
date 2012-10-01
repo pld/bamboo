@@ -3,13 +3,13 @@ import json
 
 from bson import json_util
 
-from config.db import Database
-from lib.constants import DATASET_OBSERVATION_ID, DATETIME, DB_BATCH_SIZE,\
-    NUM_COLUMNS, NUM_ROWS, SCHEMA, SIMPLETYPE
-from lib.exceptions import JSONError
-from lib.mongo import mongo_to_df
-from lib.utils import call_async
-from models.abstract_model import AbstractModel
+from bamboo.config.db import Database
+from bamboo.lib.constants import DATASET_OBSERVATION_ID, DATETIME,\
+    DB_BATCH_SIZE, NUM_COLUMNS, NUM_ROWS, SCHEMA, SIMPLETYPE
+from bamboo.lib.exceptions import JSONError
+from bamboo.lib.mongo import mongo_to_df
+from bamboo.lib.utils import call_async
+from bamboo.models.abstract_model import AbstractModel
 
 
 class Observation(AbstractModel):

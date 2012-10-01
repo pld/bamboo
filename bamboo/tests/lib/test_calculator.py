@@ -1,10 +1,9 @@
-from tests.test_base import TestBase
-
-from lib.parser import Parser
-from lib.tasks.calculator import Calculator
-from lib.utils import recognize_dates
-from models.dataset import Dataset
-from models.observation import Observation
+from bamboo.lib.parser import Parser
+from bamboo.lib.tasks.calculator import Calculator
+from bamboo.lib.utils import recognize_dates
+from bamboo.models.dataset import Dataset
+from bamboo.models.observation import Observation
+from bamboo.tests.test_base import TestBase
 
 
 class TestCalculator(TestBase):

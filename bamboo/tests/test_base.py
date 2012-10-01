@@ -3,8 +3,8 @@ import uuid
 
 from pandas import read_csv
 
-from config.db import Database
-from lib.io import open_data_file
+from bamboo.config.db import Database
+from bamboo.lib.io import open_data_file
 
 
 class TestBase(unittest.TestCase):
@@ -15,6 +15,7 @@ class TestBase(unittest.TestCase):
         'good_eats_large.csv',
         'good_eats_with_calculations.csv',
         'kenya_secondary_schools_2007.csv',
+        'soil_samples.csv',
     ]
 
     test_data = {}

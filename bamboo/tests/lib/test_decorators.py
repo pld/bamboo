@@ -1,6 +1,5 @@
-#import lib.decorators
-from lib import decorators
-from tests.test_base import TestBase
+from bamboo.lib import decorators
+from bamboo.tests.test_base import TestBase
 
 
 class TestDecorators(TestBase):

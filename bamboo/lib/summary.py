@@ -1,7 +1,7 @@
 import numpy as np
 
-from lib.constants import ALL, MONGO_RESERVED_KEYS, SUMMARY
-from lib.utils import series_to_jsondict
+from bamboo.lib.constants import ALL, MONGO_RESERVED_KEYS, SUMMARY
+from bamboo.lib.utils import series_to_jsondict
 
 
 def summarize_series(dtype, data):

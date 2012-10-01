@@ -3,11 +3,11 @@ import pickle
 
 import numpy as np
 
-from lib.constants import SCHEMA
-from lib.utils import GROUP_DELIMITER
-from models.dataset import Dataset
-from models.observation import Observation
-from test_calculator import TestCalculator
+from bamboo.lib.constants import SCHEMA
+from bamboo.lib.utils import GROUP_DELIMITER
+from bamboo.models.dataset import Dataset
+from bamboo.models.observation import Observation
+from bamboo.tests.lib.test_calculator import TestCalculator
 
 
 class TestAggregations(TestCalculator):

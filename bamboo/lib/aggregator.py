@@ -1,8 +1,8 @@
 from pandas import DataFrame, Series
 
-from lib.aggregations import Aggregation, AGGREGATIONS
-from lib.utils import split_groups
-from models.observation import Observation
+from bamboo.lib.aggregations import Aggregation, AGGREGATIONS
+from bamboo.lib.utils import split_groups
+from bamboo.models.observation import Observation
 
 
 class Aggregator(object):
