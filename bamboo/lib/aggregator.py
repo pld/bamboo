@@ -6,15 +6,15 @@ from bamboo.models.observation import Observation
 
 
 class Aggregator(object):
+    """
+    Apply the *aggregation* to group columns in *group_str* and the *column
+    of the *dframe*.
+    Store the resulting *dframe* as a linked dataset for *dataset*.
+    If a linked dataset with the same groups already exists update this
+    dataset.  Otherwise create a new linked dataset.
+    """
 
     def __init__(self, dataset, dframe, column, group_str, _type, name):
-        """
-        Apply the *aggregation* to group columns in *group_str* and the *column
-        of the *dframe*.
-        Store the resulting *dframe* as a linked dataset for *dataset*.
-        If a linked dataset with the same groups already exists update this
-        dataset.  Otherwise create a new linked dataset.
-        """
         self.dataset = dataset
         self.dframe = dframe
         self.column = column

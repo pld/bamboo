@@ -2,6 +2,10 @@ from pandas import DataFrame, Series
 
 
 class Aggregation(object):
+    """
+    Abstract class for any aggregations.
+    """
+
     def group_aggregation(self, dframe, groups, columns):
         column = columns[0]
         groupby = dframe[groups].join(

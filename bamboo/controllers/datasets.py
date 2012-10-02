@@ -43,13 +43,14 @@ class Datasets(AbstractController):
         by *dataset_id*.
 
         - *info*: return the meta-data and schema of the dataset.
-        - *related*: return the dataset_ids of linked datasets for the
-        dataset.
+        - *related*: return the dataset_ids of linked datasets for the dataset.
         - *summary*: return summary statistics for the dataset.
+
           - The *select* argument is required, it can be 'all' or a MongoDB
             JSON query
           - If *group* is passed group the summary.
           - If *query* is passed restrict summary to rows matching query.
+
         - no mode passed: Return the raw data for the dataset.
           - Restrict to *query* and *select* if passed.
 

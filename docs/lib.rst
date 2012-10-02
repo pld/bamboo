@@ -3,7 +3,7 @@ Lib
 
 Aggregator
 ----------
-.. automodule:: bamboo.lib.aggregator
+.. autoclass:: bamboo.lib.aggregator.Aggregator
     :members:
 
 Aggregation
@@ -38,7 +38,7 @@ Formula Parser
 
 Schema Builder
 ---------------------------
-.. automodule:: bamboo.lib.schema_builder
+.. autoclass:: bamboo.lib.schema_builder.SchemaBuilder
     :members:
 
 Summary Statistic Utilities
