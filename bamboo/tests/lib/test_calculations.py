@@ -1,7 +1,7 @@
 import numpy as np
 
 from bamboo.lib.constants import SCHEMA, SIMPLETYPE
-from bamboo.lib.tasks.import_dataset import import_dataset
+from bamboo.lib.io import import_dataset
 from bamboo.models.dataset import Dataset
 from bamboo.models.observation import Observation
 from bamboo.tests.lib.test_calculator import TestCalculator

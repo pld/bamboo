@@ -3,10 +3,9 @@ from collections import defaultdict
 from celery.task import task
 from pandas import concat, DataFrame, Series
 
-from bamboo.lib.aggregator import Aggregator
+from bamboo.core.aggregator import Aggregator
+from bamboo.core.parser import ParseError, Parser
 from bamboo.lib.constants import MONGO_RESERVED_KEYS, PARENT_DATASET_ID
-from bamboo.lib.exceptions import ParseError
-from bamboo.lib.parser import Parser
 from bamboo.lib.utils import call_async, df_to_jsondict, recognize_dates,\
     recognize_dates_from_schema, split_groups
 from bamboo.models.observation import Observation

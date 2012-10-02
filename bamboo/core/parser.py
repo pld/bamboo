@@ -4,12 +4,18 @@ from pyparsing import alphanums, nums, oneOf, opAssoc, operatorPrecedence,\
     CaselessLiteral, Combine, Forward, Keyword, Literal, MatchFirst,\
     OneOrMore, Optional, ParseException, Regex, Word, ZeroOrMore
 
-from bamboo.lib.aggregations import AGGREGATIONS
+from bamboo.core.aggregations import AGGREGATIONS
 from bamboo.lib.constants import SCHEMA
-from bamboo.lib.exceptions import ParseError
-from bamboo.lib.operations import EvalAndOp, EvalCaseOp, EvalComparisonOp,\
+from bamboo.core.operations import EvalAndOp, EvalCaseOp, EvalComparisonOp,\
     EvalConstant, EvalExpOp, EvalDate, EvalInOp, EvalMapOp, EvalMultOp,\
     EvalNotOp, EvalOrOp, EvalPlusOp, EvalSignOp, EvalString
+
+
+class ParseError(Exception):
+    """
+    For errors while parsing formulas.
+    """
+    pass
 
 
 class ParserContext(object):

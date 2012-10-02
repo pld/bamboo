@@ -1,5 +1,4 @@
-from bamboo.lib.exceptions import ParseError
-from bamboo.lib.parser import Parser
+from bamboo.core.parser import ParseError, Parser
 from bamboo.tests.test_base import TestBase
 
 

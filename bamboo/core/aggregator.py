@@ -1,6 +1,6 @@
 from pandas import DataFrame, Series
 
-from bamboo.lib.aggregations import Aggregation, AGGREGATIONS
+from bamboo.core.aggregations import Aggregation, AGGREGATIONS
 from bamboo.lib.utils import split_groups
 from bamboo.models.observation import Observation
 

@@ -1,11 +1,27 @@
+import os
 import re
 import tempfile
 import urllib2
 
-from bamboo.lib.constants import ERROR, ID
-from bamboo.lib.tasks.import_dataset import import_dataset
-from bamboo.lib.utils import call_async
+from celery.task import task
+from pandas import read_csv
+
+from bamboo.models.observation import Observation
+from bamboo.lib.constants import DATASET_ID, ERROR, ID
+from bamboo.lib.utils import call_async, recognize_dates
 from bamboo.models.dataset import Dataset
+
+
+@task
+def import_dataset(dataset, dframe=None, _file=None, delete=False):
+    """
+    For reading a URL and saving the corresponding dataset.
+    """
+    if _file:
+        dframe = recognize_dates(read_csv(_file))
+    if delete:
+        os.unlink(_file)
+    Observation().save(dframe, dataset)
 
 
 def open_data_file(url, allow_local_file=False):

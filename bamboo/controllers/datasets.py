@@ -6,8 +6,7 @@ from bamboo.controllers.abstract_controller import AbstractController
 from bamboo.lib.constants import ALL, ERROR, ID
 from bamboo.lib.exceptions import JSONError, MergeError
 from bamboo.lib.mongo import mongo_to_json
-from bamboo.lib.io import create_dataset_from_url, create_dataset_from_csv
-from bamboo.lib.tasks.import_dataset import import_dataset
+from bamboo.lib.io import create_dataset_from_url, create_dataset_from_csv, import_dataset
 from bamboo.lib.utils import call_async, dump_or_error
 from bamboo.models.calculation import Calculation
 from bamboo.models.dataset import Dataset

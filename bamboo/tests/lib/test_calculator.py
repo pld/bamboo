@@ -1,5 +1,5 @@
-from bamboo.lib.parser import Parser
-from bamboo.lib.tasks.calculator import Calculator
+from bamboo.core.parser import Parser
+from bamboo.core.calculator import Calculator
 from bamboo.lib.utils import recognize_dates
 from bamboo.models.dataset import Dataset
 from bamboo.models.observation import Observation
