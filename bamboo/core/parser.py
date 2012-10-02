@@ -5,10 +5,10 @@ from pyparsing import alphanums, nums, oneOf, opAssoc, operatorPrecedence,\
     OneOrMore, Optional, ParseException, Regex, Word, ZeroOrMore
 
 from bamboo.core.aggregations import AGGREGATIONS
-from bamboo.lib.constants import SCHEMA
 from bamboo.core.operations import EvalAndOp, EvalCaseOp, EvalComparisonOp,\
     EvalConstant, EvalExpOp, EvalDate, EvalInOp, EvalMapOp, EvalMultOp,\
     EvalNotOp, EvalOrOp, EvalPlusOp, EvalSignOp, EvalString
+from bamboo.lib.constants import SCHEMA
 
 
 class ParseError(Exception):

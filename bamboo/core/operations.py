@@ -6,7 +6,7 @@ import operator
 import numpy as np
 
 from bamboo.lib.constants import DATETIME, SIMPLETYPE
-from utils import parse_date_to_unix_time, parse_str_to_unix_time
+from bamboo.lib.utils import parse_date_to_unix_time, parse_str_to_unix_time
 
 
 class EvalTerm(object):
