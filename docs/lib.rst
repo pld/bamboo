@@ -1,16 +1,6 @@
 Lib
 ======
 
-Aggregator
-----------
-.. autoclass:: bamboo.lib.aggregator.Aggregator
-    :members:
-
-Aggregation
------------
-.. automodule:: bamboo.lib.aggregations
-    :members:
-
 Exceptions
 ----------
 .. automodule:: bamboo.lib.exceptions
@@ -24,16 +14,6 @@ Input/Output
 Mongo Utilities
 ---------------
 .. automodule:: bamboo.lib.mongo
-    :members:
-
-Parsing Operations
-------------------
-.. automodule:: bamboo.lib.operations
-    :members:
-
-Formula Parser
---------------
-.. autoclass:: bamboo.lib.parser.Parser
     :members:
 
 Schema Builder

@@ -21,6 +21,7 @@ Contents:
    basic_commands
    config
    controllers
+   core
    lib
    models
 
