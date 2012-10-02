@@ -162,7 +162,7 @@ run the example basic commands
 
   $ ./scripts/commands.sh -l
 
-make requests from your local server
+make requests to your local server
 
 ::
 
