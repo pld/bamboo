@@ -1,4 +1,4 @@
-Lib
+Core
 ======
 
 Aggregator
