@@ -7,7 +7,7 @@ from bamboo.lib.constants import SCHEMA
 from bamboo.lib.utils import GROUP_DELIMITER
 from bamboo.models.dataset import Dataset
 from bamboo.models.observation import Observation
-from bamboo.tests.lib.test_calculator import TestCalculator
+from bamboo.tests.core.test_calculator import TestCalculator
 
 
 class TestAggregations(TestCalculator):

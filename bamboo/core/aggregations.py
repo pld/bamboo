@@ -3,7 +3,7 @@ from pandas import DataFrame, Series
 
 class Aggregation(object):
     """
-    Abstract class for any aggregations.
+    Abstract class for all aggregations.
     """
 
     def group_aggregation(self, dframe, groups, columns):
