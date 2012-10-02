@@ -1,10 +1,10 @@
-import os
 import re
 import tempfile
 import urllib2
 
 from bamboo.lib.constants import ERROR, ID
 from bamboo.lib.tasks.import_dataset import import_dataset
+from bamboo.lib.utils import call_async
 from bamboo.models.dataset import Dataset
 
 
@@ -49,7 +49,7 @@ def create_dataset_from_url(url, allow_local_file=False):
 
     dataset = Dataset()
     dataset.save()
-    import_dataset(dataset, _file=_file)
+    call_async(import_dataset, dataset, dataset, _file=_file)
 
     return {ID: dataset.dataset_id}
 
@@ -58,16 +58,17 @@ def create_dataset_from_csv(csv_file):
     """
     Create a dataset from the uploaded .csv file.
     """
-    dataset = Dataset()
-    dataset.save()
-
     # need to write out to a named tempfile in order
     # to get a handle for pandas *read_csv* function
     tmpfile = tempfile.NamedTemporaryFile(delete=False)
     tmpfile.write(csv_file.file.read())
+
     # pandas needs a closed file for *read_csv*
     tmpfile.close()
-    import_dataset(dataset, _file=tmpfile.name)
-    os.unlink(tmpfile.name)
+
+    dataset = Dataset()
+    dataset.save()
+
+    call_async(import_dataset, dataset, dataset, _file=tmpfile.name, delete=True)
 
     return {ID: dataset.dataset_id}
