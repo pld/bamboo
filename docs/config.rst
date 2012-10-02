@@ -3,5 +3,5 @@ Config
 
 Database
 ----------
-.. automodule:: config.db
+.. automodule:: bamboo.config.db
     :members:

@@ -5,6 +5,8 @@ Note: on the command line some special characters may need to be escaped for
 the commands to function correctly.  E.g. ``&`` as ``\&``, ``?`` as ``\?``,
 ``=`` as ``\=``.
 
+Note: [*SIC*] all spelling errors in the example dataset.
+
 Check the Bamboo version
 ------------------------
 
@@ -532,7 +534,7 @@ returns::
     }
 
 store aggregation formula with multi-group:
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 ``curl -X POST -d "name=sum_of_amount&formula=sum(amount)&group=food_type,rating" http://bamboo.io/calculations/8a3d74711475d8a51c84484fe73f24bd151242ea``
 
@@ -635,5 +637,24 @@ returns::
 Updating your data
 ------------------
 
-You can post updates as JSON rows to any dataset by referring to its dataset id
-.
+You can add row updates to a dataset via JSON data in a PUT request to the dataset id.
+The row should be key-value pairs where the key is the column name. In the
+example that we have been using here, the dataset could be updated with a 
+JSON dictionary like this:
+
+::
+
+    {
+        "rating": "delectible",
+        "amount": 2,
+        "food_type": "streat_sweets"
+    }
+
+N/A values will be added when the dictionary does not supply a value for a given
+column.
+
+``curl -X PUT -H "Accept: application/json" -H "Content-type: application/json" -d '{"rating":"delectible","amount":2,"food_type":"streat_sweets"}' http://bamboo.io/datasets/8a3d74711475d8a51c84484fe73f24bd151242ea``
+
+returns::
+
+    {"id": "8a3d74711475d8a51c84484fe73f24bd151242ea"}

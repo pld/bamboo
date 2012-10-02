@@ -1,32 +1,52 @@
 Lib
 ======
 
+Aggregator
+----------
+.. automodule:: bamboo.lib.aggregator
+    :members:
+
+Aggregation
+-----------
+.. automodule:: bamboo.lib.aggregations
+    :members:
+
 Exceptions
 ----------
-.. automodule:: lib.exceptions
+.. automodule:: bamboo.lib.exceptions
     :members:
 
 Input/Output
 ------------
-.. automodule:: lib.io
+.. automodule:: bamboo.lib.io
     :members:
 
 Mongo Utilities
 ---------------
-.. automodule:: lib.mongo
+.. automodule:: bamboo.lib.mongo
     :members:
 
 Parsing Operations
 ------------------
-.. automodule:: lib.operations
+.. automodule:: bamboo.lib.operations
     :members:
 
 Formula Parser
 --------------
-.. autoclass:: lib.parser.Parser
+.. autoclass:: bamboo.lib.parser.Parser
+    :members:
+
+Schema Builder
+---------------------------
+.. automodule:: bamboo.lib.schema_builder
     :members:
 
 Summary Statistic Utilities
 ---------------------------
-.. automodule:: lib.summary
+.. automodule:: bamboo.lib.summary
+    :members:
+
+Utilities
+---------------------------
+.. automodule:: bamboo.lib.utils
     :members:

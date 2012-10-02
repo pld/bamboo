@@ -1,17 +1,22 @@
 Controllers
 =======================
 
+AbstractController
+------------
+.. autoclass:: bamboo.controllers.abstract_controller.AbstractController
+    :members:
+
 Calculations
 ------------
-.. autoclass:: controllers.calculations.Calculations
+.. autoclass:: bamboo.controllers.calculations.Calculations
     :members:
 
 Datasets
 --------
-.. autoclass:: controllers.datasets.Datasets
+.. autoclass:: bamboo.controllers.datasets.Datasets
     :members:
 
 Root
 ----
-.. autoclass:: controllers.root.Root
+.. autoclass:: bamboo.controllers.root.Root
     :members:

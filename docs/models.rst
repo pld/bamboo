@@ -3,15 +3,15 @@ Models
 
 Calculation
 -----------
-.. autoclass:: models.calculation.Calculation
+.. autoclass:: bamboo.models.calculation.Calculation
     :members:
 
 Dataset
 -------
-.. autoclass:: models.dataset.Dataset
+.. autoclass:: bamboo.models.dataset.Dataset
     :members:
 
 Observation
 -----------
-.. autoclass:: models.observation.Observation
+.. autoclass:: bamboo.models.observation.Observation
     :members:
