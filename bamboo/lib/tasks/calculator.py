@@ -93,7 +93,7 @@ class Calculator(object):
             potential_name = calculation.name
             if potential_name not in self.dframe.columns:
                 if potential_name not in labels_to_slugs:
-                    # it is an aggregation calculation, update after
+                    # it is an aggregate calculation, update after
                     aggregate_calculations.append(potential_name)
                     continue
                 else:
@@ -123,7 +123,7 @@ class Calculator(object):
         self.dframe = Observation.update(updated_dframe, self.dataset)
         self.dataset.clear_summary_stats()
 
-        self._update_linked_datasets(aggregate_calculations)
+        self._update_aggregate_datasets(aggregate_calculations)
 
         # update the merged datasets with new_dframe
         for merged_dataset in self.dataset.merged_datasets:
@@ -167,37 +167,37 @@ class Calculator(object):
         return recognize_dates_from_schema(self.dataset,
                                            DataFrame(filtered_data))
 
-    def _update_linked_datasets(self, aggregate_calculations):
+    def _update_aggregate_datasets(self, aggregate_calculations):
         for formula in aggregate_calculations:
-            self._update_linked_dataset(formula)
+            self._update_aggregate_dataset(formula)
 
-    def _update_linked_dataset(self, formula):
+    def _update_aggregate_dataset(self, formula):
         if not self.labels_to_slugs_and_groups:
             self._create_labels_to_slugs_and_groups()
         data = self.labels_to_slugs_and_groups.get(formula)
-        name, group, linked_dataset = data
+        name, group, agg_dataset = data
 
         # recalculate linked dataframe from aggregation
-        linked_dframe = linked_dataset.observations(as_df=True)
+        agg_dframe = agg_dataset.observations(as_df=True)
         aggregation, new_columns = self._make_columns(formula, name)
-        agg = Aggregator(linked_dataset, linked_dframe, new_columns,
+        agg = Aggregator(agg_dataset, agg_dframe, new_columns,
                          group, aggregation, name)
-        new_dframe = agg.eval_dframe()
+        new_agg_dframe = agg.eval_dframe()
 
         # update linked dataset with new dataframe
-        new_linked_dframe = Observation.update(new_dframe, linked_dataset)
+        new_agg_dframe = Observation.update(new_agg_dframe, agg_dataset)
 
         # add parent id column to new dframe
-        new_linked_dframe = self._add_parent_column(
-            linked_dataset.dataset_id, new_linked_dframe)
+        new_agg_dframe = self._add_parent_column(
+            agg_dataset.dataset_id, new_agg_dframe)
 
         # jsondict from new dframe
-        new_data = df_to_jsondict(new_linked_dframe)
+        new_data = df_to_jsondict(new_agg_dframe)
 
-        for merged_dataset in linked_dataset.merged_datasets:
+        for merged_dataset in agg_dataset.merged_datasets:
             # remove rows in child from this merged dataset
             merged_dataset.remove_parent_observations(
-                linked_dataset.dataset_id)
+                agg_dataset.dataset_id)
 
             # calculate updates on the child
             merged_calculator = Calculator(merged_dataset)
