@@ -69,6 +69,7 @@ def create_dataset_from_csv(csv_file):
     dataset = Dataset()
     dataset.save()
 
-    call_async(import_dataset, dataset, dataset, _file=tmpfile.name, delete=True)
+    call_async(
+        import_dataset, dataset, dataset, _file=tmpfile.name, delete=True)
 
     return {ID: dataset.dataset_id}
