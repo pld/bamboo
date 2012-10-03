@@ -93,7 +93,7 @@ class Calculator(object):
             if potential_name not in self.dframe.columns:
                 if potential_name not in labels_to_slugs:
                     # it is an aggregate calculation, update after
-                    aggregate_calculations.append(potential_name)
+                    aggregate_calculations.append(calculation)
                     continue
                 else:
                     new_column.name = labels_to_slugs[potential_name]
@@ -167,18 +167,18 @@ class Calculator(object):
                                            DataFrame(filtered_data))
 
     def _update_aggregate_datasets(self, aggregate_calculations):
-        for formula in aggregate_calculations:
-            self._update_aggregate_dataset(formula)
+        for calculation in aggregate_calculations:
+            self._update_aggregate_dataset(calculation)
 
-    def _update_aggregate_dataset(self, formula):
+    def _update_aggregate_dataset(self, calculation):
         if not self.labels_to_slugs_and_groups:
             self._create_labels_to_slugs_and_groups()
-        data = self.labels_to_slugs_and_groups.get(formula)
+        data = self.labels_to_slugs_and_groups.get(calculation.name)
         name, group, agg_dataset = data
 
         # recalculate aggregated dataframe from aggregation
         agg_dframe = agg_dataset.observations(as_df=True)
-        aggregation, new_columns = self._make_columns(formula, name)
+        aggregation, new_columns = self._make_columns(calculation.formula, name)
         agg = Aggregator(agg_dataset, agg_dframe, new_columns,
                          group, aggregation, name)
         new_agg_dframe = agg.eval_dframe()
