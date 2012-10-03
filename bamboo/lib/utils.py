@@ -88,28 +88,31 @@ def recognize_dates(dframe):
     """
     for idx, dtype in enumerate(dframe.dtypes):
         if dtype.type == np.object_:
-            try:
-                column = dframe.columns[idx]
-                new_column = Series([
-                    field if is_float_nan(field) else date_parse(field) for
-                    field in dframe[column].tolist()])
-                dframe[column] = new_column
-            except ValueError:
-                # it is not a correctly formatted date
-                pass
-            except OverflowError:
-                # it is a number that is too large to be a date
-                pass
+            dframe = _convert_column_to_date(dframe, dframe.columns[idx])
     return dframe
 
 
 def recognize_dates_from_schema(dataset, dframe):
     # if it is a date column, recognize dates
     for column, column_schema in dataset.data_schema.items():
-        if dframe.get(column) and column_schema[SIMPLETYPE] == DATETIME:
-            dframe[column] = dframe[column].map(date_parse)
+        if column_schema[SIMPLETYPE] == DATETIME:
+            dframe = _convert_column_to_date(dframe, column)
     return dframe
 
+
+def _convert_column_to_date(dframe, column):
+    try:
+        new_column = Series([
+            field if is_float_nan(field) else date_parse(field) for
+            field in dframe[column].tolist()])
+        dframe[column] = new_column
+    except ValueError:
+        # it is not a correctly formatted date
+        pass
+    except OverflowError:
+        # it is a number that is too large to be a date
+        pass
+    return dframe
 
 def parse_str_to_unix_time(value):
     return parse_date_to_unix_time(date_parse(value))

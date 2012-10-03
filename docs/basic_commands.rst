@@ -637,10 +637,10 @@ returns::
 Updating your data
 ------------------
 
-You can add row updates to a dataset via JSON data in a PUT request to the dataset id.
-The row should be key-value pairs where the key is the column name. In the
-example that we have been using here, the dataset could be updated with a 
-JSON dictionary like this:
+You can add single or multiple row updates to a dataset via JSON data in a PUT
+request to the dataset id. The row(s) should be key-value pairs where the key
+is the column name. In the example that we have been using here, the dataset
+could be updated with a JSON dictionary like this:
 
 ::
 
@@ -650,8 +650,9 @@ JSON dictionary like this:
         "food_type": "streat_sweets"
     }
 
-N/A values will be added when the dictionary does not supply a value for a given
-column.
+N/A values will be added when the dictionary does not supply a value for a
+given column.
+
 
 ``curl -X PUT -H "Accept: application/json" -H "Content-type: application/json" -d '{"rating":"delectible","amount":2,"food_type":"streat_sweets"}' http://bamboo.io/datasets/8a3d74711475d8a51c84484fe73f24bd151242ea``
 
