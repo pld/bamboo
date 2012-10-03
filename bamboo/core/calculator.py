@@ -176,14 +176,14 @@ class Calculator(object):
         data = self.labels_to_slugs_and_groups.get(formula)
         name, group, agg_dataset = data
 
-        # recalculate linked dataframe from aggregation
+        # recalculate aggregated dataframe from aggregation
         agg_dframe = agg_dataset.observations(as_df=True)
         aggregation, new_columns = self._make_columns(formula, name)
         agg = Aggregator(agg_dataset, agg_dframe, new_columns,
                          group, aggregation, name)
         new_agg_dframe = agg.eval_dframe()
 
-        # update linked dataset with new dataframe
+        # update aggregated dataset with new dataframe
         new_agg_dframe = Observation.update(new_agg_dframe, agg_dataset)
 
         # add parent id column to new dframe
