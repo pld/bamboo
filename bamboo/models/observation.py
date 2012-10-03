@@ -4,8 +4,9 @@ import json
 from bson import json_util
 
 from bamboo.config.db import Database
+from bamboo.config.settings import DB_BATCH_SIZE
 from bamboo.lib.constants import DATASET_OBSERVATION_ID, DATETIME,\
-    DB_BATCH_SIZE, NUM_COLUMNS, NUM_ROWS, SCHEMA, SIMPLETYPE
+    NUM_COLUMNS, NUM_ROWS, SCHEMA, SIMPLETYPE
 from bamboo.lib.exceptions import JSONError
 from bamboo.lib.mongo import mongo_to_df
 from bamboo.lib.utils import call_async
