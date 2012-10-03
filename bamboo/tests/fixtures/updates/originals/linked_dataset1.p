@@ -50,7 +50,7 @@ I63
 tp21
 bI00
 (lp22
-S'sum_amount_'
+S'sum_of_amount'
 p23
 atp24
 (Ntp25
