@@ -178,7 +178,8 @@ class Calculator(object):
 
         # recalculate aggregated dataframe from aggregation
         agg_dframe = agg_dataset.observations(as_df=True)
-        aggregation, new_columns = self._make_columns(calculation.formula, name)
+        aggregation, new_columns = self._make_columns(
+            calculation.formula, name)
         agg = Aggregator(agg_dataset, agg_dframe, new_columns,
                          group, aggregation, name)
         new_agg_dframe = agg.eval_dframe()

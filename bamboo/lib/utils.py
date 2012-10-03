@@ -94,8 +94,10 @@ def recognize_dates(dframe):
 
 def recognize_dates_from_schema(dataset, dframe):
     # if it is a date column, recognize dates
+    dframe_columns = dframe.columns.tolist()
     for column, column_schema in dataset.data_schema.items():
-        if column_schema[SIMPLETYPE] == DATETIME:
+        if column in dframe_columns and\
+                column_schema[SIMPLETYPE] == DATETIME:
             dframe = _convert_column_to_date(dframe, column)
     return dframe
 
@@ -113,6 +115,7 @@ def _convert_column_to_date(dframe, column):
         # it is a number that is too large to be a date
         pass
     return dframe
+
 
 def parse_str_to_unix_time(value):
     return parse_date_to_unix_time(date_parse(value))
