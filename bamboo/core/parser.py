@@ -45,11 +45,9 @@ class Parser(object):
         self.context = ParserContext(dataset) if dataset else None
         self.bnf = self.BNF()
 
-    def set_aggregation(self, string, location, tokens):
+    def store_aggregation(self, string, location, tokens):
         self.aggregation = tokens[0]
-
-    def store_columns(self, string, location, tokens):
-        self.column_functions = tokens
+        self.column_functions = tokens[1:]
 
     def BNF(self):
         """
@@ -149,8 +147,8 @@ class Parser(object):
 
         # aggregation functions
         aggregations = [
-            CaselessLiteral(aggregation).setParseAction(
-                self.set_aggregation) for aggregation in self.aggregation_names
+            CaselessLiteral(aggregation) for
+            aggregation in self.aggregation_names
         ]
 
         aggregations = reduce(lambda x, y: x | y, aggregations)
@@ -217,10 +215,9 @@ class Parser(object):
         ]) | prop_expr
 
         agg_expr = (
-            aggregations.suppress() + open_paren + (
-                case_expr + ZeroOrMore(
-                    comma + case_expr)
-            ).setParseAction(self.store_columns) + close_paren
+            (aggregations + open_paren + case_expr + ZeroOrMore(
+                comma + case_expr)
+             ).setParseAction(self.store_aggregation) + close_paren
         ) | case_expr
 
         # top level bnf

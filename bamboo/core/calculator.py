@@ -17,7 +17,7 @@ class Calculator(object):
 
     def __init__(self, dataset):
         self.dataset = dataset
-        self.dframe = Observation.find(dataset, as_df=True)
+        self.dframe = dataset.dframe()
         self.parser = Parser(dataset.record)
 
     def validate(self, formula, group_str):
@@ -59,12 +59,46 @@ class Calculator(object):
             agg = Aggregator(self.dataset, self.dframe, new_columns,
                              group_str, aggregation, name)
             agg.save_aggregation()
-            new_dframe = agg.new_dframe
         else:
-            new_dframe = Observation.update(
+            Observation.update(
                 self.dframe.join(new_columns[0]), self.dataset)
 
-        return new_dframe
+        # propagate calculation to any merged child datasets
+        for merged_dataset in self.dataset.merged_datasets:
+            merged_calculator = Calculator(merged_dataset)
+            merged_calculator._propagate_column(self.dataset)
+
+    def _propagate_column(self, parent_dataset):
+        """
+        This is called when there has been a new calculation added to
+        a dataset and that new column needs to be propagated to all
+        child (merged) datasets.
+        """
+        # delete the rows in this dataset from the parent
+        self.dataset.remove_parent_observations(parent_dataset.dataset_id)
+        # get this dataset without the out-of-date parent rows
+        dframe = self.dataset.dframe()
+        dframe = self._add_parent_ids(dframe)
+
+        # create new dframe from the upated parent
+        parent_dframe = parent_dataset.dframe()
+
+        # add parent ids to parent dframe
+        parent_dframe = self._add_parent_column(
+            parent_dataset.dataset_id,
+            parent_dframe)
+
+        # merge this new dframe with the existing dframe
+        updated_dframe = concat([dframe, parent_dframe])
+
+        # save new dframe (updates schema)
+        Observation.update(updated_dframe, self.dataset)
+        self.dataset.clear_summary_stats()
+
+        # recur
+        for merged_dataset in self.dataset.merged_datasets:
+            merged_calculator = Calculator(merged_dataset)
+            merged_calculator._propagate_column(self.dataset)
 
     @task
     def calculate_updates(self, new_data):
@@ -108,12 +142,7 @@ class Calculator(object):
             new_dframe = self._add_parent_column(
                 parent_dataset_id, new_dframe)
 
-        existing_observations = self.dataset.observations()
-        existing_dframe = self.dframe
-        old_dframe = DataFrame(existing_observations)
-        if PARENT_DATASET_ID in old_dframe.columns.tolist():
-            parent_column = old_dframe[PARENT_DATASET_ID]
-            existing_dframe = self.dframe.join(parent_column)
+        existing_dframe = self._add_parent_ids(self.dframe)
 
         # merge the two
         updated_dframe = concat([existing_dframe, new_dframe])
@@ -129,6 +158,13 @@ class Calculator(object):
             merged_calculator = Calculator(merged_dataset)
             call_async(merged_calculator.calculate_updates,
                        merged_dataset, merged_calculator, new_data)
+
+    def _add_parent_ids(self, existing_dframe):
+        old_dframe = self.dataset.dframe(with_reserved_keys=True)
+        if PARENT_DATASET_ID in old_dframe.columns.tolist():
+            parent_column = old_dframe[PARENT_DATASET_ID]
+            existing_dframe = existing_dframe.join(parent_column)
+        return existing_dframe
 
     def _make_columns(self, formula, name):
         # parse formula into function and variables
@@ -177,7 +213,7 @@ class Calculator(object):
         name, group, agg_dataset = data
 
         # recalculate aggregated dataframe from aggregation
-        agg_dframe = agg_dataset.observations(as_df=True)
+        agg_dframe = agg_dataset.dframe()
         aggregation, new_columns = self._make_columns(
             calculation.formula, name)
         agg = Aggregator(agg_dataset, agg_dframe, new_columns,

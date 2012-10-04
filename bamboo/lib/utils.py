@@ -26,6 +26,10 @@ def is_float_nan(num):
     return isinstance(num, float) and isnan(num)
 
 
+def is_potential_date(value):
+    return not (is_float_nan(value) or isinstance(value, bool))
+
+
 def get_json_value(value):
     if is_float_nan(value):
         value = JSON_NULL
@@ -105,7 +109,7 @@ def recognize_dates_from_schema(dataset, dframe):
 def _convert_column_to_date(dframe, column):
     try:
         new_column = Series([
-            field if is_float_nan(field) else date_parse(field) for
+            date_parse(field) if is_potential_date(field) else field for
             field in dframe[column].tolist()])
         dframe[column] = new_column
     except ValueError:

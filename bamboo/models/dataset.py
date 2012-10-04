@@ -4,12 +4,13 @@ from time import gmtime, strftime
 
 from celery.contrib.methods import task
 import numpy as np
-from pandas import concat, Series
+from pandas import concat, DataFrame, Series
 
 from bamboo.lib.constants import ALL, BAMBOO_RESERVED_KEY_PREFIX, DATASET_ID,\
     DATASET_OBSERVATION_ID, DIMENSION, ERROR, ID, NUM_COLUMNS, NUM_ROWS,\
     PARENT_DATASET_ID, SCHEMA, SIMPLETYPE
 from bamboo.lib.exceptions import MergeError
+from bamboo.lib.mongo import mongo_to_df
 from bamboo.lib.schema_builder import SchemaBuilder
 from bamboo.lib.summary import summarize_df, summarize_with_groups
 from bamboo.lib.utils import reserve_encoded, split_groups
@@ -69,6 +70,11 @@ class Dataset(AbstractModel):
     @property
     def merged_datasets(self):
         return [self.find_one(_id) for _id in self.merged_dataset_ids]
+
+    def dframe(self, with_reserved_keys=False):
+        observations = self.observations()
+        return DataFrame(observations) if with_reserved_keys else\
+            mongo_to_df(observations)
 
     def add_merged_dataset(self, new_dataset):
         self.update({
