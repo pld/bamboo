@@ -1,4 +1,4 @@
-from pandas import DataFrame, Series
+from pandas import Series
 
 from bamboo.core.aggregations import Aggregation, AGGREGATIONS
 from bamboo.lib.utils import split_groups

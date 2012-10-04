@@ -1,6 +1,5 @@
 import re
 
-from pandas import DataFrame
 from pymongo.cursor import Cursor
 
 from bamboo.tests.test_base import TestBase
