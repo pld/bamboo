@@ -39,8 +39,9 @@ class TestDatasetsUpdate(TestAbstractDatasets):
 
         # create linked datasets
         self.calculations = Calculations()
+        self.name1 = 'sum of amount'
         self.formula1 = 'sum(amount)'
-        self.calculations.POST(self.dataset2_id, self.formula1, self.formula1)
+        self.calculations.POST(self.dataset2_id, self.formula1, self.name1)
         result = json.loads(
             self.controller.GET(self.dataset2_id, Datasets.MODE_RELATED))
         self.linked_dataset1_id = result['']
@@ -95,13 +96,13 @@ class TestDatasetsUpdate(TestAbstractDatasets):
             'tests/fixtures/updates/update1/merged_dataset2.p')
 
     def test_datasets_update1(self):
-        self._post_row_updates(self.dataset1_id)
+        self._put_row_updates(self.dataset1_id)
         self._test_update1()
 
     def test_datasets_update1_and_update2(self):
-        self._post_row_updates(self.dataset1_id)
+        self._put_row_updates(self.dataset1_id)
         self._test_update1()
-        self._post_row_updates(self.dataset2_id)
+        self._put_row_updates(self.dataset2_id)
         self._verify_dataset(
             self.merged_dataset1_id,
             'tests/fixtures/updates/update2/merged_dataset1.p')

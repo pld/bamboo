@@ -107,15 +107,15 @@ class TestDatasets(TestAbstractDatasets):
         # inspect linked dataset
         return json.loads(self.controller.GET(linked_dataset_id))
 
-    def test_POST_dataset_id_update_bad_dataset_id(self):
+    def test_PUT_dataset_id_update_bad_dataset_id(self):
         result = json.loads(self.controller.PUT(dataset_id=111))
         assert(ERROR in result)
 
-    def test_POST_dataset_id_update(self):
+    def test_PUT_dataset_id_update(self):
         self._post_file(self._file_name_with_slashes)
         self._post_calculations(self.default_formulae)
         num_rows = len(json.loads(self.controller.GET(self.dataset_id)))
-        self._post_row_updates()
+        self._put_row_updates()
         results = json.loads(self.controller.GET(self.dataset_id))
         num_rows_after_update = len(results)
         self.assertEqual(num_rows_after_update, num_rows + 1)
@@ -129,12 +129,22 @@ class TestDatasets(TestAbstractDatasets):
             self.assertEqual(value, self._update_values[key],
                              'error in column: %s' % key)
 
-    def test_POST_dataset_id_update_with_aggregation(self):
+    def test_PUT_dataset_id_update_multiple(self):
+        self._post_file(self._file_name_with_slashes)
+        num_rows = len(json.loads(self.controller.GET(self.dataset_id)))
+        num_update_rows = 2
+        self._put_row_updates(
+            file_path='tests/fixtures/good_eats_update_multiple.json')
+        results = json.loads(self.controller.GET(self.dataset_id))
+        num_rows_after_update = len(results)
+        self.assertEqual(num_rows_after_update, num_rows + num_update_rows)
+
+    def test_PUT_dataset_id_update_with_aggregation(self):
         self._post_file()
         self._post_calculations(
             formulae=self.default_formulae + ['sum(amount)'])
         num_rows = len(json.loads(self.controller.GET(self.dataset_id)))
-        self._post_row_updates()
+        self._put_row_updates()
         results = json.loads(self.controller.GET(self.dataset_id))
         num_rows_after_update = len(results)
         self.assertEqual(num_rows_after_update, num_rows + 1)
@@ -308,7 +318,7 @@ class TestDatasets(TestAbstractDatasets):
 
     def test_GET_info_after_row_update(self):
         self._post_file()
-        self._post_row_updates()
+        self._put_row_updates()
         results = json.loads(self.controller.GET(self.dataset_id,
                              mode=Datasets.MODE_INFO))
         self.assertEqual(results[NUM_ROWS], self.NUM_ROWS + 1)
