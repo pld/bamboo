@@ -73,7 +73,8 @@ class Dataset(AbstractModel):
 
     def dframe(self, with_reserved_keys=False):
         observations = self.observations()
-        return DataFrame(observations) if with_reserved_keys else mongo_to_df(observations)
+        return DataFrame(observations) if with_reserved_keys else\
+            mongo_to_df(observations)
 
     def add_merged_dataset(self, new_dataset):
         self.update({

@@ -147,7 +147,8 @@ class Parser(object):
 
         # aggregation functions
         aggregations = [
-            CaselessLiteral(aggregation) for aggregation in self.aggregation_names
+            CaselessLiteral(aggregation) for
+            aggregation in self.aggregation_names
         ]
 
         aggregations = reduce(lambda x, y: x | y, aggregations)
@@ -214,10 +215,9 @@ class Parser(object):
         ]) | prop_expr
 
         agg_expr = (
-            (aggregations + open_paren +
-                case_expr + ZeroOrMore(
-                    comma + case_expr)
-            ).setParseAction(self.store_aggregation) + close_paren
+            (aggregations + open_paren + case_expr + ZeroOrMore(
+                comma + case_expr)
+             ).setParseAction(self.store_aggregation) + close_paren
         ) | case_expr
 
         # top level bnf

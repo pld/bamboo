@@ -84,23 +84,6 @@ class TestDatasetsUpdateWithCalcs(TestAbstractDatasets):
             self.merged_dataset2_id,
             'tests/fixtures/updates_with_calcs/originals/merged_dataset2.p')
 
-    def _test_update1(self):
-        for dataset_id in [self.merged_dataset1_id, self.merged_dataset2_id]:
-            merged_dataset = Dataset.find_one(dataset_id)
-            merged_rows = merged_dataset.observations()
-            for row in merged_rows:
-                self.assertTrue(PARENT_DATASET_ID in row.keys())
-
-        self._verify_dataset(
-            self.dataset1_id,
-            'tests/fixtures/updates_with_calcs/update1/dataset1.p')
-        self._verify_dataset(
-            self.merged_dataset1_id,
-            'tests/fixtures/updates_with_calcs/update1/merged_dataset1.p')
-        self._verify_dataset(
-            self.merged_dataset2_id,
-            'tests/fixtures/updates_with_calcs/update1/merged_dataset2.p')
-
     def _add_calculations(self):
         self.calculations.POST(self.dataset2_id,
                                'amount_plus_gps_alt > gps_precision',
@@ -129,23 +112,3 @@ class TestDatasetsUpdateWithCalcs(TestAbstractDatasets):
 
     def test_datasets_add_calculations(self):
         self._add_calculations()
-
-    def test_datasets_update1(self):
-        self._add_calculations()
-        self._put_row_updates(self.dataset1_id)
-        self._test_update1()
-
-    def test_datasets_update1_and_update2(self):
-        self._add_calculations()
-        self._put_row_updates(self.dataset1_id)
-        self._test_update1()
-        self._put_row_updates(self.dataset2_id)
-        self._verify_dataset(
-            self.merged_dataset1_id,
-            'tests/fixtures/updates_with_calcs/update2/merged_dataset1.p')
-        self._verify_dataset(
-            self.linked_dataset1_id,
-            'tests/fixtures/updates_with_calcs/update2/linked_dataset1.p')
-        self._verify_dataset(
-            self.merged_dataset2_id,
-            'tests/fixtures/updates_with_calcs/update2/merged_dataset2.p')
