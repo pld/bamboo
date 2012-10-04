@@ -10,8 +10,8 @@ from pandas import concat
 from bamboo.controllers.abstract_controller import AbstractController
 from bamboo.controllers.datasets import Datasets
 from bamboo.controllers.calculations import Calculations
-from bamboo.lib.constants import DATETIME, DIMENSION, ERROR,\
-    ID, MONGO_RESERVED_KEYS, MONGO_RESERVED_KEY_PREFIX,\
+from bamboo.lib.constants import BAMBOO_RESERVED_KEYS, DATETIME, DIMENSION,\
+    ERROR, ID, MONGO_RESERVED_KEYS, MONGO_RESERVED_KEY_PREFIX,\
     MONGO_RESERVED_KEY_STRS, NUM_COLUMNS, NUM_ROWS,\
     PARENT_DATASET_ID, SCHEMA, SIMPLETYPE, SUMMARY
 from bamboo.lib.decorators import requires_internet
@@ -248,6 +248,21 @@ class TestDatasets(TestAbstractDatasets):
                          list(expected_dframe.columns))
 
         self._check_dframes_are_equal(merged_dframe, expected_dframe)
+
+    def test_POST_merge_datasets_no_reserved_keys(self):
+        self._post_file()
+        dataset_id1 = self.dataset_id
+        self._post_file()
+        dataset_id2 = self.dataset_id
+        result = json.loads(self.controller.POST(
+            merge=True,
+            datasets=json.dumps([dataset_id1, dataset_id2])))
+        self.assertTrue(isinstance(result, dict))
+        self.assertTrue(ID in result)
+        response = json.loads(self.controller.GET(result[ID]))
+        row_keys = sum([row.keys() for row in response], [])
+        for reserved_key in BAMBOO_RESERVED_KEYS + MONGO_RESERVED_KEY_STRS:
+            self.assertFalse(reserved_key in row_keys)
 
     def test_GET(self):
         self._post_file()

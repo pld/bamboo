@@ -1,7 +1,8 @@
 from bamboo.config.db import Database
 from bamboo.lib.constants import DATASET_ID
 from bamboo.lib.decorators import classproperty
-from bamboo.lib.mongo import remove_mongo_reserved_keys
+from bamboo.lib.mongo import remove_bamboo_reserved_keys,\
+    remove_mongo_reserved_keys
 
 
 class AbstractModel(object):
@@ -51,6 +52,5 @@ class AbstractModel(object):
         """
         Remove reserved keys from records.
         """
-        _dict = remove_mongo_reserved_keys(self.record)
-        _dict.pop(DATASET_ID, None)
-        return _dict
+        _dict = remove_bamboo_reserved_keys(self.record)
+        return remove_mongo_reserved_keys(_dict)

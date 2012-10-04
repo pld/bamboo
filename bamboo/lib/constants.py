@@ -4,12 +4,11 @@ This stores constants used in multiple files.
 
 # reserved bamboo keys
 BAMBOO_RESERVED_KEY_PREFIX = 'BAMBOO_RESERVED_KEY_'
-# TODO remove bamboo reserved key prefix from dataset_id,
-# when we can migrate live db
 DATASET_ID = BAMBOO_RESERVED_KEY_PREFIX + 'dataset_id'
 DATASET_OBSERVATION_ID = BAMBOO_RESERVED_KEY_PREFIX + 'dataset_observation_id'
 PARENT_DATASET_ID = BAMBOO_RESERVED_KEY_PREFIX + 'parent_dataset_id'
 BAMBOO_RESERVED_KEYS = [
+    DATASET_ID,
     DATASET_OBSERVATION_ID,
     PARENT_DATASET_ID,
 ]
