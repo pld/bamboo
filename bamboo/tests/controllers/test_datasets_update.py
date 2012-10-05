@@ -112,3 +112,12 @@ class TestDatasetsUpdate(TestAbstractDatasets):
         self._verify_dataset(
             self.merged_dataset2_id,
             'tests/fixtures/updates/update2/merged_dataset2.p')
+
+    def test_datasets_update3(self):
+        self._put_row_updates(self.merged_dataset1_id)
+        self._verify_dataset(
+            self.merged_dataset1_id,
+            'tests/fixtures/updates/update3/merged_dataset1.p')
+        self._verify_dataset(
+            self.merged_dataset2_id,
+            'tests/fixtures/updates/update3/merged_dataset2.p')
