@@ -31,7 +31,7 @@ class Calculation(AbstractModel):
 
     @task
     def delete(self, dataset):
-        dframe = dataset.dframe(with_reserved_keys=True)
+        dframe = dataset.dframe()
         slug = dataset.build_labels_to_slugs()[self.name]
         del dframe[slug]
         dataset.replace_observations(dframe)
