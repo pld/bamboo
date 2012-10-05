@@ -1,14 +1,13 @@
 from functools import partial
 
 from pyparsing import alphanums, nums, oneOf, opAssoc, operatorPrecedence,\
-    CaselessLiteral, Combine, Forward, Keyword, Literal, MatchFirst,\
-    OneOrMore, Optional, ParseException, Regex, Word, ZeroOrMore
+    CaselessLiteral, Combine, Keyword, Literal, MatchFirst, Optional,\
+    ParseException, Regex, Word, ZeroOrMore
 
 from bamboo.core.aggregations import AGGREGATIONS
 from bamboo.core.operations import EvalAndOp, EvalCaseOp, EvalComparisonOp,\
     EvalConstant, EvalExpOp, EvalDate, EvalInOp, EvalMapOp, EvalMultOp,\
     EvalNotOp, EvalOrOp, EvalPlusOp, EvalSignOp, EvalString
-from bamboo.lib.constants import SCHEMA
 
 
 class ParseError(Exception):
@@ -24,7 +23,7 @@ class ParserContext(object):
     """
 
     def __init__(self, dataset):
-        self.schema = dataset.get(SCHEMA)
+        self.schema = dataset.data_schema
 
 
 class Parser(object):
