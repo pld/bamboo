@@ -5,8 +5,9 @@ from pandas import concat, DataFrame, Series
 
 from bamboo.core.aggregator import Aggregator
 from bamboo.core.parser import ParseError, Parser
-from bamboo.lib.constants import MONGO_RESERVED_KEYS, PARENT_DATASET_ID
+from bamboo.lib.constants import PARENT_DATASET_ID
 from bamboo.lib.datetools import recognize_dates, recognize_dates_from_schema
+from bamboo.lib.mongo import MONGO_RESERVED_KEYS
 from bamboo.lib.utils import call_async, df_to_jsondict, split_groups
 
 

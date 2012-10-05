@@ -13,12 +13,6 @@ BAMBOO_RESERVED_KEYS = [
     PARENT_DATASET_ID,
 ]
 
-# special MongoDB keys
-MONGO_RESERVED_KEYS = ['_id']
-MONGO_RESERVED_KEY_PREFIX = 'MONGO_RESERVED_KEY'
-MONGO_RESERVED_KEY_STRS = [MONGO_RESERVED_KEY_PREFIX + key
-                           for key in MONGO_RESERVED_KEYS]
-
 # internal caching keys
 ALL = '_all'
 

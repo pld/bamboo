@@ -1,6 +1,7 @@
 import numpy as np
 
-from bamboo.lib.constants import ALL, MONGO_RESERVED_KEYS, SUMMARY
+from bamboo.lib.constants import ALL, SUMMARY
+from bamboo.lib.mongo import MONGO_RESERVED_KEYS
 from bamboo.lib.utils import series_to_jsondict
 
 

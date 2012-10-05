@@ -4,9 +4,8 @@ import re
 
 import numpy as np
 
-from bamboo.lib.constants import ERROR, MONGO_RESERVED_KEYS,\
-    MONGO_RESERVED_KEY_PREFIX
 from bamboo.config.settings import ASYNCHRONOUS_TASKS
+from bamboo.lib.constants import ERROR
 
 """
 Constants for utils
@@ -50,13 +49,6 @@ def dump_or_error(data, error_message):
     return json.dumps(data)
 
 
-def prefix_reserved_key(key, prefix=MONGO_RESERVED_KEY_PREFIX):
-    """
-    Prefix reserved key
-    """
-    return '%s%s' % (prefix, key)
-
-
 def slugify_columns(column_names):
     """
     Convert non-alphanumeric characters in column names into underscores and
@@ -76,11 +68,6 @@ def slugify_columns(column_names):
             new_col_name += '_'
         encoded_names.append(new_col_name)
     return encoded_names
-
-
-def reserve_encoded(string):
-    return prefix_reserved_key(string) if string in MONGO_RESERVED_KEYS else\
-        string
 
 
 def split_groups(group_str):

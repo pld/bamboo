@@ -5,9 +5,15 @@ import re
 from bson import json_util
 from pandas import DataFrame
 
-from bamboo.lib.constants import BAMBOO_RESERVED_KEYS, MONGO_RESERVED_KEYS
-from bamboo.lib.utils import df_to_jsondict, get_json_value,\
-    prefix_reserved_key
+from bamboo.lib.constants import BAMBOO_RESERVED_KEYS
+from bamboo.lib.utils import df_to_jsondict, get_json_value
+
+
+# MongoDB keys
+MONGO_RESERVED_KEYS = ['_id']
+MONGO_RESERVED_KEY_PREFIX = 'MONGO_RESERVED_KEY'
+MONGO_RESERVED_KEY_STRS = [MONGO_RESERVED_KEY_PREFIX + key
+                           for key in MONGO_RESERVED_KEYS]
 
 
 def mongo_to_df(rows):
@@ -53,10 +59,22 @@ def remove_mongo_reserved_keys(_dict):
     with unprefixed, if not found remove reserved key from dictionary.
     """
     for key in MONGO_RESERVED_KEYS:
-        prefixed_key = prefix_reserved_key(key)
+        prefixed_key = mongo_prefix_reserved_key(key)
         if _dict.get(prefixed_key):
             _dict[key] = _dict.pop(prefixed_key)
         else:
             # remove mongo reserved keys
             del _dict[key]
     return _dict
+
+
+def mongo_prefix_reserved_key(key, prefix=MONGO_RESERVED_KEY_PREFIX):
+    """
+    Prefix reserved key
+    """
+    return '%s%s' % (prefix, key)
+
+
+def reserve_encoded(string):
+    return mongo_prefix_reserved_key(string) if\
+        string in MONGO_RESERVED_KEYS else string

@@ -5,8 +5,8 @@ import operator
 
 import numpy as np
 
-from bamboo.lib.datetools import col_is_date_simpletype, parse_date_to_unix_time,\
-    parse_str_to_unix_time
+from bamboo.lib.datetools import col_is_date_simpletype,\
+    parse_date_to_unix_time, parse_str_to_unix_time
 
 
 class EvalTerm(object):

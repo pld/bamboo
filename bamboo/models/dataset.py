@@ -10,10 +10,10 @@ from bamboo.core.calculator import Calculator
 from bamboo.lib.constants import ALL, BAMBOO_RESERVED_KEY_PREFIX, DATASET_ID,\
     DATASET_OBSERVATION_ID, DIMENSION, ERROR, ID, NUM_COLUMNS, NUM_ROWS,\
     PARENT_DATASET_ID, SCHEMA, SIMPLETYPE
-from bamboo.lib.mongo import mongo_to_df
+from bamboo.lib.mongo import mongo_to_df, reserve_encoded
 from bamboo.lib.schema_builder import SchemaBuilder
 from bamboo.lib.summary import summarize_df, summarize_with_groups
-from bamboo.lib.utils import call_async, reserve_encoded, split_groups
+from bamboo.lib.utils import call_async, split_groups
 from bamboo.models.abstract_model import AbstractModel
 from bamboo.models.calculation import Calculation
 from bamboo.models.observation import Observation

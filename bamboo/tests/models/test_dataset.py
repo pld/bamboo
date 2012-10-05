@@ -7,8 +7,8 @@ from pymongo.cursor import Cursor
 from bamboo.tests.test_base import TestBase
 from bamboo.models.dataset import Dataset
 from bamboo.models.observation import Observation
-from bamboo.lib.constants import MONGO_RESERVED_KEY_STRS, SCHEMA, SIMPLETYPE
-from bamboo.lib.mongo import mongo_decode_keys
+from bamboo.lib.constants import SCHEMA, SIMPLETYPE
+from bamboo.lib.mongo import mongo_decode_keys, MONGO_RESERVED_KEY_STRS
 from bamboo.lib.datetools import recognize_dates
 
 

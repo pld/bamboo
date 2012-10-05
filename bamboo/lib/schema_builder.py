@@ -2,7 +2,8 @@ from datetime import datetime
 import numpy as np
 
 from bamboo.lib.constants import BAMBOO_RESERVED_KEYS, DATETIME, DIMENSION,\
-    MEASURE, MONGO_RESERVED_KEY_STRS, SIMPLETYPE
+    MEASURE, SIMPLETYPE
+from bamboo.lib.mongo import MONGO_RESERVED_KEY_STRS
 from bamboo.lib.utils import slugify_columns
 
 
