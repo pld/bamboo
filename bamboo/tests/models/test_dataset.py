@@ -9,7 +9,7 @@ from bamboo.models.dataset import Dataset
 from bamboo.models.observation import Observation
 from bamboo.lib.constants import MONGO_RESERVED_KEY_STRS, SCHEMA, SIMPLETYPE
 from bamboo.lib.mongo import mongo_decode_keys
-from bamboo.lib.utils import recognize_dates
+from bamboo.lib.datetools import recognize_dates
 
 
 class TestDataset(TestBase):

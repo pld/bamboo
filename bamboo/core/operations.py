@@ -5,8 +5,8 @@ import operator
 
 import numpy as np
 
-from bamboo.lib.constants import DATETIME, SIMPLETYPE
-from bamboo.lib.utils import parse_date_to_unix_time, parse_str_to_unix_time
+from bamboo.lib.datetools import col_is_date_simpletype, parse_date_to_unix_time,\
+    parse_str_to_unix_time
 
 
 class EvalTerm(object):
@@ -43,7 +43,7 @@ class EvalConstant(EvalTerm):
             # test is date and parse as date
             field = row[self.value]
             return parse_date_to_unix_time(field) if context and\
-                context.schema[self.value][SIMPLETYPE] == DATETIME else field
+                col_is_date_simpletype(context.schema[self.value]) else field
 
 
 class EvalString(EvalTerm):

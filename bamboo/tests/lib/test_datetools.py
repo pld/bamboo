@@ -1,8 +1,8 @@
-from bamboo.lib.utils import recognize_dates
+from bamboo.lib.datetools import recognize_dates
 from bamboo.tests.test_base import TestBase
 
 
-class TestUtils(TestBase):
+class TestDatetools(TestBase):
 
     def setUp(self):
         TestBase.setUp(self)

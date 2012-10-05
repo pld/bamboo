@@ -5,7 +5,7 @@ from bamboo.controllers.calculations import Calculations
 from bamboo.controllers.datasets import Datasets
 from bamboo.models.dataset import Dataset
 from bamboo.lib.constants import ID, PARENT_DATASET_ID
-from bamboo.lib.utils import recognize_dates
+from bamboo.lib.datetools import recognize_dates
 from bamboo.tests.controllers.test_abstract_datasets import\
     TestAbstractDatasets
 

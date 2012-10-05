@@ -8,7 +8,8 @@ from pandas import read_csv
 
 from bamboo.models.observation import Observation
 from bamboo.lib.constants import DATASET_ID, ERROR, ID
-from bamboo.lib.utils import call_async, recognize_dates
+from bamboo.lib.datetools import recognize_dates
+from bamboo.lib.utils import call_async
 from bamboo.models.dataset import Dataset
 
 
