@@ -52,7 +52,7 @@ class Dataset(AbstractModel):
         return self.record.get(self.STATS, {})
 
     @property
-    def data_schema(self):
+    def schema(self):
         return self.record.get(SCHEMA)
 
     @property
@@ -140,7 +140,7 @@ class Dataset(AbstractModel):
 
         # do not allow group by numeric types
         for group in groups:
-            group_type = self.data_schema.get(group)
+            group_type = self.schema.get(group)
             _type = dframe.dtypes.get(group)
             if group != ALL and (group_type is None or
                                  group_type[self.OLAP_TYPE] != DIMENSION):
@@ -184,12 +184,12 @@ class Dataset(AbstractModel):
         schema = schema_builder.schema_from_data_and_dtypes(dframe)
         self.update({SCHEMA: schema})
 
-    def schema(self):
+    def info(self):
         return {
             ID: self.dataset_id,
             self.LABEL: '',
             self.DESCRIPTION: '',
-            SCHEMA: self.data_schema,
+            SCHEMA: self.schema,
             self.LICENSE: '',
             self.ATTRIBUTION: '',
             self.CREATED_AT: self.record.get(self.CREATED_AT),
@@ -204,7 +204,7 @@ class Dataset(AbstractModel):
         """
         return dict([
             (column_attrs[self.LABEL], reserve_encoded(column_name)) for
-            (column_name, column_attrs) in self.data_schema.items()])
+            (column_name, column_attrs) in self.schema.items()])
 
     def observations(self, query=None, select=None, as_df=False):
         return Observation.find(self, query, select, as_df)

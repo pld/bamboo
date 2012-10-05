@@ -65,7 +65,7 @@ class Datasets(AbstractController):
         try:
             if dataset.record:
                 if mode == self.MODE_INFO:
-                    result = dataset.schema()
+                    result = dataset.info()
                 elif mode == self.MODE_RELATED:
                     result = dataset.linked_datasets_dict
                 elif mode == self.MODE_SUMMARY:
