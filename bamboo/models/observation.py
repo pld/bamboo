@@ -41,7 +41,7 @@ class Observation(AbstractModel):
                 # interpret date column queries as JSON
                 datetime_columns = [
                     column for (column, schema) in
-                    dataset.data_schema.items() if
+                    dataset.schema.items() if
                     schema[SIMPLETYPE] == DATETIME and column in query.keys()]
                 for date_column in datetime_columns:
                     query[date_column] = dict([(

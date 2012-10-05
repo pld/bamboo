@@ -106,8 +106,8 @@ class TestAggregations(TestCalculator):
 
         # test that the schema is up to date
         self.assertTrue(SCHEMA in linked_dataset.record.keys())
-        self.assertTrue(isinstance(linked_dataset.data_schema, dict))
-        schema = linked_dataset.data_schema
+        self.assertTrue(isinstance(linked_dataset.schema, dict))
+        schema = linked_dataset.schema
 
         # test slugified column names
         column_names = [name]

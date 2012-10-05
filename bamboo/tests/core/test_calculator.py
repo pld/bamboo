@@ -35,7 +35,7 @@ class TestCalculator(TestBase):
 
         column_labels_to_slugs = dict([
             (column_attrs[Dataset.LABEL], (column_name)) for
-            (column_name, column_attrs) in self.dataset.data_schema.items()])
+            (column_name, column_attrs) in self.dataset.schema.items()])
         self.label_list, self.slugified_key_list = [
             list(ary) for ary in zip(*column_labels_to_slugs.items())
         ]

@@ -99,7 +99,7 @@ def recognize_dates(dframe):
 def recognize_dates_from_schema(dataset, dframe):
     # if it is a date column, recognize dates
     dframe_columns = dframe.columns.tolist()
-    for column, column_schema in dataset.data_schema.items():
+    for column, column_schema in dataset.schema.items():
         if column in dframe_columns and\
                 column_schema[SIMPLETYPE] == DATETIME:
             dframe = _convert_column_to_date(dframe, column)

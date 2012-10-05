@@ -48,8 +48,8 @@ class SchemaBuilder(object):
         for name in dtypes.keys():
             if name not in reserved_keys:
                 column_names.append(name)
-                if self.dataset.data_schema:
-                    schema_for_name = self.dataset.data_schema.get(name)
+                if self.dataset.schema:
+                    schema_for_name = self.dataset.schema.get(name)
                     if schema_for_name:
                         names_to_labels[name] = schema_for_name[
                             self.dataset.LABEL]

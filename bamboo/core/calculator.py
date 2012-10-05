@@ -18,7 +18,7 @@ class Calculator(object):
     def __init__(self, dataset):
         self.dataset = dataset
         self.dframe = dataset.dframe()
-        self.parser = Parser(dataset.record)
+        self.parser = Parser(dataset)
 
     def validate(self, formula, group_str):
         # attempt to get a row from the dataframe

@@ -76,7 +76,7 @@ class TestCalculations(TestCalculator):
             dataset = Dataset.find_one(self.dataset.dataset_id)
             self.assertTrue(SCHEMA in dataset.record.keys())
             self.assertTrue(isinstance(dataset.data_schema, dict))
-            schema = dataset.data_schema
+            schema = dataset.schema
 
             # test slugified column names
             self.slugified_key_list.append(name)

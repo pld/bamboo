@@ -23,7 +23,7 @@ class ParserContext(object):
     """
 
     def __init__(self, dataset):
-        self.schema = dataset.data_schema
+        self.schema = dataset.schema
 
 
 class Parser(object):

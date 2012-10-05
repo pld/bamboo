@@ -67,7 +67,7 @@ class TestDataset(TestBase):
             df_columns = self.test_data[dataset_name].columns.tolist()
             seen_columns = []
 
-            for column_name, column_attributes in dataset.data_schema.items():
+            for column_name, column_attributes in dataset.schema.items():
                 # check column_name is unique
                 self.assertFalse(column_name in seen_columns)
                 seen_columns.append(column_name)
