@@ -60,16 +60,14 @@ class Calculation(AbstractModel):
             self.GROUP: group,
             self.NAME: name,
         }
-        self.collection.insert(record, safe=True)
-
+        result = super(self.__class__, self).save(record)
         dataset.clear_summary_stats()
 
         # call async calculate
         call_async(calculator.calculate_column,
                    dataset, calculator, formula, name, group)
 
-        self.record = record
-        return self.record
+        return result
 
     @classmethod
     def find_one(cls, dataset_id, name):
