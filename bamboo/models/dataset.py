@@ -6,6 +6,7 @@ from celery.contrib.methods import task
 import numpy as np
 from pandas import concat, DataFrame, Series
 
+from bamboo.core.calculator import Calculator
 from bamboo.lib.constants import ALL, BAMBOO_RESERVED_KEY_PREFIX, DATASET_ID,\
     DATASET_OBSERVATION_ID, DIMENSION, ERROR, ID, NUM_COLUMNS, NUM_ROWS,\
     PARENT_DATASET_ID, SCHEMA, SIMPLETYPE
@@ -13,7 +14,7 @@ from bamboo.lib.exceptions import MergeError
 from bamboo.lib.mongo import mongo_to_df
 from bamboo.lib.schema_builder import SchemaBuilder
 from bamboo.lib.summary import summarize_df, summarize_with_groups
-from bamboo.lib.utils import reserve_encoded, split_groups
+from bamboo.lib.utils import call_async, reserve_encoded, split_groups
 from bamboo.models.abstract_model import AbstractModel
 from bamboo.models.calculation import Calculation
 from bamboo.models.observation import Observation
@@ -213,6 +214,13 @@ class Dataset(AbstractModel):
 
     def remove_parent_observations(self, parent_id):
         Observation.delete_all(self, {PARENT_DATASET_ID: parent_id})
+
+    def add_observations(self, data):
+        """
+        Update *dataset* with new *data*.
+        """
+        calculator = Calculator(self)
+        call_async(calculator.calculate_updates, self, calculator, data)
 
     @classmethod
     def merge(cls, datasets):

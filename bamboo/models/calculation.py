@@ -82,11 +82,3 @@ class Calculation(AbstractModel):
     @classmethod
     def find(cls, dataset):
         return super(cls, cls).find({DATASET_ID: dataset.dataset_id})
-
-    @classmethod
-    def update(cls, dataset, data):
-        """
-        Update *dataset* with new *data*.
-        """
-        calculator = Calculator(dataset)
-        call_async(calculator.calculate_updates, dataset, calculator, data)

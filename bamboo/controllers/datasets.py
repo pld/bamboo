@@ -128,9 +128,7 @@ class Datasets(AbstractController):
         """
         dataset = Dataset.find_one(dataset_id)
         if dataset:
-            Calculation.update(
-                dataset,
-                data=json.loads(cherrypy.request.body.read()))
+            dataset.add_observations(json.loads(cherrypy.request.body.read()))
             # return some success value
             return json.dumps({ID: dataset_id})
         else:
