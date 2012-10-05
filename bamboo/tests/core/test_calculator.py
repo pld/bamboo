@@ -17,7 +17,7 @@ class TestCalculator(TestBase):
             self.test_data['good_eats_with_calculations.csv'])
         Observation().save(dframe, self.dataset)
         self.group = None
-        self.parser = Parser(self.dataset.record)
+        self.parser = Parser(self.dataset)
         self.places = 5
 
     def _equal_msg(self, calculated, stored, formula):
