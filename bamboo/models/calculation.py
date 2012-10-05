@@ -5,7 +5,6 @@ from bamboo.core.parser import ParseError, Parser, ParserContext
 from bamboo.core.calculator import Calculator
 from bamboo.lib.utils import call_async
 from bamboo.models.abstract_model import AbstractModel
-from bamboo.models.observation import Observation
 
 
 class Calculation(AbstractModel):
@@ -32,10 +31,10 @@ class Calculation(AbstractModel):
 
     @task
     def delete(self, dataset):
-        dframe = dataset.observations(as_df=True)
+        dframe = dataset.dframe(with_reserved_keys=True)
         slug = dataset.build_labels_to_slugs()[self.name]
         del dframe[slug]
-        Observation.update(dframe, dataset)
+        dataset.replace_observations(dframe)
         super(self.__class__, self).delete({
             DATASET_ID: self.dataset_id,
             self.NAME: self.name

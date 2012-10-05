@@ -102,14 +102,3 @@ class Observation(AbstractModel):
             self.collection.insert(rows, safe=True)
 
         call_async(dataset.summarize, dataset, dataset)
-
-    @classmethod
-    def update(cls, dframe, dataset):
-        """
-        Update *dataset* by overwriting all observations with the given
-        *dframe*.
-        """
-        dataset.build_schema(dframe)
-        cls.delete_all(dataset)
-        cls().save(dframe, dataset)
-        return cls.find(dataset, as_df=True)

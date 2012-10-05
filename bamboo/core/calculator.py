@@ -8,7 +8,6 @@ from bamboo.core.parser import ParseError, Parser
 from bamboo.lib.constants import MONGO_RESERVED_KEYS, PARENT_DATASET_ID
 from bamboo.lib.utils import call_async, df_to_jsondict, recognize_dates,\
     recognize_dates_from_schema, split_groups
-from bamboo.models.observation import Observation
 
 
 class Calculator(object):
@@ -60,8 +59,7 @@ class Calculator(object):
                              group_str, aggregation, name)
             agg.save_aggregation()
         else:
-            Observation.update(
-                self.dframe.join(new_columns[0]), self.dataset)
+            self.dataset.replace_observations(self.dframe.join(new_columns[0]))
 
         # propagate calculation to any merged child datasets
         for merged_dataset in self.dataset.merged_datasets:
@@ -92,7 +90,7 @@ class Calculator(object):
         updated_dframe = concat([dframe, parent_dframe])
 
         # save new dframe (updates schema)
-        Observation.update(updated_dframe, self.dataset)
+        self.dataset.replace_observations(updated_dframe)
         self.dataset.clear_summary_stats()
 
         # recur
@@ -148,7 +146,7 @@ class Calculator(object):
         updated_dframe = concat([existing_dframe, new_dframe])
 
         # update (overwrite) the dataset with the new merged version
-        self.dframe = Observation.update(updated_dframe, self.dataset)
+        self.dframe = self.dataset.replace_observations(updated_dframe)
         self.dataset.clear_summary_stats()
 
         self._update_aggregate_datasets(aggregate_calculations)
@@ -221,7 +219,7 @@ class Calculator(object):
         new_agg_dframe = agg.eval_dframe()
 
         # update aggregated dataset with new dataframe
-        new_agg_dframe = Observation.update(new_agg_dframe, agg_dataset)
+        new_agg_dframe = agg_dataset.replace_observations(new_agg_dframe)
 
         # add parent id column to new dframe
         new_agg_dframe = self._add_parent_column(

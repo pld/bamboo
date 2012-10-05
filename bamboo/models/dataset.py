@@ -221,3 +221,13 @@ class Dataset(AbstractModel):
         calculator = Calculator(self)
         call_async(calculator.calculate_updates, self, calculator,
                    json.loads(json_data))
+
+    def replace_observations(self, dframe):
+        """
+        Update this dataset by overwriting all observations with the given
+        *dframe*.
+        """
+        self.build_schema(dframe)
+        Observation.delete_all(self)
+        Observation().save(dframe, self)
+        return self.dframe()

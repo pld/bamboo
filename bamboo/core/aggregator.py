@@ -42,7 +42,7 @@ class Aggregator(object):
             self.dataset.update({
                 self.dataset.__class__.LINKED_DATASETS: linked_datasets_dict})
         else:
-            agg_dframe = Observation.find(agg_dataset, as_df=True)
+            agg_dframe = agg_dataset.dframe()
 
             if self.groups:
                 # set indexes on new dataframes to merge correctly
@@ -55,7 +55,7 @@ class Aggregator(object):
             if self.groups:
                 new_dframe = new_dframe.reset_index()
 
-            Observation.update(new_dframe, agg_dataset)
+            agg_dataset.replace_observations(new_dframe)
         self.new_dframe = new_dframe
 
     def eval_dframe(self):
