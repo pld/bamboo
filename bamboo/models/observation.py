@@ -28,7 +28,7 @@ class Observation(AbstractModel):
         cls.collection.remove(query, safe=True)
 
     @classmethod
-    def find(cls, dataset, query=None, select=None, as_df=False):
+    def find(cls, dataset, query=None, select=None):
         """
         Try to parse query if exists, then get all rows for ID matching query,
         or if no query all.  Decode rows from mongo and return.
@@ -60,8 +60,6 @@ class Observation(AbstractModel):
         query[DATASET_OBSERVATION_ID] = dataset.dataset_observation_id
         rows = super(cls, cls).find(query, select, as_dict=True)
 
-        if as_df:
-            return mongo_to_df(rows)
         return rows
 
     def save(self, dframe, dataset):

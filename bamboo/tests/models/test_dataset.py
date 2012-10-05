@@ -1,5 +1,7 @@
+from datetime import datetime
 import re
 
+from pandas import DataFrame
 from pymongo.cursor import Cursor
 
 from bamboo.tests.test_base import TestBase
@@ -7,6 +9,7 @@ from bamboo.models.dataset import Dataset
 from bamboo.models.observation import Observation
 from bamboo.lib.constants import MONGO_RESERVED_KEY_STRS, SCHEMA, SIMPLETYPE
 from bamboo.lib.mongo import mongo_decode_keys
+from bamboo.lib.utils import recognize_dates
 
 
 class TestDataset(TestBase):
@@ -89,3 +92,21 @@ class TestDataset(TestBase):
 
             # ensure all columns in df_columns have store columns
             self.assertTrue(len(df_columns) == 0)
+
+    def test_dframe(self):
+        dataset = Dataset()
+        dataset.save(self.test_dataset_ids['good_eats.csv'])
+        Observation().save(
+            recognize_dates(self.test_data['good_eats.csv']), dataset)
+        records = [x for x in Observation.find(dataset)]
+        dframe = dataset.dframe()
+
+        self.assertTrue(isinstance(dframe, DataFrame))
+        self.assertTrue(all(self.test_data['good_eats.csv'].reindex(
+                        columns=dframe.columns).eq(dframe)))
+        columns = dframe.columns
+        # ensure no reserved keys
+        for key in MONGO_RESERVED_KEY_STRS:
+            self.assertFalse(key in columns)
+        # ensure date is converted
+        self.assertTrue(isinstance(dframe.submit_date[0], datetime))

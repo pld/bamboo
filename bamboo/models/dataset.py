@@ -71,8 +71,8 @@ class Dataset(AbstractModel):
     def merged_datasets(self):
         return [self.find_one(_id) for _id in self.merged_dataset_ids]
 
-    def dframe(self, with_reserved_keys=False):
-        observations = self.observations()
+    def dframe(self, query=None, select=None, with_reserved_keys=False):
+        observations = self.observations(query=query, select=select)
         return DataFrame(observations) if with_reserved_keys else\
             mongo_to_df(observations)
 
@@ -104,9 +104,7 @@ class Dataset(AbstractModel):
             DATASET_OBSERVATION_ID: uuid.uuid4().hex,
             self.LINKED_DATASETS: {},
         }
-        self.collection.insert(record, safe=True)
-        self.record = record
-        return record
+        return super(self.__class__, self).save(record)
 
     @task
     def delete(self):
@@ -135,7 +133,7 @@ class Dataset(AbstractModel):
             group_key = '%s,%s' % (group_str, select)
 
         # narrow list of observations via query/select
-        dframe = self.observations(query, select, as_df=True)
+        dframe = self.dframe(query=query, select=select)
 
         # do not allow group by numeric types
         for group in groups:
@@ -205,8 +203,8 @@ class Dataset(AbstractModel):
             (column_attrs[self.LABEL], reserve_encoded(column_name)) for
             (column_name, column_attrs) in self.schema.items()])
 
-    def observations(self, query=None, select=None, as_df=False):
-        return Observation.find(self, query, select, as_df)
+    def observations(self, query=None, select=None):
+        return Observation.find(self, query, select)
 
     def calculations(self):
         return Calculation.find(self)

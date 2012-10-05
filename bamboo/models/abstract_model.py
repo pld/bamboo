@@ -47,6 +47,11 @@ class AbstractModel(object):
         """
         self.collection.remove(query, safe=True)
 
+    def save(self, record):
+        self.collection.insert(record, safe=True)
+        self.record = record
+        return record
+
     @property
     def clean_record(self):
         """
