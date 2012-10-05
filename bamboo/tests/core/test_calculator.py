@@ -26,7 +26,7 @@ class TestCalculator(TestBase):
             '(within %s places), formula: %s' % (self.places, formula)
 
     def _test_calculator(self, delay=True):
-        self.dframe = Observation.find(self.dataset, as_df=True)
+        self.dframe = self.dataset.dframe()
         row = self.dframe.irow(0)
 
         columns = self.dframe.columns.tolist()

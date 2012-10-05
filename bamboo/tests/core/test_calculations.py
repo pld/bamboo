@@ -64,7 +64,7 @@ class TestCalculations(TestCalculator):
             name = self.column_labels_to_slugs[unslug_name]
 
             # test that updated dataframe persisted
-            self.dframe = Observation.find(self.dataset, as_df=True)
+            self.dframe = self.dataset.dframe()
             self.assertTrue(name in self.dframe.columns)
 
             # test new number of columns

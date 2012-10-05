@@ -47,7 +47,7 @@ def _merge_datasets(datasets):
 
     dframes = []
     for dataset in datasets:
-        dframe = dataset.observations(as_df=True)
+        dframe = dataset.dframe()
         column = Series([dataset.dataset_id] * len(dframe))
         column.name = PARENT_DATASET_ID
         dframes.append(dframe.join(column))

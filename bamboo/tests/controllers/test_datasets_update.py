@@ -59,7 +59,7 @@ class TestDatasetsUpdate(TestAbstractDatasets):
         self.merged_dataset2_id = result[ID]
 
     def _verify_dataset(self, dataset_id, fixture_path):
-        dframe = Dataset.find_one(dataset_id).observations(as_df=True)
+        dframe = Dataset.find_one(dataset_id).dframe()
         expected_dframe = recognize_dates(
             pickle.load(open(fixture_path, 'rb')))
         self._check_dframes_are_equal(dframe, expected_dframe)

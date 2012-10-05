@@ -244,12 +244,12 @@ class TestDatasets(TestAbstractDatasets):
         for dataset in datasets:
             self.assertTrue(result[ID] in dataset.merged_dataset_ids)
 
-        dframe1 = datasets[0].observations(as_df=True)
+        dframe1 = datasets[0].dframe()
         merged_dataset = Dataset.find_one(result[ID])
         merged_rows = merged_dataset.observations()
         for row in merged_rows:
             self.assertTrue(PARENT_DATASET_ID in row.keys())
-        merged_dframe = merged_dataset.observations(as_df=True)
+        merged_dframe = merged_dataset.dframe()
 
         self.assertEqual(len(merged_dframe), 2 * len(dframe1))
         expected_dframe = concat([dframe1, dframe1],

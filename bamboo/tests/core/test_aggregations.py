@@ -94,7 +94,7 @@ class TestAggregations(TestCalculator):
         # retrieve linked dataset
         linked_dataset = self.dataset.linked_datasets[self.group]
         self.assertFalse(linked_dataset is None)
-        linked_dframe = Observation.find(linked_dataset, as_df=True)
+        linked_dframe = linked_dataset.dframe()
 
         column_labels_to_slugs = linked_dataset.build_labels_to_slugs()
         name = column_labels_to_slugs[name]
