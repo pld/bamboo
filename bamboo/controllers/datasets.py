@@ -1,13 +1,11 @@
-import json
-
 import cherrypy
 
 from bamboo.controllers.abstract_controller import AbstractController
-from bamboo.lib.constants import ALL, ERROR, ID
-from bamboo.lib.exceptions import JSONError, MergeError
+from bamboo.core.merge import merge_dataset_ids, MergeError
+from bamboo.lib.constants import ALL, ID
+from bamboo.lib.exceptions import JSONError
 from bamboo.lib.mongo import mongo_to_json
-from bamboo.lib.io import create_dataset_from_url, create_dataset_from_csv,\
-    import_dataset
+from bamboo.lib.io import create_dataset_from_url, create_dataset_from_csv
 from bamboo.lib.utils import call_async, dump_or_error
 from bamboo.models.calculation import Calculation
 from bamboo.models.dataset import Dataset
@@ -112,7 +110,7 @@ class Datasets(AbstractController):
 
         try:
             if merge:
-                result = self._merge(datasets)
+                result = {ID: merge_dataset_ids(datasets).dataset_id}
             elif url:
                 result = create_dataset_from_url(url)
             elif csv_file:
@@ -126,31 +124,10 @@ class Datasets(AbstractController):
         """
         Update the *dataset_id* with the body as JSON.
         """
+        result = None
+        error = 'dataset for this id does not exist'
         dataset = Dataset.find_one(dataset_id)
         if dataset:
-            dataset.add_observations(json.loads(cherrypy.request.body.read()))
-            # return some success value
-            return json.dumps({ID: dataset_id})
-        else:
-            return json.dumps({ERROR:
-                               'dataset for this id does not exist'})
-
-    def _merge(self, datasets):
-        # try to get each of the datasets
-        dataset_ids = json.loads(datasets)
-        result = None
-
-        datasets = [Dataset.find_one(dataset_id) for dataset_id in dataset_ids]
-        new_dframe = Dataset.merge(datasets)
-
-        # save the resulting dframe as a new dataset
-        new_dataset = Dataset()
-        new_dataset.save()
-        call_async(import_dataset, new_dataset, new_dataset, dframe=new_dframe)
-
-        # store the child dataset ID with each parent
-        for dataset in datasets:
-            dataset.add_merged_dataset(new_dataset)
-
-        # return the new dataset ID
-        return {ID: new_dataset.dataset_id}
+            dataset.add_observations(cherrypy.request.body.read())
+            result = {ID: dataset_id}
+        return dump_or_error(result, error)

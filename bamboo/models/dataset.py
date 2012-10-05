@@ -4,13 +4,12 @@ from time import gmtime, strftime
 
 from celery.contrib.methods import task
 import numpy as np
-from pandas import concat, DataFrame, Series
+from pandas import DataFrame
 
 from bamboo.core.calculator import Calculator
 from bamboo.lib.constants import ALL, BAMBOO_RESERVED_KEY_PREFIX, DATASET_ID,\
     DATASET_OBSERVATION_ID, DIMENSION, ERROR, ID, NUM_COLUMNS, NUM_ROWS,\
     PARENT_DATASET_ID, SCHEMA, SIMPLETYPE
-from bamboo.lib.exceptions import MergeError
 from bamboo.lib.mongo import mongo_to_df
 from bamboo.lib.schema_builder import SchemaBuilder
 from bamboo.lib.summary import summarize_df, summarize_with_groups
@@ -215,24 +214,10 @@ class Dataset(AbstractModel):
     def remove_parent_observations(self, parent_id):
         Observation.delete_all(self, {PARENT_DATASET_ID: parent_id})
 
-    def add_observations(self, data):
+    def add_observations(self, json_data):
         """
         Update *dataset* with new *data*.
         """
         calculator = Calculator(self)
-        call_async(calculator.calculate_updates, self, calculator, data)
-
-    @classmethod
-    def merge(cls, datasets):
-        if len(datasets) < 2:
-            raise MergeError(
-                'merge requires 2 datasets (found %s)' % len(datasets))
-
-        dframes = []
-        for dataset in datasets:
-            dframe = dataset.observations(as_df=True)
-            column = Series([dataset.dataset_id] * len(dframe))
-            column.name = PARENT_DATASET_ID
-            dframes.append(dframe.join(column))
-
-        return concat(dframes, ignore_index=True)
+        call_async(calculator.calculate_updates, self, calculator,
+                   json.loads(data))

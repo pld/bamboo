@@ -75,7 +75,7 @@ class TestCalculations(TestCalculator):
             # test that the schema is up to date
             dataset = Dataset.find_one(self.dataset.dataset_id)
             self.assertTrue(SCHEMA in dataset.record.keys())
-            self.assertTrue(isinstance(dataset.data_schema, dict))
+            self.assertTrue(isinstance(dataset.schema, dict))
             schema = dataset.schema
 
             # test slugified column names

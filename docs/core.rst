@@ -11,6 +11,11 @@ Aggregation
 .. automodule:: bamboo.core.aggregations
     :members:
 
+Merge
+------------------
+.. automodule:: bamboo.core.merge
+    :members:
+
 Parsing Operations
 ------------------
 .. automodule:: bamboo.core.operations
