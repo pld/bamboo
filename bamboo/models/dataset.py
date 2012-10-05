@@ -220,4 +220,4 @@ class Dataset(AbstractModel):
         """
         calculator = Calculator(self)
         call_async(calculator.calculate_updates, self, calculator,
-                   json.loads(data))
+                   json.loads(json_data))
