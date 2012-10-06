@@ -10,9 +10,9 @@ from bamboo.core.calculator import Calculator
 from bamboo.core.summary import summarize
 from bamboo.lib.constants import BAMBOO_RESERVED_KEY_PREFIX, DATASET_ID,\
     DATASET_OBSERVATION_ID, ID, NUM_COLUMNS, NUM_ROWS,\
-    PARENT_DATASET_ID, SCHEMA, SIMPLETYPE
+    PARENT_DATASET_ID, SCHEMA
 from bamboo.lib.mongo import mongo_to_df, reserve_encoded
-from bamboo.lib.schema_builder import SchemaBuilder
+from bamboo.lib.schema_builder import schema_from_data_and_dtypes, SIMPLETYPE
 from bamboo.lib.utils import call_async, split_groups
 from bamboo.models.abstract_model import AbstractModel
 from bamboo.models.calculation import Calculation
@@ -160,8 +160,7 @@ class Dataset(AbstractModel):
         """
         Build schema for a dataset.
         """
-        schema_builder = SchemaBuilder(self)
-        schema = schema_builder.schema_from_data_and_dtypes(dframe)
+        schema = schema_from_data_and_dtypes(self, dframe)
         self.update({SCHEMA: schema})
 
     def info(self):

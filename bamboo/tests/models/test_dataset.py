@@ -7,9 +7,10 @@ from pymongo.cursor import Cursor
 from bamboo.tests.test_base import TestBase
 from bamboo.models.dataset import Dataset
 from bamboo.models.observation import Observation
-from bamboo.lib.constants import SCHEMA, SIMPLETYPE
-from bamboo.lib.mongo import mongo_decode_keys, MONGO_RESERVED_KEY_STRS
+from bamboo.lib.constants import SCHEMA
 from bamboo.lib.datetools import recognize_dates
+from bamboo.lib.mongo import mongo_decode_keys, MONGO_RESERVED_KEY_STRS
+from bamboo.lib.schema_builder import OLAP_TYPE, SIMPLETYPE
 
 
 class TestDataset(TestBase):
@@ -80,7 +81,7 @@ class TestDataset(TestBase):
 
                 # check has require attributes
                 self.assertTrue(SIMPLETYPE in column_attributes)
-                self.assertTrue(Dataset.OLAP_TYPE in column_attributes)
+                self.assertTrue(OLAP_TYPE in column_attributes)
                 self.assertTrue(Dataset.LABEL in column_attributes)
 
                 # check label is an original column

@@ -20,7 +20,6 @@ ID = 'id'
 NUM_COLUMNS = 'num_columns'
 NUM_ROWS = 'num_rows'
 SCHEMA = 'schema'
-SIMPLETYPE = 'simpletype'
 
 # datetime simpletype
 DATETIME = 'datetime'

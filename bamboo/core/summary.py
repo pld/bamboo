@@ -2,6 +2,7 @@ import numpy as np
 
 from bamboo.lib.constants import DIMENSION
 from bamboo.lib.mongo import MONGO_RESERVED_KEYS
+from bamboo.lib.schema_builder import OLAP_TYPE
 from bamboo.lib.utils import series_to_jsondict
 
 
@@ -54,7 +55,7 @@ def summarize(dataset, dframe, groups, group_str, no_cache):
         group_type = dataset.schema.get(group)
         _type = dframe.dtypes.get(group)
         if group != dataset.ALL and (
-                group_type is None or group_type[dataset.OLAP_TYPE] != DIMENSION):
+                group_type is None or group_type[OLAP_TYPE] != DIMENSION):
             raise ColumnTypeError("group: '%s' is not a dimension." % group)
 
     # check cached stats for group and update as necessary

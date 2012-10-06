@@ -12,10 +12,11 @@ from bamboo.controllers.datasets import Datasets
 from bamboo.controllers.calculations import Calculations
 from bamboo.core.summary import SUMMARY
 from bamboo.lib.constants import BAMBOO_RESERVED_KEYS, DATETIME, DIMENSION,\
-    ID, NUM_COLUMNS, NUM_ROWS, PARENT_DATASET_ID, SCHEMA, SIMPLETYPE
+    ID, NUM_COLUMNS, NUM_ROWS, PARENT_DATASET_ID, SCHEMA
 from bamboo.lib.decorators import requires_internet
 from bamboo.lib.mongo import MONGO_RESERVED_KEY_PREFIX,\
     MONGO_RESERVED_KEY_STRS, MONGO_RESERVED_KEYS
+from bamboo.lib.schema_builder import OLAP_TYPE, SIMPLETYPE
 from bamboo.lib.utils import GROUP_DELIMITER
 from bamboo.models.dataset import Dataset
 from bamboo.models.calculation import Calculation
@@ -310,7 +311,7 @@ class TestDatasets(TestAbstractDatasets):
         self.assertTrue(SCHEMA in results.keys())
         schema = results[SCHEMA]
         for key, column in schema.items():
-            if column[Dataset.OLAP_TYPE] == DIMENSION:
+            if column[OLAP_TYPE] == DIMENSION:
                 self.assertTrue(Dataset.CARDINALITY in column.keys())
                 self.assertEqual(
                     column[Dataset.CARDINALITY], self.cardinalities[key])

@@ -5,7 +5,8 @@ from dateutil.parser import parse as date_parse
 import numpy as np
 from pandas import Series
 
-from bamboo.lib.constants import DATETIME, SIMPLETYPE
+from bamboo.lib.constants import DATETIME
+from bamboo.lib.schema_builder import SIMPLETYPE
 from bamboo.lib.utils import is_float_nan
 
 

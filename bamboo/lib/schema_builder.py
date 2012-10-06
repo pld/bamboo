@@ -2,87 +2,90 @@ from datetime import datetime
 import numpy as np
 
 from bamboo.lib.constants import BAMBOO_RESERVED_KEYS, DATETIME, DIMENSION,\
-    MEASURE, SIMPLETYPE
+    MEASURE
 from bamboo.lib.mongo import MONGO_RESERVED_KEY_STRS
 from bamboo.lib.utils import slugify_columns
 
 
-class SchemaBuilder(object):
-    # map from numpy objects to olap_types
-    DTYPE_TO_OLAP_TYPE_MAP = {
-        np.object_: DIMENSION,
-        np.bool_: DIMENSION,
-        np.float64: MEASURE,
-        np.int64: MEASURE,
-        datetime: MEASURE,
-    }
+OLAP_TYPE = 'olap_type'
+SIMPLETYPE = 'simpletype'
 
-    # simpletypes
-    STRING = 'string'
-    INTEGER = 'integer'
-    FLOAT = 'float'
-    BOOLEAN = 'boolean'
+# map from numpy objects to olap_types
+DTYPE_TO_OLAP_TYPE_MAP = {
+    np.object_: DIMENSION,
+    np.bool_: DIMENSION,
+    np.float64: MEASURE,
+    np.int64: MEASURE,
+    datetime: MEASURE,
+}
 
-    # map from numpy objects to simpletypes
-    DTYPE_TO_SIMPLETYPE_MAP = {
-        np.bool_:   BOOLEAN,
-        np.float64: FLOAT,
-        np.int64:   INTEGER,
-        np.object_: STRING,
-        datetime: DATETIME,
-    }
+# simpletypes
+STRING = 'string'
+INTEGER = 'integer'
+FLOAT = 'float'
+BOOLEAN = 'boolean'
 
-    def __init__(self, dataset):
-        self.dataset = dataset
+# map from numpy objects to simpletypes
+DTYPE_TO_SIMPLETYPE_MAP = {
+    np.bool_:   BOOLEAN,
+    np.float64: FLOAT,
+    np.int64:   INTEGER,
+    np.object_: STRING,
+    datetime: DATETIME,
+}
 
-    def schema_from_data_and_dtypes(self, dframe):
-        """
-        Build schema from the dframe, *dframe*, and a dict of dtypes, *dtypes*.
-        """
-        dtypes = dframe.dtypes.to_dict()
 
-        column_names = list()
-        names_to_labels = dict()
-        reserved_keys = MONGO_RESERVED_KEY_STRS + BAMBOO_RESERVED_KEYS
+def schema_from_data_and_dtypes(dataset, dframe):
+    """
+    Build schema from the dframe, *dframe*, and a dict of dtypes, *dtypes*.
+    """
+    dtypes = dframe.dtypes.to_dict()
 
-        # use existing labels for existing columns
-        for name in dtypes.keys():
-            if name not in reserved_keys:
-                column_names.append(name)
-                if self.dataset.schema:
-                    schema_for_name = self.dataset.schema.get(name)
-                    if schema_for_name:
-                        names_to_labels[name] = schema_for_name[
-                            self.dataset.LABEL]
+    column_names = list()
+    names_to_labels = dict()
+    reserved_keys = MONGO_RESERVED_KEY_STRS + BAMBOO_RESERVED_KEYS
 
-        encoded_names = dict(zip(column_names, slugify_columns(column_names)))
+    # use existing labels for existing columns
+    for name in dtypes.keys():
+        if name not in reserved_keys:
+            column_names.append(name)
+            if dataset.schema:
+                schema_for_name = dataset.schema.get(name)
+                if schema_for_name:
+                    names_to_labels[name] = schema_for_name[
+                        dataset.LABEL]
 
-        schema = {}
-        for (name, dtype) in dtypes.items():
-            if name not in BAMBOO_RESERVED_KEYS:
-                column_schema = {
-                    self.dataset.LABEL: names_to_labels.get(name, name),
-                    self.dataset.OLAP_TYPE: self._olap_type_for_data_and_dtype(
-                        dframe[name], dtype),
-                    SIMPLETYPE: self._simpletype_for_data_and_dtype(
-                        dframe[name], dtype),
-                }
+    encoded_names = dict(zip(column_names, slugify_columns(column_names)))
 
-                if column_schema[self.dataset.OLAP_TYPE] == DIMENSION:
-                    column_schema[self.dataset.CARDINALITY] = dframe[
-                        name].nunique()
-                schema[encoded_names[name]] = column_schema
+    schema = {}
+    for (name, dtype) in dtypes.items():
+        if name not in BAMBOO_RESERVED_KEYS:
+            column_schema = {
+                dataset.LABEL: names_to_labels.get(name, name),
+                OLAP_TYPE: _olap_type_for_data_and_dtype(
+                    dframe[name], dtype),
+                SIMPLETYPE: _simpletype_for_data_and_dtype(
+                    dframe[name], dtype),
+            }
 
-        return schema
+            if column_schema[OLAP_TYPE] == DIMENSION:
+                column_schema[dataset.CARDINALITY] = dframe[
+                    name].nunique()
+            schema[encoded_names[name]] = column_schema
 
-    def _olap_type_for_data_and_dtype(self, column, dtype):
-        return self._type_for_data_and_dtypes(
-            self.DTYPE_TO_OLAP_TYPE_MAP, column, dtype.type)
+    return schema
 
-    def _simpletype_for_data_and_dtype(self, column, dtype):
-        return self._type_for_data_and_dtypes(
-            self.DTYPE_TO_SIMPLETYPE_MAP, column, dtype.type)
 
-    def _type_for_data_and_dtypes(self, type_map, column, dtype_type):
-        has_datetime = any([isinstance(field, datetime) for field in column])
-        return type_map[datetime if has_datetime else dtype_type]
+def _olap_type_for_data_and_dtype(column, dtype):
+    return _type_for_data_and_dtypes(
+        DTYPE_TO_OLAP_TYPE_MAP, column, dtype.type)
+
+
+def _simpletype_for_data_and_dtype(column, dtype):
+    return _type_for_data_and_dtypes(
+        DTYPE_TO_SIMPLETYPE_MAP, column, dtype.type)
+
+
+def _type_for_data_and_dtypes(type_map, column, dtype_type):
+    has_datetime = any([isinstance(field, datetime) for field in column])
+    return type_map[datetime if has_datetime else dtype_type]
