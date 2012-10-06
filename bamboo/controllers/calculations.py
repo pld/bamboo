@@ -1,9 +1,10 @@
 import json
 
 from bamboo.controllers.abstract_controller import AbstractController
+from bamboo.core.parser import ParseError
 from bamboo.lib.constants import ID
 from bamboo.lib.mongo import dump_mongo_json
-from bamboo.lib.utils import call_async, dump_or_error
+from bamboo.lib.utils import call_async
 from bamboo.models.calculation import Calculation
 from bamboo.models.dataset import Dataset
 
@@ -27,7 +28,7 @@ class Calculations(AbstractController):
                 calculation.delete, dataset, calculation, dataset)
             result = {self.SUCCESS: 'deleted calculation: %s for dataset: %s' %
                       (name, dataset_id)}
-        return dump_or_error(result,
+        return self.dump_or_error(result,
                              'name and dataset_id combination not found')
 
     def POST(self, dataset_id, formula, name, group=None):
@@ -36,11 +37,18 @@ class Calculations(AbstractController):
         the *formula*.  Variables in formula can only refer to columns in the
         dataset.
         """
+        error = 'name and dataset_id combination not found'
+        result = None
         dataset = Dataset.find_one(dataset_id)
         if dataset:
-            calculation = Calculation()
-            calculation.save(dataset, formula, name, group)
-            return dump_mongo_json(calculation.clean_record)
+            try:
+                Calculation.create(dataset, formula, name, group)
+                result = {
+                    self.SUCCESS: 'created calulcation: %s for dataset: %s'
+                        % (name, dataset_id)}
+            except ParseError as err:
+                error = e.__str__()
+        return self.dump_or_error(result, error)
 
     def GET(self, dataset_id):
         """

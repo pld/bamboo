@@ -1,7 +1,7 @@
 from celery.contrib.methods import task
 
-from bamboo.lib.constants import DATASET_ID, ERROR
-from bamboo.core.parser import ParseError, Parser, ParserContext
+from bamboo.lib.constants import DATASET_ID
+from bamboo.core.parser import Parser, ParserContext
 from bamboo.core.calculator import Calculator
 from bamboo.lib.utils import call_async
 from bamboo.models.abstract_model import AbstractModel
@@ -44,15 +44,13 @@ class Calculation(AbstractModel):
         """
         Attempt to parse formula, then save formula, and add a task to
         calculate formula.
+
+        Raises a ParseError if an invalid formula is supplied.
         """
         calculator = Calculator(dataset)
 
         # ensure that the formula is parsable
-        try:
-            calculator.validate(formula, group)
-        except ParseError, err:
-            # do not save record, return error
-            return {ERROR: err}
+        calculator.validate(formula, group)
 
         record = {
             DATASET_ID: dataset.dataset_id,
@@ -60,14 +58,18 @@ class Calculation(AbstractModel):
             self.GROUP: group,
             self.NAME: name,
         }
-        result = super(self.__class__, self).save(record)
+        super(self.__class__, self).save(record)
         dataset.clear_summary_stats()
 
         # call async calculate
         call_async(calculator.calculate_column,
                    dataset, calculator, formula, name, group)
+        return record
 
-        return result
+    @classmethod
+    def create(cls, dataset, formula, name, group=None):
+        calculation = cls()
+        return calculation.save(dataset, formula, name, group)
 
     @classmethod
     def find_one(cls, dataset_id, name):
