@@ -27,8 +27,8 @@ class Aggregator(object):
     def save_aggregation(self):
         new_dframe = self.eval_dframe()
 
-        linked_datasets = self.dataset.linked_datasets
-        agg_dataset = linked_datasets.get(self.group_str, None)
+        aggregated_datasets = self.dataset.aggregated_datasets
+        agg_dataset = aggregated_datasets.get(self.group_str, None)
 
         if agg_dataset is None:
             agg_dataset = self.dataset.__class__()
@@ -37,10 +37,10 @@ class Aggregator(object):
             Observation().save(new_dframe, agg_dataset)
 
             # store a link to the new dataset
-            linked_datasets_dict = self.dataset.linked_datasets_dict
-            linked_datasets_dict[self.group_str] = agg_dataset.dataset_id
+            aggregated_datasets_dict = self.dataset.aggregated_datasets_dict
+            aggregated_datasets_dict[self.group_str] = agg_dataset.dataset_id
             self.dataset.update({
-                self.dataset.__class__.LINKED_DATASETS: linked_datasets_dict})
+                self.dataset.__class__.AGGREGATED_DATASETS: aggregated_datasets_dict})
         else:
             agg_dframe = agg_dataset.dframe()
 

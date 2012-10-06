@@ -244,7 +244,7 @@ class Calculator(object):
         Extract info from linked datasets
         """
         self.labels_to_slugs_and_groups = dict()
-        for group, dataset in self.dataset.linked_datasets.items():
+        for group, dataset in self.dataset.aggregated_datasets.items():
             for label, slug in dataset.build_labels_to_slugs().items():
                 self.labels_to_slugs_and_groups[label] = (
                     slug, group, dataset)

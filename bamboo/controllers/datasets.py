@@ -65,7 +65,7 @@ class Datasets(AbstractController):
                 if mode == self.MODE_INFO:
                     result = dataset.info()
                 elif mode == self.MODE_RELATED:
-                    result = dataset.linked_datasets_dict
+                    result = dataset.aggregated_datasets_dict
                 elif mode == self.MODE_SUMMARY:
                     # for summary require a select
                     if select is None:

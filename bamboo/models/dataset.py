@@ -32,7 +32,7 @@ class Dataset(AbstractModel):
     DESCRIPTION = 'description'
     LABEL = 'label'
     LICENSE = 'license'
-    LINKED_DATASETS = BAMBOO_RESERVED_KEY_PREFIX + 'linked_datasets'
+    AGGREGATED_DATASETS = BAMBOO_RESERVED_KEY_PREFIX + 'linked_datasets'
     MERGED_DATASETS = 'merged_datasets'
     OLAP_TYPE = 'olap_type'
     UPDATED_AT = 'updated_at'
@@ -55,13 +55,13 @@ class Dataset(AbstractModel):
         return self.record.get(SCHEMA)
 
     @property
-    def linked_datasets_dict(self):
-        return self.record.get(self.LINKED_DATASETS, {})
+    def aggregated_datasets_dict(self):
+        return self.record.get(self.AGGREGATED_DATASETS, {})
 
     @property
-    def linked_datasets(self):
+    def aggregated_datasets(self):
         return dict([(group, self.find_one(_id)) for (group, _id) in
-                     self.linked_datasets_dict.items()])
+                     self.aggregated_datasets_dict.items()])
 
     @property
     def merged_dataset_ids(self):
@@ -102,7 +102,7 @@ class Dataset(AbstractModel):
             self.CREATED_AT: strftime("%Y-%m-%d %H:%M:%S", gmtime()),
             DATASET_ID: dataset_id,
             DATASET_OBSERVATION_ID: uuid.uuid4().hex,
-            self.LINKED_DATASETS: {},
+            self.AGGREGATED_DATASETS: {},
         }
         return super(self.__class__, self).save(record)
 

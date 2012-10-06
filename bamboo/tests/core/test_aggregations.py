@@ -92,7 +92,7 @@ class TestAggregations(TestCalculator):
             formula)
 
         # retrieve linked dataset
-        linked_dataset = self.dataset.linked_datasets[self.group]
+        linked_dataset = self.dataset.aggregated_datasets[self.group]
         self.assertFalse(linked_dataset is None)
         linked_dframe = linked_dataset.dframe()
 
