@@ -7,12 +7,12 @@ import numpy as np
 from pandas import DataFrame
 
 from bamboo.core.calculator import Calculator
+from bamboo.core.summary import summarize
 from bamboo.lib.constants import BAMBOO_RESERVED_KEY_PREFIX, DATASET_ID,\
     DATASET_OBSERVATION_ID, ID, NUM_COLUMNS, NUM_ROWS,\
     PARENT_DATASET_ID, SCHEMA, SIMPLETYPE
 from bamboo.lib.mongo import mongo_to_df, reserve_encoded
 from bamboo.lib.schema_builder import SchemaBuilder
-from bamboo.lib.summary import summarize
 from bamboo.lib.utils import call_async, split_groups
 from bamboo.models.abstract_model import AbstractModel
 from bamboo.models.calculation import Calculation
