@@ -1,6 +1,6 @@
 from pymongo.cursor import Cursor
 
-from bamboo.lib.constants import ERROR
+from bamboo.core.parser import ParseError
 from bamboo.models.calculation import Calculation
 from bamboo.models.dataset import Dataset
 from bamboo.models.observation import Observation
@@ -23,8 +23,7 @@ class TestCalculation(TestBase):
         if not formula:
             formula = self.formula
         self._save_observations()
-        calculation = Calculation()
-        return calculation.save(self.dataset, formula, self.name)
+        return Calculation.create(self.dataset, formula, self.name)
 
     def test_save(self):
         record = self._save_observations_and_calculation()
@@ -32,39 +31,39 @@ class TestCalculation(TestBase):
         self.assertTrue(Calculation.FORMULA in record.keys())
 
     def test_save_improper_formula(self):
-        record = self._save_observations_and_calculation('NON_EXISTENT_COLUMN')
-        self.assertTrue(isinstance(record, dict))
-        self.assertTrue(ERROR in record.keys())
-        self.assertTrue('Missing column' in record[ERROR].__str__())
+        try:
+            self._save_observations_and_calculation('NON_EXISTENT_COLUMN')
+        except ParseError as e:
+            self.assertTrue('Missing column' in e.__str__())
 
     def test_save_unparsable_formula(self):
-        record = self._save_observations_and_calculation(
+        try:
+            self._save_observations_and_calculation(
             '=NON_EXISTENT_COLUMN')
-        self.assertTrue(isinstance(record, dict))
-        self.assertTrue(ERROR in record.keys())
-        self.assertTrue('Parse Failure' in record[ERROR].__str__())
+        except ParseError as e:
+            self.assertTrue('Parse Failure' in e.__str__())
 
     def test_save_improper_formula_no_data(self):
-        record = Calculation().save(self.dataset, 'NON_EXISTENT_COLUMN',
-                                    self.name)
-        self.assertTrue(isinstance(record, dict))
-        self.assertTrue(ERROR in record.keys())
-        self.assertTrue('Missing column' in record[ERROR].__str__())
+        try:
+            Calculation().save(self.dataset, 'NON_EXISTENT_COLUMN',
+                               self.name)
+        except ParseError as e:
+            self.assertTrue('Missing column' in e.__str__())
 
     def test_save_unparsable_formula_no_data(self):
-        record = Calculation().save(self.dataset, '=NON_EXISTENT_COLUMN',
-                                    self.name)
-        self.assertTrue(isinstance(record, dict))
-        self.assertTrue(ERROR in record.keys())
-        self.assertTrue('Parse Failure' in record[ERROR].__str__())
+        try:
+            Calculation().save(self.dataset, '=NON_EXISTENT_COLUMN',
+                               self.name)
+        except ParseError as e:
+            self.assertTrue('Parse Failure' in e.__str__())
 
     def test_save_non_existent_group(self):
         self._save_observations()
-        record = Calculation().save(
-            self.dataset, self.formula, self.name, group='NON_EXISTENT_GROUP')
-        self.assertTrue(isinstance(record, dict))
-        self.assertTrue(ERROR in record.keys())
-        self.assertTrue('Group' in record[ERROR].__str__())
+        try:
+            Calculation().save(self.dataset, self.formula, self.name,
+                               group='NON_EXISTENT_GROUP')
+        except ParseError as e:
+            self.assertTrue('Group' in e.__str__())
 
     def test_find(self):
         record = self._save_observations_and_calculation()

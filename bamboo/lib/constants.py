@@ -14,7 +14,6 @@ BAMBOO_RESERVED_KEYS = [
 ]
 
 # JSON output labels
-ERROR = 'error'
 ID = 'id'
 
 # metadata

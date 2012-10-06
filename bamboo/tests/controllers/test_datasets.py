@@ -11,7 +11,7 @@ from bamboo.controllers.abstract_controller import AbstractController
 from bamboo.controllers.datasets import Datasets
 from bamboo.controllers.calculations import Calculations
 from bamboo.lib.constants import BAMBOO_RESERVED_KEYS, DATETIME, DIMENSION,\
-    ERROR, ID, NUM_COLUMNS, NUM_ROWS, PARENT_DATASET_ID, SCHEMA, SIMPLETYPE
+    ID, NUM_COLUMNS, NUM_ROWS, PARENT_DATASET_ID, SCHEMA, SIMPLETYPE
 from bamboo.lib.decorators import requires_internet
 from bamboo.lib.mongo import MONGO_RESERVED_KEY_PREFIX,\
     MONGO_RESERVED_KEY_STRS, MONGO_RESERVED_KEYS
@@ -110,7 +110,7 @@ class TestDatasets(TestAbstractDatasets):
 
     def test_PUT_dataset_id_update_bad_dataset_id(self):
         result = json.loads(self.controller.PUT(dataset_id=111))
-        assert(ERROR in result)
+        assert(Datasets.ERROR in result)
 
     def test_PUT_dataset_id_update(self):
         self._post_file(self._file_name_with_slashes)
@@ -189,7 +189,7 @@ class TestDatasets(TestAbstractDatasets):
     def test_POST_file_as_url_failure(self):
         result = json.loads(self.controller.POST(url=self._file_uri))
         self.assertTrue(isinstance(result, dict))
-        self.assertTrue(ERROR in result)
+        self.assertTrue(Datasets.ERROR in result)
 
     @requires_internet
     def test_POST_url(self):
@@ -211,14 +211,14 @@ class TestDatasets(TestAbstractDatasets):
     def test_POST_bad_url(self):
         result = json.loads(self.controller.POST(url='http://dsfskfjdks.com'))
         self.assertTrue(isinstance(result, dict))
-        self.assertTrue(ERROR in result)
+        self.assertTrue(Datasets.ERROR in result)
 
     def test_POST_merge_datasets_0_not_enough(self):
         result = json.loads(self.controller.POST(
             merge=True,
             datasets=json.dumps([])))
         self.assertTrue(isinstance(result, dict))
-        self.assertTrue(ERROR in result)
+        self.assertTrue(Datasets.ERROR in result)
 
     def test_POST_merge_datasets_1_not_enough(self):
         self._post_file()
@@ -226,7 +226,7 @@ class TestDatasets(TestAbstractDatasets):
             merge=True,
             datasets=json.dumps([self.dataset_id])))
         self.assertTrue(isinstance(result, dict))
-        self.assertTrue(ERROR in result)
+        self.assertTrue(Datasets.ERROR in result)
 
     def test_POST_merge_datasets(self):
         self._post_file()
@@ -344,13 +344,13 @@ class TestDatasets(TestAbstractDatasets):
 
     def test_GET_bad_id(self):
         results = self.controller.GET('honey_badger')
-        self.assertTrue(ERROR in results)
+        self.assertTrue(Datasets.ERROR in results)
 
     def test_GET_unsupported_api_call(self):
         self._post_file()
         results = json.loads(self.controller.GET(self.dataset_id,
                              'honey_badger'))
-        self.assertTrue(ERROR in results)
+        self.assertTrue(Datasets.ERROR in results)
 
     def test_GET_with_query(self):
         # (sic)
@@ -361,7 +361,7 @@ class TestDatasets(TestAbstractDatasets):
         self._post_file()
         results = json.loads(self.controller.GET(self.dataset_id,
                              query='bad json'))
-        self.assertTrue('JSON' in results[ERROR])
+        self.assertTrue('JSON' in results[Datasets.ERROR])
 
     def test_GET_with_date_query(self):
         query = {
@@ -407,7 +407,7 @@ class TestDatasets(TestAbstractDatasets):
         results = self.controller.GET(
             self.dataset_id, mode=Datasets.MODE_SUMMARY)
         results = json.loads(results)
-        self.assertTrue(ERROR in results.keys())
+        self.assertTrue(Datasets.ERROR in results.keys())
 
     def test_GET_summary_with_query(self):
         self._post_file()
@@ -448,7 +448,7 @@ class TestDatasets(TestAbstractDatasets):
                         results[group][column_value], group)
             else:
                 self.assertFalse(group in results.keys())
-                self.assertTrue(ERROR in results.keys())
+                self.assertTrue(Datasets.ERROR in results.keys())
 
     def test_GET_summary_with_group_select(self):
         self._post_file()
@@ -473,7 +473,7 @@ class TestDatasets(TestAbstractDatasets):
             group=group_columns,
             select=self.controller.SELECT_ALL_FOR_SUMMARY)
         results = self._test_summary_results(results)
-        self.assertFalse(ERROR in results.keys())
+        self.assertFalse(Datasets.ERROR in results.keys())
         self.assertTrue(group_columns in results.keys())
         self.assertEqual(
             len(results[group_columns].keys()[0].split(GROUP_DELIMITER)),
@@ -488,7 +488,7 @@ class TestDatasets(TestAbstractDatasets):
             group=group_columns,
             select=self.controller.SELECT_ALL_FOR_SUMMARY)
         results = self._test_summary_results(results)
-        self.assertTrue(ERROR in results.keys())
+        self.assertTrue(Datasets.ERROR in results.keys())
 
     def test_GET_summary_nonexistent_group(self):
         self._post_file()
@@ -499,7 +499,7 @@ class TestDatasets(TestAbstractDatasets):
             group=group_columns,
             select=self.controller.SELECT_ALL_FOR_SUMMARY)
         results = self._test_summary_results(results)
-        self.assertTrue(ERROR in results.keys())
+        self.assertTrue(Datasets.ERROR in results.keys())
 
     def test_GET_summary_with_group_and_query(self):
         self._post_file()
@@ -606,4 +606,4 @@ class TestDatasets(TestAbstractDatasets):
         for dataset_name in self.TEST_DATASETS:
             result = json.loads(self.controller.DELETE(
                                 self.test_dataset_ids[dataset_name]))
-            self.assertTrue(ERROR in result)
+            self.assertTrue(Datasets.ERROR in result)

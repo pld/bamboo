@@ -8,7 +8,7 @@ from pandas import DataFrame
 
 from bamboo.core.calculator import Calculator
 from bamboo.lib.constants import BAMBOO_RESERVED_KEY_PREFIX, DATASET_ID,\
-    DATASET_OBSERVATION_ID, DIMENSION, ERROR, ID, NUM_COLUMNS, NUM_ROWS,\
+    DATASET_OBSERVATION_ID, ID, NUM_COLUMNS, NUM_ROWS,\
     PARENT_DATASET_ID, SCHEMA, SIMPLETYPE
 from bamboo.lib.mongo import mongo_to_df, reserve_encoded
 from bamboo.lib.schema_builder import SchemaBuilder
@@ -138,25 +138,7 @@ class Dataset(AbstractModel):
         # narrow list of observations via query/select
         dframe = self.dframe(query=query, select=select)
 
-        # do not allow group by numeric types
-        for group in groups:
-            group_type = self.schema.get(group)
-            _type = dframe.dtypes.get(group)
-            if group != self.ALL and (group_type is None or
-                                 group_type[self.OLAP_TYPE] != DIMENSION):
-                return {ERROR: "group: '%s' is not a dimension." % group}
-
-        # check cached stats for group and update as necessary
-        stats = self.stats
-        if query or select or not stats.get(group_str):
-            group_stats = summarize(dframe, groups, self.ALL == group_str)
-            stats.update({group_str: group_stats})
-            if not query and not select:
-                self.update({self.STATS: stats})
-        stats_to_return = stats.get(group_str)
-
-        return stats_to_return if group_str == self.ALL else {
-            group_str: stats_to_return}
+        return summarize(self, dframe, groups, group_str, query or select)
 
     @classmethod
     def find_one(cls, dataset_id):

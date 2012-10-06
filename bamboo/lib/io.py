@@ -7,7 +7,7 @@ from celery.task import task
 from pandas import read_csv
 
 from bamboo.models.observation import Observation
-from bamboo.lib.constants import DATASET_ID, ERROR, ID
+from bamboo.lib.constants import DATASET_ID, ID
 from bamboo.lib.datetools import recognize_dates
 from bamboo.lib.utils import call_async
 from bamboo.models.dataset import Dataset
@@ -51,18 +51,13 @@ def open_data_file(url, allow_local_file=False):
 def create_dataset_from_url(url, allow_local_file=False):
     """
     Load a URL, read from a CSV, create a dataset and return the unique ID.
-    """
-    _file = None
 
-    try:
-        _file = open_data_file(url, allow_local_file)
-    except (IOError, urllib2.HTTPError):
-        # error reading file/url, return
-        pass
+    Raises an IOError or urllib2.HTTPError if bad file or URL given.
+    """
+    _file = open_data_file(url, allow_local_file)
 
     if not _file:
-        # could not get a file handle
-        return {ERROR: 'could not get a filehandle for: %s' % url}
+        raise IOError
 
     dataset = Dataset()
     dataset.save()

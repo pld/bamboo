@@ -1,11 +1,9 @@
-import simplejson as json
 from math import isnan
 import re
 
 import numpy as np
 
 from bamboo.config.settings import ASYNCHRONOUS_TASKS
-from bamboo.lib.constants import ERROR
 
 """
 Constants for utils
@@ -41,12 +39,6 @@ def series_to_jsondict(series):
 
 def df_to_jsondict(dframe):
     return [series_to_jsondict(series) for idx, series in dframe.iterrows()]
-
-
-def dump_or_error(data, error_message):
-    if data is None:
-        data = {ERROR: error_message}
-    return json.dumps(data)
 
 
 def slugify_columns(column_names):

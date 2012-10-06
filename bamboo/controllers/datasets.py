@@ -1,4 +1,5 @@
 import cherrypy
+import urllib2
 
 from bamboo.controllers.abstract_controller import AbstractController
 from bamboo.core.merge import merge_dataset_ids, MergeError
@@ -6,7 +7,8 @@ from bamboo.lib.constants import ID
 from bamboo.lib.exceptions import JSONError
 from bamboo.lib.mongo import mongo_to_json
 from bamboo.lib.io import create_dataset_from_url, create_dataset_from_csv
-from bamboo.lib.utils import call_async, dump_or_error
+from bamboo.lib.summary import ColumnTypeError
+from bamboo.lib.utils import call_async
 from bamboo.models.calculation import Calculation
 from bamboo.models.dataset import Dataset
 from bamboo.models.observation import Observation
@@ -32,7 +34,7 @@ class Datasets(AbstractController):
         if dataset.record:
             task = call_async(dataset.delete, dataset, dataset)
             result = {self.SUCCESS: 'deleted dataset: %s' % dataset_id}
-        return dump_or_error(result, 'id not found')
+        return self.dump_or_error(result, 'id not found')
 
     def GET(self, dataset_id, mode=False, query=None, select=None,
             group=None):
@@ -79,10 +81,10 @@ class Datasets(AbstractController):
                     return mongo_to_json(dataset.observations(query, select))
                 else:
                     error = 'unsupported API call'
-        except JSONError as e:
+        except (ColumnTypeError, JSONError) as e:
             error = e.__str__()
 
-        return dump_or_error(result, error)
+        return self.dump_or_error(result, error)
 
     def POST(self, merge=None, url=None, csv_file=None, datasets=None):
         """
@@ -117,8 +119,11 @@ class Datasets(AbstractController):
                 result = create_dataset_from_csv(csv_file)
         except (ValueError, MergeError) as e:
             error = e.__str__()
+        except (IOError, urllib2.HTTPError):
+            # error reading file/url, return
+            error = 'could not get a filehandle for: %s' % url
 
-        return dump_or_error(result, error)
+        return self.dump_or_error(result, error)
 
     def PUT(self, dataset_id):
         """
@@ -130,4 +135,4 @@ class Datasets(AbstractController):
         if dataset:
             dataset.add_observations(cherrypy.request.body.read())
             result = {ID: dataset_id}
-        return dump_or_error(result, error)
+        return self.dump_or_error(result, error)

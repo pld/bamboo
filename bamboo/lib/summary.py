@@ -1,10 +1,15 @@
 import numpy as np
 
+from bamboo.lib.constants import DIMENSION
 from bamboo.lib.mongo import MONGO_RESERVED_KEYS
 from bamboo.lib.utils import series_to_jsondict
 
 
 SUMMARY = 'summary'
+
+
+class ColumnTypeError(Exception):
+    pass
 
 
 def summarize_series(dtype, data):
@@ -40,6 +45,27 @@ def summarize_with_groups(dframe, groups):
         dframe.groupby(groups).apply(summarize_df, groups))
 
 
-def summarize(dframe, groups, is_with_groups):
-    return summarize_df(dframe) if is_with_groups else summarize_with_groups(
-        dframe, groups)
+def summarize(dataset, dframe, groups, group_str, no_cache):
+    """
+    Raises a ColumnTypeError if grouping on a non-dimensional column.
+    """
+    # do not allow group by numeric types
+    for group in groups:
+        group_type = dataset.schema.get(group)
+        _type = dframe.dtypes.get(group)
+        if group != dataset.ALL and (group_type is None or
+                             group_type[dataset.OLAP_TYPE] != DIMENSION):
+            raise ColumnTypeError("group: '%s' is not a dimension." % group)
+
+    # check cached stats for group and update as necessary
+    stats = dataset.stats
+    if no_cache or not stats.get(group_str):
+        group_stats = summarize_df(dframe) if group_str == dataset.ALL else\
+            summarize_with_groups(dframe, groups)
+        stats.update({group_str: group_stats})
+        if not no_cache:
+            dataset.update({dataset.STATS: stats})
+    stats_to_return = stats.get(group_str)
+
+    return stats_to_return if group_str == dataset.ALL else {
+        group_str: stats_to_return}
