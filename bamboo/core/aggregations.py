@@ -7,43 +7,69 @@ class Aggregation(object):
     """
 
     def group_aggregation(self, dframe, groups, columns):
+        """
+        For when aggregation is called with a group parameter.
+        """
         column = columns[0]
         groupby = dframe[groups].join(
             column).groupby(groups, as_index=False)
         return groupby.agg(self.name)
 
     def column_aggregation(self, columns, name):
+        """
+        For when aggregation is called without a group parameter.
+        """
         column = columns[0]
         result = float(column.__getattribute__(self.name)())
         return DataFrame({name: Series([result])})
 
 
 class MaxAggregation(Aggregation):
+    """
+    Calculate the maximum.
+    """
 
     name = 'max'
 
 
 class MeanAggregation(Aggregation):
+    """
+    Calculate the arithmetic mean.
+    """
 
     name = 'mean'
 
 
 class MedianAggregation(Aggregation):
+    """
+    Calculate the median.
+    """
 
     name = 'median'
 
 
 class MinAggregation(Aggregation):
+    """
+    Calculate the minimum.
+    """
 
     name = 'min'
 
 
 class SumAggregation(Aggregation):
+    """
+    Calculate the sum.
+    """
 
     name = 'sum'
 
 
 class RatioAggregation(Aggregation):
+    """
+    Calculate the ratio. Columns with N/A for either the numerator or
+    denominator are ignored.  This will store associated numerator and
+    denominator columns.
+    """
 
     name = 'ratio'
 
