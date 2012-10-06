@@ -29,7 +29,7 @@ class Calculations(AbstractController):
             result = {self.SUCCESS: 'deleted calculation: %s for dataset: %s' %
                       (name, dataset_id)}
         return self.dump_or_error(result,
-                             'name and dataset_id combination not found')
+                                  'name and dataset_id combination not found')
 
     def POST(self, dataset_id, formula, name, group=None):
         """
@@ -45,8 +45,8 @@ class Calculations(AbstractController):
                 Calculation.create(dataset, formula, name, group)
                 result = {
                     self.SUCCESS: 'created calulcation: %s for dataset: %s'
-                        % (name, dataset_id)}
-            except ParseError as err:
+                    % (name, dataset_id)}
+            except ParseError as e:
                 error = e.__str__()
         return self.dump_or_error(result, error)
 

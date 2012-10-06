@@ -35,6 +35,12 @@ class TestCalculations(TestBase):
         self.assertTrue(isinstance(response, dict))
         self.assertFalse(DATASET_ID in response)
 
+    def test_POST_invalid_formula(self):
+        result = json.loads(
+            self.controller.POST(self.dataset_id, '=NON_EXIST', self.name))
+        self.assertTrue(isinstance(result, dict))
+        self.assertTrue(Datasets.ERROR in result.keys())
+
     def test_POST_remove_summary(self):
         Datasets().GET(
             self.dataset_id,

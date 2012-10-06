@@ -36,7 +36,6 @@ class Dataset(AbstractModel):
     LICENSE = 'license'
     AGGREGATED_DATASETS = BAMBOO_RESERVED_KEY_PREFIX + 'linked_datasets'
     MERGED_DATASETS = 'merged_datasets'
-    OLAP_TYPE = 'olap_type'
     UPDATED_AT = 'updated_at'
 
     # commonly accessed variables

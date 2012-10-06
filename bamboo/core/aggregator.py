@@ -40,7 +40,7 @@ class Aggregator(object):
             aggregated_datasets_dict = self.dataset.aggregated_datasets_dict
             aggregated_datasets_dict[self.group_str] = agg_dataset.dataset_id
             self.dataset.update({
-                self.dataset.__class__.AGGREGATED_DATASETS: aggregated_datasets_dict})
+                self.dataset.AGGREGATED_DATASETS: aggregated_datasets_dict})
         else:
             agg_dframe = agg_dataset.dframe()
 

@@ -1,3 +1,4 @@
+from nose.tools import assert_raises
 from pymongo.cursor import Cursor
 
 from bamboo.core.parser import ParseError
@@ -31,12 +32,14 @@ class TestCalculation(TestBase):
         self.assertTrue(Calculation.FORMULA in record.keys())
 
     def test_save_improper_formula(self):
+        assert_raises(ParseError, self._save_observations_and_calculation, 'NON_EXISTENT_COLUMN')
         try:
             self._save_observations_and_calculation('NON_EXISTENT_COLUMN')
         except ParseError as e:
             self.assertTrue('Missing column' in e.__str__())
 
     def test_save_unparsable_formula(self):
+        assert_raises(ParseError, self._save_observations_and_calculation, '=NON_EXISTENT_COLUMN')
         try:
             self._save_observations_and_calculation(
             '=NON_EXISTENT_COLUMN')
@@ -44,6 +47,8 @@ class TestCalculation(TestBase):
             self.assertTrue('Parse Failure' in e.__str__())
 
     def test_save_improper_formula_no_data(self):
+        assert_raises(ParseError, Calculation().save, self.dataset,
+                      'NON_EXISTENT_COLUMN', self.name)
         try:
             Calculation().save(self.dataset, 'NON_EXISTENT_COLUMN',
                                self.name)
@@ -51,6 +56,8 @@ class TestCalculation(TestBase):
             self.assertTrue('Missing column' in e.__str__())
 
     def test_save_unparsable_formula_no_data(self):
+        assert_raises(ParseError, Calculation().save, self.dataset,
+                      '=NON_EXISTENT_COLUMN', self.name)
         try:
             Calculation().save(self.dataset, '=NON_EXISTENT_COLUMN',
                                self.name)
@@ -59,6 +66,8 @@ class TestCalculation(TestBase):
 
     def test_save_non_existent_group(self):
         self._save_observations()
+        assert_raises(ParseError, Calculation().save, self.dataset,
+                      self.formula, self.name, group='NON_EXISTENT_GROUP')
         try:
             Calculation().save(self.dataset, self.formula, self.name,
                                group='NON_EXISTENT_GROUP')

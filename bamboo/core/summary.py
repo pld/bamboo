@@ -53,8 +53,8 @@ def summarize(dataset, dframe, groups, group_str, no_cache):
     for group in groups:
         group_type = dataset.schema.get(group)
         _type = dframe.dtypes.get(group)
-        if group != dataset.ALL and (group_type is None or
-                             group_type[dataset.OLAP_TYPE] != DIMENSION):
+        if group != dataset.ALL and (
+                group_type is None or group_type[dataset.OLAP_TYPE] != DIMENSION):
             raise ColumnTypeError("group: '%s' is not a dimension." % group)
 
     # check cached stats for group and update as necessary
