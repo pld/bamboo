@@ -1,4 +1,5 @@
 from calendar import timegm
+from datetime import datetime
 
 from dateutil.parser import parse as date_parse
 import numpy as np
@@ -58,3 +59,20 @@ def parse_date_to_unix_time(date):
 
 def col_is_date_simpletype(column_schema):
     return column_schema[SIMPLETYPE] == DATETIME
+
+
+def parse_timestamp_query(query, schema):
+    """
+    Interpret date column queries as JSON.
+    """
+    if query != {}:
+        datetime_columns = [
+            column for (column, schema) in
+            schema.items() if
+            schema[SIMPLETYPE] == DATETIME and column in query.keys()]
+        for date_column in datetime_columns:
+            query[date_column] = dict([(
+                key,
+                datetime.fromtimestamp(int(value))) for (key, value) in
+                query[date_column].items()])
+    return query

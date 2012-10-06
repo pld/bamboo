@@ -7,12 +7,12 @@ import numpy as np
 from pandas import DataFrame
 
 from bamboo.core.calculator import Calculator
-from bamboo.lib.constants import ALL, BAMBOO_RESERVED_KEY_PREFIX, DATASET_ID,\
+from bamboo.lib.constants import BAMBOO_RESERVED_KEY_PREFIX, DATASET_ID,\
     DATASET_OBSERVATION_ID, DIMENSION, ERROR, ID, NUM_COLUMNS, NUM_ROWS,\
     PARENT_DATASET_ID, SCHEMA, SIMPLETYPE
 from bamboo.lib.mongo import mongo_to_df, reserve_encoded
 from bamboo.lib.schema_builder import SchemaBuilder
-from bamboo.lib.summary import summarize_df, summarize_with_groups
+from bamboo.lib.summary import summarize
 from bamboo.lib.utils import call_async, split_groups
 from bamboo.models.abstract_model import AbstractModel
 from bamboo.models.calculation import Calculation
@@ -23,7 +23,9 @@ class Dataset(AbstractModel):
 
     __collectionname__ = 'datasets'
 
+    # caching keys
     STATS = '_stats'
+    ALL = '_all'
 
     # metadata
     ATTRIBUTION = 'attribution'
@@ -112,7 +114,7 @@ class Dataset(AbstractModel):
         Observation.delete_all(self)
 
     @task
-    def summarize(self, query=None, select=None, group_str=ALL):
+    def summarize(self, query=None, select=None, group_str=None):
         """
         Return a summary for the rows/values filtered by *query* and *select*
         and grouped by *group_str* or the overall summary if no group is
@@ -120,17 +122,18 @@ class Dataset(AbstractModel):
 
         *group_str* may be a string of many comma separated groups.
         """
+        # interpret none as all
+        if not group_str:
+            group_str = self.ALL
+
         # split group in case of multigroups
         groups = split_groups(group_str)
-        group_key = ALL
 
         # if select append groups to select
         if select:
             select = json.loads(select)
             select.update(dict(zip(groups, [1] * len(groups))))
             select = json.dumps(select)
-        if group_str != ALL:
-            group_key = '%s,%s' % (group_str, select)
 
         # narrow list of observations via query/select
         dframe = self.dframe(query=query, select=select)
@@ -139,21 +142,20 @@ class Dataset(AbstractModel):
         for group in groups:
             group_type = self.schema.get(group)
             _type = dframe.dtypes.get(group)
-            if group != ALL and (group_type is None or
+            if group != self.ALL and (group_type is None or
                                  group_type[self.OLAP_TYPE] != DIMENSION):
                 return {ERROR: "group: '%s' is not a dimension." % group}
 
         # check cached stats for group and update as necessary
         stats = self.stats
-        if query or not stats.get(group_key):
-            stats = {ALL: summarize_df(dframe)} if group_str == ALL \
-                else summarize_with_groups(
-                    dframe, stats, group_key, groups, select)
-            if not query:
+        if query or select or not stats.get(group_str):
+            group_stats = summarize(dframe, groups, self.ALL == group_str)
+            stats.update({group_str: group_stats})
+            if not query and not select:
                 self.update({self.STATS: stats})
-        stats_to_return = stats.get(group_key)
+        stats_to_return = stats.get(group_str)
 
-        return stats_to_return if group_str == ALL else {
+        return stats_to_return if group_str == self.ALL else {
             group_str: stats_to_return}
 
     @classmethod

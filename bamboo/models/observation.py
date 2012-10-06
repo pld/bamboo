@@ -1,12 +1,11 @@
-from datetime import datetime
 import json
 
 from bson import json_util
 
 from bamboo.config.db import Database
 from bamboo.config.settings import DB_BATCH_SIZE
-from bamboo.lib.constants import DATASET_OBSERVATION_ID, DATETIME,\
-    NUM_COLUMNS, NUM_ROWS, SCHEMA, SIMPLETYPE
+from bamboo.lib.constants import DATASET_OBSERVATION_ID, NUM_COLUMNS, NUM_ROWS, SCHEMA
+from bamboo.lib.datetools import parse_timestamp_query
 from bamboo.lib.exceptions import JSONError
 from bamboo.lib.mongo import mongo_to_df
 from bamboo.lib.utils import call_async
@@ -37,17 +36,7 @@ class Observation(AbstractModel):
             query = (query and json.loads(
                 query, object_hook=json_util.object_hook)) or {}
 
-            if query != {}:
-                # interpret date column queries as JSON
-                datetime_columns = [
-                    column for (column, schema) in
-                    dataset.schema.items() if
-                    schema[SIMPLETYPE] == DATETIME and column in query.keys()]
-                for date_column in datetime_columns:
-                    query[date_column] = dict([(
-                        key,
-                        datetime.fromtimestamp(int(value))) for (key, value) in
-                        query[date_column].items()])
+            query = parse_timestamp_query(query, dataset.schema)
         except ValueError, e:
             raise JSONError('cannot decode query: %s' % e.__str__())
 

@@ -1,8 +1,10 @@
 import numpy as np
 
-from bamboo.lib.constants import ALL, SUMMARY
 from bamboo.lib.mongo import MONGO_RESERVED_KEYS
 from bamboo.lib.utils import series_to_jsondict
+
+
+SUMMARY = 'summary'
 
 
 def summarize_series(dtype, data):
@@ -30,11 +32,14 @@ def summarize_df(dframe, groups=[]):
     ])
 
 
-def summarize_with_groups(dframe, stats, group_str, groups, select):
+def summarize_with_groups(dframe, groups):
     """
     Calculate summary statistics for group.
     """
-    grouped_stats = series_to_jsondict(
+    return series_to_jsondict(
         dframe.groupby(groups).apply(summarize_df, groups))
-    stats.update({group_str: grouped_stats})
-    return stats
+
+
+def summarize(dframe, groups, is_with_groups):
+    return summarize_df(dframe) if is_with_groups else summarize_with_groups(
+        dframe, groups)

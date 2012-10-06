@@ -3,7 +3,7 @@ import json
 from bamboo.controllers.abstract_controller import AbstractController
 from bamboo.controllers.calculations import Calculations
 from bamboo.controllers.datasets import Datasets
-from bamboo.lib.constants import ALL, DATASET_ID, ERROR, ID
+from bamboo.lib.constants import DATASET_ID, ERROR, ID
 from bamboo.lib.io import create_dataset_from_url
 from bamboo.models.calculation import Calculation
 from bamboo.models.dataset import Dataset
@@ -42,11 +42,11 @@ class TestCalculations(TestBase):
             select=Datasets.SELECT_ALL_FOR_SUMMARY)
         dataset = Dataset.find_one(self.dataset_id)
         self.assertTrue(isinstance(dataset.stats, dict))
-        self.assertTrue(isinstance(dataset.stats[ALL], dict))
+        self.assertTrue(isinstance(dataset.stats[Dataset.ALL], dict))
         self._post_formula()
         # stats should have new column for calculation
         dataset = Dataset.find_one(self.dataset_id)
-        self.assertTrue(self.name in dataset.stats.get(ALL).keys())
+        self.assertTrue(self.name in dataset.stats.get(Dataset.ALL).keys())
 
     def test_DELETE_nonexistent_calculation(self):
         result = json.loads(self.controller.DELETE(self.dataset_id, self.name))

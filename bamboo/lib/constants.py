@@ -13,9 +13,6 @@ BAMBOO_RESERVED_KEYS = [
     PARENT_DATASET_ID,
 ]
 
-# internal caching keys
-ALL = '_all'
-
 # JSON output labels
 ERROR = 'error'
 ID = 'id'
@@ -25,7 +22,6 @@ NUM_COLUMNS = 'num_columns'
 NUM_ROWS = 'num_rows'
 SCHEMA = 'schema'
 SIMPLETYPE = 'simpletype'
-SUMMARY = 'summary'
 
 # datetime simpletype
 DATETIME = 'datetime'

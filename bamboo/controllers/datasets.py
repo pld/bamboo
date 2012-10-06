@@ -2,7 +2,7 @@ import cherrypy
 
 from bamboo.controllers.abstract_controller import AbstractController
 from bamboo.core.merge import merge_dataset_ids, MergeError
-from bamboo.lib.constants import ALL, ID
+from bamboo.lib.constants import ID
 from bamboo.lib.exceptions import JSONError
 from bamboo.lib.mongo import mongo_to_json
 from bamboo.lib.io import create_dataset_from_url, create_dataset_from_csv
@@ -35,7 +35,7 @@ class Datasets(AbstractController):
         return dump_or_error(result, 'id not found')
 
     def GET(self, dataset_id, mode=False, query=None, select=None,
-            group=ALL):
+            group=None):
         """
         Based on *mode* perform different operations on the dataset specified
         by *dataset_id*.
