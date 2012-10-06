@@ -7,17 +7,17 @@ from bamboo.models.observation import Observation
 
 class Aggregator(object):
     """
-    Apply the *aggregation* to group columns in *group_str* and the *column
+    Apply the *aggregation* to group columns in *group_str* and the *columns*
     of the *dframe*.
     Store the resulting *dframe* as a linked dataset for *dataset*.
     If a linked dataset with the same groups already exists update this
     dataset.  Otherwise create a new linked dataset.
     """
 
-    def __init__(self, dataset, dframe, column, group_str, _type, name):
+    def __init__(self, dataset, dframe, columns, group_str, _type, name):
         self.dataset = dataset
         self.dframe = dframe
-        self.column = column
+        self.columns = columns
         # MongoDB does not allow None as a key
         self.group_str = group_str if group_str else ''
         self.groups = split_groups(self.group_str) if group_str else None
@@ -64,6 +64,6 @@ class Aggregator(object):
         if self.group_str:
             # groupby on dframe then run aggregation on groupby obj
             return aggregation.group_aggregation(self.dframe, self.groups,
-                                                 self.column)
+                                                 self.columns)
         else:
-            return aggregation.column_aggregation(self.column, self.name)
+            return aggregation.column_aggregation(self.columns, self.name)

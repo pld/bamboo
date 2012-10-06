@@ -49,6 +49,6 @@ class Calculations(AbstractController):
         dataset = Dataset.find_one(dataset_id)
         if dataset:
             # get the calculations
-            calculations = dataset.calculations
+            calculations = dataset.calculations()
             return dump_mongo_json(
                 [x.clean_record for x in calculations])

@@ -166,7 +166,9 @@ class Calculator(object):
         return existing_dframe
 
     def _make_columns(self, formula, name):
-        # parse formula into function and variables
+        """
+        Parse formula into function and variables
+        """
         aggregation, functions = self.parser.parse_formula(formula)
 
         new_columns = []
