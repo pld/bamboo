@@ -25,3 +25,8 @@ Formula Parser
 --------------
 .. autoclass:: bamboo.core.parser.Parser
     :members:
+
+Summary Statistic Utilities
+---------------------------
+.. automodule:: bamboo.lib.summary
+    :members:

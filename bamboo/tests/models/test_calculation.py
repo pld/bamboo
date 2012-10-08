@@ -32,17 +32,19 @@ class TestCalculation(TestBase):
         self.assertTrue(Calculation.FORMULA in record.keys())
 
     def test_save_improper_formula(self):
-        assert_raises(ParseError, self._save_observations_and_calculation, 'NON_EXISTENT_COLUMN')
+        assert_raises(ParseError, self._save_observations_and_calculation,
+                      'NON_EXISTENT_COLUMN')
         try:
             self._save_observations_and_calculation('NON_EXISTENT_COLUMN')
         except ParseError as e:
             self.assertTrue('Missing column' in e.__str__())
 
     def test_save_unparsable_formula(self):
-        assert_raises(ParseError, self._save_observations_and_calculation, '=NON_EXISTENT_COLUMN')
+        assert_raises(ParseError, self._save_observations_and_calculation,
+                      '=NON_EXISTENT_COLUMN')
         try:
             self._save_observations_and_calculation(
-            '=NON_EXISTENT_COLUMN')
+                '=NON_EXISTENT_COLUMN')
         except ParseError as e:
             self.assertTrue('Parse Failure' in e.__str__())
 

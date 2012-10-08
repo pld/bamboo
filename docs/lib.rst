@@ -18,12 +18,7 @@ Mongo Utilities
 
 Schema Builder
 ---------------------------
-.. autoclass:: bamboo.lib.schema_builder.SchemaBuilder
-    :members:
-
-Summary Statistic Utilities
----------------------------
-.. automodule:: bamboo.lib.summary
+.. automodule:: bamboo.lib.schema_builder
     :members:
 
 Utilities
