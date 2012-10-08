@@ -2,8 +2,10 @@ from math import isnan
 import re
 
 import numpy as np
+from pandas import Series
 
 from bamboo.config.settings import ASYNCHRONOUS_TASKS
+from bamboo.lib.constants import PARENT_DATASET_ID
 
 """
 Constants for utils
@@ -72,3 +74,9 @@ def call_async(function, dataset, *args, **kwargs):
             args=args, kwargs=kwargs, queue=dataset.dataset_id)
     else:  # pragma: no cover
         function(*args, **kwargs)
+
+
+def add_parent_column(parent_dataset_id, child_dframe):
+    column = Series([parent_dataset_id] * len(child_dframe))
+    column.name = PARENT_DATASET_ID
+    return child_dframe.join(column)

@@ -113,11 +113,32 @@ class TestDatasetsUpdate(TestAbstractDatasets):
             self.merged_dataset2_id,
             'tests/fixtures/updates/update2/merged_dataset2.p')
 
-    def test_datasets_update3(self):
+    def test_datasets_update_merged(self):
         self._put_row_updates(self.merged_dataset1_id)
         self._verify_dataset(
             self.merged_dataset1_id,
-            'tests/fixtures/updates/update3/merged_dataset1.p')
+            'tests/fixtures/updates/update_merged/merged_dataset1.p')
         self._verify_dataset(
             self.merged_dataset2_id,
-            'tests/fixtures/updates/update3/merged_dataset2.p')
+            'tests/fixtures/updates/update_merged/merged_dataset2.p')
+
+    def test_datasets_update_aggregated_dataset(self):
+        self._put_row_updates(
+            dataset_id=self.linked_dataset1_id,
+            file_path='tests/fixtures/updates/update_agg/update.json')
+        self._verify_dataset(
+            self.linked_dataset1_id,
+            'tests/fixtures/updates/update_agg/linked_dataset1.p')
+        self._verify_dataset(
+            self.merged_dataset2_id,
+            'tests/fixtures/updates/update_agg/merged_dataset2.p')
+        self._put_row_updates(self.dataset2_id)
+        self._verify_dataset(
+            self.dataset2_id,
+            'tests/fixtures/updates/update_agg2/dataset2.p')
+        self._verify_dataset(
+            self.linked_dataset1_id,
+            'tests/fixtures/updates/update_agg2/linked_dataset1.p')
+        self._verify_dataset(
+            self.merged_dataset2_id,
+            'tests/fixtures/updates/update_agg2/merged_dataset2.p')

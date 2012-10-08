@@ -1,7 +1,7 @@
 from pandas import Series
 
 from bamboo.core.aggregations import Aggregation, AGGREGATIONS
-from bamboo.lib.utils import split_groups
+from bamboo.lib.utils import add_parent_column, split_groups
 from bamboo.models.observation import Observation
 
 
@@ -26,6 +26,7 @@ class Aggregator(object):
 
     def save_aggregation(self):
         new_dframe = self.eval_dframe()
+        new_dframe = add_parent_column(self.dataset.dataset_id, new_dframe)
 
         aggregated_datasets = self.dataset.aggregated_datasets
         agg_dataset = aggregated_datasets.get(self.group_str, None)

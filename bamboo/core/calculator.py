@@ -1,14 +1,15 @@
 from collections import defaultdict
 
 from celery.task import task
-from pandas import concat, DataFrame, Series
+from pandas import concat, DataFrame
 
 from bamboo.core.aggregator import Aggregator
 from bamboo.core.parser import ParseError, Parser
 from bamboo.lib.constants import PARENT_DATASET_ID
 from bamboo.lib.datetools import recognize_dates, recognize_dates_from_schema
 from bamboo.lib.mongo import MONGO_RESERVED_KEYS
-from bamboo.lib.utils import call_async, df_to_jsondict, split_groups
+from bamboo.lib.utils import add_parent_column, call_async, df_to_jsondict,\
+    split_groups
 
 
 class Calculator(object):
@@ -83,7 +84,7 @@ class Calculator(object):
         parent_dframe = parent_dataset.dframe()
 
         # add parent ids to parent dframe
-        parent_dframe = self._add_parent_column(
+        parent_dframe = add_parent_column(
             parent_dataset.dataset_id,
             parent_dframe)
 
@@ -100,7 +101,7 @@ class Calculator(object):
             merged_calculator._propagate_column(self.dataset)
 
     @task
-    def calculate_updates(self, new_data):
+    def calculate_updates(self, new_data, parent_dataset_id=None):
         """
         Update dataset with *new_data*.
 
@@ -134,11 +135,9 @@ class Calculator(object):
                 new_column.name = potential_name
             new_dframe = new_dframe.join(new_column)
 
-        # get parent id from existing dataset
-        parent_dataset_id = self.dataset.observations()[0].get(
-            PARENT_DATASET_ID)
+        # set parent id if provided
         if parent_dataset_id:
-            new_dframe = self._add_parent_column(
+            new_dframe = add_parent_column(
                 parent_dataset_id, new_dframe)
 
         existing_dframe = self._add_parent_ids(self.dframe)
@@ -152,11 +151,23 @@ class Calculator(object):
 
         self._update_aggregate_datasets(aggregate_calculations)
 
+        # store slugs as labels for child datasets
+        slugified_data = []
+        if not isinstance(new_data, list):
+            new_data = [new_data]
+        for row in new_data:
+            for key, value in row.iteritems():
+                if labels_to_slugs.get(key) and key not in MONGO_RESERVED_KEYS:
+                    del row[key]
+                    row[labels_to_slugs[key]] = value
+            slugified_data.append(row)
+
         # update the merged datasets with new_dframe
         for merged_dataset in self.dataset.merged_datasets:
             merged_calculator = Calculator(merged_dataset)
             call_async(merged_calculator.calculate_updates,
-                       merged_dataset, merged_calculator, new_data)
+                       merged_dataset, merged_calculator,
+                       slugified_data, self.dataset.dataset_id)
 
     def _add_parent_ids(self, existing_dframe):
         old_dframe = self.dataset.dframe(with_reserved_keys=True)
@@ -213,19 +224,23 @@ class Calculator(object):
         data = self.labels_to_slugs_and_groups.get(calculation.name)
         name, group, agg_dataset = data
 
+        # delete the rows in this dataset from the parent
+        agg_dataset.remove_parent_observations(self.dataset.dataset_id)
+
         # recalculate aggregated dataframe from aggregation
         agg_dframe = agg_dataset.dframe()
+
         aggregation, new_columns = self._make_columns(
             calculation.formula, name)
         agg = Aggregator(agg_dataset, agg_dframe, new_columns,
                          group, aggregation, name)
-        new_agg_dframe = agg.eval_dframe()
+        new_agg_dframe = concat([agg_dframe, agg.eval_dframe()])
 
         # update aggregated dataset with new dataframe
         new_agg_dframe = agg_dataset.replace_observations(new_agg_dframe)
 
         # add parent id column to new dframe
-        new_agg_dframe = self._add_parent_column(
+        new_agg_dframe = add_parent_column(
             agg_dataset.dataset_id, new_agg_dframe)
 
         # jsondict from new dframe
@@ -239,7 +254,8 @@ class Calculator(object):
             # calculate updates on the child
             merged_calculator = Calculator(merged_dataset)
             call_async(merged_calculator.calculate_updates,
-                       merged_dataset, merged_calculator, new_data)
+                       merged_dataset, merged_calculator, new_data,
+                       self.dataset.dataset_id)
 
     def _create_labels_to_slugs_and_groups(self):
         """
@@ -250,8 +266,3 @@ class Calculator(object):
             for label, slug in dataset.build_labels_to_slugs().items():
                 self.labels_to_slugs_and_groups[label] = (
                     slug, group, dataset)
-
-    def _add_parent_column(self, parent_dataset_id, child_dframe):
-        column = Series([parent_dataset_id] * len(child_dframe))
-        column.name = PARENT_DATASET_ID
-        return child_dframe.join(column)
