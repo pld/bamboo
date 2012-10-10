@@ -3,7 +3,6 @@ import json
 import cherrypy
 
 from bamboo.controllers.datasets import Datasets
-from bamboo.lib.constants import ID
 from bamboo.lib.io import create_dataset_from_url
 from bamboo.lib.jsontools import df_to_jsondict, series_to_jsondict
 from bamboo.models.dataset import Dataset
@@ -31,7 +30,7 @@ class TestAbstractDatasets(TestBase):
         cherrypy.request.body = open(file_path, 'r')
         result = json.loads(self.controller.PUT(dataset_id=dataset_id))
         self.assertTrue(isinstance(result, dict))
-        self.assertTrue(ID in result)
+        self.assertTrue(Dataset.ID in result)
         # set up the (default) values to test against
         with open(self._update_check_file_path, 'r') as f:
             self._update_values = json.loads(f.read())
@@ -40,7 +39,8 @@ class TestAbstractDatasets(TestBase):
         if file_name is None:
             file_name = self._file_name
         self.dataset_id = create_dataset_from_url(
-            'file://tests/fixtures/%s' % file_name, allow_local_file=True)[ID]
+            'file://tests/fixtures/%s' % file_name,
+            allow_local_file=True).dataset_id
         self.schema = json.loads(
             self.controller.GET(
                 self.dataset_id,

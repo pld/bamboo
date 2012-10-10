@@ -4,7 +4,6 @@ import urllib2
 from bamboo.controllers.abstract_controller import AbstractController
 from bamboo.core.merge import merge_dataset_ids, MergeError
 from bamboo.core.summary import ColumnTypeError
-from bamboo.lib.constants import ID
 from bamboo.lib.jsontools import JSONError
 from bamboo.lib.mongo import dframe_to_json
 from bamboo.lib.io import create_dataset_from_url, create_dataset_from_csv
@@ -113,12 +112,13 @@ class Datasets(AbstractController):
 
         try:
             if merge:
-                result = {ID: merge_dataset_ids(datasets).dataset_id}
+                result = merge_dataset_ids(datasets)
             elif url:
                 dataset = create_dataset_from_url(url)
-                result = {ID: dataset.dataset_id}
+                result = dataset.dataset_id
             elif csv_file:
                 result = create_dataset_from_csv(csv_file)
+            result = {Dataset.ID: result.dataset_id}
         except (ValueError, MergeError) as e:
             error = e.__str__()
         except (IOError, urllib2.HTTPError):
@@ -136,5 +136,5 @@ class Datasets(AbstractController):
         dataset = Dataset.find_one(dataset_id)
         if dataset:
             dataset.add_observations(cherrypy.request.body.read())
-            result = {ID: dataset_id}
+            result = {Dataset.ID: dataset_id}
         return self.dump_or_error(result, error)

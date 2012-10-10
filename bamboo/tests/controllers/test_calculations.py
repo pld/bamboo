@@ -4,7 +4,6 @@ from bamboo.controllers.abstract_controller import AbstractController
 from bamboo.controllers.calculations import Calculations
 from bamboo.controllers.datasets import Datasets
 from bamboo.core.frame import DATASET_ID
-from bamboo.lib.constants import ID
 from bamboo.lib.io import create_dataset_from_url
 from bamboo.models.calculation import Calculation
 from bamboo.models.dataset import Dataset
@@ -17,8 +16,8 @@ class TestCalculations(TestBase):
         TestBase.setUp(self)
 
         self._file = 'file://tests/fixtures/good_eats.csv'
-        self.dataset_id = create_dataset_from_url(self._file,
-                                                  allow_local_file=True)[ID]
+        self.dataset_id = create_dataset_from_url(
+            self._file, allow_local_file=True).dataset_id
         self.controller = Calculations()
         self.formula = 'amount + gps_alt'
         self.name = 'test'

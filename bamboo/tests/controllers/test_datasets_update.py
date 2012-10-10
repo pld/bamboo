@@ -5,7 +5,6 @@ from bamboo.controllers.calculations import Calculations
 from bamboo.controllers.datasets import Datasets
 from bamboo.core.frame import PARENT_DATASET_ID
 from bamboo.models.dataset import Dataset
-from bamboo.lib.constants import ID
 from bamboo.lib.datetools import recognize_dates
 from bamboo.tests.controllers.test_abstract_datasets import\
     TestAbstractDatasets
@@ -51,13 +50,13 @@ class TestDatasetsUpdate(TestAbstractDatasets):
         result = json.loads(self.controller.POST(
             merge=True,
             datasets=json.dumps([self.dataset1_id, self.dataset2_id])))
-        self.merged_dataset1_id = result[ID]
+        self.merged_dataset1_id = result[Datset.ID]
 
         result = json.loads(self.controller.POST(
             merge=True,
             datasets=json.dumps(
                 [self.merged_dataset1_id, self.linked_dataset1_id])))
-        self.merged_dataset2_id = result[ID]
+        self.merged_dataset2_id = result[Dataset.ID]
 
     def _verify_dataset(self, dataset_id, fixture_path):
         dframe = Dataset.find_one(dataset_id).dframe()

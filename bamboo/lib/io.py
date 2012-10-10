@@ -63,7 +63,7 @@ def create_dataset_from_url(url, allow_local_file=False):
     dataset.save()
     call_async(import_dataset, dataset, dataset, _file=_file)
 
-    return dataset.dataset_id
+    return dataset
 
 
 def create_dataset_from_csv(csv_file):
@@ -84,4 +84,4 @@ def create_dataset_from_csv(csv_file):
     call_async(
         import_dataset, dataset, dataset, _file=tmpfile.name, delete=True)
 
-    return {ID: dataset.dataset_id}
+    return dataset

@@ -12,7 +12,6 @@ from bamboo.controllers.datasets import Datasets
 from bamboo.controllers.calculations import Calculations
 from bamboo.core.frame import BAMBOO_RESERVED_KEYS, PARENT_DATASET_ID
 from bamboo.core.summary import SUMMARY
-from bamboo.lib.constants import ID
 from bamboo.tests.decorators import requires_internet
 from bamboo.lib.datetools import DATETIME
 from bamboo.lib.mongo import MONGO_RESERVED_KEY_PREFIX,\
@@ -78,7 +77,7 @@ class TestDatasets(TestAbstractDatasets):
 
     def _test_summary_built(self, result):
         # check that summary is created
-        self.dataset_id = result[ID]
+        self.dataset_id = result[Dataset.ID]
         results = self.controller.GET(
             self.dataset_id,
             mode=Datasets.MODE_SUMMARY,
@@ -163,7 +162,7 @@ class TestDatasets(TestAbstractDatasets):
         mock_uploaded_file = MockUploadedFile(_file)
         result = json.loads(self.controller.POST(csv_file=mock_uploaded_file))
         self.assertTrue(isinstance(result, dict))
-        self.assertTrue(ID in result)
+        self.assertTrue(Dataset.ID in result)
 
         results = self._test_summary_built(result)
         self._test_summary_no_group(results)
@@ -177,7 +176,7 @@ class TestDatasets(TestAbstractDatasets):
         mock_uploaded_file = MockUploadedFile(_file)
         result = json.loads(self.controller.POST(csv_file=mock_uploaded_file))
         self.assertTrue(isinstance(result, dict))
-        self.assertTrue(ID in result)
+        self.assertTrue(Dataset.ID in result)
 
         results = self._test_summary_built(result)
         self._test_summary_no_group(results)
@@ -197,7 +196,7 @@ class TestDatasets(TestAbstractDatasets):
     def test_POST_url(self):
         result = json.loads(self.controller.POST(url=self.url))
         self.assertTrue(isinstance(result, dict))
-        self.assertTrue(ID in result)
+        self.assertTrue(Dataset.ID in result)
 
         self._test_summary_built(result)
 
@@ -205,8 +204,8 @@ class TestDatasets(TestAbstractDatasets):
     def test_POST_not_csv_url(self):
         result = json.loads(self.controller.POST(url='http://74.125.228.110/'))
         self.assertTrue(isinstance(result, dict))
-        self.assertTrue(ID in result)
-        results = json.loads(self.controller.GET(result[ID]))
+        self.assertTrue(Dataset.ID in result)
+        results = json.loads(self.controller.GET(result[Dataset.ID]))
         self.assertEqual(len(results), 0)
 
     @requires_internet
@@ -239,16 +238,16 @@ class TestDatasets(TestAbstractDatasets):
             merge=True,
             datasets=json.dumps([dataset_id1, dataset_id2])))
         self.assertTrue(isinstance(result, dict))
-        self.assertTrue(ID in result)
+        self.assertTrue(Dataset.ID in result)
 
         datasets = [Dataset.find_one(dataset_id)
                     for dataset_id in [dataset_id1, dataset_id2]]
 
         for dataset in datasets:
-            self.assertTrue(result[ID] in dataset.merged_dataset_ids)
+            self.assertTrue(result[Dataset.ID] in dataset.merged_dataset_ids)
 
         dframe1 = datasets[0].dframe()
-        merged_dataset = Dataset.find_one(result[ID])
+        merged_dataset = Dataset.find_one(result[Dataset.ID])
         merged_rows = merged_dataset.observations()
         for row in merged_rows:
             self.assertTrue(PARENT_DATASET_ID in row.keys())
@@ -271,8 +270,8 @@ class TestDatasets(TestAbstractDatasets):
             merge=True,
             datasets=json.dumps([dataset_id1, dataset_id2])))
         self.assertTrue(isinstance(result, dict))
-        self.assertTrue(ID in result)
-        response = json.loads(self.controller.GET(result[ID]))
+        self.assertTrue(Dataset.ID in result)
+        response = json.loads(self.controller.GET(result[Dataset.ID]))
         row_keys = sum([row.keys() for row in response], [])
         for reserved_key in BAMBOO_RESERVED_KEYS + MONGO_RESERVED_KEY_STRS:
             self.assertFalse(reserved_key in row_keys)
@@ -341,7 +340,8 @@ class TestDatasets(TestAbstractDatasets):
         self.assertTrue(isinstance(results, dict))
         result_keys = results.keys()
         for key in [
-                Dataset.CREATED_AT, ID, Dataset.SCHEMA, Dataset.UPDATED_AT]:
+                Dataset.CREATED_AT, Dataset.ID, Dataset.SCHEMA,
+                Dataset.UPDATED_AT]:
             self.assertTrue(key in result_keys)
         self.assertEqual(
             results[Dataset.SCHEMA]['submit_date'][SIMPLETYPE], DATETIME)

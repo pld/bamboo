@@ -9,7 +9,6 @@ from bamboo.core.calculator import Calculator
 from bamboo.core.frame import BAMBOO_RESERVED_KEY_PREFIX, DATASET_ID,\
     DATASET_OBSERVATION_ID, PARENT_DATASET_ID
 from bamboo.core.summary import summarize
-from bamboo.lib.constants import ID
 from bamboo.lib.mongo import mongo_to_df, reserve_encoded
 from bamboo.lib.schema_builder import schema_from_data_and_dtypes, SIMPLETYPE
 from bamboo.lib.utils import call_async, split_groups
@@ -32,6 +31,7 @@ class Dataset(AbstractModel):
     CARDINALITY = 'cardinality'
     CREATED_AT = 'created_at'
     DESCRIPTION = 'description'
+    ID = 'id'
     LABEL = 'label'
     LICENSE = 'license'
     NUM_COLUMNS = 'num_columns'
@@ -168,7 +168,7 @@ class Dataset(AbstractModel):
 
     def info(self):
         return {
-            ID: self.dataset_id,
+            self.ID: self.dataset_id,
             self.LABEL: '',
             self.DESCRIPTION: '',
             self.SCHEMA: self.schema,
