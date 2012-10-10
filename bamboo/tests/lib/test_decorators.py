@@ -1,4 +1,5 @@
 from bamboo.lib import decorators
+from bamboo.tests imprt decorators as test_decorators
 from bamboo.tests.test_base import TestBase
 
 
@@ -15,17 +16,17 @@ class TestDecorators(TestBase):
         wrapped_test_func()
 
     def test_print_time(self):
-        self._test_decorator(decorators.print_time)
+        self._test_decorator(test_decorators.print_time)
 
     def test_requires_internet(self):
-        self._test_decorator(decorators.requires_internet)
+        self._test_decorator(test_decorators.requires_internet)
 
     def test_requires_internet_bad_url(self):
-        wrapped_test_func = decorators.requires_internet(self._test_func,
-                                                         'http://')
+        wrapped_test_func = test_decorators.requires_internet(
+            self._test_func, 'http://')
         self.assertTrue(hasattr(wrapped_test_func, '__call__'))
         self.assertRaises(AssertionError, wrapped_test_func)
 
     def test_check_bad_url(self):
-        result = decorators._check_url('http://')
+        result = test_decorators._check_url('http://')
         self.assertEqual(result, False)
