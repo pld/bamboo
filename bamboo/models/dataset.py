@@ -8,7 +8,8 @@ from pandas import DataFrame
 
 from bamboo.core.calculator import Calculator
 from bamboo.core.summary import summarize
-from bamboo.lib.constants import BAMBOO_RESERVED_KEY_PREFIX, DATASET_ID,\
+from bamboo.lib.constants import BAMBOO_RESERVED_KEY_PREFIX,\
+    BAMBOO_RESERVED_KEYS, DATASET_ID,\
     DATASET_OBSERVATION_ID, ID, NUM_COLUMNS, NUM_ROWS,\
     PARENT_DATASET_ID, SCHEMA
 from bamboo.lib.mongo import mongo_to_df, reserve_encoded
@@ -72,10 +73,20 @@ class Dataset(AbstractModel):
     def merged_datasets(self):
         return [self.find_one(_id) for _id in self.merged_dataset_ids]
 
-    def dframe(self, query=None, select=None, with_reserved_keys=False):
+    def dframe(self, query=None, select=None, with_reserved_keys=False,
+               with_parent_ids=False):
         observations = self.observations(query=query, select=select)
-        return DataFrame(observations) if with_reserved_keys else\
-            mongo_to_df(observations)
+        if with_reserved_keys:
+            return DataFrame(observations)
+        else:
+            dframe = mongo_to_df(observations)
+            reserved_keys = list(set(BAMBOO_RESERVED_KEYS).intersection(
+                set(dframe.columns.tolist())))
+            if with_parent_ids and PARENT_DATASET_ID in reserved_keys:
+                reserved_keys.remove(PARENT_DATASET_ID)
+            for column in reserved_keys:
+                del dframe[column]
+            return dframe
 
     def add_merged_dataset(self, new_dataset):
         self.update({
@@ -211,3 +222,4 @@ class Dataset(AbstractModel):
         Observation.delete_all(self)
         Observation().save(dframe, self)
         return self.dframe()
+

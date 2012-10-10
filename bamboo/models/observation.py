@@ -8,7 +8,6 @@ from bamboo.lib.constants import DATASET_OBSERVATION_ID, NUM_COLUMNS,\
     NUM_ROWS, SCHEMA
 from bamboo.lib.datetools import parse_timestamp_query
 from bamboo.lib.exceptions import JSONError
-from bamboo.lib.mongo import mongo_to_df
 from bamboo.lib.utils import call_async
 from bamboo.models.abstract_model import AbstractModel
 

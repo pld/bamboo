@@ -5,7 +5,6 @@ from pandas import concat, DataFrame
 
 from bamboo.core.aggregator import Aggregator
 from bamboo.core.parser import ParseError, Parser
-from bamboo.lib.constants import PARENT_DATASET_ID
 from bamboo.lib.datetools import recognize_dates, recognize_dates_from_schema
 from bamboo.lib.mongo import MONGO_RESERVED_KEYS
 from bamboo.lib.utils import add_parent_column, call_async, df_to_jsondict,\
@@ -77,8 +76,7 @@ class Calculator(object):
         # delete the rows in this dataset from the parent
         self.dataset.remove_parent_observations(parent_dataset.dataset_id)
         # get this dataset without the out-of-date parent rows
-        dframe = self.dataset.dframe()
-        dframe = self._add_parent_ids(dframe)
+        dframe = self.dataset.dframe(with_parent_ids=True)
 
         # create new dframe from the upated parent
         parent_dframe = parent_dataset.dframe()
@@ -140,7 +138,7 @@ class Calculator(object):
             new_dframe = add_parent_column(
                 parent_dataset_id, new_dframe)
 
-        existing_dframe = self._add_parent_ids(self.dframe)
+        existing_dframe = self.dataset.dframe(with_parent_ids=True)
 
         # merge the two
         updated_dframe = concat([existing_dframe, new_dframe])
@@ -168,13 +166,6 @@ class Calculator(object):
             call_async(merged_calculator.calculate_updates,
                        merged_dataset, merged_calculator,
                        slugified_data, self.dataset.dataset_id)
-
-    def _add_parent_ids(self, existing_dframe):
-        old_dframe = self.dataset.dframe(with_reserved_keys=True)
-        if PARENT_DATASET_ID in old_dframe.columns.tolist():
-            parent_column = old_dframe[PARENT_DATASET_ID]
-            existing_dframe = existing_dframe.join(parent_column)
-        return existing_dframe
 
     def _make_columns(self, formula, name):
         """

@@ -13,7 +13,7 @@ from bamboo.controllers.calculations import Calculations
 from bamboo.core.summary import SUMMARY
 from bamboo.lib.constants import BAMBOO_RESERVED_KEYS, DATETIME, DIMENSION,\
     ID, NUM_COLUMNS, NUM_ROWS, PARENT_DATASET_ID, SCHEMA
-from bamboo.lib.decorators import requires_internet
+from bamboo.tests.decorators import requires_internet
 from bamboo.lib.mongo import MONGO_RESERVED_KEY_PREFIX,\
     MONGO_RESERVED_KEY_STRS, MONGO_RESERVED_KEYS
 from bamboo.lib.schema_builder import OLAP_TYPE, SIMPLETYPE

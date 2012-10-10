@@ -72,7 +72,7 @@ def call_async(function, dataset, *args, **kwargs):
         function(*args, **kwargs)
 
 
-def add_parent_column(parent_dataset_id, child_dframe):
-    column = Series([parent_dataset_id] * len(child_dframe))
+def add_parent_column(parent_dataset_id, dframe):
+    column = Series([parent_dataset_id] * len(dframe))
     column.name = PARENT_DATASET_ID
-    return child_dframe.join(column)
+    return dframe.join(column)

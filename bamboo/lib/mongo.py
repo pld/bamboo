@@ -5,7 +5,6 @@ import re
 from bson import json_util
 from pandas import DataFrame
 
-from bamboo.lib.constants import BAMBOO_RESERVED_KEYS
 from bamboo.lib.utils import df_to_jsondict, get_json_value
 
 
@@ -23,11 +22,11 @@ def mongo_to_df(rows):
     return DataFrame(mongo_decode_keys(rows))
 
 
-def mongo_to_json(rows):
+def dframe_to_json(dframe):
     """
     Convert mongo *cursor* to json dict, via dataframe, then dump to JSON.
     """
-    jsondict = df_to_jsondict(mongo_to_df(rows))
+    jsondict = df_to_jsondict(dframe)
     return dump_mongo_json(jsondict)
 
 
@@ -40,17 +39,10 @@ def mongo_decode_keys(observations):
     Remove internal keys from collection records.
     Decode keys that were encoded for mongo.
     """
-    for observation in observations:
-        observation = remove_bamboo_reserved_keys(observation)
-        observation = remove_mongo_reserved_keys(observation)
-
-    return observations
-
-
-def remove_bamboo_reserved_keys(_dict):
-    for reserved_key in BAMBOO_RESERVED_KEYS:
-        _dict.pop(reserved_key, None)
-    return _dict
+    return [
+        remove_mongo_reserved_keys(observation) for observation in
+        observations
+    ]
 
 
 def remove_mongo_reserved_keys(_dict):
