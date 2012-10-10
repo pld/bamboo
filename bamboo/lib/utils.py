@@ -48,10 +48,6 @@ def slugify_columns(column_names):
     Convert non-alphanumeric characters in column names into underscores and
     ensure that all column names are unique.
     """
-    # we need to change this to deal with the following conditions:
-    # * _id as a key (mongo)
-    # * keys that start with a $ or contain a . (mongo)
-    # * keys that contain spaces or operators (parsing)
     encode_column_re = re.compile(r'\W')
 
     encoded_names = []
