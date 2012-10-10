@@ -7,8 +7,7 @@ class BambooFrame(DataFrame):
     def add_parent_column(self, parent_dataset_id):
         column = Series([parent_dataset_id] * len(self))
         column.name = PARENT_DATASET_ID
-        self = self.join(column)
-        return self
+        return self.join(column)
 
     def remove_bamboo_reserved_keys(self, keep_parent_ids=False):
         reserved_keys = list(set(BAMBOO_RESERVED_KEYS).intersection(

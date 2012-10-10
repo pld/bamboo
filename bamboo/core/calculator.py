@@ -79,11 +79,9 @@ class Calculator(object):
         # get this dataset without the out-of-date parent rows
         dframe = self.dataset.dframe(keep_parent_ids=True)
 
-        # create new dframe from the upated parent
-        parent_dframe = parent_dataset.dframe()
-
-        # add parent ids to parent dframe
-        parent_dframe.add_parent_column(parent_dataset.dataset_id)
+        # create new dframe from the upated parent and add parent id
+        parent_dframe = parent_dataset.dframe().add_parent_column(
+            parent_dataset.dataset_id)
 
         # merge this new dframe with the existing dframe
         updated_dframe = concat([dframe, parent_dframe])
@@ -134,7 +132,7 @@ class Calculator(object):
 
         # set parent id if provided
         if parent_dataset_id:
-            new_dframe.add_parent_column(parent_dataset_id)
+            new_dframe = new_dframe.add_parent_column(parent_dataset_id)
 
         existing_dframe = self.dataset.dframe(keep_parent_ids=True)
 
@@ -225,11 +223,9 @@ class Calculator(object):
                          group, aggregation, name)
         new_agg_dframe = concat([agg_dframe, agg.eval_dframe()])
 
-        # update aggregated dataset with new dataframe
-        new_agg_dframe = agg_dataset.replace_observations(new_agg_dframe)
-
-        # add parent id column to new dframe
-        new_agg_dframe.add_parent_column(agg_dataset.dataset_id)
+        # update aggregated dataset with new dataframe and add parent id
+        new_agg_dframe = agg_dataset.replace_observations(
+            new_agg_dframe).add_parent_column(agg_dataset.dataset_id)
 
         # jsondict from new dframe
         new_data = df_to_jsondict(new_agg_dframe)

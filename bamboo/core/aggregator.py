@@ -26,8 +26,8 @@ class Aggregator(object):
         self._type = _type
 
     def save_aggregation(self):
-        new_dframe = BambooFrame(self.eval_dframe())
-        new_dframe.add_parent_column(self.dataset.dataset_id)
+        new_dframe = BambooFrame(self.eval_dframe()).add_parent_column(
+            self.dataset.dataset_id)
 
         aggregated_datasets = self.dataset.aggregated_datasets
         agg_dataset = aggregated_datasets.get(self.group_str, None)
