@@ -112,13 +112,12 @@ class Datasets(AbstractController):
 
         try:
             if merge:
-                result = merge_dataset_ids(datasets)
+                dataset = merge_dataset_ids(datasets)
             elif url:
                 dataset = create_dataset_from_url(url)
-                result = dataset.dataset_id
             elif csv_file:
-                result = create_dataset_from_csv(csv_file)
-            result = {Dataset.ID: result.dataset_id}
+                dataset = create_dataset_from_csv(csv_file)
+            result = {Dataset.ID: dataset.dataset_id}
         except (ValueError, MergeError) as e:
             error = e.__str__()
         except (IOError, urllib2.HTTPError):
