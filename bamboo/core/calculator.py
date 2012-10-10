@@ -6,9 +6,9 @@ from pandas import concat, DataFrame
 from bamboo.core.aggregator import Aggregator
 from bamboo.core.parser import ParseError, Parser
 from bamboo.lib.datetools import recognize_dates, recognize_dates_from_schema
+from bamboo.lib.jsontools import df_to_jsondict
 from bamboo.lib.mongo import MONGO_RESERVED_KEYS
-from bamboo.lib.utils import add_parent_column, call_async, df_to_jsondict,\
-    split_groups
+from bamboo.lib.utils import add_parent_column, call_async, split_groups
 
 
 class Calculator(object):

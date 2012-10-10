@@ -5,7 +5,7 @@ import re
 from bson import json_util
 from pandas import DataFrame
 
-from bamboo.lib.utils import df_to_jsondict, get_json_value
+from bamboo.lib.jsontools import df_to_jsondict, get_json_value
 
 
 # MongoDB keys

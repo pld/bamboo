@@ -7,7 +7,7 @@ from bamboo.config.settings import DB_BATCH_SIZE
 from bamboo.lib.constants import DATASET_OBSERVATION_ID, NUM_COLUMNS,\
     NUM_ROWS, SCHEMA
 from bamboo.lib.datetools import parse_timestamp_query
-from bamboo.lib.exceptions import JSONError
+from bamboo.lib.jsontools import JSONError
 from bamboo.lib.utils import call_async
 from bamboo.models.abstract_model import AbstractModel
 

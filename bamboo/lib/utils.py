@@ -1,7 +1,6 @@
 from math import isnan
 import re
 
-import numpy as np
 from pandas import Series
 
 from bamboo.config.settings import ASYNCHRONOUS_TASKS
@@ -11,36 +10,12 @@ from bamboo.lib.constants import PARENT_DATASET_ID
 Constants for utils
 """
 
-# JSON encoding string
-JSON_NULL = 'null'
-
 # delimiter when passing multiple groups as a string
 GROUP_DELIMITER = ','
 
 
 def is_float_nan(num):
     return isinstance(num, float) and isnan(num)
-
-
-def get_json_value(value):
-    if is_float_nan(value):
-        value = JSON_NULL
-    elif isinstance(value, np.int64):
-        value = int(value)
-    elif isinstance(value, np.bool_):
-        value = bool(value)
-    return value
-
-
-def series_to_jsondict(series):
-    return series if series is None else dict([
-        (unicode(key), get_json_value(value))
-        for key, value in series.iteritems()
-    ])
-
-
-def df_to_jsondict(dframe):
-    return [series_to_jsondict(series) for idx, series in dframe.iterrows()]
 
 
 def slugify_columns(column_names):
