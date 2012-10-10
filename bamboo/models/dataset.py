@@ -73,20 +73,16 @@ class Dataset(AbstractModel):
     def merged_datasets(self):
         return [self.find_one(_id) for _id in self.merged_dataset_ids]
 
-    def dframe(self, query=None, select=None, with_reserved_keys=False,
-               with_parent_ids=False):
+    def dframe(self, query=None, select=None, with_parent_ids=False):
         observations = self.observations(query=query, select=select)
-        if with_reserved_keys:
-            return DataFrame(observations)
-        else:
-            dframe = mongo_to_df(observations)
-            reserved_keys = list(set(BAMBOO_RESERVED_KEYS).intersection(
-                set(dframe.columns.tolist())))
-            if with_parent_ids and PARENT_DATASET_ID in reserved_keys:
-                reserved_keys.remove(PARENT_DATASET_ID)
-            for column in reserved_keys:
-                del dframe[column]
-            return dframe
+        dframe = mongo_to_df(observations)
+        reserved_keys = list(set(BAMBOO_RESERVED_KEYS).intersection(
+            set(dframe.columns.tolist())))
+        if with_parent_ids and PARENT_DATASET_ID in reserved_keys:
+            reserved_keys.remove(PARENT_DATASET_ID)
+        for column in reserved_keys:
+            del dframe[column]
+        return dframe
 
     def add_merged_dataset(self, new_dataset):
         self.update({
