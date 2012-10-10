@@ -3,8 +3,8 @@ import numpy as np
 import re
 
 from bson import json_util
-from pandas import DataFrame
 
+from bamboo.core.frame import BambooFrame
 from bamboo.lib.jsontools import df_to_jsondict, get_json_value
 
 
@@ -19,7 +19,7 @@ def mongo_to_df(rows):
     """
     Decode all row keys and create DataFrame.
     """
-    return DataFrame(mongo_decode_keys(rows))
+    return BambooFrame(mongo_decode_keys(rows))
 
 
 def dframe_to_json(dframe):

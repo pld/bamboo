@@ -5,7 +5,7 @@ from pandas import concat, Series
 from bamboo.models.dataset import Dataset
 from bamboo.lib.constants import PARENT_DATASET_ID
 from bamboo.lib.io import import_dataset
-from bamboo.lib.utils import add_parent_column, call_async
+from bamboo.lib.utils import call_async
 
 
 class MergeError(Exception):
@@ -47,6 +47,6 @@ def _merge_datasets(datasets):
 
     dframes = []
     for dataset in datasets:
-        dframes.append(add_parent_column(dataset.dataset_id, dataset.dframe()))
+        dframes.append(dataset.dframe().add_parent_column(dataset.dataset_id))
 
     return concat(dframes, ignore_index=True)

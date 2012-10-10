@@ -1,14 +1,15 @@
 from collections import defaultdict
 
 from celery.task import task
-from pandas import concat, DataFrame
+from pandas import concat
 
 from bamboo.core.aggregator import Aggregator
+from bamboo.core.frame import BambooFrame
 from bamboo.core.parser import ParseError, Parser
 from bamboo.lib.datetools import recognize_dates, recognize_dates_from_schema
 from bamboo.lib.jsontools import df_to_jsondict
 from bamboo.lib.mongo import MONGO_RESERVED_KEYS
-from bamboo.lib.utils import add_parent_column, call_async, split_groups
+from bamboo.lib.utils import call_async, split_groups
 
 
 class Calculator(object):
@@ -76,15 +77,13 @@ class Calculator(object):
         # delete the rows in this dataset from the parent
         self.dataset.remove_parent_observations(parent_dataset.dataset_id)
         # get this dataset without the out-of-date parent rows
-        dframe = self.dataset.dframe(with_parent_ids=True)
+        dframe = self.dataset.dframe(keep_parent_ids=True)
 
         # create new dframe from the upated parent
         parent_dframe = parent_dataset.dframe()
 
         # add parent ids to parent dframe
-        parent_dframe = add_parent_column(
-            parent_dataset.dataset_id,
-            parent_dframe)
+        parent_dframe.add_parent_column(parent_dataset.dataset_id)
 
         # merge this new dframe with the existing dframe
         updated_dframe = concat([dframe, parent_dframe])
@@ -135,10 +134,9 @@ class Calculator(object):
 
         # set parent id if provided
         if parent_dataset_id:
-            new_dframe = add_parent_column(
-                parent_dataset_id, new_dframe)
+            new_dframe.add_parent_column(parent_dataset_id)
 
-        existing_dframe = self.dataset.dframe(with_parent_ids=True)
+        existing_dframe = self.dataset.dframe(keep_parent_ids=True)
 
         # merge the two
         updated_dframe = concat([existing_dframe, new_dframe])
@@ -203,7 +201,7 @@ class Calculator(object):
                     filtered_row[col] = val
             filtered_data.append(filtered_row)
         return recognize_dates_from_schema(self.dataset,
-                                           DataFrame(filtered_data))
+                                           BambooFrame(filtered_data))
 
     def _update_aggregate_datasets(self, aggregate_calculations):
         for calculation in aggregate_calculations:
@@ -231,8 +229,7 @@ class Calculator(object):
         new_agg_dframe = agg_dataset.replace_observations(new_agg_dframe)
 
         # add parent id column to new dframe
-        new_agg_dframe = add_parent_column(
-            agg_dataset.dataset_id, new_agg_dframe)
+        new_agg_dframe.add_parent_column(agg_dataset.dataset_id)
 
         # jsondict from new dframe
         new_data = df_to_jsondict(new_agg_dframe)

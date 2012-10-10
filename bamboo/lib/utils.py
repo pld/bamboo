@@ -45,9 +45,3 @@ def call_async(function, dataset, *args, **kwargs):
             args=args, kwargs=kwargs, queue=dataset.dataset_id)
     else:  # pragma: no cover
         function(*args, **kwargs)
-
-
-def add_parent_column(parent_dataset_id, dframe):
-    column = Series([parent_dataset_id] * len(dframe))
-    column.name = PARENT_DATASET_ID
-    return dframe.join(column)
