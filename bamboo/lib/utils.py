@@ -4,7 +4,6 @@ import re
 from pandas import Series
 
 from bamboo.config.settings import ASYNCHRONOUS_TASKS
-from bamboo.lib.constants import PARENT_DATASET_ID
 
 """
 Constants for utils

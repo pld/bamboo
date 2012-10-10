@@ -7,7 +7,6 @@ from pymongo.cursor import Cursor
 from bamboo.tests.test_base import TestBase
 from bamboo.models.dataset import Dataset
 from bamboo.models.observation import Observation
-from bamboo.lib.constants import SCHEMA
 from bamboo.lib.datetools import recognize_dates
 from bamboo.lib.mongo import mongo_decode_keys, MONGO_RESERVED_KEY_STRS
 from bamboo.lib.schema_builder import OLAP_TYPE, SIMPLETYPE
@@ -65,7 +64,8 @@ class TestDataset(TestBase):
             # get dataset with new schema
             dataset = Dataset.find_one(self.test_dataset_ids[dataset_name])
 
-            for key in [Dataset.CREATED_AT, SCHEMA, Dataset.UPDATED_AT]:
+            for key in [
+                    Dataset.CREATED_AT, Dataset.SCHEMA, Dataset.UPDATED_AT]:
                 self.assertTrue(key in dataset.record.keys())
 
             df_columns = self.test_data[dataset_name].columns.tolist()

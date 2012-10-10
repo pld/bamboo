@@ -4,8 +4,7 @@ from bson import json_util
 
 from bamboo.config.db import Database
 from bamboo.config.settings import DB_BATCH_SIZE
-from bamboo.lib.constants import DATASET_OBSERVATION_ID, NUM_COLUMNS,\
-    NUM_ROWS, SCHEMA
+from bamboo.core.frame import DATASET_OBSERVATION_ID
 from bamboo.lib.datetools import parse_timestamp_query
 from bamboo.lib.jsontools import JSONError
 from bamboo.lib.utils import call_async
@@ -57,13 +56,13 @@ class Observation(AbstractModel):
         *dataset*, insert in chuncks of size *DB_BATCH_SIZE*.
         """
         # build schema for the dataset after having read it from file.
-        if not SCHEMA in dataset.record:
+        if not dataset.SCHEMA in dataset.record:
             dataset.build_schema(dframe)
 
         # add metadata to dataset
         dataset.update({
-            NUM_COLUMNS: len(dframe.columns),
-            NUM_ROWS: len(dframe),
+            dataset.NUM_COLUMNS: len(dframe.columns),
+            dataset.NUM_ROWS: len(dframe),
         })
 
         dataset_observation_id = dataset.dataset_observation_id

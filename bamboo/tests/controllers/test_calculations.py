@@ -3,7 +3,8 @@ import json
 from bamboo.controllers.abstract_controller import AbstractController
 from bamboo.controllers.calculations import Calculations
 from bamboo.controllers.datasets import Datasets
-from bamboo.lib.constants import DATASET_ID, ID
+from bamboo.core.frame import DATASET_ID
+from bamboo.lib.constants import ID
 from bamboo.lib.io import create_dataset_from_url
 from bamboo.models.calculation import Calculation
 from bamboo.models.dataset import Dataset

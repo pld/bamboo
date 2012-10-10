@@ -10,13 +10,14 @@ from pandas import concat
 from bamboo.controllers.abstract_controller import AbstractController
 from bamboo.controllers.datasets import Datasets
 from bamboo.controllers.calculations import Calculations
+from bamboo.core.frame import BAMBOO_RESERVED_KEYS, PARENT_DATASET_ID
 from bamboo.core.summary import SUMMARY
-from bamboo.lib.constants import BAMBOO_RESERVED_KEYS, DATETIME, DIMENSION,\
-    ID, NUM_COLUMNS, NUM_ROWS, PARENT_DATASET_ID, SCHEMA
+from bamboo.lib.constants import ID
 from bamboo.tests.decorators import requires_internet
+from bamboo.lib.datetools import DATETIME
 from bamboo.lib.mongo import MONGO_RESERVED_KEY_PREFIX,\
     MONGO_RESERVED_KEY_STRS, MONGO_RESERVED_KEYS
-from bamboo.lib.schema_builder import OLAP_TYPE, SIMPLETYPE
+from bamboo.lib.schema_builder import DIMENSION, OLAP_TYPE, SIMPLETYPE
 from bamboo.lib.utils import GROUP_DELIMITER
 from bamboo.models.dataset import Dataset
 from bamboo.models.calculation import Calculation
@@ -183,7 +184,7 @@ class TestDatasets(TestAbstractDatasets):
         results = json.loads(self.controller.GET(self.dataset_id,
                              mode=Datasets.MODE_INFO))
 
-        for column_name, column_schema in results[SCHEMA].items():
+        for column_name, column_schema in results[Dataset.SCHEMA].items():
             self.assertEqual(
                 column_schema[SIMPLETYPE], self.simpletypes[column_name])
 
@@ -297,19 +298,19 @@ class TestDatasets(TestAbstractDatasets):
         results = json.loads(self.controller.GET(self.dataset_id,
                              mode=Datasets.MODE_INFO))
         self.assertTrue(isinstance(results, dict))
-        self.assertTrue(SCHEMA in results.keys())
-        self.assertTrue(NUM_ROWS in results.keys())
-        self.assertEqual(results[NUM_ROWS], self.NUM_ROWS)
-        self.assertTrue(NUM_COLUMNS in results.keys())
-        self.assertEqual(results[NUM_COLUMNS], self.NUM_COLS)
+        self.assertTrue(Dataset.SCHEMA in results.keys())
+        self.assertTrue(Dataset.NUM_ROWS in results.keys())
+        self.assertEqual(results[Dataset.NUM_ROWS], self.NUM_ROWS)
+        self.assertTrue(Dataset.NUM_COLUMNS in results.keys())
+        self.assertEqual(results[Dataset.NUM_COLUMNS], self.NUM_COLS)
 
     def test_GET_info_cardinality(self):
         self._post_file()
         results = json.loads(self.controller.GET(self.dataset_id,
                              mode=Datasets.MODE_INFO))
         self.assertTrue(isinstance(results, dict))
-        self.assertTrue(SCHEMA in results.keys())
-        schema = results[SCHEMA]
+        self.assertTrue(Dataset.SCHEMA in results.keys())
+        schema = results[Dataset.SCHEMA]
         for key, column in schema.items():
             if column[OLAP_TYPE] == DIMENSION:
                 self.assertTrue(Dataset.CARDINALITY in column.keys())
@@ -323,14 +324,14 @@ class TestDatasets(TestAbstractDatasets):
         self._put_row_updates()
         results = json.loads(self.controller.GET(self.dataset_id,
                              mode=Datasets.MODE_INFO))
-        self.assertEqual(results[NUM_ROWS], self.NUM_ROWS + 1)
+        self.assertEqual(results[Dataset.NUM_ROWS], self.NUM_ROWS + 1)
 
     def test_GET_info_after_adding_calculations(self):
         self._post_file()
         self._post_calculations(formulae=self.default_formulae)
         results = json.loads(self.controller.GET(self.dataset_id,
                              mode=Datasets.MODE_INFO))
-        self.assertEqual(results[NUM_COLUMNS], self.NUM_COLS +
+        self.assertEqual(results[Dataset.NUM_COLUMNS], self.NUM_COLS +
                          len(self.default_formulae))
 
     def test_GET_schema(self):
@@ -339,9 +340,11 @@ class TestDatasets(TestAbstractDatasets):
                              mode=Datasets.MODE_INFO))
         self.assertTrue(isinstance(results, dict))
         result_keys = results.keys()
-        for key in [Dataset.CREATED_AT, ID, SCHEMA, Dataset.UPDATED_AT]:
+        for key in [
+                Dataset.CREATED_AT, ID, Dataset.SCHEMA, Dataset.UPDATED_AT]:
             self.assertTrue(key in result_keys)
-        self.assertEqual(results[SCHEMA]['submit_date'][SIMPLETYPE], DATETIME)
+        self.assertEqual(
+            results[Dataset.SCHEMA]['submit_date'][SIMPLETYPE], DATETIME)
 
     def test_GET_bad_id(self):
         results = self.controller.GET('honey_badger')

@@ -1,5 +1,5 @@
 from bamboo.config.db import Database
-from bamboo.lib.constants import BAMBOO_RESERVED_KEYS, DATASET_ID
+from bamboo.core.frame import BAMBOO_RESERVED_KEYS, DATASET_ID
 from bamboo.lib.decorators import classproperty
 from bamboo.lib.mongo import remove_mongo_reserved_keys
 

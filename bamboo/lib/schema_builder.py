@@ -1,14 +1,24 @@
 from datetime import datetime
 import numpy as np
 
-from bamboo.lib.constants import BAMBOO_RESERVED_KEYS, DATETIME, DIMENSION,\
-    MEASURE
+from bamboo.core.frame import BAMBOO_RESERVED_KEYS
 from bamboo.lib.mongo import MONGO_RESERVED_KEY_STRS
 from bamboo.lib.utils import slugify_columns
 
 
 OLAP_TYPE = 'olap_type'
 SIMPLETYPE = 'simpletype'
+
+# simpletypes
+BOOLEAN = 'boolean'
+DATETIME = 'datetime'
+INTEGER = 'integer'
+FLOAT = 'float'
+STRING = 'string'
+
+# olap_types
+DIMENSION = 'dimension'
+MEASURE = 'measure'
 
 # map from numpy objects to olap_types
 DTYPE_TO_OLAP_TYPE_MAP = {
@@ -18,12 +28,6 @@ DTYPE_TO_OLAP_TYPE_MAP = {
     np.int64: MEASURE,
     datetime: MEASURE,
 }
-
-# simpletypes
-STRING = 'string'
-INTEGER = 'integer'
-FLOAT = 'float'
-BOOLEAN = 'boolean'
 
 # map from numpy objects to simpletypes
 DTYPE_TO_SIMPLETYPE_MAP = {

@@ -1,9 +1,8 @@
 import numpy as np
 
-from bamboo.lib.constants import DIMENSION
-from bamboo.lib.mongo import MONGO_RESERVED_KEYS
-from bamboo.lib.schema_builder import OLAP_TYPE
 from bamboo.lib.jsontools import series_to_jsondict
+from bamboo.lib.mongo import MONGO_RESERVED_KEYS
+from bamboo.lib.schema_builder import DIMENSION, OLAP_TYPE
 
 
 SUMMARY = 'summary'

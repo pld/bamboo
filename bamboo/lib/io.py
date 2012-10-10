@@ -6,8 +6,8 @@ import urllib2
 from celery.task import task
 from pandas import read_csv
 
+from bamboo.core.frame import DATASET_ID
 from bamboo.models.observation import Observation
-from bamboo.lib.constants import DATASET_ID, ID
 from bamboo.lib.datetools import recognize_dates
 from bamboo.lib.utils import call_async
 from bamboo.models.dataset import Dataset
@@ -63,7 +63,7 @@ def create_dataset_from_url(url, allow_local_file=False):
     dataset.save()
     call_async(import_dataset, dataset, dataset, _file=_file)
 
-    return {ID: dataset.dataset_id}
+    return dataset.dataset_id
 
 
 def create_dataset_from_csv(csv_file):

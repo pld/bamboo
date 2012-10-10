@@ -3,7 +3,6 @@ import pickle
 
 import numpy as np
 
-from bamboo.lib.constants import SCHEMA
 from bamboo.lib.utils import GROUP_DELIMITER
 from bamboo.models.dataset import Dataset
 from bamboo.models.observation import Observation
@@ -105,7 +104,7 @@ class TestAggregations(TestCalculator):
                          self.expected_length[self.group])
 
         # test that the schema is up to date
-        self.assertTrue(SCHEMA in linked_dataset.record.keys())
+        self.assertTrue(linked_dataset.SCHEMA in linked_dataset.record.keys())
         self.assertTrue(isinstance(linked_dataset.schema, dict))
         schema = linked_dataset.schema
 

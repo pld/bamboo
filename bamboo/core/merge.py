@@ -3,7 +3,6 @@ import json
 from pandas import concat, Series
 
 from bamboo.models.dataset import Dataset
-from bamboo.lib.constants import PARENT_DATASET_ID
 from bamboo.lib.io import import_dataset
 from bamboo.lib.utils import call_async
 

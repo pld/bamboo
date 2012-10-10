@@ -1,6 +1,5 @@
 import numpy as np
 
-from bamboo.lib.constants import SCHEMA
 from bamboo.lib.io import import_dataset
 from bamboo.lib.schema_builder import SIMPLETYPE
 from bamboo.models.dataset import Dataset
@@ -75,7 +74,7 @@ class TestCalculations(TestCalculator):
 
             # test that the schema is up to date
             dataset = Dataset.find_one(self.dataset.dataset_id)
-            self.assertTrue(SCHEMA in dataset.record.keys())
+            self.assertTrue(Dataset.SCHEMA in dataset.record.keys())
             self.assertTrue(isinstance(dataset.schema, dict))
             schema = dataset.schema
 

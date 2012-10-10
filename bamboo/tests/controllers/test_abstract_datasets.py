@@ -3,9 +3,10 @@ import json
 import cherrypy
 
 from bamboo.controllers.datasets import Datasets
-from bamboo.lib.constants import ID, SCHEMA
+from bamboo.lib.constants import ID
 from bamboo.lib.io import create_dataset_from_url
 from bamboo.lib.jsontools import df_to_jsondict, series_to_jsondict
+from bamboo.models.dataset import Dataset
 from bamboo.tests.test_base import TestBase
 
 
@@ -40,8 +41,10 @@ class TestAbstractDatasets(TestBase):
             file_name = self._file_name
         self.dataset_id = create_dataset_from_url(
             'file://tests/fixtures/%s' % file_name, allow_local_file=True)[ID]
-        self.schema = json.loads(self.controller.GET(self.dataset_id,
-                                 mode=self.controller.MODE_INFO))[SCHEMA]
+        self.schema = json.loads(
+            self.controller.GET(
+                self.dataset_id,
+                mode=self.controller.MODE_INFO))[Dataset.SCHEMA]
 
     def _check_dframes_are_equal(self, dframe1, dframe2):
         self._check_dframe_is_subset(dframe1, dframe2)

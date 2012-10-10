@@ -4,14 +4,12 @@ from time import gmtime, strftime
 
 from celery.contrib.methods import task
 import numpy as np
-from pandas import DataFrame
 
 from bamboo.core.calculator import Calculator
+from bamboo.core.frame import BAMBOO_RESERVED_KEY_PREFIX, DATASET_ID,\
+    DATASET_OBSERVATION_ID, PARENT_DATASET_ID
 from bamboo.core.summary import summarize
-from bamboo.lib.constants import BAMBOO_RESERVED_KEY_PREFIX,\
-    DATASET_ID,\
-    DATASET_OBSERVATION_ID, ID, NUM_COLUMNS, NUM_ROWS,\
-    PARENT_DATASET_ID, SCHEMA
+from bamboo.lib.constants import ID
 from bamboo.lib.mongo import mongo_to_df, reserve_encoded
 from bamboo.lib.schema_builder import schema_from_data_and_dtypes, SIMPLETYPE
 from bamboo.lib.utils import call_async, split_groups
@@ -29,14 +27,17 @@ class Dataset(AbstractModel):
     ALL = '_all'
 
     # metadata
+    AGGREGATED_DATASETS = BAMBOO_RESERVED_KEY_PREFIX + 'linked_datasets'
     ATTRIBUTION = 'attribution'
     CARDINALITY = 'cardinality'
     CREATED_AT = 'created_at'
     DESCRIPTION = 'description'
     LABEL = 'label'
     LICENSE = 'license'
-    AGGREGATED_DATASETS = BAMBOO_RESERVED_KEY_PREFIX + 'linked_datasets'
+    NUM_COLUMNS = 'num_columns'
+    NUM_ROWS = 'num_rows'
     MERGED_DATASETS = 'merged_datasets'
+    SCHEMA = 'schema'
     UPDATED_AT = 'updated_at'
 
     # commonly accessed variables
@@ -54,7 +55,7 @@ class Dataset(AbstractModel):
 
     @property
     def schema(self):
-        return self.record.get(SCHEMA)
+        return self.record.get(self.SCHEMA)
 
     @property
     def aggregated_datasets_dict(self):
@@ -163,20 +164,20 @@ class Dataset(AbstractModel):
         Build schema for a dataset.
         """
         schema = schema_from_data_and_dtypes(self, dframe)
-        self.update({SCHEMA: schema})
+        self.update({self.SCHEMA: schema})
 
     def info(self):
         return {
             ID: self.dataset_id,
             self.LABEL: '',
             self.DESCRIPTION: '',
-            SCHEMA: self.schema,
+            self.SCHEMA: self.schema,
             self.LICENSE: '',
             self.ATTRIBUTION: '',
             self.CREATED_AT: self.record.get(self.CREATED_AT),
             self.UPDATED_AT: self.record.get(self.UPDATED_AT),
-            NUM_COLUMNS: self.record.get(NUM_COLUMNS),
-            NUM_ROWS: self.record.get(NUM_ROWS),
+            self.NUM_COLUMNS: self.record.get(self.NUM_COLUMNS),
+            self.NUM_ROWS: self.record.get(self.NUM_ROWS),
         }
 
     def build_labels_to_slugs(self):

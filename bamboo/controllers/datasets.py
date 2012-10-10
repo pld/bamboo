@@ -115,7 +115,8 @@ class Datasets(AbstractController):
             if merge:
                 result = {ID: merge_dataset_ids(datasets).dataset_id}
             elif url:
-                result = create_dataset_from_url(url)
+                dataset = create_dataset_from_url(url)
+                result = {ID: dataset.dataset_id}
             elif csv_file:
                 result = create_dataset_from_csv(csv_file)
         except (ValueError, MergeError) as e:

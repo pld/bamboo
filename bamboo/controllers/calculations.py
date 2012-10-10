@@ -2,7 +2,6 @@ import json
 
 from bamboo.controllers.abstract_controller import AbstractController
 from bamboo.core.parser import ParseError
-from bamboo.lib.constants import ID
 from bamboo.lib.mongo import dump_mongo_json
 from bamboo.lib.utils import call_async
 from bamboo.models.calculation import Calculation
