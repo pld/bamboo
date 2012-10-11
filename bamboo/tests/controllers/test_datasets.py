@@ -361,6 +361,30 @@ class TestDatasets(TestAbstractDatasets):
         self._test_get_with_query_or_select('{"rating": "delectible"}',
                                             num_results=11)
 
+    def test_GET_with_query_limit_order_by(self):
+
+        def get_results(query='{}', select=None, limit=None, order_by=None):
+            self._post_file()
+            return json.loads(self.controller.GET(self.dataset_id,
+                                                 query=query,
+                                                 select=select,
+                                                 limit=limit,
+                                                 order_by=order_by))
+
+        # test the limit
+        limit = 4
+        results = get_results(limit=limit)
+        self.assertEqual(len(results), limit)
+
+        # test the order_by
+        limit = 1
+        results = get_results(limit=limit, order_by='rating')
+        self.assertEqual(results[0].get('rating'), 'delectible')
+
+        limit = 1
+        results = get_results(limit=limit, order_by='-rating')
+        self.assertEqual(results[0].get('rating'), 'epic_eat')
+
     def test_GET_with_bad_query(self):
         self._post_file()
         results = json.loads(self.controller.GET(self.dataset_id,
