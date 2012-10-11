@@ -3,8 +3,9 @@ import json
 import cherrypy
 
 from bamboo.controllers.datasets import Datasets
+from bamboo.core.frame import BambooFrame
 from bamboo.lib.io import create_dataset_from_url
-from bamboo.lib.jsontools import df_to_jsondict, series_to_jsondict
+from bamboo.lib.jsontools import series_to_jsondict
 from bamboo.models.dataset import Dataset
 from bamboo.tests.test_base import TestBase
 
@@ -51,7 +52,7 @@ class TestAbstractDatasets(TestBase):
         self._check_dframe_is_subset(dframe2, dframe1)
 
     def _check_dframe_is_subset(self, dframe1, dframe2):
-        dframe2_rows = df_to_jsondict(dframe2)
+        dframe2_rows = BambooFrame(dframe2).to_jsondict()
         for row in dframe1.iterrows():
             dframe1_row = series_to_jsondict(row[1])
             self.assertTrue(dframe1_row in dframe2_rows,

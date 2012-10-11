@@ -30,7 +30,3 @@ def series_to_jsondict(series):
         (unicode(key), get_json_value(value))
         for key, value in series.iteritems()
     ])
-
-
-def df_to_jsondict(dframe):
-    return [series_to_jsondict(series) for idx, series in dframe.iterrows()]

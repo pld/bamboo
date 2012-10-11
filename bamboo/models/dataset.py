@@ -6,7 +6,7 @@ from celery.contrib.methods import task
 import numpy as np
 
 from bamboo.core.calculator import Calculator
-from bamboo.core.frame import BAMBOO_RESERVED_KEY_PREFIX, DATASET_ID,\
+from bamboo.core.frame import BambooFrame, BAMBOO_RESERVED_KEY_PREFIX, DATASET_ID,\
     DATASET_OBSERVATION_ID, PARENT_DATASET_ID
 from bamboo.core.summary import summarize
 from bamboo.lib.mongo import mongo_to_df, reserve_encoded
@@ -76,7 +76,7 @@ class Dataset(AbstractModel):
 
     def dframe(self, query=None, select=None, keep_parent_ids=False):
         observations = self.observations(query=query, select=select)
-        dframe = mongo_to_df(observations)
+        dframe = BambooFrame(mongo_to_df(observations))
         dframe.remove_bamboo_reserved_keys(keep_parent_ids)
         return dframe
 

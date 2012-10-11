@@ -5,7 +5,6 @@ from bamboo.controllers.abstract_controller import AbstractController
 from bamboo.core.merge import merge_dataset_ids, MergeError
 from bamboo.core.summary import ColumnTypeError
 from bamboo.lib.jsontools import JSONError
-from bamboo.lib.mongo import dframe_to_json
 from bamboo.lib.io import create_dataset_from_url, create_dataset_from_csv
 from bamboo.lib.utils import call_async
 from bamboo.models.calculation import Calculation
@@ -77,8 +76,8 @@ class Datasets(AbstractController):
                         result = dataset.summarize(
                             dataset, query, select, group)
                 elif mode is False:
-                    return dframe_to_json(
-                        dataset.dframe(query=query, select=select))
+                    return dataset.dframe(
+                        query=query, select=select).to_json()
                 else:
                     error = 'unsupported API call'
         except (ColumnTypeError, JSONError) as e:
