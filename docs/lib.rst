@@ -1,11 +1,6 @@
 Lib
 ======
 
-Exceptions
-----------
-.. automodule:: bamboo.lib.exceptions
-    :members:
-
 Input/Output
 ------------
 .. automodule:: bamboo.lib.io

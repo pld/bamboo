@@ -28,5 +28,5 @@ Formula Parser
 
 Summary Statistic Utilities
 ---------------------------
-.. automodule:: bamboo.lib.summary
+.. automodule:: bamboo.core.summary
     :members:
