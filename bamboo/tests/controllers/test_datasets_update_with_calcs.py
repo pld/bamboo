@@ -53,7 +53,7 @@ class TestDatasetsUpdateWithCalcs(TestAbstractDatasets):
         result = json.loads(self.controller.POST(
             merge=True,
             datasets=json.dumps([self.dataset1_id, self.dataset2_id])))
-        self.merged_dataset1_id = result[Datset.ID]
+        self.merged_dataset1_id = result[Dataset.ID]
 
         result = json.loads(self.controller.POST(
             merge=True,
