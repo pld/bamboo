@@ -74,8 +74,10 @@ class Dataset(AbstractModel):
     def merged_datasets(self):
         return [self.find_one(_id) for _id in self.merged_dataset_ids]
 
-    def dframe(self, query=None, select=None, keep_parent_ids=False):
-        observations = self.observations(query=query, select=select)
+    def dframe(self, query=None, select=None, keep_parent_ids=False,
+               limit=0, order_by=None):
+        observations = self.observations(query=query, select=select,
+                                         limit=limit, order_by=order_by)
         dframe = BambooFrame(mongo_to_df(observations))
         dframe.remove_bamboo_reserved_keys(keep_parent_ids)
         return dframe
@@ -116,7 +118,8 @@ class Dataset(AbstractModel):
         Observation.delete_all(self)
 
     @task
-    def summarize(self, query=None, select=None, group_str=None):
+    def summarize(self, query=None, select=None,
+                  group_str=None, limit=0, order_by=None):
         """
         Return a summary for the rows/values filtered by *query* and *select*
         and grouped by *group_str* or the overall summary if no group is
@@ -138,7 +141,8 @@ class Dataset(AbstractModel):
             select = json.dumps(select)
 
         # narrow list of observations via query/select
-        dframe = self.dframe(query=query, select=select)
+        dframe = self.dframe(query=query, select=select,
+                             limit=limit, order_by=order_by)
 
         return summarize(self, dframe, groups, group_str, query or select)
 
@@ -188,8 +192,9 @@ class Dataset(AbstractModel):
             (column_attrs[self.LABEL], reserve_encoded(column_name)) for
             (column_name, column_attrs) in self.schema.items()])
 
-    def observations(self, query=None, select=None):
-        return Observation.find(self, query, select)
+    def observations(self, query=None, select=None, limit=0, order_by=None):
+        return Observation.find(self, query, select,
+                                limit=limit, order_by=order_by)
 
     def calculations(self):
         return Calculation.find(self)

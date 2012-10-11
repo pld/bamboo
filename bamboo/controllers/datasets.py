@@ -35,7 +35,7 @@ class Datasets(AbstractController):
         return self.dump_or_error(result, 'id not found')
 
     def GET(self, dataset_id, mode=False, query=None, select=None,
-            group=None):
+            group=None, limit=0, order_by=None):
         """
         Based on *mode* perform different operations on the dataset specified
         by *dataset_id*.
@@ -73,11 +73,13 @@ class Datasets(AbstractController):
                     else:
                         if select == self.SELECT_ALL_FOR_SUMMARY:
                             select = None
-                        result = dataset.summarize(
-                            dataset, query, select, group)
+                        result = dataset.summarize(dataset, query, select,
+                                                   group, limit=limit,
+                                                   order_by=order_by)
                 elif mode is False:
                     return dataset.dframe(
-                        query=query, select=select).to_json()
+                        query=query, select=select,
+                        limit=limit, order_by=order_by).to_json()
                 else:
                     error = 'unsupported API call'
         except (ColumnTypeError, JSONError) as e:

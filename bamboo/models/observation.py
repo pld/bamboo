@@ -2,7 +2,6 @@ import json
 
 from bson import json_util
 
-from bamboo.config.db import Database
 from bamboo.config.settings import DB_BATCH_SIZE
 from bamboo.core.frame import DATASET_OBSERVATION_ID
 from bamboo.lib.datetools import parse_timestamp_query
@@ -26,10 +25,17 @@ class Observation(AbstractModel):
         cls.collection.remove(query, safe=True)
 
     @classmethod
-    def find(cls, dataset, query=None, select=None):
+    def find(cls, dataset, query=None, select=None, limit=0, order_by=None):
         """
         Try to parse query if exists, then get all rows for ID matching query,
         or if no query all.  Decode rows from mongo and return.
+
+        order_by: sort resulting rows according to a column value (ASC or DESC)
+            Examples:   order_by='mycolumn'
+                        order_by='-mycolumn'
+
+        limit: apply a limit on the number of rows returned.
+            limit is applied AFTER ordering.
         """
         try:
             query = (query and json.loads(
@@ -46,9 +52,8 @@ class Observation(AbstractModel):
                 raise JSONError('cannot decode select: %s' % e.__str__())
 
         query[DATASET_OBSERVATION_ID] = dataset.dataset_observation_id
-        rows = super(cls, cls).find(query, select, as_dict=True)
-
-        return rows
+        return super(cls, cls).find(query, select, as_dict=True,
+                                    limit=limit, order_by=order_by)
 
     def save(self, dframe, dataset):
         """
