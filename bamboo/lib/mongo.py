@@ -4,8 +4,7 @@ import re
 
 from bson import json_util
 
-from bamboo.core.frame import BambooFrame
-from bamboo.lib.jsontools import df_to_jsondict, get_json_value
+from bamboo.lib.jsontools import get_json_value
 
 
 # MongoDB keys
@@ -19,15 +18,7 @@ def mongo_to_df(rows):
     """
     Decode all row keys and create DataFrame.
     """
-    return BambooFrame(mongo_decode_keys(rows))
-
-
-def dframe_to_json(dframe):
-    """
-    Convert mongo *cursor* to json dict, via dataframe, then dump to JSON.
-    """
-    jsondict = df_to_jsondict(dframe)
-    return dump_mongo_json(jsondict)
+    return mongo_decode_keys(rows)
 
 
 def dump_mongo_json(_dict):

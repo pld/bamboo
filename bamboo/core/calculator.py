@@ -7,7 +7,6 @@ from bamboo.core.aggregator import Aggregator
 from bamboo.core.frame import BambooFrame
 from bamboo.core.parser import ParseError, Parser
 from bamboo.lib.datetools import recognize_dates, recognize_dates_from_schema
-from bamboo.lib.jsontools import df_to_jsondict
 from bamboo.lib.mongo import MONGO_RESERVED_KEYS
 from bamboo.lib.utils import call_async, split_groups
 
@@ -228,7 +227,7 @@ class Calculator(object):
             new_agg_dframe).add_parent_column(agg_dataset.dataset_id)
 
         # jsondict from new dframe
-        new_data = df_to_jsondict(new_agg_dframe)
+        new_data = new_agg_dframe.to_jsondict()
 
         for merged_dataset in agg_dataset.merged_datasets:
             # remove rows in child from this merged dataset
