@@ -21,8 +21,36 @@ class AbstractModel(object):
         return cls.__collection__
 
     @classmethod
-    def find(cls, query, select=None, as_dict=False):
+    def find(cls, query, select=None, as_dict=False,
+             limit=None, order_by=None):
+        """ Interface to mongo's find()
+
+        order_by: sort resulting rows according to a column value (ASC or DESC)
+            Examples:   order_by='mycolumn'
+                        order_by='-mycolumn'
+
+        limit: apply a limit on the number of rows returned.
+            limit is applied AFTER ordering.
+        """
         records = cls.collection.find(query, select)
+
+        # apply ORDER BY
+        # Usage:
+        # sort='column' or sort='-column'
+        if order_by:
+            if order_by[0] in ('-', '+'):
+                sort_dir, field = -1 if order_by[0] == '-' else 1, order_by[1:]
+            else:
+                sort_dir, field = 1, order_by
+            records = records.sort(field, sort_dir)
+
+        # apply LIMIT
+        # limit is applied AFTER order_by as we assume people would want
+        # to limit the overall data.
+        # It's less efficient that sorting a limited subset of data obvsl.
+        if limit:
+            records = records.limit(limit)
+
         return [record for record in records] if as_dict else [
             cls(record) for record in records
         ]
