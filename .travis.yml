@@ -6,6 +6,7 @@ before_install:
 install:
   - pip install numpy --use-mirrors
   - pip install -r requirements.pip --use-mirrors
+  - pip install -r requirements-test.pip --use-mirrors
 script: cd bamboo && nosetests
 services:
   - mongodb
