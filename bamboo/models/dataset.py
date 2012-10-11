@@ -75,7 +75,7 @@ class Dataset(AbstractModel):
         return [self.find_one(_id) for _id in self.merged_dataset_ids]
 
     def dframe(self, query=None, select=None, keep_parent_ids=False,
-               limit=None, order_by=None):
+               limit=0, order_by=None):
         observations = self.observations(query=query, select=select,
                                          limit=limit, order_by=order_by)
         dframe = mongo_to_df(observations)
@@ -119,7 +119,7 @@ class Dataset(AbstractModel):
 
     @task
     def summarize(self, query=None, select=None,
-                  group_str=None, limit=None, order_by=None):
+                  group_str=None, limit=0, order_by=None):
         """
         Return a summary for the rows/values filtered by *query* and *select*
         and grouped by *group_str* or the overall summary if no group is
@@ -192,7 +192,7 @@ class Dataset(AbstractModel):
             (column_attrs[self.LABEL], reserve_encoded(column_name)) for
             (column_name, column_attrs) in self.schema.items()])
 
-    def observations(self, query=None, select=None, limit=None, order_by=None):
+    def observations(self, query=None, select=None, limit=0, order_by=None):
         return Observation.find(self, query, select,
                                 limit=limit, order_by=order_by)
 

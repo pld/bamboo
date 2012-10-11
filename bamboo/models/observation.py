@@ -25,7 +25,7 @@ class Observation(AbstractModel):
         cls.collection.remove(query, safe=True)
 
     @classmethod
-    def find(cls, dataset, query=None, select=None, limit=None, order_by=None):
+    def find(cls, dataset, query=None, select=None, limit=0, order_by=None):
         """
         Try to parse query if exists, then get all rows for ID matching query,
         or if no query all.  Decode rows from mongo and return.

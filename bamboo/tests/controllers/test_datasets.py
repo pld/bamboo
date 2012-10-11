@@ -366,10 +366,10 @@ class TestDatasets(TestAbstractDatasets):
         def get_results(query='{}', select=None, limit=None, order_by=None):
             self._post_file()
             return json.loads(self.controller.GET(self.dataset_id,
-                                                 query=query,
-                                                 select=select,
-                                                 limit=limit,
-                                                 order_by=order_by))
+                                                  query=query,
+                                                  select=select,
+                                                  limit=limit,
+                                                  order_by=order_by))
 
         # test the limit
         limit = 4
