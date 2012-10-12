@@ -9,7 +9,7 @@ from bamboo.core.calculator import Calculator
 from bamboo.core.frame import BambooFrame, BAMBOO_RESERVED_KEY_PREFIX, DATASET_ID,\
     DATASET_OBSERVATION_ID, PARENT_DATASET_ID
 from bamboo.core.summary import summarize
-from bamboo.lib.mongo import mongo_to_df, reserve_encoded
+from bamboo.lib.mongo import reserve_encoded
 from bamboo.lib.schema_builder import schema_from_data_and_dtypes, SIMPLETYPE
 from bamboo.lib.utils import call_async, split_groups
 from bamboo.models.abstract_model import AbstractModel
@@ -78,7 +78,8 @@ class Dataset(AbstractModel):
                limit=0, order_by=None):
         observations = self.observations(query=query, select=select,
                                          limit=limit, order_by=order_by)
-        dframe = BambooFrame(mongo_to_df(observations))
+        dframe = BambooFrame(observations)
+        dframe.decode_mongo_reserved_keys()
         dframe.remove_bamboo_reserved_keys(keep_parent_ids)
         return dframe
 

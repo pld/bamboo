@@ -8,7 +8,7 @@ from bamboo.tests.test_base import TestBase
 from bamboo.models.dataset import Dataset
 from bamboo.models.observation import Observation
 from bamboo.lib.datetools import recognize_dates
-from bamboo.lib.mongo import mongo_decode_keys, MONGO_RESERVED_KEY_STRS
+from bamboo.lib.mongo import MONGO_RESERVED_KEY_STRS
 from bamboo.lib.schema_builder import OLAP_TYPE, SIMPLETYPE
 
 

@@ -14,26 +14,8 @@ MONGO_RESERVED_KEY_STRS = [MONGO_RESERVED_KEY_PREFIX + key
                            for key in MONGO_RESERVED_KEYS]
 
 
-def mongo_to_df(rows):
-    """
-    Decode all row keys and create DataFrame.
-    """
-    return mongo_decode_keys(rows)
-
-
 def dump_mongo_json(_dict):
     return json.dumps(_dict, default=json_util.default)
-
-
-def mongo_decode_keys(observations):
-    """
-    Remove internal keys from collection records.
-    Decode keys that were encoded for mongo.
-    """
-    return [
-        remove_mongo_reserved_keys(observation) for observation in
-        observations
-    ]
 
 
 def remove_mongo_reserved_keys(_dict):
