@@ -1,6 +1,8 @@
 import json
+from math import ceil
 
 from bson import json_util
+from pandas import Series
 
 from bamboo.config.settings import DB_BATCH_SIZE
 from bamboo.core.frame import DATASET_OBSERVATION_ID
@@ -80,16 +82,18 @@ class Observation(AbstractModel):
         dframe.columns = [labels_to_slugs.get(column, column) for column in
                           dframe.columns.tolist()]
 
-        for row_index, row in dframe.iterrows():
-            row = row.to_dict()
-            row[DATASET_OBSERVATION_ID] = dataset_observation_id
-            rows.append(row)
-            if len(rows) > DB_BATCH_SIZE:
-                # insert data into collection
-                self.collection.insert(rows, safe=True)
-                rows = []
+        id_column = Series([dataset_observation_id] * len(dframe))
+        id_column.name = DATASET_OBSERVATION_ID
 
-        if len(rows):
-            self.collection.insert(rows, safe=True)
+        dframe = dframe.join(id_column)
+
+        rows = [row.to_dict() for (_, row) in dframe.iterrows()]
+
+        batches = int(ceil(float(len(rows)) / DB_BATCH_SIZE))
+
+        for batch in range(0, batches):
+            start = batch * DB_BATCH_SIZE
+            end = (batch + 1) * DB_BATCH_SIZE
+            self.collection.insert(rows[start:end], safe=True)
 
         call_async(dataset.summarize, dataset, dataset)
