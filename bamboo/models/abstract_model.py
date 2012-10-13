@@ -1,4 +1,7 @@
+from math import ceil
+
 from bamboo.config.db import Database
+from bamboo.config.settings import DB_BATCH_SIZE
 from bamboo.core.frame import BAMBOO_RESERVED_KEYS, DATASET_ID
 from bamboo.lib.decorators import classproperty
 from bamboo.lib.mongo import remove_mongo_reserved_keys
@@ -64,6 +67,17 @@ class AbstractModel(object):
     def __nonzero__(self):
         return self.record is not None
 
+    @property
+    def clean_record(self):
+        """
+        Remove reserved keys from records.
+        """
+        _dict = dict([
+            (key, value) for (key, value) in self.record.items() if not key in
+            BAMBOO_RESERVED_KEYS
+        ])
+        return remove_mongo_reserved_keys(_dict)
+
     def delete(self, query):
         """
         Delete the record.
@@ -75,13 +89,13 @@ class AbstractModel(object):
         self.record = record
         return record
 
-    @property
-    def clean_record(self):
+    def batch_save(self, records):
         """
-        Remove reserved keys from records.
+        Save records in batches to avoid document size maximum setting.
         """
-        _dict = dict([
-            (key, value) for (key, value) in self.record.items() if not key in
-            BAMBOO_RESERVED_KEYS
-        ])
-        return remove_mongo_reserved_keys(_dict)
+        batches = int(ceil(float(len(records)) / DB_BATCH_SIZE))
+
+        for batch in range(0, batches):
+            start = batch * DB_BATCH_SIZE
+            end = (batch + 1) * DB_BATCH_SIZE
+            self.collection.insert(records[start:end], safe=True)

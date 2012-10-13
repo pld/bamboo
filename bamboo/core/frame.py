@@ -1,7 +1,8 @@
 from pandas import DataFrame, Series
 
 from bamboo.lib.jsontools import series_to_jsondict
-from bamboo.lib.mongo import dump_mongo_json, mongo_prefix_reserved_key, MONGO_RESERVED_KEYS
+from bamboo.lib.mongo import dump_mongo_json, mongo_prefix_reserved_key,\
+    MONGO_RESERVED_KEYS
 
 
 # reserved bamboo keys

@@ -1,10 +1,8 @@
 import json
-from math import ceil
 
 from bson import json_util
 from pandas import Series
 
-from bamboo.config.settings import DB_BATCH_SIZE
 from bamboo.core.frame import DATASET_OBSERVATION_ID
 from bamboo.lib.datetools import parse_timestamp_query
 from bamboo.lib.jsontools import JSONError
@@ -72,9 +70,6 @@ class Observation(AbstractModel):
             dataset.NUM_ROWS: len(dframe),
         })
 
-        dataset_observation_id = dataset.dataset_observation_id
-        rows = []
-
         labels_to_slugs = dataset.build_labels_to_slugs()
 
         # if column name is not in map assume it is already slugified
@@ -82,18 +77,11 @@ class Observation(AbstractModel):
         dframe.columns = [labels_to_slugs.get(column, column) for column in
                           dframe.columns.tolist()]
 
-        id_column = Series([dataset_observation_id] * len(dframe))
+        id_column = Series([dataset.dataset_observation_id] * len(dframe))
         id_column.name = DATASET_OBSERVATION_ID
-
         dframe = dframe.join(id_column)
 
         rows = [row.to_dict() for (_, row) in dframe.iterrows()]
-
-        batches = int(ceil(float(len(rows)) / DB_BATCH_SIZE))
-
-        for batch in range(0, batches):
-            start = batch * DB_BATCH_SIZE
-            end = (batch + 1) * DB_BATCH_SIZE
-            self.collection.insert(rows[start:end], safe=True)
+        self.batch_save(rows)
 
         call_async(dataset.summarize, dataset, dataset)

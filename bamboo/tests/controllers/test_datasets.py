@@ -126,10 +126,8 @@ class TestDatasets(TestAbstractDatasets):
                 self.assertTrue(
                     column in result.keys(),
                     "column %s not in %s" % (column, result.keys()))
-        # compare the last column values with what we expect
-        for key, value in results[-1].items():
-            self.assertEqual(value, self._update_values[key],
-                             'error in column: %s' % key)
+        # ensure new row is in results
+        self.assertTrue(self._update_values in results)
 
     def test_PUT_dataset_id_update_multiple(self):
         self._post_file(self._file_name_with_slashes)

@@ -6,8 +6,8 @@ from celery.contrib.methods import task
 import numpy as np
 
 from bamboo.core.calculator import Calculator
-from bamboo.core.frame import BambooFrame, BAMBOO_RESERVED_KEY_PREFIX, DATASET_ID,\
-    DATASET_OBSERVATION_ID, PARENT_DATASET_ID
+from bamboo.core.frame import BambooFrame, BAMBOO_RESERVED_KEY_PREFIX,\
+    DATASET_ID, DATASET_OBSERVATION_ID, PARENT_DATASET_ID
 from bamboo.core.summary import summarize
 from bamboo.lib.mongo import reserve_encoded
 from bamboo.lib.schema_builder import schema_from_data_and_dtypes, SIMPLETYPE
