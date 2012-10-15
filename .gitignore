@@ -4,6 +4,7 @@
 *~
 .coverage
 .noseids
+*.noseprof
 
 # pip build directory
 build

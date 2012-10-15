@@ -81,6 +81,13 @@ run tests
   $ cd bamboo
   $ ../scripts/test.sh
 
+or run the profiler
+
+::
+
+  $ cd bamboo
+  $ ../scripts/test.sh -p
+
 Documentation
 -------------
 

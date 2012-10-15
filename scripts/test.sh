@@ -1,13 +1,11 @@
 #!/bin/sh
 
-FILE=""
 PROFILE=""
 
-while getopts "p:f:" opt
+while getopts "p" opt
 do
   case "$opt" in
-    f) FILE=$OPTARG ;;
-    p) PROFILE=$OPTARG ;;
+    p) PROFILE=1 ;;
   esac
 done
 
@@ -15,6 +13,9 @@ if [ -z "$PROFILE" ]
 then
   nosetests --with-progressive --with-cov --cov-report term-missing ../bamboo
 else
-  # E.g. FILE=tests/models/test_dataset.py PROFILE=models/dataset
-  nosetests --with-profile $FILE --profile-restrict $PROFILE
+  echo "beginning profile tests..."
+  mkdir -p ../profiling
+  FILEPATH=../profiling/$(date +%Y_%m_%d-%H_%M).noseprof
+  nosetests ../bamboo/tests/test_profile.py --nocapture --with-profile 2>&1 |\
+    grep bamboo/bamboo | grep -v test > $FILEPATH
 fi
