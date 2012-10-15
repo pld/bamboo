@@ -79,7 +79,7 @@ run tests
 ::
 
   $ cd bamboo
-  $ ./test.sh
+  $ ../scripts/test.sh
 
 Documentation
 -------------
@@ -117,7 +117,7 @@ To work on the code:
 
 ::
 
-  $ cd bamboo && ./test.sh
+  $ cd bamboo && ../scripts/test.sh
 
 6. submit a pull request
 

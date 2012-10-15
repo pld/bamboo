@@ -161,8 +161,7 @@ class Dataset(AbstractModel):
         """
         _dict[self.UPDATED_AT] = strftime("%Y-%m-%d %H:%M:%S", gmtime())
         self.record.update(_dict)
-        document = {'$set': _dict}
-        self.collection.update({DATASET_ID: self.dataset_id}, document,
+        self.collection.update({DATASET_ID: self.dataset_id}, self.record,
                                safe=True)
 
     def build_schema(self, dframe):
