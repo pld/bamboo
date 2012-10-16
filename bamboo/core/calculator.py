@@ -113,7 +113,7 @@ class Calculator(object):
         aggregate_calculations = []
 
         for calculation in calculations:
-            aggregation, function = \
+            aggregation, function =\
                 self.parser.parse_formula(calculation.formula)
             new_column = new_dframe.apply(function[0], axis=1,
                                           args=(self.parser.context, ))
@@ -205,24 +205,29 @@ class Calculator(object):
             self._update_aggregate_dataset(calculation)
 
     def _update_aggregate_dataset(self, calculation):
+        """
+        Update the aggregated dataset built for *self* with *calculation*.
+
+        - delete the rows in this dataset from the parent
+        - recalculate aggregated dataframe from aggregation
+        - update aggregated dataset with new dataframe and add parent id
+        - recur on all merged datasets descending from the aggregated dataset
+
+        """
         if not self.labels_to_slugs_and_groups:
             self._create_labels_to_slugs_and_groups()
         data = self.labels_to_slugs_and_groups.get(calculation.name)
         name, group, agg_dataset = data
 
-        # delete the rows in this dataset from the parent
         agg_dataset.remove_parent_observations(self.dataset.dataset_id)
 
-        # recalculate aggregated dataframe from aggregation
         agg_dframe = agg_dataset.dframe()
-
         aggregation, new_columns = self._make_columns(
             calculation.formula, name)
         agg = Aggregator(agg_dataset, agg_dframe, new_columns,
                          group, aggregation, name)
         new_agg_dframe = concat([agg_dframe, agg.eval_dframe()])
 
-        # update aggregated dataset with new dataframe and add parent id
         new_agg_dframe = agg_dataset.replace_observations(
             new_agg_dframe).add_parent_column(agg_dataset.dataset_id)
 
