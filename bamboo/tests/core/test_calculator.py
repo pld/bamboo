@@ -25,7 +25,7 @@ class TestCalculator(TestBase):
                calculated, type(stored), stored) +\
             '(within %s places), formula: %s' % (self.places, formula)
 
-    def _test_calculator(self, delay=True):
+    def _test_calculator(self):
         self.dframe = self.dataset.dframe()
         row = self.dframe.irow(0)
 
@@ -46,15 +46,8 @@ class TestCalculator(TestBase):
 
             calculator = Calculator(self.dataset)
 
-            if delay:
-                task = calculator.calculate_column.delay(
-                    calculator, formula, name, self.group)
-                # test that task has completed
-                self.assertTrue(task.ready())
-                self.assertTrue(task.successful())
-            else:
-                task = calculator.calculate_column(
-                    calculator, formula, name, self.group)
+            task = calculator.calculate_column(
+                calculator, formula, name, self.group)
 
             self.column_labels_to_slugs = self.dataset.build_labels_to_slugs()
 

@@ -15,9 +15,9 @@ class TestCalculations(TestBase):
     def setUp(self):
         TestBase.setUp(self)
 
-        self._file = 'file://tests/fixtures/good_eats.csv'
         self.dataset_id = create_dataset_from_url(
-            self._file, allow_local_file=True).dataset_id
+            '%s%s' % (self._local_fixture_prefix(), 'good_eats.csv'),
+            allow_local_file=True).dataset_id
         self.controller = Calculations()
         self.formula = 'amount + gps_alt'
         self.name = 'test'

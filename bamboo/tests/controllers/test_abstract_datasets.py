@@ -1,4 +1,5 @@
 import json
+import os
 
 import cherrypy
 
@@ -40,7 +41,7 @@ class TestAbstractDatasets(TestBase):
         if file_name is None:
             file_name = self._file_name
         self.dataset_id = create_dataset_from_url(
-            'file://tests/fixtures/%s' % file_name,
+            'file://localhost%s/tests/fixtures/%s' % (os.getcwd(), file_name),
             allow_local_file=True).dataset_id
         self.schema = json.loads(
             self.controller.GET(

@@ -1,10 +1,10 @@
+import os
 import unittest
 import uuid
 
 from pandas import read_csv
 
 from bamboo.config.db import Database
-from bamboo.lib.io import open_data_file
 
 
 class TestBase(unittest.TestCase):
@@ -22,6 +22,7 @@ class TestBase(unittest.TestCase):
     test_dataset_ids = {}
 
     def setUp(self):
+        os.environ['BAMBOO_ASYNC_FALSE'] = 'True'
         self._drop_database()
         self._create_database()
         self._load_test_data()
@@ -35,9 +36,11 @@ class TestBase(unittest.TestCase):
     def _drop_database(self):
         Database.connection().drop_database(self.TEST_DATABASE_NAME)
 
+    def _local_fixture_prefix(self):
+        return 'file://localhost%s/tests/fixtures/' % os.getcwd()
+
     def _load_test_data(self):
         for dataset_name in self.TEST_DATASETS:
-            f = open_data_file('file://tests/fixtures/%s' % dataset_name,
-                               allow_local_file=True)
-            self.test_data[dataset_name] = read_csv(f)
+            self.test_data[dataset_name] = read_csv(
+                '%s%s' % (self._local_fixture_prefix(), dataset_name))
             self.test_dataset_ids[dataset_name] = uuid.uuid4().hex

@@ -124,20 +124,17 @@ class TestAggregations(TestCalculator):
             msg = self._equal_msg(result, stored, formula)
             self.assertAlmostEqual(result, stored, self.places, msg)
 
-    def test_calculator_with_delay(self):
+    def test_calculator(self):
         self._test_calculator()
-
-    def test_calculator_without_delay(self):
-        self._test_calculator(delay=False)
 
     def test_calculator_with_group(self):
         self.group = 'food_type'
-        self._test_calculator(delay=False)
+        self._test_calculator()
 
     def test_calculator_with_group_list(self):
         self.group = 'food_type'
-        self._test_calculator(delay=False)
+        self._test_calculator()
 
     def test_calculator_with_multigroup_list(self):
         self.group = 'food_type,rating'
-        self._test_calculator(delay=False)
+        self._test_calculator()
