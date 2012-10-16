@@ -1,6 +1,7 @@
 import json
 import os
 from StringIO import StringIO
+import sys
 from tempfile import NamedTemporaryFile
 
 from pandas import concat
@@ -8,6 +9,7 @@ from pandas import concat
 from bamboo.config.settings import ASYNCHRONOUS_TASKS
 from bamboo.controllers.datasets import Datasets
 from bamboo.models.dataset import Dataset
+from bamboo.tests.decorators import run_profiler
 from bamboo.tests.mock import MockUploadedFile
 from bamboo.tests.test_base import TestBase
 
@@ -53,6 +55,7 @@ class TestProfile(TestBase):
     def test_large_profile(self):
         self._test_profile('large')
 
+    @run_profiler
     def _test_profile(self, size):
         print 'bamboo/bamboo: %s' % size
         self._test_create_data(*self.TEST_CASE_SIZES[size])

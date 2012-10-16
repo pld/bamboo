@@ -219,9 +219,6 @@ class Calculator(object):
         data = self.labels_to_slugs_and_groups.get(calculation.name)
         name, group, agg_dataset = data
 
-        # IF reducible
-
-        # IF NOT reducible
         agg_dataset.remove_parent_observations(self.dataset.dataset_id)
 
         agg_dframe = agg_dataset.dframe()
