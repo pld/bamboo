@@ -9,6 +9,7 @@ from pandas import read_csv
 
 from bamboo.config.db import Database
 from bamboo.config.settings import TEST_DATABASE_NAME
+from bamboo.tests.decorators import print_time
 
 
 class TestBase(unittest.TestCase):
@@ -28,13 +29,12 @@ class TestBase(unittest.TestCase):
     def setUp(self):
         self._drop_database()
         self._create_database()
-        self._start_celery_daemon()
         self._load_test_data()
 
     def tearDown(self):
-        self._stop_celery_daemon()
         self._drop_database()
 
+    @print_time
     def _start_celery_daemon(self):
         if not self.celery_process:
             self.celery_process = Popen(
@@ -43,7 +43,7 @@ class TestBase(unittest.TestCase):
             # wait until celery is setup
             inspect = task.control.inspect()
             while not inspect.stats():
-                sleep(0.5)
+                sleep(0.1)
 
     def _stop_celery_daemon(self):
         if self.celery_process:

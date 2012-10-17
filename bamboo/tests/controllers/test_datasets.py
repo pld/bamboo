@@ -288,7 +288,7 @@ class TestDatasets(TestAbstractDatasets):
         while True:
             results = json.loads(self.controller.GET(self.dataset_id))
             if len(results): break
-            sleep(0.5)
+            sleep(0.1)
         self.assertTrue(isinstance(results, list))
         self.assertTrue(isinstance(results[0], dict))
         self.assertEqual(len(results), self.NUM_ROWS)

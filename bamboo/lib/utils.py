@@ -41,8 +41,7 @@ def split_groups(group_str):
 
 def call_async(function, dataset, *args, **kwargs):
     if not os.getenv('BAMBOO_ASYNC_OFF') and ASYNCHRONOUS_TASKS:
-        function.__getattribute__('delay')(*args, **kwargs)
-#        function.__getattribute__('apply_async')(
-#            args=args, kwargs=kwargs, queue=dataset.dataset_id)
+        function.__getattribute__('apply_async')(
+            args=args, kwargs=kwargs)
     else:  # pragma: no cover
         function(*args, **kwargs)
