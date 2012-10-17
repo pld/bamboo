@@ -29,6 +29,9 @@ def create_dataset_from_url(url, allow_local_file=False):
 
     Raises an IOError for a bad file or a ConnectionError for a bad URL.
     """
+    if not allow_local_file and isinstance(url, basestring) and url[0:4] == 'file':
+        raise IOError
+
     dataset = Dataset()
     dataset.save()
     call_async(import_dataset, dataset, dataset, filepath_or_buffer=url)

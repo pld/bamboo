@@ -9,9 +9,9 @@ from bamboo.config.settings import RUN_PROFILER
 def requires_async(func):
     @wraps(func)
     def wrapper(*args, **kwargs):
-        del os.environ['BAMBOO_ASYNC_FALSE']
+        del os.environ['BAMBOO_ASYNC_OFF']
         result = func(*args, **kwargs)
-        os.environ['BAMBOO_ASYNC_FALSE'] = 'True'
+        os.environ['BAMBOO_ASYNC_OFF'] = 'True'
         return result
     return wrapper
 

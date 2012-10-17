@@ -2,7 +2,7 @@ from datetime import datetime
 import os
 import pickle
 import simplejson as json
-from time import mktime
+from time import mktime, sleep
 
 import numpy as np
 from pandas import concat
@@ -278,6 +278,17 @@ class TestDatasets(TestAbstractDatasets):
     def test_GET(self):
         self._post_file()
         results = json.loads(self.controller.GET(self.dataset_id))
+        self.assertTrue(isinstance(results, list))
+        self.assertTrue(isinstance(results[0], dict))
+        self.assertEqual(len(results), self.NUM_ROWS)
+
+    @requires_async
+    def test_GET_async(self):
+        self._post_file()
+        while True:
+            results = json.loads(self.controller.GET(self.dataset_id))
+            if len(results): break
+            sleep(0.5)
         self.assertTrue(isinstance(results, list))
         self.assertTrue(isinstance(results[0], dict))
         self.assertEqual(len(results), self.NUM_ROWS)
