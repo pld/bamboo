@@ -9,7 +9,9 @@ install:
   - pip install -r requirements-test.pip --use-mirrors
 script:
   - ./celeryd/celeryd start
-  - cd bamboo && nosetests
+  - cd bamboo
+  - nosetests
+  - cd ..
   - ./celeryd/celeryd stop
 services:
   - mongodb
