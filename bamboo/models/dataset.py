@@ -84,6 +84,8 @@ class Dataset(AbstractModel):
         return dframe
 
     def add_merged_dataset(self, new_dataset):
+        print 'adding %s to dataset %s' % (new_dataset.dataset_id,
+                self.dataset_id)
         self.update({
             self.MERGED_DATASETS: self.merged_datasets +
             [new_dataset.dataset_id]})

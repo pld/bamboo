@@ -271,9 +271,41 @@ class TestDatasets(TestAbstractDatasets):
             datasets=json.dumps([dataset_id1, dataset_id2])))
         self.assertTrue(isinstance(result, dict))
         self.assertTrue(Dataset.ID in result)
+        merged_id = result[Dataset.ID]
 
-        datasets = [Dataset.find_one(dataset_id)
-                    for dataset_id in [dataset_id1, dataset_id2]]
+        # wait for background tasks for finish
+        while True:
+            results1 = json.loads(self.controller.GET(dataset_id1))
+            results2 = json.loads(self.controller.GET(dataset_id2))
+            results3 = json.loads(self.controller.GET(merged_id))
+            if all([len(res) for res in [results1, results2, results3]]): break
+            sleep(0.1)
+
+        while True:
+            datasets = [Dataset.find_one(dataset_id)
+                        for dataset_id in [dataset_id1, dataset_id2]]
+            print [dataset.merged_dataset_ids for dataset in datasets]
+            if all([dataset.merged_dataset_ids for dataset in datasets]): break
+            sleep(0.1)
+
+        for dataset in datasets:
+            print dataset.merged_dataset_ids
+            self.assertTrue(merged_id in dataset.merged_dataset_ids)
+
+        dframe1 = datasets[0].dframe()
+        merged_dataset = Dataset.find_one(result[Dataset.ID])
+        merged_rows = merged_dataset.observations()
+        for row in merged_rows:
+            self.assertTrue(PARENT_DATASET_ID in row.keys())
+        merged_dframe = merged_dataset.dframe()
+
+        self.assertEqual(len(merged_dframe), 2 * len(dframe1))
+        expected_dframe = concat([dframe1, dframe1],
+                                 ignore_index=True)
+        self.assertEqual(list(merged_dframe.columns),
+                         list(expected_dframe.columns))
+
+        self._check_dframes_are_equal(merged_dframe, expected_dframe)
 
     def test_POST_merge_datasets_no_reserved_keys(self):
         self._post_file()

@@ -18,28 +18,24 @@ class MergeError(Exception):
 def merge_dataset_ids(dataset_ids):
     new_dataset = Dataset()
     new_dataset.save()
-    call_async(_merge_datasets_task, None, new_dataset, dataset_ids)
-    return new_dataset
-
-
-@task
-def _merge_datasets_task(new_dataset, dataset_ids):
-    # try to get each of the datasets
     dataset_ids = json.loads(dataset_ids)
-    result = None
 
     datasets = [Dataset.find_one(dataset_id) for dataset_id in dataset_ids]
-    new_dframe = _merge_datasets(datasets)
-
-    # save the resulting dframe as a new dataset
-    import_dataset(new_dataset, dframe=new_dframe)
-
     # store the child dataset ID with each parent
     for dataset in datasets:
         dataset.add_merged_dataset(new_dataset)
 
-    # return the new dataset ID
+    call_async(_merge_datasets_task, new_dataset, new_dataset, datasets)
+
     return new_dataset
+
+
+@task
+def _merge_datasets_task(new_dataset, datasets):
+    new_dframe = _merge_datasets(datasets)
+
+    # save the resulting dframe as a new dataset
+    import_dataset(new_dataset, dframe=new_dframe)
 
 
 def _merge_datasets(datasets):
