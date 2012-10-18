@@ -122,7 +122,7 @@ class Datasets(AbstractController):
         except (ValueError, MergeError) as e:
             error = e.__str__()
         except IOError:
-            error = 'could not get a filehandle for: %s' % url
+            error = 'could not get a filehandle for: %s' % csv_file
         except urllib2.URLError:
             error = 'could not load: %s' % url
 
