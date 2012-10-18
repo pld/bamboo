@@ -10,3 +10,4 @@ CELERY_MONGODB_BACKEND_SETTINGS = {
     'taskmeta_collection': 'celery_tasks',
 }
 CELERY_IMPORTS = ("bamboo.lib.io",)
+CELERYD_CONCURRENCY = 1

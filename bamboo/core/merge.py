@@ -1,5 +1,6 @@
 import json
 
+from celery.task import task
 from pandas import concat, Series
 
 from bamboo.models.dataset import Dataset
@@ -15,6 +16,14 @@ class MergeError(Exception):
 
 
 def merge_dataset_ids(dataset_ids):
+    new_dataset = Dataset()
+    new_dataset.save()
+    call_async(_merge_datasets_task, None, new_dataset, dataset_ids)
+    return new_dataset
+
+
+@task
+def _merge_datasets_task(new_dataset, dataset_ids):
     # try to get each of the datasets
     dataset_ids = json.loads(dataset_ids)
     result = None
@@ -23,9 +32,7 @@ def merge_dataset_ids(dataset_ids):
     new_dframe = _merge_datasets(datasets)
 
     # save the resulting dframe as a new dataset
-    new_dataset = Dataset()
-    new_dataset.save()
-    call_async(import_dataset, new_dataset, new_dataset, dframe=new_dframe)
+    import_dataset(new_dataset, dframe=new_dframe)
 
     # store the child dataset ID with each parent
     for dataset in datasets:

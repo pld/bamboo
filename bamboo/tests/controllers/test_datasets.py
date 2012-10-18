@@ -260,6 +260,21 @@ class TestDatasets(TestAbstractDatasets):
 
         self._check_dframes_are_equal(merged_dframe, expected_dframe)
 
+    @requires_async
+    def test_POST_merge_datasets_async(self):
+        self._post_file()
+        dataset_id1 = self.dataset_id
+        self._post_file()
+        dataset_id2 = self.dataset_id
+        result = json.loads(self.controller.POST(
+            merge=True,
+            datasets=json.dumps([dataset_id1, dataset_id2])))
+        self.assertTrue(isinstance(result, dict))
+        self.assertTrue(Dataset.ID in result)
+
+        datasets = [Dataset.find_one(dataset_id)
+                    for dataset_id in [dataset_id1, dataset_id2]]
+
     def test_POST_merge_datasets_no_reserved_keys(self):
         self._post_file()
         dataset_id1 = self.dataset_id
