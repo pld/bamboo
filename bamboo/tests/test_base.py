@@ -1,15 +1,11 @@
 import os
-from subprocess import Popen
-from time import sleep
 import unittest
 import uuid
 
-from celery import task
 from pandas import read_csv
 
 from bamboo.config.db import Database
 from bamboo.config.settings import TEST_DATABASE_NAME
-from bamboo.tests.decorators import print_time
 
 
 class TestBase(unittest.TestCase):
@@ -24,7 +20,6 @@ class TestBase(unittest.TestCase):
 
     test_data = {}
     test_dataset_ids = {}
-    celery_process = None
 
     def setUp(self):
         self._drop_database()
@@ -33,21 +28,6 @@ class TestBase(unittest.TestCase):
 
     def tearDown(self):
         self._drop_database()
-
-    @print_time
-    def _start_celery_daemon(self):
-        if not self.celery_process:
-            self.celery_process = Popen(
-                ['celery', 'worker', '-l', 'critical', '-E'],
-                cwd='..')
-            # wait until celery is setup
-            inspect = task.control.inspect()
-            while not inspect.stats():
-                sleep(0.1)
-
-    def _stop_celery_daemon(self):
-        if self.celery_process:
-            self.celery_process.terminate()
 
     def _create_database(self):
         Database.db(TEST_DATABASE_NAME)

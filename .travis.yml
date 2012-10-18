@@ -7,7 +7,10 @@ install:
   - pip install numpy --use-mirrors
   - pip install -r requirements.pip --use-mirrors
   - pip install -r requirements-test.pip --use-mirrors
-script: cd bamboo && nosetests
+script:
+  - ./celeryd/celeryd.init start
+  - cd bamboo && nosetests
+  - ./celeryd/celeryd.init stop
 services:
   - mongodb
 notifications:

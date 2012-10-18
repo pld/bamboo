@@ -19,3 +19,5 @@ env
 *.bak
 *.dat
 *.dir
+*.log
+*.pid

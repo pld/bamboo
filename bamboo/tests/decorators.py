@@ -11,9 +11,7 @@ def requires_async(func):
     def wrapper(*args, **kwargs):
         del os.environ['BAMBOO_ASYNC_OFF']
         self = args[0]
-        self._start_celery_daemon()
         result = func(*args, **kwargs)
-        self._stop_celery_daemon()
         os.environ['BAMBOO_ASYNC_OFF'] = 'True'
         return result
     return wrapper
