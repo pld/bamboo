@@ -1,7 +1,5 @@
 import os
-import re
 import tempfile
-import urllib2
 
 from celery.task import task
 from pandas import read_csv
@@ -14,54 +12,29 @@ from bamboo.models.dataset import Dataset
 
 
 @task
-def import_dataset(dataset, dframe=None, _file=None, delete=False):
+def import_dataset(dataset, dframe=None, filepath_or_buffer=None, delete=False):
     """
     For reading a URL and saving the corresponding dataset.
     """
-    if _file:
-        dframe = recognize_dates(read_csv(_file))
+    if filepath_or_buffer:
+        dframe = recognize_dates(read_csv(filepath_or_buffer))
     if delete:
-        os.unlink(_file)
+        os.unlink(filepath_or_buffer)
     Observation().save(dframe, dataset)
-
-
-def open_data_file(url, allow_local_file=False):
-    """
-    Handle url and file handles
-    """
-    open_url = lambda d: urllib2.urlopen(d['url'])
-    protocols = {
-        'http':  open_url,
-        'https': open_url,
-    }
-    if allow_local_file:
-        protocols.update({'file': lambda d: d['path']})
-
-    regex = re.compile(
-        '^(?P<url>(?P<protocol>%s):\/\/(?P<path>.+))$'
-        % '|'.join(protocols.keys())
-    )
-    match = re.match(regex, url)
-    if match:
-        args = match.groupdict()
-        return protocols[args['protocol']](args)
-    return None
 
 
 def create_dataset_from_url(url, allow_local_file=False):
     """
     Load a URL, read from a CSV, create a dataset and return the unique ID.
 
-    Raises an IOError or urllib2.HTTPError if bad file or URL given.
+    Raises an IOError for a bad file or a ConnectionError for a bad URL.
     """
-    _file = open_data_file(url, allow_local_file)
-
-    if not _file:
+    if not allow_local_file and isinstance(url, basestring) and url[0:4] == 'file':
         raise IOError
 
     dataset = Dataset()
     dataset.save()
-    call_async(import_dataset, dataset, dataset, _file=_file)
+    call_async(import_dataset, dataset, dataset, filepath_or_buffer=url)
 
     return dataset
 
@@ -82,6 +55,6 @@ def create_dataset_from_csv(csv_file):
     dataset.save()
 
     call_async(
-        import_dataset, dataset, dataset, _file=tmpfile.name, delete=True)
+        import_dataset, dataset, dataset, filepath_or_buffer=tmpfile.name, delete=True)
 
     return dataset

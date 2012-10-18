@@ -14,3 +14,10 @@ docs/_build
 
 # a place for a virtualenv
 env
+
+# celery files
+*.bak
+*.dat
+*.dir
+*.log
+*.pid

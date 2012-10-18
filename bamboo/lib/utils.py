@@ -1,4 +1,5 @@
 from math import isnan
+import os
 import re
 
 from pandas import Series
@@ -39,8 +40,8 @@ def split_groups(group_str):
 
 
 def call_async(function, dataset, *args, **kwargs):
-    if ASYNCHRONOUS_TASKS:
+    if not os.getenv('BAMBOO_ASYNC_OFF') and ASYNCHRONOUS_TASKS:
         function.__getattribute__('apply_async')(
-            args=args, kwargs=kwargs, queue=dataset.dataset_id)
+            args=args, kwargs=kwargs)
     else:  # pragma: no cover
         function(*args, **kwargs)

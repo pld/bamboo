@@ -121,9 +121,10 @@ class Datasets(AbstractController):
             result = {Dataset.ID: dataset.dataset_id}
         except (ValueError, MergeError) as e:
             error = e.__str__()
-        except (IOError, urllib2.HTTPError):
-            # error reading file/url, return
+        except IOError:
             error = 'could not get a filehandle for: %s' % url
+        except urllib2.URLError:
+            error = 'could not load: %s' % url
 
         return self.dump_or_error(result, error)
 

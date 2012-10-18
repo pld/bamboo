@@ -2,7 +2,7 @@ from datetime import datetime
 import os
 import pickle
 import simplejson as json
-from time import mktime
+from time import mktime, sleep
 
 import numpy as np
 from pandas import concat
@@ -12,7 +12,7 @@ from bamboo.controllers.datasets import Datasets
 from bamboo.controllers.calculations import Calculations
 from bamboo.core.frame import BAMBOO_RESERVED_KEYS, PARENT_DATASET_ID
 from bamboo.core.summary import SUMMARY
-from bamboo.tests.decorators import requires_internet
+from bamboo.tests.decorators import requires_async, requires_internet
 from bamboo.lib.datetools import DATETIME
 from bamboo.lib.mongo import MONGO_RESERVED_KEY_PREFIX,\
     MONGO_RESERVED_KEY_STRS, MONGO_RESERVED_KEYS
@@ -199,6 +199,7 @@ class TestDatasets(TestAbstractDatasets):
         self._test_summary_built(result)
 
     @requires_internet
+    @requires_async
     def test_POST_not_csv_url(self):
         result = json.loads(self.controller.POST(url='http://74.125.228.110/'))
         self.assertTrue(isinstance(result, dict))
@@ -277,6 +278,17 @@ class TestDatasets(TestAbstractDatasets):
     def test_GET(self):
         self._post_file()
         results = json.loads(self.controller.GET(self.dataset_id))
+        self.assertTrue(isinstance(results, list))
+        self.assertTrue(isinstance(results[0], dict))
+        self.assertEqual(len(results), self.NUM_ROWS)
+
+    @requires_async
+    def test_GET_async(self):
+        self._post_file()
+        while True:
+            results = json.loads(self.controller.GET(self.dataset_id))
+            if len(results): break
+            sleep(0.1)
         self.assertTrue(isinstance(results, list))
         self.assertTrue(isinstance(results[0], dict))
         self.assertEqual(len(results), self.NUM_ROWS)

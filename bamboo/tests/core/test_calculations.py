@@ -104,8 +104,5 @@ class TestCalculations(TestCalculator):
                     msg = self._equal_msg(row[name], row[formula], formula)
                     self.assertEqual(row[name], row[formula], msg)
 
-    def test_calculator_with_delay(self):
+    def test_calculator(self):
         self._test_calculator()
-
-    def test_calculator_without_delay(self):
-        self._test_calculator(delay=False)
