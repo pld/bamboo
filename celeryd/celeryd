@@ -20,8 +20,8 @@
 
 #set -e
 
-DEFAULT_PID_FILE="/var/run/celeryd@%n.pid"
-DEFAULT_LOG_FILE="/var/log/celeryd@%n.log"
+DEFAULT_PID_FILE="celeryd/celeryd@%n.pid"
+DEFAULT_LOG_FILE="celeryd/celeryd@%n.log"
 DEFAULT_LOG_LEVEL="INFO"
 DEFAULT_NODES="celery"
 DEFAULT_CELERYD="-m celery.bin.celeryd_detach"
@@ -42,6 +42,7 @@ CELERYD_MULTI=${CELERYD_MULTI:-"celeryd-multi"}
 CELERYD=${CELERYD:-$DEFAULT_CELERYD}
 CELERYCTL=${CELERYCTL:="celeryctl"}
 CELERYD_NODES=${CELERYD_NODES:-$DEFAULT_NODES}
+CELERYD_OPTS="--config=bamboo.config.celeryconfig_test"
 
 export CELERY_LOADER
 
