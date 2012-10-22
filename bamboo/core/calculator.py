@@ -219,7 +219,8 @@ class Calculator(object):
         data = self.labels_to_slugs_and_groups.get(calculation.name)
         name, group, agg_dataset = data
 
-        agg_dataset.remove_parent_observations(self.dataset.dataset_id)
+        if not group:
+            agg_dataset.remove_parent_observations(self.dataset.dataset_id)
 
         agg_dframe = agg_dataset.dframe()
         aggregation, new_columns = self._make_columns(
@@ -250,7 +251,11 @@ class Calculator(object):
         Extract info from linked datasets
         """
         self.labels_to_slugs_and_groups = dict()
+        print self.dataset.aggregated_datasets.items()
         for group, dataset in self.dataset.aggregated_datasets.items():
+            print 'group <<%s>>' % group
+            print dataset.build_labels_to_slugs()
             for label, slug in dataset.build_labels_to_slugs().items():
                 self.labels_to_slugs_and_groups[label] = (
                     slug, group, dataset)
+        print [x[1] for x in self.labels_to_slugs_and_groups.values()]
