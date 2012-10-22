@@ -6,7 +6,7 @@ class Aggregation(object):
     Abstract class for all aggregations.
     """
 
-    def group_aggregation(self, dframe, groups, columns):
+    def group(self, dframe, groups, columns):
         """
         For when aggregation is called with a group parameter.
         """
@@ -15,13 +15,16 @@ class Aggregation(object):
             column).groupby(groups, as_index=False)
         return groupby.agg(self.name)
 
-    def column_aggregation(self, columns, name):
+    def column(self, columns, name):
         """
         For when aggregation is called without a group parameter.
         """
         column = columns[0]
         result = float(column.__getattribute__(self.name)())
         return DataFrame({name: Series([result])})
+
+    def _reduce(self, dframe, columns, name):
+        pass
 
 
 class MaxAggregation(Aggregation):
@@ -63,6 +66,9 @@ class SumAggregation(Aggregation):
 
     name = 'sum'
 
+    def _reduce(self, dframe, columns, name):
+        return dframe + self.column(columns, name)
+
 
 class RatioAggregation(Aggregation):
     """
@@ -73,7 +79,7 @@ class RatioAggregation(Aggregation):
 
     name = 'ratio'
 
-    def group_aggregation(self, dframe, groups, columns):
+    def group(self, dframe, groups, columns):
         # name of formula
         name = columns[0].name
         dframe = dframe[groups]
@@ -91,7 +97,7 @@ class RatioAggregation(Aggregation):
         # need to set index to account for dropped values
         return dframe
 
-    def column_aggregation(self, columns, name):
+    def column(self, columns, name):
         dframe = DataFrame(index=columns[0].index)
 
         column_names, dframe = self._build_dframe(dframe, name, columns)

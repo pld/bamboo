@@ -1,4 +1,4 @@
-from pandas import Series
+from pandas import concat, Series
 
 from bamboo.core.aggregations import Aggregation, AGGREGATIONS
 from bamboo.core.frame import BambooFrame
@@ -23,9 +23,9 @@ class Aggregator(object):
         self.group_str = group_str if group_str else ''
         self.groups = split_groups(self.group_str) if group_str else None
         self.name = name
-        self._type = _type
+        self.aggregation = AGGREGATIONS.get(_type)
 
-    def save_aggregation(self):
+    def save(self):
         new_dframe = BambooFrame(self.eval_dframe()).add_parent_column(
             self.dataset.dataset_id)
 
@@ -60,12 +60,30 @@ class Aggregator(object):
             agg_dataset.replace_observations(new_dframe)
         self.new_dframe = new_dframe
 
-    def eval_dframe(self):
-        aggregation = AGGREGATIONS.get(self._type)
+    def update(self, parent_dataset_id):
+        """
+        Attempt to reduce an update and store.
+        """
+        print '---------------'
+        print self.dframe
+        print self.columns
+        # get dframe with columns from this parent
+        dframe = self.dataset.dframe(
+            keep_parent_ids=True).only_rows_for_parent_id(parent_dataset_id)
+        print dframe
+        new_dframe = BambooFrame(self.aggregation._reduce(
+            dframe, self.columns, self.name))
+        print new_dframe
+        self.dataset.remove_parent_observations(parent_dataset_id)
+        print self.dataset.dframe()
+        new_agg_dframe = concat([self.dataset.dframe(), new_dframe])
+        return self.dataset.replace_observations(
+            new_agg_dframe).add_parent_column(self.dataset.dataset_id)
 
+    def eval_dframe(self):
         if self.group_str:
             # groupby on dframe then run aggregation on groupby obj
-            return aggregation.group_aggregation(self.dframe, self.groups,
+            return self.aggregation.group(self.dframe, self.groups,
                                                  self.columns)
         else:
-            return aggregation.column_aggregation(self.columns, self.name)
+            return self.aggregation.column(self.columns, self.name)
