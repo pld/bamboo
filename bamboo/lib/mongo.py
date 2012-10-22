@@ -1,3 +1,4 @@
+from  base64 import b64encode
 import json
 import numpy as np
 import re
@@ -43,3 +44,26 @@ def mongo_prefix_reserved_key(key, prefix=MONGO_RESERVED_KEY_PREFIX):
 def reserve_encoded(string):
     return mongo_prefix_reserved_key(string) if\
         string in MONGO_RESERVED_KEYS else string
+
+
+def dict_for_mongo(d):
+    for key, value in d.items():
+        if type(value) == list:
+            value = [dict_for_mongo(e)
+                     if type(e) == dict else e for e in value]
+        elif type(value) == dict:
+            value = dict_for_mongo(value)
+        elif _is_invalid_for_mongo(key):
+            del d[key]
+            d[_encode_for_mongo(key)] = value
+    return d
+
+
+def _encode_for_mongo(key):
+    # TODO: compile RE
+    return reduce(lambda s, c: re.sub(c[0], b64encode(c[1]), s),
+                  [(r'^\$', '$'), (r'\.', '.')], key)
+
+
+def _is_invalid_for_mongo(key):
+    return key.startswith('$') or key.count('.') > 0

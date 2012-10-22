@@ -12,7 +12,8 @@ from bamboo.models.dataset import Dataset
 
 
 @task
-def import_dataset(dataset, dframe=None, filepath_or_buffer=None, delete=False):
+def import_dataset(dataset, dframe=None, filepath_or_buffer=None,
+                   delete=False):
     """
     For reading a URL and saving the corresponding dataset.
     """
@@ -29,7 +30,8 @@ def create_dataset_from_url(url, allow_local_file=False):
 
     Raises an IOError for a bad file or a ConnectionError for a bad URL.
     """
-    if not allow_local_file and isinstance(url, basestring) and url[0:4] == 'file':
+    if not allow_local_file and isinstance(url, basestring)\
+            and url[0:4] == 'file':
         raise IOError
 
     dataset = Dataset()
@@ -55,6 +57,7 @@ def create_dataset_from_csv(csv_file):
     dataset.save()
 
     call_async(
-        import_dataset, dataset, dataset, filepath_or_buffer=tmpfile.name, delete=True)
+        import_dataset, dataset, dataset,
+        filepath_or_buffer=tmpfile.name, delete=True)
 
     return dataset

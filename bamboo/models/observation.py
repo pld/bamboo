@@ -64,18 +64,13 @@ class Observation(AbstractModel):
         if not dataset.SCHEMA in dataset.record:
             dataset.build_schema(dframe)
 
-        # add metadata to dataset
-        dataset.update({
-            dataset.NUM_COLUMNS: len(dframe.columns),
-            dataset.NUM_ROWS: len(dframe),
-        })
-
         labels_to_slugs = dataset.build_labels_to_slugs()
 
         # if column name is not in map assume it is already slugified
         # (i.e. NOT a label)
-        dframe.columns = [labels_to_slugs.get(column, column) for column in
-                          dframe.columns.tolist()]
+        columns = dframe.columns = [
+            labels_to_slugs.get(column, column) for column in
+            dframe.columns.tolist()]
 
         id_column = Series([dataset.dataset_observation_id] * len(dframe))
         id_column.name = DATASET_OBSERVATION_ID
@@ -83,5 +78,12 @@ class Observation(AbstractModel):
 
         rows = [row.to_dict() for (_, row) in dframe.iterrows()]
         self.batch_save(rows)
+
+        # add metadata to dataset
+        dataset.update({
+            dataset.NUM_COLUMNS: len(columns),
+            dataset.NUM_ROWS: len(dframe),
+            dataset.STATUS: 'ready',
+        })
 
         call_async(dataset.summarize, dataset, dataset)
