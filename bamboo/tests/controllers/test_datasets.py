@@ -278,13 +278,15 @@ class TestDatasets(TestAbstractDatasets):
             results1 = json.loads(self.controller.GET(dataset_id1))
             results2 = json.loads(self.controller.GET(dataset_id2))
             results3 = json.loads(self.controller.GET(merged_id))
-            if all([len(res) for res in [results1, results2, results3]]): break
+            if all([len(res) for res in [results1, results2, results3]]):
+                break
             sleep(0.1)
 
         while True:
             datasets = [Dataset.find_one(dataset_id)
                         for dataset_id in [dataset_id1, dataset_id2]]
-            if all([dataset.merged_dataset_ids for dataset in datasets]): break
+            if all([dataset.status == 'ready' for dataset in datasets]):
+                break
             sleep(0.1)
 
         for dataset in datasets:
@@ -332,7 +334,8 @@ class TestDatasets(TestAbstractDatasets):
         self._post_file()
         while True:
             results = json.loads(self.controller.GET(self.dataset_id))
-            if len(results): break
+            if len(results):
+                break
             sleep(0.1)
         self.assertTrue(isinstance(results, list))
         self.assertTrue(isinstance(results[0], dict))

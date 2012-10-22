@@ -38,6 +38,7 @@ class Dataset(AbstractModel):
     NUM_ROWS = 'num_rows'
     MERGED_DATASETS = 'merged_datasets'
     SCHEMA = 'schema'
+    STATUS = 'status'
     UPDATED_AT = 'updated_at'
 
     # commonly accessed variables
@@ -50,12 +51,16 @@ class Dataset(AbstractModel):
         return self.record[DATASET_ID]
 
     @property
+    def schema(self):
+        return self.record.get(self.SCHEMA)
+
+    @property
     def stats(self):
         return self.record.get(self.STATS, {})
 
     @property
-    def schema(self):
-        return self.record.get(self.SCHEMA)
+    def status(self):
+        return self.record[self.STATUS]
 
     @property
     def aggregated_datasets_dict(self):
@@ -84,8 +89,6 @@ class Dataset(AbstractModel):
         return dframe
 
     def add_merged_dataset(self, new_dataset):
-        print 'adding %s to dataset %s' % (new_dataset.dataset_id,
-                self.dataset_id)
         self.update({
             self.MERGED_DATASETS: self.merged_datasets +
             [new_dataset.dataset_id]})
@@ -108,10 +111,11 @@ class Dataset(AbstractModel):
             dataset_id = uuid.uuid4().hex
 
         record = {
-            self.CREATED_AT: strftime("%Y-%m-%d %H:%M:%S", gmtime()),
             DATASET_ID: dataset_id,
             DATASET_OBSERVATION_ID: uuid.uuid4().hex,
             self.AGGREGATED_DATASETS: {},
+            self.CREATED_AT: strftime("%Y-%m-%d %H:%M:%S", gmtime()),
+            self.STATUS: 'pending',
         }
         return super(self.__class__, self).save(record)
 
@@ -163,7 +167,8 @@ class Dataset(AbstractModel):
         """
         _dict[self.UPDATED_AT] = strftime("%Y-%m-%d %H:%M:%S", gmtime())
         _dict = dict_for_mongo(_dict)
-        self.collection.update({DATASET_ID: self.dataset_id}, {'$set': _dict}, safe=True)
+        self.collection.update({
+            DATASET_ID: self.dataset_id}, {'$set': _dict}, safe=True)
         self.record = self.__class__.find_one(self.dataset_id).record
 
     def build_schema(self, dframe):
