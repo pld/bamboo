@@ -284,16 +284,14 @@ class TestDatasets(TestAbstractDatasets):
         while True:
             datasets = [Dataset.find_one(dataset_id)
                         for dataset_id in [dataset_id1, dataset_id2]]
-            print [dataset.merged_dataset_ids for dataset in datasets]
             if all([dataset.merged_dataset_ids for dataset in datasets]): break
             sleep(0.1)
 
         for dataset in datasets:
-            print dataset.merged_dataset_ids
             self.assertTrue(merged_id in dataset.merged_dataset_ids)
 
         dframe1 = datasets[0].dframe()
-        merged_dataset = Dataset.find_one(result[Dataset.ID])
+        merged_dataset = Dataset.find_one(merged_id)
         merged_rows = merged_dataset.observations()
         for row in merged_rows:
             self.assertTrue(PARENT_DATASET_ID in row.keys())

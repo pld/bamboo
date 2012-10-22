@@ -20,22 +20,24 @@ def merge_dataset_ids(dataset_ids):
     new_dataset.save()
     dataset_ids = json.loads(dataset_ids)
 
-    datasets = [Dataset.find_one(dataset_id) for dataset_id in dataset_ids]
-    # store the child dataset ID with each parent
-    for dataset in datasets:
-        dataset.add_merged_dataset(new_dataset)
-
-    call_async(_merge_datasets_task, new_dataset, new_dataset, datasets)
+    call_async(_merge_datasets_task, new_dataset, new_dataset, dataset_ids)
 
     return new_dataset
 
 
 @task
-def _merge_datasets_task(new_dataset, datasets):
+def _merge_datasets_task(new_dataset, dataset_ids):
+    print '<<< merge_datasets IN'
+    datasets = [Dataset.find_one(dataset_id) for dataset_id in dataset_ids]
     new_dframe = _merge_datasets(datasets)
 
     # save the resulting dframe as a new dataset
     import_dataset(new_dataset, dframe=new_dframe)
+
+    # store the child dataset ID with each parent
+    for dataset in datasets:
+        dataset.add_merged_dataset(new_dataset)
+    print '>>> merge_datasets OUT'
 
 
 def _merge_datasets(datasets):
@@ -50,5 +52,7 @@ def _merge_datasets(datasets):
     dframes = []
     for dataset in datasets:
         dframes.append(dataset.dframe().add_parent_column(dataset.dataset_id))
+
+    print 'len of dframes: %s' % [len(d) for d in dframes]
 
     return concat(dframes, ignore_index=True)

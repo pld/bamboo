@@ -16,11 +16,13 @@ def import_dataset(dataset, dframe=None, filepath_or_buffer=None, delete=False):
     """
     For reading a URL and saving the corresponding dataset.
     """
+    print '<<< import_dataset IN'
     if filepath_or_buffer:
         dframe = recognize_dates(read_csv(filepath_or_buffer))
     if delete:
         os.unlink(filepath_or_buffer)
     Observation().save(dframe, dataset)
+    print '>>> import_dataset OUT'
 
 
 def create_dataset_from_url(url, allow_local_file=False):

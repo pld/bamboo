@@ -9,7 +9,7 @@ from bamboo.core.calculator import Calculator
 from bamboo.core.frame import BambooFrame, BAMBOO_RESERVED_KEY_PREFIX,\
     DATASET_ID, DATASET_OBSERVATION_ID, PARENT_DATASET_ID
 from bamboo.core.summary import summarize
-from bamboo.lib.mongo import reserve_encoded
+from bamboo.lib.mongo import dict_for_mongo, reserve_encoded
 from bamboo.lib.schema_builder import schema_from_data_and_dtypes, SIMPLETYPE
 from bamboo.lib.utils import call_async, split_groups
 from bamboo.models.abstract_model import AbstractModel
@@ -162,9 +162,9 @@ class Dataset(AbstractModel):
         Update dataset *dataset* with *_dict*.
         """
         _dict[self.UPDATED_AT] = strftime("%Y-%m-%d %H:%M:%S", gmtime())
-        self.record.update(_dict)
-        self.collection.update({DATASET_ID: self.dataset_id}, self.record,
-                               safe=True)
+        _dict = dict_for_mongo(_dict)
+        self.collection.update({DATASET_ID: self.dataset_id}, {'$set': _dict}, safe=True)
+        self.record = self.__class__.find_one(self.dataset_id).record
 
     def build_schema(self, dframe):
         """
