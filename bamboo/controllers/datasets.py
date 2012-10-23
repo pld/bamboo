@@ -22,7 +22,7 @@ class Datasets(AbstractController):
     MODE_RELATED = 'related'
     MODE_SUMMARY = 'summary'
 
-    def DELETE(self, dataset_id):
+    def delete(self, dataset_id):
         """
         Delete the dataset with hash *dataset_id* from mongo
         """
@@ -34,7 +34,54 @@ class Datasets(AbstractController):
             result = {self.SUCCESS: 'deleted dataset: %s' % dataset_id}
         return self.dump_or_error(result, 'id not found')
 
-    def GET(self, dataset_id, mode=False, query=None, select=None,
+    def info(self, dataset_id):
+        dataset = Dataset.find_one(dataset_id)
+        result = None
+        error = 'id not found'
+
+        try:
+            if dataset.record:
+                result = dataset.info()
+        except (ColumnTypeError, JSONError) as e:
+            error = e.__str__()
+
+        return self.dump_or_error(result, error)
+
+    def summary(self, dataset_id, query=None, select=None,
+            group=None, limit=0, order_by=None):
+        dataset = Dataset.find_one(dataset_id)
+        result = None
+        error = 'id not found'
+
+        try:
+            if dataset.record:
+                if select is None:
+                    error = 'no select'
+                else:
+                    if select == self.SELECT_ALL_FOR_SUMMARY:
+                        select = None
+                    result = dataset.summarize(dataset, query, select,
+                                               group, limit=limit,
+                                               order_by=order_by)
+        except (ColumnTypeError, JSONError) as e:
+            error = e.__str__()
+
+        return self.dump_or_error(result, error)
+
+    def related(self, dataset_id):
+        dataset = Dataset.find_one(dataset_id)
+        result = None
+        error = 'id not found'
+
+        try:
+            if dataset.record:
+                result = dataset.aggregated_datasets_dict
+        except (ColumnTypeError, JSONError) as e:
+            error = e.__str__()
+
+        return self.dump_or_error(result, error)
+
+    def show(self, dataset_id, query=None, select=None,
             group=None, limit=0, order_by=None):
         """
         Based on *mode* perform different operations on the dataset specified
@@ -62,32 +109,15 @@ class Datasets(AbstractController):
 
         try:
             if dataset.record:
-                if mode == self.MODE_INFO:
-                    result = dataset.info()
-                elif mode == self.MODE_RELATED:
-                    result = dataset.aggregated_datasets_dict
-                elif mode == self.MODE_SUMMARY:
-                    # for summary require a select
-                    if select is None:
-                        error = 'no select'
-                    else:
-                        if select == self.SELECT_ALL_FOR_SUMMARY:
-                            select = None
-                        result = dataset.summarize(dataset, query, select,
-                                                   group, limit=limit,
-                                                   order_by=order_by)
-                elif mode is False:
-                    return dataset.dframe(
-                        query=query, select=select,
-                        limit=limit, order_by=order_by).to_json()
-                else:
-                    error = 'unsupported API call'
+                return dataset.dframe(
+                    query=query, select=select,
+                    limit=limit, order_by=order_by).to_json()
         except (ColumnTypeError, JSONError) as e:
             error = e.__str__()
 
         return self.dump_or_error(result, error)
 
-    def POST(self, merge=None, url=None, csv_file=None, datasets=None):
+    def create(self, merge=None, url=None, csv_file=None, datasets=None):
         """
         If *url* is provided read data from URL *url*.
         If *csv_file* is provided read data from *csv_file*.

@@ -3,6 +3,7 @@ from bamboo.controllers.datasets import Datasets
 from bamboo.controllers.root import Root
 from bamboo.controllers.version import Version
 
+
 def connect_routes(dispatcher):
     """
     This function takes the dispatcher and attaches the routes.
@@ -13,10 +14,24 @@ def connect_routes(dispatcher):
     datasets = Datasets()
     version = Version()
 
-    # define routes
+    # define routes as tuples:
+    # (name, method, route, controller, action)
     routes = [
+        # root
         ('index', 'GET', '/', root, 'index'),
+        # datasets
+        ('datasets_delete', 'DELETE', '/datasets/:dataset_id', datasets,
+         'delete'),
+        ('datasets_create', 'POST', '/datasets', datasets, 'create'),
+        ('datasets_show', 'GET', '/datasets/:dataset_id', datasets, 'show'),
+        ('datasets_info', 'GET', '/datasets/:dataset_id/info', datasets,
+         'info'),
+        ('datasets_summary', 'GET', '/datasets/:dataset_id/summary', datasets,
+         'summary'),
+        ('datasets_related', 'GET', '/datasets/:dataset_id/related', datasets,
+         'related'),
     ]
+
     # map them into args to dispatcher
     dictify = lambda x: dict(zip(
         ['name', 'conditions', 'route', 'controller', 'action'], x))
