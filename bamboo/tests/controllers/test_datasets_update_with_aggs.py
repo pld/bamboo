@@ -100,7 +100,7 @@ class TestDatasetsUpdateWithAggs(TestAbstractDatasets):
             self.merged_dataset2_id,
             'tests/fixtures/updates_with_aggs/originals/merged_dataset2.p')
 
-    def test_datasets_add_calculations(self):
+    def test_datasets_update(self):
         self._put_row_updates(self.dataset2_id)
         self._verify_dataset(
             self.dataset2_id,

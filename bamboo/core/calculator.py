@@ -13,7 +13,7 @@ from bamboo.lib.utils import call_async, split_groups
 
 class Calculator(object):
 
-    labels_to_slugs_and_groups = None
+    calcs_to_data = None
 
     def __init__(self, dataset):
         self.dataset = dataset
@@ -58,7 +58,7 @@ class Calculator(object):
         if aggregation:
             agg = Aggregator(self.dataset, self.dframe, new_columns,
                              group_str, aggregation, name)
-            agg.save_aggregation()
+            agg.save()
         else:
             self.dataset.replace_observations(self.dframe.join(new_columns[0]))
 
@@ -142,7 +142,7 @@ class Calculator(object):
         self.dframe = self.dataset.replace_observations(updated_dframe)
         self.dataset.clear_summary_stats()
 
-        self._update_aggregate_datasets(aggregate_calculations)
+        self._update_aggregate_datasets(aggregate_calculations, new_dframe)
 
         # store slugs as labels for child datasets
         slugified_data = []
@@ -162,15 +162,18 @@ class Calculator(object):
                        merged_dataset, merged_calculator,
                        slugified_data, self.dataset.dataset_id)
 
-    def _make_columns(self, formula, name):
+    def _make_columns(self, formula, name, dframe=None):
         """
         Parse formula into function and variables
         """
+        if dframe is None:
+            dframe = self.dframe
+
         aggregation, functions = self.parser.parse_formula(formula)
 
         new_columns = []
         for function in functions:
-            new_column = self.dframe.apply(
+            new_column = dframe.apply(
                 function, axis=1, args=(self.parser.context, ))
             new_columns.append(new_column)
 
@@ -200,11 +203,16 @@ class Calculator(object):
         return recognize_dates_from_schema(self.dataset,
                                            BambooFrame(filtered_data))
 
-    def _update_aggregate_datasets(self, aggregate_calculations):
-        for calculation in aggregate_calculations:
-            self._update_aggregate_dataset(calculation)
+    def _update_aggregate_datasets(self, calculations, new_dframe):
+        if not self.calcs_to_data:
+            self._create_calculations_to_groups_and_datasets(calculations)
+        for calc in calculations:
+            for slug, group, dataset in self.calcs_to_data[calc.name]:
+                self._update_aggregate_dataset(calc, new_dframe, slug, group,
+                        dataset)
 
-    def _update_aggregate_dataset(self, calculation):
+    def _update_aggregate_dataset(self, calculation, new_dframe, name, group,
+            agg_dataset):
         """
         Update the aggregated dataset built for *self* with *calculation*.
 
@@ -214,23 +222,15 @@ class Calculator(object):
         - recur on all merged datasets descending from the aggregated dataset
 
         """
-        if not self.labels_to_slugs_and_groups:
-            self._create_labels_to_slugs_and_groups()
-        data = self.labels_to_slugs_and_groups.get(calculation.name)
-        name, group, agg_dataset = data
-
-        if not group:
-            agg_dataset.remove_parent_observations(self.dataset.dataset_id)
-
-        agg_dframe = agg_dataset.dframe()
         aggregation, new_columns = self._make_columns(
-            calculation.formula, name)
+            calculation.formula, name, new_dframe)
+        agg_dframe = agg_dataset.dframe()
+        print 'group <<%s>>' % group
+        print agg_dframe
+
         agg = Aggregator(agg_dataset, agg_dframe, new_columns,
                          group, aggregation, name)
-        new_agg_dframe = concat([agg_dframe, agg.eval_dframe()])
-
-        new_agg_dframe = agg_dataset.replace_observations(
-            new_agg_dframe).add_parent_column(agg_dataset.dataset_id)
+        new_agg_dframe = agg.update(self.dataset.dataset_id)
 
         # jsondict from new dframe
         new_data = new_agg_dframe.to_jsondict()
@@ -246,16 +246,12 @@ class Calculator(object):
                        merged_dataset, merged_calculator, new_data,
                        self.dataset.dataset_id)
 
-    def _create_labels_to_slugs_and_groups(self):
-        """
-        Extract info from linked datasets
-        """
-        self.labels_to_slugs_and_groups = dict()
-        print self.dataset.aggregated_datasets.items()
+    def _create_calculations_to_groups_and_datasets(self, calculations):
+        self.calcs_to_data = defaultdict(list)
+        calculations = set([calc.name for calc in calculations])
         for group, dataset in self.dataset.aggregated_datasets.items():
-            print 'group <<%s>>' % group
-            print dataset.build_labels_to_slugs()
-            for label, slug in dataset.build_labels_to_slugs().items():
-                self.labels_to_slugs_and_groups[label] = (
-                    slug, group, dataset)
-        print [x[1] for x in self.labels_to_slugs_and_groups.values()]
+            labels_to_slugs = dataset.build_labels_to_slugs()
+            for calc in list(
+                    set(labels_to_slugs.keys()).intersection(calculations)):
+                for label, slug in labels_to_slugs.items():
+                    self.calcs_to_data[label].append((slug, group, dataset))
