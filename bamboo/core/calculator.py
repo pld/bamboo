@@ -209,10 +209,10 @@ class Calculator(object):
 
         for formula, slug, group, dataset in self.calcs_to_data:
             self._update_aggregate_dataset(formula, new_dframe, slug, group,
-                    dataset)
+                                           dataset)
 
     def _update_aggregate_dataset(self, formula, new_dframe, name, group,
-            agg_dataset):
+                                  agg_dataset):
         """
         Update the aggregated dataset built for *self* with *calculation*.
 
@@ -251,12 +251,15 @@ class Calculator(object):
         """
         self.calcs_to_data = defaultdict(list)
         names_to_formulas = dict([(calc.name, calc.formula) for calc in
-                calculations])
+                                  calculations])
         calculations = set([calc.name for calc in calculations])
         for group, dataset in self.dataset.aggregated_datasets.items():
             labels_to_slugs = dataset.build_labels_to_slugs()
             for calc in list(
                     set(labels_to_slugs.keys()).intersection(calculations)):
-                self.calcs_to_data[calc].append((names_to_formulas[calc], labels_to_slugs[calc], group, dataset))
+                self.calcs_to_data[calc].append(
+                    (names_to_formulas[calc],
+                     labels_to_slugs[calc], group, dataset))
         self.calcs_to_data = [
-            item for sublist in self.calcs_to_data.values() for item in sublist]
+            item for sublist in self.calcs_to_data.values() for item in sublist
+        ]

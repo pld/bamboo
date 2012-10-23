@@ -78,6 +78,6 @@ class Aggregator(object):
         if self.group_str:
             # groupby on dframe then run aggregation on groupby obj
             return self.aggregation.group(self.dframe, self.groups,
-                                                 self.columns)
+                                          self.columns)
         else:
             return self.aggregation.column(self.columns, self.name)
