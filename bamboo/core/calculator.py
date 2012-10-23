@@ -235,11 +235,9 @@ class Calculator(object):
                          group, aggregation, name)
         new_agg_dframe = agg.update(self.dataset.dataset_id)
 
-        print 'new agg dframe: %s' % new_agg_dframe.to_dict()
-
-
         # jsondict from new dframe
         new_data = new_agg_dframe.to_jsondict()
+        print 'new data: %s' % new_data
 
         for merged_dataset in agg_dataset.merged_datasets:
             # remove rows in child from this merged dataset

@@ -35,10 +35,7 @@ class MultiColumnAggregation(Aggregation):
         new_dframe = self.column(columns, name)
         for column in new_dframe.columns:
             dframe[column] += new_dframe[column]
-        print '----------'
-        print dframe.to_dict()
         dframe[name] = self._agg_dframe(dframe, name)
-        print dframe[name]
         return dframe
 
     def _name_for_idx(self, name, idx):
@@ -112,6 +109,9 @@ class SumAggregation(Aggregation):
 
     def _reduce(self, dframe, columns, name):
         dframe[name] += self.column(columns, name)[name]
+        print 'sum reduce dframe'
+        print dframe.to_dict()
+        print '>>>>>>>>>>sum reduce dframe'
         return dframe
 
 
@@ -157,4 +157,5 @@ class RatioAggregation(MultiColumnAggregation):
 
 AGGREGATIONS = dict([
     (cls.name, cls()) for cls in
-    Aggregation.__subclasses__() + MultiColumnAggregation.__subclasses__() if hasattr(cls, 'name')])
+    Aggregation.__subclasses__() + MultiColumnAggregation.__subclasses__()
+    if hasattr(cls, 'name')])

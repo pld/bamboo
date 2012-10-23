@@ -58,4 +58,4 @@ class TestAbstractDatasets(TestBase):
             dframe1_row = series_to_jsondict(row[1])
             self.assertTrue(dframe1_row in dframe2_rows,
                             'dframe1_row: %s\n\ndframe2_rows: %s' % (
-                                dframe1_row, dframe2_rows))
+                                dframe1_row, dframe2_rows[-1]))
