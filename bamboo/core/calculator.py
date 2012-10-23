@@ -206,12 +206,14 @@ class Calculator(object):
     def _update_aggregate_datasets(self, calculations, new_dframe):
         if not self.calcs_to_data:
             self._create_calculations_to_groups_and_datasets(calculations)
-        for calc in calculations:
-            for slug, group, dataset in self.calcs_to_data[calc.name]:
-                self._update_aggregate_dataset(calc, new_dframe, slug, group,
-                        dataset)
 
-    def _update_aggregate_dataset(self, calculation, new_dframe, name, group,
+        print self.calcs_to_data
+
+        for formula, slug, group, dataset in self.calcs_to_data:
+            self._update_aggregate_dataset(formula, new_dframe, slug, group,
+                    dataset)
+
+    def _update_aggregate_dataset(self, formula, new_dframe, name, group,
             agg_dataset):
         """
         Update the aggregated dataset built for *self* with *calculation*.
@@ -223,14 +225,17 @@ class Calculator(object):
 
         """
         aggregation, new_columns = self._make_columns(
-            calculation.formula, name, new_dframe)
+            formula, name, new_dframe)
         agg_dframe = agg_dataset.dframe()
-        print 'group <<%s>>' % group
-        print agg_dframe
 
         agg = Aggregator(agg_dataset, agg_dframe, new_columns,
                          group, aggregation, name)
         new_agg_dframe = agg.update(self.dataset.dataset_id)
+
+        print '========== group: %s ===========' % group
+        print '========== name: %s ===========' % name
+        print 'new agg dframe: %s' % new_agg_dframe.to_dict()
+
 
         # jsondict from new dframe
         new_data = new_agg_dframe.to_jsondict()
@@ -247,11 +252,18 @@ class Calculator(object):
                        self.dataset.dataset_id)
 
     def _create_calculations_to_groups_and_datasets(self, calculations):
+        """
+        Create list of groups and calculations.
+        TODO: cleanup this function.
+        """
         self.calcs_to_data = defaultdict(list)
+        names_to_formulas = dict([(calc.name, calc.formula) for calc in
+                calculations])
         calculations = set([calc.name for calc in calculations])
         for group, dataset in self.dataset.aggregated_datasets.items():
             labels_to_slugs = dataset.build_labels_to_slugs()
             for calc in list(
                     set(labels_to_slugs.keys()).intersection(calculations)):
-                for label, slug in labels_to_slugs.items():
-                    self.calcs_to_data[label].append((slug, group, dataset))
+                self.calcs_to_data[calc].append((names_to_formulas[calc], labels_to_slugs[calc], group, dataset))
+        self.calcs_to_data = [
+            item for sublist in self.calcs_to_data.values() for item in sublist]

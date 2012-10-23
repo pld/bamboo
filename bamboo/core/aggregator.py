@@ -64,21 +64,15 @@ class Aggregator(object):
         """
         Attempt to reduce an update and store.
         """
-        print '---------------'
-        print self.dframe
-        print self.columns
         # get dframe with columns from this parent
         dframe = self.dataset.dframe(
             keep_parent_ids=True).only_rows_for_parent_id(parent_dataset_id)
-        print dframe
         new_dframe = BambooFrame(self.aggregation._reduce(
             dframe, self.columns, self.name))
-        print new_dframe
         self.dataset.remove_parent_observations(parent_dataset_id)
-        print self.dataset.dframe()
         new_agg_dframe = concat([self.dataset.dframe(), new_dframe])
         return self.dataset.replace_observations(
-            new_agg_dframe).add_parent_column(self.dataset.dataset_id)
+            new_agg_dframe.add_parent_column(parent_dataset_id))
 
     def eval_dframe(self):
         if self.group_str:

@@ -24,7 +24,7 @@ class Aggregation(object):
         return DataFrame({name: Series([result])})
 
     def _reduce(self, dframe, columns, name):
-        pass
+        return dframe
 
 
 class MaxAggregation(Aggregation):
@@ -41,6 +41,9 @@ class MeanAggregation(Aggregation):
     """
 
     name = 'mean'
+
+    def _reduce(self, dframe, columns, name):
+        return dframe
 
 
 class MedianAggregation(Aggregation):
@@ -67,7 +70,8 @@ class SumAggregation(Aggregation):
     name = 'sum'
 
     def _reduce(self, dframe, columns, name):
-        return dframe + self.column(columns, name)
+        dframe[name] += self.column(columns, name)[name]
+        return dframe
 
 
 class RatioAggregation(Aggregation):
@@ -106,6 +110,15 @@ class RatioAggregation(Aggregation):
         column = self._agg_dframe(dframe, column_names)
         column.name = name
         return dframe.join(column)
+
+    def _reduce(self, dframe, columns, name):
+        new_dframe = self.column(columns, name)
+        column_names = []
+        for column in new_dframe.columns:
+            column_names.append(column)
+            dframe[column] += new_dframe[column]
+        dframe[name] = self._agg_dframe(dframe, column_names)
+        return dframe
 
     def _agg_dframe(self, dframe, column_names):
         return dframe[column_names[0]].apply(float) / dframe[column_names[1]]
