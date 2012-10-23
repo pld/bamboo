@@ -31,6 +31,16 @@ class MultiColumnAggregation(Aggregation):
     """
     Interface for aggregations that create multiple columns.
     """
+    def _reduce(self, dframe, columns, name):
+        new_dframe = self.column(columns, name)
+        for column in new_dframe.columns:
+            dframe[column] += new_dframe[column]
+        print '----------'
+        print dframe.to_dict()
+        dframe[name] = self._agg_dframe(dframe, name)
+        print dframe[name]
+        return dframe
+
     def _name_for_idx(self, name, idx):
         return '%s_%s' % (name, {
             0: 'numerator',
@@ -38,17 +48,15 @@ class MultiColumnAggregation(Aggregation):
         }[idx])
 
     def _build_dframe(self, dframe, name, columns):
-        column_names = []
-
         for idx, column in enumerate(columns):
             column.name = self._name_for_idx(name, idx)
-            column_names.append(column.name)
             dframe = dframe.join(column)
 
-        return column_names, dframe
+        return dframe
 
-    def _agg_dframe(self, dframe, column_names):
-        return dframe[column_names[0]].apply(float) / dframe[column_names[1]]
+    def _agg_dframe(self, dframe, name):
+        return dframe[self._name_for_idx(name, 0)].apply(float) /\
+            dframe[self._name_for_idx(name, 1)]
 
 
 class MaxAggregation(Aggregation):
@@ -71,15 +79,12 @@ class MeanAggregation(MultiColumnAggregation):
         dframe = DataFrame(index=[0])
 
         columns = [Series([col]) for col in [column.sum(), len(column)]]
-        column_names, dframe = self._build_dframe(dframe, name, columns)
+        dframe = self._build_dframe(dframe, name, columns)
 
         dframe = DataFrame([dframe.sum().to_dict()])
-        column = self._agg_dframe(dframe, column_names)
+        column = self._agg_dframe(dframe, name)
         column.name = name
         return dframe.join(column)
-
-    def _reduce(self, dframe, columns, name):
-        return dframe
 
 
 class MedianAggregation(Aggregation):
@@ -124,12 +129,12 @@ class RatioAggregation(MultiColumnAggregation):
         name = columns[0].name
         dframe = dframe[groups]
 
-        column_names, dframe = self._build_dframe(dframe, name, columns)
+        dframe = self._build_dframe(dframe, name, columns)
 
         groupby = dframe.groupby(groups, as_index=False)
         aggregated_dframe = groupby.sum()
 
-        new_column = self._agg_dframe(aggregated_dframe, column_names)
+        new_column = self._agg_dframe(aggregated_dframe, name)
 
         new_column.name = name
         dframe = aggregated_dframe.join(new_column)
@@ -140,23 +145,16 @@ class RatioAggregation(MultiColumnAggregation):
     def column(self, columns, name):
         dframe = DataFrame(index=columns[0].index)
 
-        column_names, dframe = self._build_dframe(dframe, name, columns)
+        dframe = self._build_dframe(dframe, name, columns)
+        column_names = [self._name_for_idx(name, i) for i in xrange(0, 2)]
         dframe = dframe.dropna(subset=column_names)
 
         dframe = DataFrame([dframe.sum().to_dict()])
-        column = self._agg_dframe(dframe, column_names)
+        column = self._agg_dframe(dframe, name)
         column.name = name
         return dframe.join(column)
 
-    def _reduce(self, dframe, columns, name):
-        new_dframe = self.column(columns, name)
-        column_names = []
-        for column in new_dframe.columns:
-            column_names.append(column)
-            dframe[column] += new_dframe[column]
-        dframe[name] = self._agg_dframe(dframe, column_names)
-        return dframe
 
-
-AGGREGATIONS = dict([(cls.name, cls()) for cls in
-                     Aggregation.__subclasses__() + MultiColumnAggregation.__subclasses__() if hasattr(cls, 'name')])
+AGGREGATIONS = dict([
+    (cls.name, cls()) for cls in
+    Aggregation.__subclasses__() + MultiColumnAggregation.__subclasses__() if hasattr(cls, 'name')])

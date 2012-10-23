@@ -56,9 +56,9 @@ class TestDatasetsUpdateWithAggs(TestAbstractDatasets):
                 self.dataset2_id, aggregation, name)
 
         # and with group
-        for aggregation, name in aggregations.items():
-            self.calculations.POST(
-                self.dataset2_id, aggregation, name, group='food_type')
+#        for aggregation, name in aggregations.items():
+#            self.calculations.POST(
+#                self.dataset2_id, aggregation, name, group='food_type')
 
         result = json.loads(
             self.controller.GET(self.dataset2_id, Datasets.MODE_RELATED))

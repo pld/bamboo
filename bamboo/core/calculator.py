@@ -228,12 +228,13 @@ class Calculator(object):
             formula, name, new_dframe)
         agg_dframe = agg_dataset.dframe()
 
+        print '========== group: %s ===========' % group
+        print '========== name: %s ===========' % name
+
         agg = Aggregator(agg_dataset, agg_dframe, new_columns,
                          group, aggregation, name)
         new_agg_dframe = agg.update(self.dataset.dataset_id)
 
-        print '========== group: %s ===========' % group
-        print '========== name: %s ===========' % name
         print 'new agg dframe: %s' % new_agg_dframe.to_dict()
 
 
