@@ -207,8 +207,6 @@ class Calculator(object):
         if not self.calcs_to_data:
             self._create_calculations_to_groups_and_datasets(calculations)
 
-        print self.calcs_to_data
-
         for formula, slug, group, dataset in self.calcs_to_data:
             self._update_aggregate_dataset(formula, new_dframe, slug, group,
                     dataset)
@@ -228,16 +226,12 @@ class Calculator(object):
             formula, name, new_dframe)
         agg_dframe = agg_dataset.dframe()
 
-        print '========== group: %s ===========' % group
-        print '========== name: %s ===========' % name
-
         agg = Aggregator(agg_dataset, agg_dframe, new_columns,
                          group, aggregation, name)
         new_agg_dframe = agg.update(self.dataset.dataset_id)
 
         # jsondict from new dframe
         new_data = new_agg_dframe.to_jsondict()
-        print 'new data: %s' % new_data
 
         for merged_dataset in agg_dataset.merged_datasets:
             # remove rows in child from this merged dataset
@@ -248,7 +242,7 @@ class Calculator(object):
             merged_calculator = Calculator(merged_dataset)
             call_async(merged_calculator.calculate_updates,
                        merged_dataset, merged_calculator, new_data,
-                       self.dataset.dataset_id)
+                       agg_dataset.dataset_id)
 
     def _create_calculations_to_groups_and_datasets(self, calculations):
         """

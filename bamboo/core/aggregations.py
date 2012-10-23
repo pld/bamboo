@@ -109,9 +109,6 @@ class SumAggregation(Aggregation):
 
     def _reduce(self, dframe, columns, name):
         dframe[name] += self.column(columns, name)[name]
-        print 'sum reduce dframe'
-        print dframe.to_dict()
-        print '>>>>>>>>>>sum reduce dframe'
         return dframe
 
 
