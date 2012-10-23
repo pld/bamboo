@@ -83,6 +83,23 @@ class MeanAggregation(MultiColumnAggregation):
         column.name = name
         return dframe.join(column)
 
+    def group(self, dframe, groups, columns):
+        column = columns[0]
+        name = column.name
+        dframe = dframe[groups]
+
+        dframe = self._build_dframe(
+            dframe, name, [column, Series([1] * len(column))])
+        groupby = dframe.groupby(groups, as_index=False)
+        aggregated_dframe = groupby.sum()
+
+        new_column = self._agg_dframe(aggregated_dframe, name)
+        new_column.name = name
+
+        dframe = aggregated_dframe.join(new_column)
+
+        return dframe
+
 
 class MedianAggregation(Aggregation):
     """
@@ -136,7 +153,6 @@ class RatioAggregation(MultiColumnAggregation):
         new_column.name = name
         dframe = aggregated_dframe.join(new_column)
 
-        # need to set index to account for dropped values
         return dframe
 
     def column(self, columns, name):
