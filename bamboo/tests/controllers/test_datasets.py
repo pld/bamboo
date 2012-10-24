@@ -673,3 +673,9 @@ class TestDatasets(TestAbstractDatasets):
             result = json.loads(self.controller.delete(
                                 self.test_dataset_ids[dataset_name]))
             self.assertTrue(Datasets.ERROR in result)
+
+    def test_show_jsonp(self):
+        self._post_file()
+        results = self.controller.show(self.dataset_id, jsonp='jsonp')
+        self.assertEqual('jsonp(', results[0:6])
+        self.assertEqual(')', results[-1])
