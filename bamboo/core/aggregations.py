@@ -36,6 +36,12 @@ class MultiColumnAggregation(Aggregation):
     """
     Interface for aggregations that create multiple columns.
     """
+    def group(self, columns):
+        dframe = self.dframe[self.groups]
+        dframe = self._build_dframe(dframe, columns)
+        groupby = dframe.groupby(self.groups, as_index=False)
+        return self._add_calculated_column(groupby.sum())
+
     def _reduce(self, dframe, columns):
         self.columns = columns
         self.column = columns[0]
@@ -58,6 +64,13 @@ class MultiColumnAggregation(Aggregation):
 
         return dframe
 
+    def _add_calculated_column(self, dframe):
+        column = dframe[self._name_for_idx(0)].apply(float) /\
+            dframe[self._name_for_idx(1)]
+        column.name = self.name
+
+        return dframe.join(column)
+
     def _agg_dframe(self, dframe):
         return dframe[self._name_for_idx(0)].apply(float) /\
             dframe[self._name_for_idx(1)]
@@ -78,6 +91,9 @@ class MeanAggregation(MultiColumnAggregation):
 
     formula_name = 'mean'
 
+    def group(self):
+        return super(self.__class__, self).group([self.column, Series([1] * len(self.column))])
+
     def agg(self):
         dframe = DataFrame(index=[0])
 
@@ -86,24 +102,7 @@ class MeanAggregation(MultiColumnAggregation):
         dframe = self._build_dframe(dframe, columns)
 
         dframe = DataFrame([dframe.sum().to_dict()])
-        column = self._agg_dframe(dframe)
-        column.name = self.name
-        return dframe.join(column)
-
-    def group(self):
-        dframe = self.dframe[self.groups]
-
-        dframe = self._build_dframe(
-            dframe, [self.column, Series([1] * len(self.column))])
-        groupby = dframe.groupby(self.groups, as_index=False)
-        aggregated_dframe = groupby.sum()
-
-        new_column = self._agg_dframe(aggregated_dframe)
-        new_column.name = self.name
-
-        dframe = aggregated_dframe.join(new_column)
-
-        return dframe
+        return self._add_calculated_column(dframe)
 
 
 class MedianAggregation(Aggregation):
@@ -146,20 +145,7 @@ class RatioAggregation(MultiColumnAggregation):
     formula_name = 'ratio'
 
     def group(self):
-        # name of formula
-        dframe = self.dframe[self.groups]
-
-        dframe = self._build_dframe(dframe, self.columns)
-
-        groupby = dframe.groupby(self.groups, as_index=False)
-        aggregated_dframe = groupby.sum()
-
-        new_column = self._agg_dframe(aggregated_dframe)
-
-        new_column.name = self.name
-        dframe = aggregated_dframe.join(new_column)
-
-        return dframe
+        return super(self.__class__, self).group(self.columns)
 
     def agg(self):
         dframe = DataFrame(index=self.column.index)
@@ -169,9 +155,8 @@ class RatioAggregation(MultiColumnAggregation):
         dframe = dframe.dropna(subset=column_names)
 
         dframe = DataFrame([dframe.sum().to_dict()])
-        column = self._agg_dframe(dframe)
-        column.name = self.name
-        return dframe.join(column)
+
+        return self._add_calculated_column(dframe)
 
 
 AGGREGATIONS = dict([
