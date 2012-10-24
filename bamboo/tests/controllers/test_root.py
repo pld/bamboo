@@ -10,9 +10,9 @@ class TestRoot(TestBase):
         TestBase.setUp(self)
         self.controller = Root()
 
-    def test_GET(self):
+    def test_index(self):
         try:
-            response = self.controller.GET()
+            response = self.controller.index()
         except HTTPRedirect as redirect:
             self.assertEqual(redirect.status, 303)
-            self.assertTrue(redirect.urls[0].endswith('/index.html'))
+            self.assertTrue(redirect.urls[0].endswith('/docs/index.html'))

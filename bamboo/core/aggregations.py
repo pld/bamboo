@@ -92,7 +92,8 @@ class MeanAggregation(MultiColumnAggregation):
     formula_name = 'mean'
 
     def group(self):
-        return super(self.__class__, self).group([self.column, Series([1] * len(self.column))])
+        return super(self.__class__, self).group(
+            [self.column, Series([1] * len(self.column))])
 
     def agg(self):
         dframe = DataFrame(index=[0])

@@ -1,4 +1,8 @@
-import simplejson as json
+from bamboo.lib.mongo import dump_mongo_json
+
+
+class ArgumentError(Exception):
+    pass
 
 
 class AbstractController(object):
@@ -14,4 +18,4 @@ class AbstractController(object):
     def dump_or_error(self, data, error_message):
         if data is None:
             data = {self.ERROR: error_message}
-        return json.dumps(data)
+        return dump_mongo_json(data)

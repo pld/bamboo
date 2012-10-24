@@ -24,6 +24,8 @@ ID=`echo "$RET" | sed 's/.*: "\(\w*\).*/\1/'`
 # output the id
 echo "The dataset id is $ID"
 
+sleep 5
+
 echo -e "\nRetrieve info for dataset"
 RET=$(curl -#g $HOST/datasets/$ID/info)
 echo $RET

@@ -1,7 +1,8 @@
 import cherrypy
 import urllib2
 
-from bamboo.controllers.abstract_controller import AbstractController
+from bamboo.controllers.abstract_controller import AbstractController,\
+    ArgumentError
 from bamboo.core.merge import merge_dataset_ids, MergeError
 from bamboo.core.summary import ColumnTypeError
 from bamboo.lib.jsontools import JSONError
@@ -13,16 +14,9 @@ from bamboo.models.observation import Observation
 
 
 class Datasets(AbstractController):
-    'Datasets controller'
-
     SELECT_ALL_FOR_SUMMARY = 'all'
 
-    # modes for dataset GET
-    MODE_INFO = 'info'
-    MODE_RELATED = 'related'
-    MODE_SUMMARY = 'summary'
-
-    def DELETE(self, dataset_id):
+    def delete(self, dataset_id):
         """
         Delete the dataset with hash *dataset_id* from mongo
         """
@@ -34,60 +28,81 @@ class Datasets(AbstractController):
             result = {self.SUCCESS: 'deleted dataset: %s' % dataset_id}
         return self.dump_or_error(result, 'id not found')
 
-    def GET(self, dataset_id, mode=False, query=None, select=None,
-            group=None, limit=0, order_by=None):
+    def info(self, dataset_id):
         """
-        Based on *mode* perform different operations on the dataset specified
-        by *dataset_id*.
+        Return the data for *dataset_id*. Returns an error message if
+        *dataset_id* does not exist.
+        """
+        def _action(dataset):
+            return dataset.info()
+        return self._safe_get_and_call(dataset_id, _action)
 
-        - *info*: return the meta-data and schema of the dataset.
-        - *related*: return the dataset_ids of linked datasets for the dataset.
-        - *summary*: return summary statistics for the dataset.
-
+    def summary(self, dataset_id, query=None, select=None,
+                group=None, limit=0, order_by=None):
+        """
           - The *select* argument is required, it can be 'all' or a MongoDB
             JSON query
           - If *group* is passed group the summary.
           - If *query* is passed restrict summary to rows matching query.
 
-        - no mode passed: Return the raw data for the dataset.
-          - Restrict to *query* and *select* if passed.
-
-        Returns an error message if dataset_id does not exists, mode does not
-        exist, or the JSON for query or select is improperly formatted.
-        Otherwise, returns the result from above dependent on mode.
+        Returns an error message if *dataset_id* does not exiss or the JSON for
+        query or select is improperly formatted.
         """
-        dataset = Dataset.find_one(dataset_id)
+        def _action(dataset, query=query, select=select, group=group,
+                    limit=limit, order_by=order_by):
+            if select is None:
+                raise ArgumentError('no select')
+            if select == self.SELECT_ALL_FOR_SUMMARY:
+                select = None
+            return dataset.summarize(dataset, query, select,
+                                     group, limit=limit,
+                                     order_by=order_by)
+        return self._safe_get_and_call(dataset_id, _action)
+
+    def related(self, dataset_id):
+        def _action(dataset):
+            return dataset.aggregated_datasets_dict
+        return self._safe_get_and_call(dataset_id, _action)
+
+    def show(self, dataset_id, query=None, select=None,
+             group=None, limit=0, order_by=None):
+        """
+        Return rows for *dataset_id*, passing *query* and *select* onto
+        MongoDB.
+
+        Returns an error message if *dataset_id* does not exist or the JSON for
+        query or select is improperly formatted.
+        """
+        def _action(dataset, query=query, select=select,
+                    limit=limit, order_by=order_by):
+            return dataset.dframe(
+                query=query, select=select,
+                limit=limit, order_by=order_by).to_jsondict()
+
+        return self._safe_get_and_call(dataset_id, _action)
+
+    def merge(self, datasets=None):
+        """
+        Merge the datasets with the dataset_ids in *datasets*.
+
+        *dataset* should be a JSON encoded array of dataset IDs for existing
+        datasets.
+
+        Returns the ID of the new merged datasets created by combining the
+        datasets provided as an argument.
+        """
         result = None
-        error = 'id not found'
+        error = 'merge failed'
 
         try:
-            if dataset.record:
-                if mode == self.MODE_INFO:
-                    result = dataset.info()
-                elif mode == self.MODE_RELATED:
-                    result = dataset.aggregated_datasets_dict
-                elif mode == self.MODE_SUMMARY:
-                    # for summary require a select
-                    if select is None:
-                        error = 'no select'
-                    else:
-                        if select == self.SELECT_ALL_FOR_SUMMARY:
-                            select = None
-                        result = dataset.summarize(dataset, query, select,
-                                                   group, limit=limit,
-                                                   order_by=order_by)
-                elif mode is False:
-                    return dataset.dframe(
-                        query=query, select=select,
-                        limit=limit, order_by=order_by).to_json()
-                else:
-                    error = 'unsupported API call'
-        except (ColumnTypeError, JSONError) as e:
+            dataset = merge_dataset_ids(datasets)
+            result = {Dataset.ID: dataset.dataset_id}
+        except (ValueError, MergeError) as e:
             error = e.__str__()
 
         return self.dump_or_error(result, error)
 
-    def POST(self, merge=None, url=None, csv_file=None, datasets=None):
+    def create(self, url=None, csv_file=None):
         """
         If *url* is provided read data from URL *url*.
         If *csv_file* is provided read data from *csv_file*.
@@ -112,15 +127,11 @@ class Datasets(AbstractController):
         error = 'url or csv_file required'
 
         try:
-            if merge:
-                dataset = merge_dataset_ids(datasets)
-            elif url:
+            if url:
                 dataset = create_dataset_from_url(url)
             elif csv_file:
                 dataset = create_dataset_from_csv(csv_file)
             result = {Dataset.ID: dataset.dataset_id}
-        except (ValueError, MergeError) as e:
-            error = e.__str__()
         except IOError:
             error = 'could not get a filehandle for: %s' % csv_file
         except urllib2.URLError:
@@ -128,14 +139,27 @@ class Datasets(AbstractController):
 
         return self.dump_or_error(result, error)
 
-    def PUT(self, dataset_id):
+    def update(self, dataset_id):
         """
         Update the *dataset_id* with the body as JSON.
         """
         result = None
         error = 'dataset for this id does not exist'
         dataset = Dataset.find_one(dataset_id)
-        if dataset:
+        if dataset.record:
             dataset.add_observations(cherrypy.request.body.read())
             result = {Dataset.ID: dataset_id}
+        return self.dump_or_error(result, error)
+
+    def _safe_get_and_call(self, dataset_id, action, **kwargs):
+        dataset = Dataset.find_one(dataset_id)
+        error = 'id not found'
+        result = None
+
+        try:
+            if dataset.record:
+                result = action(dataset, **kwargs)
+        except (ArgumentError, ColumnTypeError, JSONError) as e:
+            error = e.__str__()
+
         return self.dump_or_error(result, error)

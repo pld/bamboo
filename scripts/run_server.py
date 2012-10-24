@@ -6,17 +6,26 @@ sys.path.append(os.getcwd())
 
 import cherrypy
 
-from bamboo.controllers.calculations import Calculations
-from bamboo.controllers.datasets import Datasets
-from bamboo.controllers.root import Root
-from bamboo.controllers.version import Version
+from bamboo.config.routes import connect_routes
 
-root = Root()
-root.calculations = Calculations()
-root.datasets = Datasets()
-root.version = Version()
 
-cherrypy.tree.mount(root, '/')
+# use routes dispatcher
+dispatcher = cherrypy.dispatch.RoutesDispatcher()
+routes_conf = {'/' : {'request.dispatch' : dispatcher}}
+local_conf = 'bamboo/config/local.conf'
 
+# connect routes
+connect_routes(dispatcher)
+
+# global config
+cherrypy.config.update(routes_conf)
+cherrypy.config.update(local_conf)
+
+# app config
+app = cherrypy.tree.mount(root=None, config=routes_conf)
+app.merge(local_conf)
+
+
+# start server
 if __name__ == '__main__':  # pragma: no cover
-    cherrypy.quickstart(root, config='bamboo/config/local.conf')
+    cherrypy.quickstart(app)

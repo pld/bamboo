@@ -39,7 +39,7 @@ class TestDatasetsUpdateWithAggs(TestAbstractDatasets):
 
         # add calculations
         self.calculations = Calculations()
-        self.calculations.POST(
+        self.calculations.create(
             self.dataset2_id, 'amount + gps_alt', 'amount plus gps_alt')
 
         # create linked datasets
@@ -53,27 +53,25 @@ class TestDatasetsUpdateWithAggs(TestAbstractDatasets):
         }
 
         for aggregation, name in aggregations.items():
-            self.calculations.POST(
+            self.calculations.create(
                 self.dataset2_id, aggregation, name)
 
         # and with group
         for aggregation, name in aggregations.items():
-            self.calculations.POST(
+            self.calculations.create(
                 self.dataset2_id, aggregation, name, group='food_type')
 
         result = json.loads(
-            self.controller.GET(self.dataset2_id, Datasets.MODE_RELATED))
+            self.controller.related(self.dataset2_id))
 
         self.linked_dataset1_id = result['']
 
         # create merged datasets
-        result = json.loads(self.controller.POST(
-            merge=True,
+        result = json.loads(self.controller.merge(
             datasets=json.dumps([self.dataset1_id, self.dataset2_id])))
         self.merged_dataset1_id = result[Dataset.ID]
 
-        result = json.loads(self.controller.POST(
-            merge=True,
+        result = json.loads(self.controller.merge(
             datasets=json.dumps(
                 [self.merged_dataset1_id, self.linked_dataset1_id])))
         self.merged_dataset2_id = result[Dataset.ID]

@@ -9,7 +9,7 @@ class Version(AbstractController):
     VERSION_NUMBER = '0.4.1'
     VERSION_DESCRIPTION = 'alpha'
 
-    def GET(self):
+    def index(self):
         return json.dumps({
             'version': self.VERSION_NUMBER,
             'description': self.VERSION_DESCRIPTION
