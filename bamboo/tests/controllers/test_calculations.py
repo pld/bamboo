@@ -63,3 +63,9 @@ class TestCalculations(TestBase):
         self.assertTrue(AbstractController.SUCCESS in result)
         dataset = Dataset.find_one(self.dataset_id)
         self.assertTrue(self.name not in dataset.build_labels_to_slugs())
+
+    def test_show_jsonp(self):
+        self._post_formula()
+        results = self.controller.show(self.dataset_id, jsonp='jsonp')
+        self.assertEqual('jsonp(', results[0:6])
+        self.assertEqual(')', results[-1])

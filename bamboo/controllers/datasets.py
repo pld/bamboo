@@ -16,7 +16,7 @@ from bamboo.models.observation import Observation
 class Datasets(AbstractController):
     SELECT_ALL_FOR_SUMMARY = 'all'
 
-    def delete(self, dataset_id):
+    def delete(self, dataset_id, jsonp=False):
         """
         Delete the dataset with hash *dataset_id* from mongo
         """
@@ -26,19 +26,19 @@ class Datasets(AbstractController):
         if dataset.record:
             task = call_async(dataset.delete, dataset, dataset)
             result = {self.SUCCESS: 'deleted dataset: %s' % dataset_id}
-        return self.dump_or_error(result, 'id not found')
+        return self.dump_or_error(result, 'id not found', jsonp)
 
-    def info(self, dataset_id):
+    def info(self, dataset_id, jsonp=False):
         """
         Return the data for *dataset_id*. Returns an error message if
         *dataset_id* does not exist.
         """
         def _action(dataset):
             return dataset.info()
-        return self._safe_get_and_call(dataset_id, _action)
+        return self._safe_get_and_call(dataset_id, _action, jsonp)
 
     def summary(self, dataset_id, query=None, select=None,
-                group=None, limit=0, order_by=None):
+                group=None, limit=0, order_by=None, jsonp=False):
         """
           - The *select* argument is required, it can be 'all' or a MongoDB
             JSON query
@@ -57,15 +57,15 @@ class Datasets(AbstractController):
             return dataset.summarize(dataset, query, select,
                                      group, limit=limit,
                                      order_by=order_by)
-        return self._safe_get_and_call(dataset_id, _action)
+        return self._safe_get_and_call(dataset_id, _action, jsonp)
 
-    def related(self, dataset_id):
+    def related(self, dataset_id, jsonp=False):
         def _action(dataset):
             return dataset.aggregated_datasets_dict
-        return self._safe_get_and_call(dataset_id, _action)
+        return self._safe_get_and_call(dataset_id, _action, jsonp)
 
     def show(self, dataset_id, query=None, select=None,
-             group=None, limit=0, order_by=None):
+             group=None, limit=0, order_by=None, jsonp=False):
         """
         Return rows for *dataset_id*, passing *query* and *select* onto
         MongoDB.
@@ -79,9 +79,9 @@ class Datasets(AbstractController):
                 query=query, select=select,
                 limit=limit, order_by=order_by).to_jsondict()
 
-        return self._safe_get_and_call(dataset_id, _action)
+        return self._safe_get_and_call(dataset_id, _action, jsonp)
 
-    def merge(self, datasets=None):
+    def merge(self, datasets=None, jsonp=False):
         """
         Merge the datasets with the dataset_ids in *datasets*.
 
@@ -100,9 +100,9 @@ class Datasets(AbstractController):
         except (ValueError, MergeError) as e:
             error = e.__str__()
 
-        return self.dump_or_error(result, error)
+        return self.dump_or_error(result, error, jsonp)
 
-    def create(self, url=None, csv_file=None):
+    def create(self, url=None, csv_file=None, jsonp=False):
         """
         If *url* is provided read data from URL *url*.
         If *csv_file* is provided read data from *csv_file*.
@@ -137,9 +137,9 @@ class Datasets(AbstractController):
         except urllib2.URLError:
             error = 'could not load: %s' % url
 
-        return self.dump_or_error(result, error)
+        return self.dump_or_error(result, error, jsonp)
 
-    def update(self, dataset_id):
+    def update(self, dataset_id, jsonp=False):
         """
         Update the *dataset_id* with the body as JSON.
         """
@@ -149,9 +149,9 @@ class Datasets(AbstractController):
         if dataset.record:
             dataset.add_observations(cherrypy.request.body.read())
             result = {Dataset.ID: dataset_id}
-        return self.dump_or_error(result, error)
+        return self.dump_or_error(result, error, jsonp)
 
-    def _safe_get_and_call(self, dataset_id, action, **kwargs):
+    def _safe_get_and_call(self, dataset_id, action, jsonp, **kwargs):
         dataset = Dataset.find_one(dataset_id)
         error = 'id not found'
         result = None
@@ -162,4 +162,4 @@ class Datasets(AbstractController):
         except (ArgumentError, ColumnTypeError, JSONError) as e:
             error = e.__str__()
 
-        return self.dump_or_error(result, error)
+        return self.dump_or_error(result, error, jsonp)

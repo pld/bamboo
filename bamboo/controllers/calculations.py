@@ -10,7 +10,7 @@ from bamboo.models.dataset import Dataset
 
 class Calculations(AbstractController):
 
-    def delete(self, dataset_id, name):
+    def delete(self, dataset_id, name, jsonp=False):
         """
         Delete the calculation for the dataset specified by the hash
         *dataset_id* from mongo and the column *name*.
@@ -28,9 +28,10 @@ class Calculations(AbstractController):
             result = {self.SUCCESS: 'deleted calculation: %s for dataset: %s' %
                       (name, dataset_id)}
         return self.dump_or_error(result,
-                                  'name and dataset_id combination not found')
+                                  'name and dataset_id combination not found',
+                                  jsonp)
 
-    def create(self, dataset_id, formula, name, group=None):
+    def create(self, dataset_id, formula, name, group=None, jsonp=False):
         """
         Create a new calculation for *dataset_id* named *name* that calulates
         the *formula*.  Variables in formula can only refer to columns in the
@@ -47,15 +48,17 @@ class Calculations(AbstractController):
                     % (name, dataset_id)}
             except ParseError as e:
                 error = e.__str__()
-        return self.dump_or_error(result, error)
+        return self.dump_or_error(result, error, jsonp)
 
-    def show(self, dataset_id):
+    def show(self, dataset_id, jsonp=False):
         """
         Retrieve the calculations for *dataset_id*.
         """
         dataset = Dataset.find_one(dataset_id)
+        result = None
+
         if dataset:
             # get the calculations
-            calculations = dataset.calculations()
-            return dump_mongo_json(
-                [x.clean_record for x in calculations])
+            result = dataset.calculations()
+            result = [x.clean_record for x in result]
+        return self.dump_or_error(result, 'dataset_id not found', jsonp)
