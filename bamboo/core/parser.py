@@ -77,7 +77,7 @@ class Parser(object):
         conj        neg [andop neg]*
         disj        conj [orop conj]*
         case        'case' disj: atom[, disj: atom]*[, 'default': atom]
-        agg         agg ( case )
+        agg         agg ( case[, case]* )
         =========   ==========
 
         Examples:
@@ -253,6 +253,12 @@ class Parser(object):
 
         # check valid formula
         aggregation, functions = self.parse_formula(formula)
+
+        if not self.context.schema:
+            raise ParseError(
+                'No schema for dataset, please add data or wait for it to '
+                'finish processing')
+
         try:
             for function in functions:
                 function(row, self.context)

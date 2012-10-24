@@ -54,7 +54,7 @@ class TestAggregations(TestCalculator):
         self.groups_list = None
 
     def _offset_for_ratio(self, formula, _int):
-        if formula[0:5] == 'ratio':
+        if formula[0:4] in ['mean', 'rati']:
             _int += 2
         return _int
 

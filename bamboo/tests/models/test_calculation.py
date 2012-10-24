@@ -55,7 +55,7 @@ class TestCalculation(TestBase):
             Calculation().save(self.dataset, 'NON_EXISTENT_COLUMN',
                                self.name)
         except ParseError as e:
-            self.assertTrue('Missing column' in e.__str__())
+            self.assertTrue('No schema' in e.__str__())
 
     def test_save_unparsable_formula_no_data(self):
         assert_raises(ParseError, Calculation().save, self.dataset,

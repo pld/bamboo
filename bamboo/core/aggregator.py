@@ -1,4 +1,4 @@
-from pandas import Series
+from pandas import concat, Series
 
 from bamboo.core.aggregations import Aggregation, AGGREGATIONS
 from bamboo.core.frame import BambooFrame
@@ -15,19 +15,20 @@ class Aggregator(object):
     dataset.  Otherwise create a new linked dataset.
     """
 
-    def __init__(self, dataset, dframe, columns, group_str, _type, name):
+    def __init__(self, dataset, dframe, group_str, _type, name):
         self.dataset = dataset
         self.dframe = dframe
-        self.columns = columns
         # MongoDB does not allow None as a key
         self.group_str = group_str if group_str else ''
         self.groups = split_groups(self.group_str) if group_str else None
         self.name = name
-        self._type = _type
+        self.aggregation = AGGREGATIONS.get(_type)(
+            self.name, self.groups, self.dframe)
 
-    def save_aggregation(self):
-        new_dframe = BambooFrame(self.eval_dframe()).add_parent_column(
-            self.dataset.dataset_id)
+    def save(self, columns):
+        new_dframe = BambooFrame(
+            self.aggregation._eval(columns)
+        ).add_parent_column(self.dataset.dataset_id)
 
         aggregated_datasets = self.dataset.aggregated_datasets
         agg_dataset = aggregated_datasets.get(self.group_str, None)
@@ -60,12 +61,28 @@ class Aggregator(object):
             agg_dataset.replace_observations(new_dframe)
         self.new_dframe = new_dframe
 
-    def eval_dframe(self):
-        aggregation = AGGREGATIONS.get(self._type)
+    def update(self, child_dataset, parser, formula, columns):
+        """
+        Attempt to reduce an update and store.
+        """
+        parent_dataset_id = self.dataset.dataset_id
 
-        if self.group_str:
-            # groupby on dframe then run aggregation on groupby obj
-            return aggregation.group_aggregation(self.dframe, self.groups,
-                                                 self.columns)
+        # get dframe only including rows from this parent
+        dframe = child_dataset.dframe(
+            keep_parent_ids=True).only_rows_for_parent_id(parent_dataset_id)
+
+        # remove rows in child from parent
+        child_dataset.remove_parent_observations(parent_dataset_id)
+
+        if not self.groups and '_reduce' in dir(self.aggregation):
+            dframe = BambooFrame(
+                self.aggregation._reduce(dframe, columns))
         else:
-            return aggregation.column_aggregation(self.columns, self.name)
+            _, columns = parser._make_columns(
+                formula, self.name, self.dframe)
+            new_dframe = self.aggregation._eval(columns)
+            dframe[self.name] = new_dframe[self.name]
+
+        new_agg_dframe = concat([child_dataset.dframe(), dframe])
+        return child_dataset.replace_observations(
+            new_agg_dframe.add_parent_column(parent_dataset_id))
