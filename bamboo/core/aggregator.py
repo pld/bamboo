@@ -15,19 +15,20 @@ class Aggregator(object):
     dataset.  Otherwise create a new linked dataset.
     """
 
-    def __init__(self, dataset, dframe, columns, group_str, _type, name):
+    def __init__(self, dataset, dframe, group_str, _type, name):
         self.dataset = dataset
         self.dframe = dframe
-        self.columns = columns
         # MongoDB does not allow None as a key
         self.group_str = group_str if group_str else ''
         self.groups = split_groups(self.group_str) if group_str else None
         self.name = name
-        self.aggregation = AGGREGATIONS.get(_type)
+        self.aggregation = AGGREGATIONS.get(_type)(
+            self.name, self.groups, self.dframe)
 
-    def save(self):
-        new_dframe = BambooFrame(self.eval_dframe()).add_parent_column(
-            self.dataset.dataset_id)
+    def save(self, columns):
+        new_dframe = BambooFrame(
+            self.aggregation._eval(columns)
+        ).add_parent_column(self.dataset.dataset_id)
 
         aggregated_datasets = self.dataset.aggregated_datasets
         agg_dataset = aggregated_datasets.get(self.group_str, None)
@@ -60,7 +61,7 @@ class Aggregator(object):
             agg_dataset.replace_observations(new_dframe)
         self.new_dframe = new_dframe
 
-    def update(self, child_dataset, parser, formula):
+    def update(self, child_dataset, parser, formula, columns):
         """
         Attempt to reduce an update and store.
         """
@@ -74,22 +75,14 @@ class Aggregator(object):
         child_dataset.remove_parent_observations(parent_dataset_id)
 
         if not self.groups and '_reduce' in dir(self.aggregation):
-            dframe = BambooFrame(self.aggregation._reduce(
-                dframe, self.columns, self.name))
+            dframe = BambooFrame(
+                self.aggregation._reduce(dframe, columns))
         else:
-            _, self.columns = parser._make_columns(
+            _, columns = parser._make_columns(
                 formula, self.name, self.dframe)
-            new_dframe = self.eval_dframe()
+            new_dframe = self.aggregation._eval(columns)
             dframe[self.name] = new_dframe[self.name]
 
         new_agg_dframe = concat([child_dataset.dframe(), dframe])
         return child_dataset.replace_observations(
             new_agg_dframe.add_parent_column(parent_dataset_id))
-
-    def eval_dframe(self):
-        if self.group_str:
-            # groupby on dframe then run aggregation on groupby obj
-            return self.aggregation.group(self.dframe, self.groups,
-                                          self.columns)
-        else:
-            return self.aggregation.column(self.columns, self.name)

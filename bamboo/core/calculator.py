@@ -56,9 +56,9 @@ class Calculator(object):
         aggregation, new_columns = self._make_columns(formula, name)
 
         if aggregation:
-            agg = Aggregator(self.dataset, self.dframe, new_columns,
+            agg = Aggregator(self.dataset, self.dframe,
                              group_str, aggregation, name)
-            agg.save()
+            agg.save(new_columns)
         else:
             self.dataset.replace_observations(self.dframe.join(new_columns[0]))
 
@@ -225,9 +225,9 @@ class Calculator(object):
         aggregation, new_columns = self._make_columns(
             formula, name, new_dframe)
 
-        agg = Aggregator(self.dataset, self.dframe, new_columns,
+        agg = Aggregator(self.dataset, self.dframe,
                          group, aggregation, name)
-        new_agg_dframe = agg.update(agg_dataset, self, formula)
+        new_agg_dframe = agg.update(agg_dataset, self, formula, new_columns)
 
         # jsondict from new dframe
         new_data = new_agg_dframe.to_jsondict()

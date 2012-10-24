@@ -6,51 +6,61 @@ class Aggregation(object):
     Abstract class for all aggregations.
     """
 
-    def group(self, dframe, groups, columns):
+    def __init__(self, name, groups, dframe):
+        self.name = name
+        self.groups = groups
+        self.dframe = dframe
+
+    def _eval(self, columns):
+        self.columns = columns
+        self.column = columns[0]
+        return self.group() if self.groups else self.agg()
+
+    def group(self):
         """
         For when aggregation is called with a group parameter.
         """
-        column = columns[0]
-        groupby = dframe[groups].join(
-            column).groupby(groups, as_index=False)
-        return groupby.agg(self.name)
+        groupby = self.dframe[self.groups].join(
+            self.column).groupby(self.groups, as_index=False)
+        return groupby.agg(self.formula_name)
 
-    def column(self, columns, name):
+    def agg(self):
         """
         For when aggregation is called without a group parameter.
         """
-        column = columns[0]
-        result = float(column.__getattribute__(self.name)())
-        return DataFrame({name: Series([result])})
+        result = float(self.column.__getattribute__(self.formula_name)())
+        return DataFrame({self.name: Series([result])})
 
 
 class MultiColumnAggregation(Aggregation):
     """
     Interface for aggregations that create multiple columns.
     """
-    def _reduce(self, dframe, columns, name):
-        new_dframe = self.column(columns, name)
+    def _reduce(self, dframe, columns):
+        self.columns = columns
+        self.column = columns[0]
+        new_dframe = self.agg()
         for column in new_dframe.columns:
             dframe[column] += new_dframe[column]
-        dframe[name] = self._agg_dframe(dframe, name)
+        dframe[self.name] = self._agg_dframe(dframe)
         return dframe
 
-    def _name_for_idx(self, name, idx):
-        return '%s_%s' % (name, {
+    def _name_for_idx(self, idx):
+        return '%s_%s' % (self.name, {
             0: 'numerator',
             1: 'denominator',
         }[idx])
 
-    def _build_dframe(self, dframe, name, columns):
+    def _build_dframe(self, dframe, columns):
         for idx, column in enumerate(columns):
-            column.name = self._name_for_idx(name, idx)
+            column.name = self._name_for_idx(idx)
             dframe = dframe.join(column)
 
         return dframe
 
-    def _agg_dframe(self, dframe, name):
-        return dframe[self._name_for_idx(name, 0)].apply(float) /\
-            dframe[self._name_for_idx(name, 1)]
+    def _agg_dframe(self, dframe):
+        return dframe[self._name_for_idx(0)].apply(float) /\
+            dframe[self._name_for_idx(1)]
 
 
 class MaxAggregation(Aggregation):
@@ -58,7 +68,7 @@ class MaxAggregation(Aggregation):
     Calculate the maximum.
     """
 
-    name = 'max'
+    formula_name = 'max'
 
 
 class MeanAggregation(MultiColumnAggregation):
@@ -66,32 +76,30 @@ class MeanAggregation(MultiColumnAggregation):
     Calculate the arithmetic mean.
     """
 
-    name = 'mean'
+    formula_name = 'mean'
 
-    def column(self, columns, name):
-        column = columns[0]
+    def agg(self):
         dframe = DataFrame(index=[0])
 
-        columns = [Series([col]) for col in [column.sum(), len(column)]]
-        dframe = self._build_dframe(dframe, name, columns)
+        columns = [
+            Series([col]) for col in [self.column.sum(), len(self.column)]]
+        dframe = self._build_dframe(dframe, columns)
 
         dframe = DataFrame([dframe.sum().to_dict()])
-        column = self._agg_dframe(dframe, name)
-        column.name = name
+        column = self._agg_dframe(dframe, self.name)
+        column.name = self.name
         return dframe.join(column)
 
-    def group(self, dframe, groups, columns):
-        column = columns[0]
-        name = column.name
-        dframe = dframe[groups]
+    def group(self):
+        dframe = self.dframe[self.groups]
 
         dframe = self._build_dframe(
-            dframe, name, [column, Series([1] * len(column))])
-        groupby = dframe.groupby(groups, as_index=False)
+            dframe, [self.column, Series([1] * len(self.column))])
+        groupby = dframe.groupby(self.groups, as_index=False)
         aggregated_dframe = groupby.sum()
 
-        new_column = self._agg_dframe(aggregated_dframe, name)
-        new_column.name = name
+        new_column = self._agg_dframe(aggregated_dframe)
+        new_column.name = self.name
 
         dframe = aggregated_dframe.join(new_column)
 
@@ -103,7 +111,7 @@ class MedianAggregation(Aggregation):
     Calculate the median.
     """
 
-    name = 'median'
+    formula_name = 'median'
 
 
 class MinAggregation(Aggregation):
@@ -111,7 +119,7 @@ class MinAggregation(Aggregation):
     Calculate the minimum.
     """
 
-    name = 'min'
+    formula_name = 'min'
 
 
 class SumAggregation(Aggregation):
@@ -119,10 +127,12 @@ class SumAggregation(Aggregation):
     Calculate the sum.
     """
 
-    name = 'sum'
+    formula_name = 'sum'
 
-    def _reduce(self, dframe, columns, name):
-        dframe[name] += self.column(columns, name)[name]
+    def _reduce(self, dframe, columns):
+        self.columns = columns
+        self.column = columns[0]
+        dframe[self.name] += self.agg()[self.name]
         return dframe
 
 
@@ -133,39 +143,38 @@ class RatioAggregation(MultiColumnAggregation):
     denominator columns.
     """
 
-    name = 'ratio'
+    formula_name = 'ratio'
 
-    def group(self, dframe, groups, columns):
+    def group(self):
         # name of formula
-        name = columns[0].name
-        dframe = dframe[groups]
+        dframe = self.dframe[self.groups]
 
-        dframe = self._build_dframe(dframe, name, columns)
+        dframe = self._build_dframe(dframe, self.columns)
 
-        groupby = dframe.groupby(groups, as_index=False)
+        groupby = dframe.groupby(self.groups, as_index=False)
         aggregated_dframe = groupby.sum()
 
-        new_column = self._agg_dframe(aggregated_dframe, name)
+        new_column = self._agg_dframe(aggregated_dframe)
 
-        new_column.name = name
+        new_column.name = self.name
         dframe = aggregated_dframe.join(new_column)
 
         return dframe
 
-    def column(self, columns, name):
-        dframe = DataFrame(index=columns[0].index)
+    def agg(self):
+        dframe = DataFrame(index=self.column.index)
 
-        dframe = self._build_dframe(dframe, name, columns)
-        column_names = [self._name_for_idx(name, i) for i in xrange(0, 2)]
+        dframe = self._build_dframe(dframe, self.columns)
+        column_names = [self._name_for_idx(i) for i in xrange(0, 2)]
         dframe = dframe.dropna(subset=column_names)
 
         dframe = DataFrame([dframe.sum().to_dict()])
-        column = self._agg_dframe(dframe, name)
-        column.name = name
+        column = self._agg_dframe(dframe)
+        column.name = self.name
         return dframe.join(column)
 
 
 AGGREGATIONS = dict([
-    (cls.name, cls()) for cls in
+    (cls.formula_name, cls) for cls in
     Aggregation.__subclasses__() + MultiColumnAggregation.__subclasses__()
-    if hasattr(cls, 'name')])
+    if hasattr(cls, 'formula_name')])
