@@ -9,6 +9,17 @@ from bamboo.models.dataset import Dataset
 
 
 class Calculations(AbstractController):
+    """
+    The Calculations Controller provides access to calculations.  Calculations
+    are formulas and names
+    that (for now) must be linked to a specific dataset via that dataset's ID.
+
+    All actions in the Calculations Controller can optionally take a *jsonp*
+    parameter.  If passed the returned result will be wrapped this the
+    parameter value.  E.g., is ``jsonp=parseResults`` the returned value will
+    be parseResults([some-JSON])``, where ``some-JSON`` is the function return
+    value.
+    """
 
     def delete(self, dataset_id, name, jsonp=False):
         """

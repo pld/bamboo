@@ -14,6 +14,17 @@ from bamboo.models.observation import Observation
 
 
 class Datasets(AbstractController):
+    """
+    The Datasets Controller provides access to data.  Datasets can store data
+    from uploaded CSVs or URLs pointing to CSVs.  Additional rows can be passed
+    as JSON and added to a dataset.
+
+    All actions in the Datasets Controller can optionally take a *jsonp*
+    parameter.  If passed the returned result will be wrapped this the
+    parameter value.  E.g., is ``jsonp=parseResults`` the returned value will
+    be parseResults([some-JSON])``, where ``some-JSON`` is the function return
+    value.
+    """
     SELECT_ALL_FOR_SUMMARY = 'all'
 
     def delete(self, dataset_id, jsonp=False):
@@ -60,6 +71,12 @@ class Datasets(AbstractController):
         return self._safe_get_and_call(dataset_id, _action, jsonp)
 
     def related(self, dataset_id, jsonp=False):
+        """
+        Return a dict of aggregated data for the given *dataset_id*.
+        The dict is of the form {group: id}.
+
+        Returns an error message if *dataset_id* does not exist.
+        """
         def _action(dataset):
             return dataset.aggregated_datasets_dict
         return self._safe_get_and_call(dataset_id, _action, jsonp)
