@@ -16,6 +16,9 @@ class MergeError(Exception):
 
 
 def merge_dataset_ids(dataset_ids):
+    """
+    Load a JSON array of dataset IDs and start a background merge task.
+    """
     new_dataset = Dataset()
     new_dataset.save()
     dataset_ids = json.loads(dataset_ids)
