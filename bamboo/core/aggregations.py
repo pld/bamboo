@@ -86,7 +86,7 @@ class MeanAggregation(MultiColumnAggregation):
         dframe = self._build_dframe(dframe, columns)
 
         dframe = DataFrame([dframe.sum().to_dict()])
-        column = self._agg_dframe(dframe, self.name)
+        column = self._agg_dframe(dframe)
         column.name = self.name
         return dframe.join(column)
 
