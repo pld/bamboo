@@ -156,7 +156,8 @@ class TestDatasets(TestAbstractDatasets):
     def test_POST_file(self):
         _file = open(self._file_path, 'r')
         mock_uploaded_file = MockUploadedFile(_file)
-        result = json.loads(self.controller.create(csv_file=mock_uploaded_file))
+        result = json.loads(
+            self.controller.create(csv_file=mock_uploaded_file))
         self.assertTrue(isinstance(result, dict))
         self.assertTrue(Dataset.ID in result)
 
@@ -170,7 +171,8 @@ class TestDatasets(TestAbstractDatasets):
         _file_path = self._file_path.replace(self._file_name, _file_name)
         _file = open(_file_path, 'r')
         mock_uploaded_file = MockUploadedFile(_file)
-        result = json.loads(self.controller.create(csv_file=mock_uploaded_file))
+        result = json.loads(
+            self.controller.create(csv_file=mock_uploaded_file))
         self.assertTrue(isinstance(result, dict))
         self.assertTrue(Dataset.ID in result)
 
@@ -413,10 +415,10 @@ class TestDatasets(TestAbstractDatasets):
         def get_results(query='{}', select=None, limit=None, order_by=None):
             self._post_file()
             return json.loads(self.controller.show(self.dataset_id,
-                                                  query=query,
-                                                  select=select,
-                                                  limit=limit,
-                                                  order_by=order_by))
+                                                   query=query,
+                                                   select=select,
+                                                   limit=limit,
+                                                   order_by=order_by))
 
         # test the limit
         limit = 4

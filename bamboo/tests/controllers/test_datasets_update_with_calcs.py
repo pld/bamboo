@@ -84,17 +84,17 @@ class TestDatasetsUpdateWithCalcs(TestAbstractDatasets):
 
     def _add_calculations(self):
         self.calculations.create(self.dataset2_id,
-                               'amount_plus_gps_alt > gps_precision',
-                               'amount plus gps_alt > gps_precision')
+                                 'amount_plus_gps_alt > gps_precision',
+                                 'amount plus gps_alt > gps_precision')
         self.calculations.create(self.linked_dataset1_id,
-                               'sum_of_amount * 2',
-                               'amount')
+                                 'sum_of_amount * 2',
+                                 'amount')
         self.calculations.create(self.merged_dataset1_id,
-                               'gps_alt * 2',
-                               'double gps_alt')
+                                 'gps_alt * 2',
+                                 'double gps_alt')
         self.calculations.create(self.merged_dataset2_id,
-                               'amount * 2',
-                               'double amount')
+                                 'amount * 2',
+                                 'double amount')
         self._verify_dataset(
             self.dataset2_id,
             'tests/fixtures/updates_with_calcs/calcs/dataset2.p')
