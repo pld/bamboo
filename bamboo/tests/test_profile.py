@@ -72,25 +72,23 @@ class TestProfile(TestBase):
         self.data.to_csv(self.tmp_file)
         self.tmp_file.close()
         mock_uploaded_file = MockUploadedFile(open(self.tmp_file.name, 'r'))
-        result = json.loads(self.datasets.POST(csv_file=mock_uploaded_file))
+        result = json.loads(self.datasets.create(csv_file=mock_uploaded_file))
         self.assertTrue(isinstance(result, dict))
         self.assertTrue(Dataset.ID in result)
         self.dataset_id = result[Dataset.ID]
 
     def _test_get_info(self):
-        result = json.loads(self.datasets.GET(self.dataset_id,
-                            mode=Datasets.MODE_INFO))
+        result = json.loads(self.datasets.info(self.dataset_id))
         self.assertTrue(isinstance(result, dict))
 
     def _test_get_summary(self):
-        result = json.loads(self.datasets.GET(
-            self.dataset_id, mode=Datasets.MODE_SUMMARY,
+        result = json.loads(self.datasets.summary(
+            self.dataset_id,
             select=self.datasets.SELECT_ALL_FOR_SUMMARY))
         self.assertTrue(isinstance(result, dict))
 
     def _test_get_summary_with_group(self, group):
-        result = json.loads(self.datasets.GET(
-            self.dataset_id, mode=Datasets.MODE_SUMMARY,
-            group=group,
+        result = json.loads(self.datasets.summary(
+            self.dataset_id, group=group,
             select=self.datasets.SELECT_ALL_FOR_SUMMARY))
         self.assertTrue(isinstance(result, dict))
