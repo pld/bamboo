@@ -39,24 +39,22 @@ class TestDatasetsUpdateWithCalcs(TestAbstractDatasets):
 
         # add calculations
         self.calculations = Calculations()
-        self.calculations.POST(
+        self.calculations.create(
             self.dataset2_id, 'amount + gps_alt', 'amount plus gps_alt')
 
         # create linked datasets
-        self.calculations.POST(
+        self.calculations.create(
             self.dataset2_id, 'sum(amount)', 'sum of amount')
         result = json.loads(
-            self.controller.GET(self.dataset2_id, Datasets.MODE_RELATED))
+            self.controller.related(self.dataset2_id))
         self.linked_dataset1_id = result['']
 
         # create merged datasets
-        result = json.loads(self.controller.POST(
-            merge=True,
+        result = json.loads(self.controller.merge(
             datasets=json.dumps([self.dataset1_id, self.dataset2_id])))
         self.merged_dataset1_id = result[Dataset.ID]
 
-        result = json.loads(self.controller.POST(
-            merge=True,
+        result = json.loads(self.controller.merge(
             datasets=json.dumps(
                 [self.merged_dataset1_id, self.linked_dataset1_id])))
         self.merged_dataset2_id = result[Dataset.ID]
@@ -85,16 +83,16 @@ class TestDatasetsUpdateWithCalcs(TestAbstractDatasets):
             'tests/fixtures/updates_with_calcs/originals/merged_dataset2.p')
 
     def _add_calculations(self):
-        self.calculations.POST(self.dataset2_id,
+        self.calculations.create(self.dataset2_id,
                                'amount_plus_gps_alt > gps_precision',
                                'amount plus gps_alt > gps_precision')
-        self.calculations.POST(self.linked_dataset1_id,
+        self.calculations.create(self.linked_dataset1_id,
                                'sum_of_amount * 2',
                                'amount')
-        self.calculations.POST(self.merged_dataset1_id,
+        self.calculations.create(self.merged_dataset1_id,
                                'gps_alt * 2',
                                'double gps_alt')
-        self.calculations.POST(self.merged_dataset2_id,
+        self.calculations.create(self.merged_dataset2_id,
                                'amount * 2',
                                'double amount')
         self._verify_dataset(
