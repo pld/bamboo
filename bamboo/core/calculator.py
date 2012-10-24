@@ -262,3 +262,10 @@ class Calculator(object):
         self.calcs_to_data = [
             item for sublist in self.calcs_to_data.values() for item in sublist
         ]
+
+    def __getstate__(self):
+        """
+        Get state for pickle.
+        """
+        return dict(
+            dataset=self.dataset, dframe=self.dframe, parser=self.parser)

@@ -12,7 +12,7 @@ from bamboo.config.routes import connect_routes
 
 # use routes dispatcher
 dispatcher = cherrypy.dispatch.RoutesDispatcher()
-routes_conf = {'/' : {'request.dispatch' : dispatcher}}
+routes_conf = {'/': {'request.dispatch': dispatcher}}
 prod_conf = 'config/prod.conf'
 
 # connect routes

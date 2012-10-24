@@ -50,6 +50,8 @@ echo -e "\nStore calculation named small_schools with formula acreage<10"
 RET=$(curl -#X POST -d "name=small_schools&formula=acreage<10" $HOST/calculations/$ID)
 echo $RET
 
+sleep 5
+
 echo -e "\nRetrieve new calculated column small_schools and Districts (truncated to 2000 characters)"
 RET=$(curl -#g $HOST/datasets/$ID?select='{"small_schools":1,"district":1}')
 echo $RET | cut -c -2000
@@ -59,6 +61,8 @@ echo -e "(tsc_male_teachers+local_authority_male_teachers+pta_board_of_governors
 echo -e "plus signs must by URI encoded for curl to process them correctly."
 RET=$(curl -#X POST -d "name=male_female_teacher_ratio&formula=(tsc_male_teachers%2Blocal_authority_male_teachers%2Bpta_board_of_governors_male_teacher%2Bother_male_teachers)/(tsc_female_teachers%2Blocal_authority_female_teachers%2Bpta_board_of_governors_female_teacher%2Bother_female_teachers)'" $HOST/calculations/$ID)
 echo $RET
+
+sleep 10
 
 echo -e "\nRetrieve new calculated column male_female_teacher_ratio summary"
 RET=$(curl -#g $HOST/datasets/$ID/summary?select='{"male_female_teacher_ratio":1}')
@@ -72,6 +76,8 @@ echo -e "\nStore aggregation sum(tsc_male_teachers)"
 RET=$(curl -#X POST -d "name=sum_tsc_male_teachers&formula=sum(tsc_male_teachers)" $HOST/calculations/$ID)
 echo $RET
 
+sleep 5
+
 echo -e "\nRetrieve linked dataset IDs"
 RET=$(curl -#g $HOST/datasets/$ID/related)
 echo $RET
@@ -84,6 +90,8 @@ echo $RET
 echo -e "\nStore aggregation sum(tsc_male_teachers) grouped by province"
 RET=$(curl -#X POST -d "name=sum_tsc_male_teachers&formula=sum(tsc_male_teachers)&group=province" $HOST/calculations/$ID)
 echo $RET
+
+sleep 5
 
 echo -e "\nRetrieve linked dataset IDs"
 RET=$(curl -#g $HOST/datasets/$ID/related)

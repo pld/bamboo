@@ -1,4 +1,5 @@
 import json
+import time
 
 from bamboo.controllers.abstract_controller import AbstractController
 from bamboo.controllers.calculations import Calculations
@@ -7,6 +8,7 @@ from bamboo.core.frame import DATASET_ID
 from bamboo.lib.io import create_dataset_from_url
 from bamboo.models.calculation import Calculation
 from bamboo.models.dataset import Dataset
+from bamboo.tests.decorators import requires_async
 from bamboo.tests.test_base import TestBase
 
 
@@ -34,6 +36,15 @@ class TestCalculations(TestBase):
         response = json.loads(self._post_formula())
         self.assertTrue(isinstance(response, dict))
         self.assertFalse(DATASET_ID in response)
+
+    @requires_async
+    def test_create_async(self):
+        response = json.loads(self._post_formula())
+        self.assertTrue(isinstance(response, dict))
+        self.assertFalse(DATASET_ID in response)
+        time.sleep(1)
+        dataset = Dataset.find_one(self.dataset_id)
+        self.assertTrue(self.name in dataset.schema.keys())
 
     def test_POST_invalid_formula(self):
         result = json.loads(

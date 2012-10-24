@@ -42,7 +42,7 @@ class Parser(object):
 
     def __init__(self, dataset=None):
         self.context = ParserContext(dataset) if dataset else None
-        self.bnf = self.BNF()
+        self.BNF()
 
     def store_aggregation(self, string, location, tokens):
         self.aggregation = tokens[0]
@@ -222,8 +222,6 @@ class Parser(object):
         # top level bnf
         self.bnf = agg_expr
 
-        return self.bnf
-
     def parse_formula(self, input_str):
         """
         Parse formula and return evaluation function.
@@ -264,3 +262,27 @@ class Parser(object):
                 function(row, self.context)
         except KeyError, err:
             raise ParseError('Missing column reference: %s' % err)
+
+    def __getstate__(self):
+        """
+        Get state for pickle.
+        """
+        return [
+            self.aggregation,
+            self.aggregation_names,
+            self.function_names,
+            self.operator_names,
+            self.special_names,
+            self.reserved_words,
+            self.special_names,
+            self.context,
+        ]
+
+    def __setstate__(self, state):
+        """
+        Set internal variables from pickled state.
+        """
+        self.aggregation, self.aggregation_names, self.function_names,\
+            self.operator_names, self.special_names, self.reserved_words,\
+            self.special_names, self.context = state
+        self.BNF()
