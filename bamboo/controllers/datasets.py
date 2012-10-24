@@ -117,7 +117,19 @@ class Datasets(AbstractController):
 
         return self.dump_or_error(result, error)
 
-    def create(self, merge=None, url=None, csv_file=None, datasets=None):
+    def merge(self, datasets=None):
+        result = None
+        error = 'merge failed'
+
+        try:
+            dataset = merge_dataset_ids(datasets)
+            result = {Dataset.ID: dataset.dataset_id}
+        except (ValueError, MergeError) as e:
+            error = e.__str__()
+
+        return self.dump_or_error(result, error)
+
+    def create(self, url=None, csv_file=None):
         """
         If *url* is provided read data from URL *url*.
         If *csv_file* is provided read data from *csv_file*.
@@ -142,15 +154,11 @@ class Datasets(AbstractController):
         error = 'url or csv_file required'
 
         try:
-            if merge:
-                dataset = merge_dataset_ids(datasets)
-            elif url:
+            if url:
                 dataset = create_dataset_from_url(url)
             elif csv_file:
                 dataset = create_dataset_from_csv(csv_file)
             result = {Dataset.ID: dataset.dataset_id}
-        except (ValueError, MergeError) as e:
-            error = e.__str__()
         except IOError:
             error = 'could not get a filehandle for: %s' % csv_file
         except urllib2.URLError:
@@ -158,7 +166,7 @@ class Datasets(AbstractController):
 
         return self.dump_or_error(result, error)
 
-    def PUT(self, dataset_id):
+    def update(self, dataset_id):
         """
         Update the *dataset_id* with the body as JSON.
         """

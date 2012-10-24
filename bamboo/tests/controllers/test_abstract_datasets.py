@@ -30,7 +30,7 @@ class TestAbstractDatasets(TestBase):
         if not file_path:
             file_path = self._update_file_path
         cherrypy.request.body = open(file_path, 'r')
-        result = json.loads(self.controller.PUT(dataset_id=dataset_id))
+        result = json.loads(self.controller.update(dataset_id=dataset_id))
         self.assertTrue(isinstance(result, dict))
         self.assertTrue(Dataset.ID in result)
         # set up the (default) values to test against
@@ -44,9 +44,7 @@ class TestAbstractDatasets(TestBase):
             'file://localhost%s/tests/fixtures/%s' % (os.getcwd(), file_name),
             allow_local_file=True).dataset_id
         self.schema = json.loads(
-            self.controller.GET(
-                self.dataset_id,
-                mode=self.controller.MODE_INFO))[Dataset.SCHEMA]
+            self.controller.info(self.dataset_id))[Dataset.SCHEMA]
 
     def _check_dframes_are_equal(self, dframe1, dframe2):
         self._check_dframe_is_subset(dframe1, dframe2)
