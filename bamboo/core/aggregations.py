@@ -23,9 +23,6 @@ class Aggregation(object):
         result = float(column.__getattribute__(self.name)())
         return DataFrame({name: Series([result])})
 
-    def _reduce(self, dframe, columns, name):
-        return dframe
-
 
 class MultiColumnAggregation(Aggregation):
     """

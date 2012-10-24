@@ -224,11 +224,10 @@ class Calculator(object):
         """
         aggregation, new_columns = self._make_columns(
             formula, name, new_dframe)
-        agg_dframe = agg_dataset.dframe()
 
-        agg = Aggregator(agg_dataset, agg_dframe, new_columns,
+        agg = Aggregator(self.dataset, self.dframe, new_columns,
                          group, aggregation, name)
-        new_agg_dframe = agg.update(self.dataset.dataset_id)
+        new_agg_dframe = agg.update(agg_dataset, self, formula)
 
         # jsondict from new dframe
         new_data = new_agg_dframe.to_jsondict()

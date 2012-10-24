@@ -60,18 +60,30 @@ class Aggregator(object):
             agg_dataset.replace_observations(new_dframe)
         self.new_dframe = new_dframe
 
-    def update(self, parent_dataset_id):
+    def update(self, child_dataset, parser, formula):
         """
         Attempt to reduce an update and store.
         """
-        # get dframe with columns from this parent
-        dframe = self.dataset.dframe(
+        parent_dataset_id = self.dataset.dataset_id
+
+        # get dframe only including rows from this parent
+        dframe = child_dataset.dframe(
             keep_parent_ids=True).only_rows_for_parent_id(parent_dataset_id)
-        new_dframe = BambooFrame(self.aggregation._reduce(
-            dframe, self.columns, self.name))
-        self.dataset.remove_parent_observations(parent_dataset_id)
-        new_agg_dframe = concat([self.dataset.dframe(), new_dframe])
-        return self.dataset.replace_observations(
+
+        # remove rows in child from parent
+        child_dataset.remove_parent_observations(parent_dataset_id)
+
+        if not self.groups and '_reduce' in dir(self.aggregation):
+            dframe = BambooFrame(self.aggregation._reduce(
+                dframe, self.columns, self.name))
+        else:
+            _, self.columns = parser._make_columns(
+                formula, self.name, self.dframe)
+            new_dframe = self.eval_dframe()
+            dframe[self.name] = new_dframe[self.name]
+
+        new_agg_dframe = concat([child_dataset.dframe(), dframe])
+        return child_dataset.replace_observations(
             new_agg_dframe.add_parent_column(parent_dataset_id))
 
     def eval_dframe(self):

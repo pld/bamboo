@@ -46,6 +46,7 @@ class TestDatasetsUpdateWithAggs(TestAbstractDatasets):
         aggregations = {
             'max(amount)': 'max of amount',
             'mean(amount)': 'mean of amount',
+            'median(amount)': 'median of amount',
             'min(amount)': 'min of amount',
             'ratio(amount, gps_latitude)': 'ratio of amount and gps_latitude',
             'sum(amount)': 'sum of amount',
@@ -56,9 +57,9 @@ class TestDatasetsUpdateWithAggs(TestAbstractDatasets):
                 self.dataset2_id, aggregation, name)
 
         # and with group
-#        for aggregation, name in aggregations.items():
-#            self.calculations.POST(
-#                self.dataset2_id, aggregation, name, group='food_type')
+        for aggregation, name in aggregations.items():
+            self.calculations.POST(
+                self.dataset2_id, aggregation, name, group='food_type')
 
         result = json.loads(
             self.controller.GET(self.dataset2_id, Datasets.MODE_RELATED))
