@@ -15,6 +15,7 @@ DEPLOYMENTS = {
         'branch':       'master',
         'key_filename': os.path.expanduser('~/.ssh/modilabs.pem'),
         'init_script': 'bamboo_uwsgi.sh',
+        'celeryd':     'celeryd',
     }
 }
 
@@ -57,6 +58,10 @@ def deploy(deployment_name):
 
     # install dependencies
     _run_in_virtualenv('pip install -r %s' % env.pip_requirements_file)
+
+    # restart celery
+    with cd(env.code_src):
+        _run_in_virtualenv('../shared/%s restart' % env.celeryd)
 
     # restart the server
     with cd(env.code_src):
