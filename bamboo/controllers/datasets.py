@@ -18,11 +18,6 @@ class Datasets(AbstractController):
 
     SELECT_ALL_FOR_SUMMARY = 'all'
 
-    # modes for dataset GET
-    MODE_INFO = 'info'
-    MODE_RELATED = 'related'
-    MODE_SUMMARY = 'summary'
-
     def delete(self, dataset_id):
         """
         Delete the dataset with hash *dataset_id* from mongo
