@@ -18,7 +18,7 @@ def connect_routes(dispatcher):
     # (name, method, route, controller, action)
     routes = [
         # root
-        ('index', 'GET',
+        ('root', 'GET',
             '/', root, 'index'),
         # datasets
         ('datasets_delete', 'DELETE',
@@ -33,6 +33,8 @@ def connect_routes(dispatcher):
             '/datasets/:dataset_id/summary', datasets, 'summary'),
         ('datasets_related', 'GET',
             '/datasets/:dataset_id/related', datasets, 'related'),
+        ('datasets_merge', 'POST',
+            '/datasets/merge', datasets, 'merge'),
          # calculations
         ('calculations_create', 'POST',
             '/calculations/:dataset_id', calculations, 'create'),
@@ -46,6 +48,9 @@ def connect_routes(dispatcher):
             '/calculations/:dataset_id', calculations, 'delete'),
         ('calculations_delete_alias', 'DELETE',
             '/datasets/:dataset_id/calculations', calculations, 'delete'),
+        # version
+        ('version', 'GET',
+            '/', version, 'index'),
     ]
 
     # map them into args to dispatcher
