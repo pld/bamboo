@@ -38,6 +38,10 @@ class BambooFrame(DataFrame):
         for column in reserved_keys:
             del self[column]
 
+    def only_rows_for_parent_id(self, parent_id):
+        return self[self[PARENT_DATASET_ID] == parent_id].drop(
+            PARENT_DATASET_ID, 1)
+
     def to_jsondict(self):
         return [series_to_jsondict(series) for idx, series in self.iterrows()]
 
