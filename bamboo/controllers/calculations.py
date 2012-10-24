@@ -14,14 +14,14 @@ class Calculations(AbstractController):
     are formulas and names
     that (for now) must be linked to a specific dataset via that dataset's ID.
 
-    All actions in the Calculations Controller can optionally take a *jsonp*
+    All actions in the Calculations Controller can optionally take a *callback*
     parameter.  If passed the returned result will be wrapped this the
-    parameter value.  E.g., is ``jsonp=parseResults`` the returned value will
-    be parseResults([some-JSON])``, where ``some-JSON`` is the function return
-    value.
+    parameter value.  E.g., is ``callback=parseResults`` the returned value
+    will be parseResults([some-JSON])``, where ``some-JSON`` is the function
+    return value.
     """
 
-    def delete(self, dataset_id, name, jsonp=False):
+    def delete(self, dataset_id, name, callback=False):
         """
         Delete the calculation for the dataset specified by the hash
         *dataset_id* from mongo and the column *name*.
@@ -40,9 +40,9 @@ class Calculations(AbstractController):
                       (name, dataset_id)}
         return self.dump_or_error(result,
                                   'name and dataset_id combination not found',
-                                  jsonp)
+                                  callback)
 
-    def create(self, dataset_id, formula, name, group=None, jsonp=False):
+    def create(self, dataset_id, formula, name, group=None, callback=False):
         """
         Create a new calculation for *dataset_id* named *name* that calulates
         the *formula*.  Variables in formula can only refer to columns in the
@@ -59,9 +59,9 @@ class Calculations(AbstractController):
                     % (name, dataset_id)}
             except ParseError as e:
                 error = e.__str__()
-        return self.dump_or_error(result, error, jsonp)
+        return self.dump_or_error(result, error, callback)
 
-    def show(self, dataset_id, jsonp=False):
+    def show(self, dataset_id, callback=False):
         """
         Retrieve the calculations for *dataset_id*.
         """
@@ -72,4 +72,4 @@ class Calculations(AbstractController):
             # get the calculations
             result = dataset.calculations()
             result = [x.clean_record for x in result]
-        return self.dump_or_error(result, 'dataset_id not found', jsonp)
+        return self.dump_or_error(result, 'dataset_id not found', callback)

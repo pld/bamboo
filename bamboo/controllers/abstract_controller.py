@@ -15,8 +15,8 @@ class AbstractController(object):
     ERROR = 'error'
     SUCCESS = 'success'
 
-    def dump_or_error(self, data, error_message, jsonp=False):
+    def dump_or_error(self, data, error_message, callback=False):
         if data is None:
             data = {self.ERROR: error_message}
         json = dump_mongo_json(data)
-        return '%s(%s)' % (jsonp, json) if jsonp else json
+        return '%s(%s)' % (callback, json) if callback else json

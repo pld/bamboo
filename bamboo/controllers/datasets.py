@@ -19,15 +19,15 @@ class Datasets(AbstractController):
     from uploaded CSVs or URLs pointing to CSVs.  Additional rows can be passed
     as JSON and added to a dataset.
 
-    All actions in the Datasets Controller can optionally take a *jsonp*
+    All actions in the Datasets Controller can optionally take a *callback*
     parameter.  If passed the returned result will be wrapped this the
-    parameter value.  E.g., is ``jsonp=parseResults`` the returned value will
-    be parseResults([some-JSON])``, where ``some-JSON`` is the function return
-    value.
+    parameter value.  E.g., is ``callback=parseResults`` the returned value
+    will be parseResults([some-JSON])``, where ``some-JSON`` is the function
+    return value.
     """
     SELECT_ALL_FOR_SUMMARY = 'all'
 
-    def delete(self, dataset_id, jsonp=False):
+    def delete(self, dataset_id, callback=False):
         """
         Delete the dataset with hash *dataset_id* from mongo
         """
@@ -37,19 +37,19 @@ class Datasets(AbstractController):
         if dataset.record:
             task = call_async(dataset.delete, dataset, dataset)
             result = {self.SUCCESS: 'deleted dataset: %s' % dataset_id}
-        return self.dump_or_error(result, 'id not found', jsonp)
+        return self.dump_or_error(result, 'id not found', callback)
 
-    def info(self, dataset_id, jsonp=False):
+    def info(self, dataset_id, callback=False):
         """
         Return the data for *dataset_id*. Returns an error message if
         *dataset_id* does not exist.
         """
         def _action(dataset):
             return dataset.info()
-        return self._safe_get_and_call(dataset_id, _action, jsonp)
+        return self._safe_get_and_call(dataset_id, _action, callback)
 
     def summary(self, dataset_id, query=None, select=None,
-                group=None, limit=0, order_by=None, jsonp=False):
+                group=None, limit=0, order_by=None, callback=False):
         """
           - The *select* argument is required, it can be 'all' or a MongoDB
             JSON query
@@ -68,9 +68,9 @@ class Datasets(AbstractController):
             return dataset.summarize(dataset, query, select,
                                      group, limit=limit,
                                      order_by=order_by)
-        return self._safe_get_and_call(dataset_id, _action, jsonp)
+        return self._safe_get_and_call(dataset_id, _action, callback)
 
-    def related(self, dataset_id, jsonp=False):
+    def related(self, dataset_id, callback=False):
         """
         Return a dict of aggregated data for the given *dataset_id*.
         The dict is of the form {group: id}.
@@ -79,10 +79,10 @@ class Datasets(AbstractController):
         """
         def _action(dataset):
             return dataset.aggregated_datasets_dict
-        return self._safe_get_and_call(dataset_id, _action, jsonp)
+        return self._safe_get_and_call(dataset_id, _action, callback)
 
     def show(self, dataset_id, query=None, select=None,
-             group=None, limit=0, order_by=None, jsonp=False):
+             group=None, limit=0, order_by=None, callback=False):
         """
         Return rows for *dataset_id*, passing *query* and *select* onto
         MongoDB.
@@ -96,9 +96,9 @@ class Datasets(AbstractController):
                 query=query, select=select,
                 limit=limit, order_by=order_by).to_jsondict()
 
-        return self._safe_get_and_call(dataset_id, _action, jsonp)
+        return self._safe_get_and_call(dataset_id, _action, callback)
 
-    def merge(self, datasets=None, jsonp=False):
+    def merge(self, datasets=None, callback=False):
         """
         Merge the datasets with the dataset_ids in *datasets*.
 
@@ -117,9 +117,9 @@ class Datasets(AbstractController):
         except (ValueError, MergeError) as e:
             error = e.__str__()
 
-        return self.dump_or_error(result, error, jsonp)
+        return self.dump_or_error(result, error, callback)
 
-    def create(self, url=None, csv_file=None, jsonp=False):
+    def create(self, url=None, csv_file=None, callback=False):
         """
         If *url* is provided read data from URL *url*.
         If *csv_file* is provided read data from *csv_file*.
@@ -154,9 +154,9 @@ class Datasets(AbstractController):
         except urllib2.URLError:
             error = 'could not load: %s' % url
 
-        return self.dump_or_error(result, error, jsonp)
+        return self.dump_or_error(result, error, callback)
 
-    def update(self, dataset_id, jsonp=False):
+    def update(self, dataset_id, callback=False):
         """
         Update the *dataset_id* with the body as JSON.
         """
@@ -166,9 +166,9 @@ class Datasets(AbstractController):
         if dataset.record:
             dataset.add_observations(cherrypy.request.body.read())
             result = {Dataset.ID: dataset_id}
-        return self.dump_or_error(result, error, jsonp)
+        return self.dump_or_error(result, error, callback)
 
-    def _safe_get_and_call(self, dataset_id, action, jsonp, **kwargs):
+    def _safe_get_and_call(self, dataset_id, action, callback, **kwargs):
         dataset = Dataset.find_one(dataset_id)
         error = 'id not found'
         result = None
@@ -179,4 +179,4 @@ class Datasets(AbstractController):
         except (ArgumentError, ColumnTypeError, JSONError) as e:
             error = e.__str__()
 
-        return self.dump_or_error(result, error, jsonp)
+        return self.dump_or_error(result, error, callback)

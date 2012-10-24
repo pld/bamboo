@@ -676,6 +676,6 @@ class TestDatasets(TestAbstractDatasets):
 
     def test_show_jsonp(self):
         self._post_file()
-        results = self.controller.show(self.dataset_id, jsonp='jsonp')
+        results = self.controller.show(self.dataset_id, callback='jsonp')
         self.assertEqual('jsonp(', results[0:6])
         self.assertEqual(')', results[-1])

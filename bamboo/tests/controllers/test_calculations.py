@@ -39,6 +39,11 @@ class TestCalculations(TestBase):
 
     @requires_async
     def test_create_async(self):
+        while True:
+            dataset = Dataset.find_one(self.dataset_id)
+            if dataset.status == 'ready':
+                break
+            sleep(0.1)
         response = json.loads(self._post_formula())
         self.assertTrue(isinstance(response, dict))
         self.assertFalse(DATASET_ID in response)
@@ -77,6 +82,6 @@ class TestCalculations(TestBase):
 
     def test_show_jsonp(self):
         self._post_formula()
-        results = self.controller.show(self.dataset_id, jsonp='jsonp')
+        results = self.controller.show(self.dataset_id, callback='jsonp')
         self.assertEqual('jsonp(', results[0:6])
         self.assertEqual(')', results[-1])
