@@ -7,19 +7,22 @@ sys.path.append('/var/www/bamboo/current/bamboo')
 
 import cherrypy
 
-from controllers.calculations import Calculations
-from controllers.datasets import Datasets
-from controllers.root import Root
-from controllers.version import Version
+from bamboo.config.routes import connect_routes
 
-root = Root()
-root.calculations = Calculations()
-root.datasets = Datasets()
-root.version = Version()
 
-cherrypy.tree.mount(root, '/')
+# use routes dispatcher
+dispatcher = cherrypy.dispatch.RoutesDispatcher()
+routes_conf = {'/' : {'request.dispatch' : dispatcher}}
+prod_conf = 'config/prod.conf'
 
+# connect routes
+connect_routes(dispatcher)
+
+# global config
+cherrypy.config.update(routes_conf)
+cherrypy.config.update(prod_conf)
 cherrypy.config.update({'environment': 'embedded'})
 
-application = cherrypy.Application(root, script_name='/',
-                                   config='config/prod.conf')
+# app config
+application = cherrypy.tree.mount(root=None, config=routes_conf)
+application.merge(prod_conf)
