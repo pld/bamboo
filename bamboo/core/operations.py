@@ -41,7 +41,7 @@ class EvalConstant(EvalTerm):
             return np.float64(self.value)
         except ValueError:
             # test is date and parse as date
-            field = row[self.value]
+            field = row.get(self.value)
             return parse_date_to_unix_time(field) if context and\
                 col_is_date_simpletype(context.schema[self.value]) else field
 
