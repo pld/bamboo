@@ -659,3 +659,18 @@ given column.
 returns::
 
     {"id": "8a3d74711475d8a51c84484fe73f24bd151242ea"}
+
+Merging multiple datasets
+-------------------------
+
+To row-wise merge 2 or more datasets into a new dataset use the _merge_ command
+. For example, to merge two datasets with IDs 8123 and 9123, use the following
+command. This will return the ID of the new merged dataset.  The merge occurs
+in the background.  When the dataset status is set to "ready" you can be sure
+the data has been merged.
+
+``curl -X POST -d "datasets=[8123, 9123]" http://bamboo.io/datasets/merge``
+
+returns::
+
+    {"id": "8a3d74711475d8a51c84484fe73f24bd151242ea"}
