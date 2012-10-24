@@ -1,7 +1,8 @@
 import cherrypy
 import urllib2
 
-from bamboo.controllers.abstract_controller import AbstractController
+from bamboo.controllers.abstract_controller import AbstractController,\
+    ArgumentError
 from bamboo.core.merge import merge_dataset_ids, MergeError
 from bamboo.core.summary import ColumnTypeError
 from bamboo.lib.jsontools import JSONError
@@ -35,51 +36,27 @@ class Datasets(AbstractController):
         return self.dump_or_error(result, 'id not found')
 
     def info(self, dataset_id):
-        dataset = Dataset.find_one(dataset_id)
-        result = None
-        error = 'id not found'
-
-        try:
-            if dataset.record:
-                result = dataset.info()
-        except (ColumnTypeError, JSONError) as e:
-            error = e.__str__()
-
-        return self.dump_or_error(result, error)
+        def _action(dataset):
+            return dataset.info()
+        return self._safe_get_and_call(dataset_id, _action)
 
     def summary(self, dataset_id, query=None, select=None,
             group=None, limit=0, order_by=None):
-        dataset = Dataset.find_one(dataset_id)
-        result = None
-        error = 'id not found'
-
-        try:
-            if dataset.record:
-                if select is None:
-                    error = 'no select'
-                else:
-                    if select == self.SELECT_ALL_FOR_SUMMARY:
-                        select = None
-                    result = dataset.summarize(dataset, query, select,
-                                               group, limit=limit,
-                                               order_by=order_by)
-        except (ColumnTypeError, JSONError) as e:
-            error = e.__str__()
-
-        return self.dump_or_error(result, error)
+        def _action(dataset, query=query, select=select, group=group,
+                    limit=limit, order_by=order_by):
+            if select is None:
+                raise ArgumentError('no select')
+            if select == self.SELECT_ALL_FOR_SUMMARY:
+                select = None
+            return dataset.summarize(dataset, query, select,
+                                       group, limit=limit,
+                                       order_by=order_by)
+        return self._safe_get_and_call(dataset_id, _action)
 
     def related(self, dataset_id):
-        dataset = Dataset.find_one(dataset_id)
-        result = None
-        error = 'id not found'
-
-        try:
-            if dataset.record:
-                result = dataset.aggregated_datasets_dict
-        except (ColumnTypeError, JSONError) as e:
-            error = e.__str__()
-
-        return self.dump_or_error(result, error)
+        def _action(dataset):
+            return dataset.aggregated_datasets_dict
+        return self._safe_get_and_call(dataset_id, _action)
 
     def show(self, dataset_id, query=None, select=None,
             group=None, limit=0, order_by=None):
@@ -103,19 +80,13 @@ class Datasets(AbstractController):
         exist, or the JSON for query or select is improperly formatted.
         Otherwise, returns the result from above dependent on mode.
         """
-        dataset = Dataset.find_one(dataset_id)
-        result = None
-        error = 'id not found'
+        def _action(dataset, query=query, select=select,
+                    limit=limit, order_by=order_by):
+            return dataset.dframe(
+                query=query, select=select,
+                limit=limit, order_by=order_by).to_jsondict()
 
-        try:
-            if dataset.record:
-                return dataset.dframe(
-                    query=query, select=select,
-                    limit=limit, order_by=order_by).to_json()
-        except (ColumnTypeError, JSONError) as e:
-            error = e.__str__()
-
-        return self.dump_or_error(result, error)
+        return self._safe_get_and_call(dataset_id, _action)
 
     def merge(self, datasets=None):
         result = None
@@ -173,7 +144,20 @@ class Datasets(AbstractController):
         result = None
         error = 'dataset for this id does not exist'
         dataset = Dataset.find_one(dataset_id)
-        if dataset:
+        if dataset.record:
             dataset.add_observations(cherrypy.request.body.read())
             result = {Dataset.ID: dataset_id}
+        return self.dump_or_error(result, error)
+
+    def _safe_get_and_call(self, dataset_id, action, **kwargs):
+        dataset = Dataset.find_one(dataset_id)
+        error = 'id not found'
+        result = None
+
+        try:
+            if dataset.record:
+                result = action(dataset, **kwargs)
+        except (ArgumentError, ColumnTypeError, JSONError) as e:
+            error = e.__str__()
+
         return self.dump_or_error(result, error)
