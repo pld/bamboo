@@ -47,7 +47,7 @@ class TestDatasetsUpdateWithAggs(TestAbstractDatasets):
             'max(amount)': 'max of amount',
             'mean(amount)': 'mean of amount',
             'min(amount)': 'min of amount',
-            'ratio(amount, gps_alt)': 'ratio of amount and gps_alt',
+            'ratio(amount, gps_latitude)': 'ratio of amount and gps_latitude',
             'sum(amount)': 'sum of amount',
         }
 

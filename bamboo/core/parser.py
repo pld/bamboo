@@ -77,7 +77,7 @@ class Parser(object):
         conj        neg [andop neg]*
         disj        conj [orop conj]*
         case        'case' disj: atom[, disj: atom]*[, 'default': atom]
-        agg         agg ( case )
+        agg         agg ( case[, case]* )
         =========   ==========
 
         Examples:
