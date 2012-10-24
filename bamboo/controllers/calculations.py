@@ -10,7 +10,7 @@ from bamboo.models.dataset import Dataset
 
 class Calculations(AbstractController):
 
-    def DELETE(self, dataset_id, name):
+    def delete(self, dataset_id, name):
         """
         Delete the calculation for the dataset specified by the hash
         *dataset_id* from mongo and the column *name*.
@@ -30,13 +30,13 @@ class Calculations(AbstractController):
         return self.dump_or_error(result,
                                   'name and dataset_id combination not found')
 
-    def POST(self, dataset_id, formula, name, group=None):
+    def create(self, dataset_id, formula, name, group=None):
         """
         Create a new calculation for *dataset_id* named *name* that calulates
         the *formula*.  Variables in formula can only refer to columns in the
         dataset.
         """
-        error = 'name and dataset_id combination not found'
+        error = 'dataset_id not found'
         result = None
         dataset = Dataset.find_one(dataset_id)
         if dataset:
@@ -49,7 +49,7 @@ class Calculations(AbstractController):
                 error = e.__str__()
         return self.dump_or_error(result, error)
 
-    def GET(self, dataset_id):
+    def show(self, dataset_id):
         """
         Retrieve the calculations for *dataset_id*.
         """

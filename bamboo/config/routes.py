@@ -18,18 +18,34 @@ def connect_routes(dispatcher):
     # (name, method, route, controller, action)
     routes = [
         # root
-        ('index', 'GET', '/', root, 'index'),
+        ('index', 'GET',
+            '/', root, 'index'),
         # datasets
-        ('datasets_delete', 'DELETE', '/datasets/:dataset_id', datasets,
-         'delete'),
-        ('datasets_create', 'POST', '/datasets', datasets, 'create'),
-        ('datasets_show', 'GET', '/datasets/:dataset_id', datasets, 'show'),
-        ('datasets_info', 'GET', '/datasets/:dataset_id/info', datasets,
-         'info'),
-        ('datasets_summary', 'GET', '/datasets/:dataset_id/summary', datasets,
-         'summary'),
-        ('datasets_related', 'GET', '/datasets/:dataset_id/related', datasets,
-         'related'),
+        ('datasets_delete', 'DELETE',
+            '/datasets/:dataset_id', datasets, 'delete'),
+        ('datasets_create', 'POST',
+            '/datasets', datasets, 'create'),
+        ('datasets_show', 'GET',
+            '/datasets/:dataset_id', datasets, 'show'),
+        ('datasets_info', 'GET',
+            '/datasets/:dataset_id/info', datasets, 'info'),
+        ('datasets_summary', 'GET',
+            '/datasets/:dataset_id/summary', datasets, 'summary'),
+        ('datasets_related', 'GET',
+            '/datasets/:dataset_id/related', datasets, 'related'),
+         # calculations
+        ('calculations_create', 'POST',
+            '/calculations/:dataset_id', calculations, 'create'),
+        ('calculations_create_alias', 'POST',
+            '/datasets/:dataset_id/calculations', calculations, 'show'),
+        ('calculations_show', 'GET',
+            '/calculations/:dataset_id', calculations, 'show'),
+        ('calculations_show_alias', 'GET',
+            '/datasets/:dataset_id/calculations', calculations, 'show'),
+        ('calculations_delete', 'DELETE',
+            '/calculations/:dataset_id', calculations, 'delete'),
+        ('calculations_delete_alias', 'DELETE',
+            '/datasets/:dataset_id/calculations', calculations, 'delete'),
     ]
 
     # map them into args to dispatcher

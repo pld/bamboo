@@ -41,7 +41,7 @@ class TestDatasetsUpdate(TestAbstractDatasets):
         self.calculations = Calculations()
         self.name1 = 'sum of amount'
         self.formula1 = 'sum(amount)'
-        self.calculations.POST(self.dataset2_id, self.formula1, self.name1)
+        self.calculations.create(self.dataset2_id, self.formula1, self.name1)
         result = json.loads(
             self.controller.related(self.dataset2_id))
         self.linked_dataset1_id = result['']

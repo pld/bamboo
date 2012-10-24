@@ -52,7 +52,7 @@ class TestDatasets(TestAbstractDatasets):
         for idx, formula in enumerate(formulae):
             name = 'calc_%d' % idx if formula in self.schema.keys()\
                 else formula
-            controller.POST(self.dataset_id, formula, name, group)
+            controller.create(self.dataset_id, formula, name, group)
 
     def _test_summary_results(self, results):
         results = json.loads(results)

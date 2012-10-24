@@ -23,11 +23,11 @@ class TestCalculations(TestBase):
         self.name = 'test'
 
     def _post_formula(self):
-        return self.controller.POST(self.dataset_id, self.formula, self.name)
+        return self.controller.create(self.dataset_id, self.formula, self.name)
 
     def test_GET(self):
         self._post_formula()
-        response = self.controller.GET(self.dataset_id)
+        response = self.controller.show(self.dataset_id)
         self.assertTrue(isinstance(json.loads(response), list))
 
     def test_POST(self):
@@ -37,7 +37,7 @@ class TestCalculations(TestBase):
 
     def test_POST_invalid_formula(self):
         result = json.loads(
-            self.controller.POST(self.dataset_id, '=NON_EXIST', self.name))
+            self.controller.create(self.dataset_id, '=NON_EXIST', self.name))
         self.assertTrue(isinstance(result, dict))
         self.assertTrue(Datasets.ERROR in result.keys())
 
@@ -54,12 +54,12 @@ class TestCalculations(TestBase):
         self.assertTrue(self.name in dataset.stats.get(Dataset.ALL).keys())
 
     def test_DELETE_nonexistent_calculation(self):
-        result = json.loads(self.controller.DELETE(self.dataset_id, self.name))
+        result = json.loads(self.controller.delete(self.dataset_id, self.name))
         self.assertTrue(Calculations.ERROR in result)
 
     def test_DELETE(self):
         self._post_formula()
-        result = json.loads(self.controller.DELETE(self.dataset_id, self.name))
+        result = json.loads(self.controller.delete(self.dataset_id, self.name))
         self.assertTrue(AbstractController.SUCCESS in result)
         dataset = Dataset.find_one(self.dataset_id)
         self.assertTrue(self.name not in dataset.build_labels_to_slugs())
