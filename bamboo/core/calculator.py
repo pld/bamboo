@@ -175,9 +175,9 @@ class Calculator(object):
         for function in functions:
             new_column = dframe.apply(
                 function, axis=1, args=(self.parser.context, ))
+            new_column.name = name
             new_columns.append(new_column)
 
-        new_columns[0].name = name
 
         return aggregation, new_columns
 
