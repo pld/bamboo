@@ -5,7 +5,6 @@ from celery.task import task
 from pandas import read_csv
 
 from bamboo.core.frame import DATASET_ID
-from bamboo.models.observation import Observation
 from bamboo.lib.datetools import recognize_dates
 from bamboo.lib.utils import call_async
 from bamboo.models.dataset import Dataset
@@ -21,7 +20,7 @@ def import_dataset(dataset, dframe=None, filepath_or_buffer=None,
         dframe = recognize_dates(read_csv(filepath_or_buffer))
     if delete:
         os.unlink(filepath_or_buffer)
-    Observation().save(dframe, dataset)
+    dataset.save_observations(dframe)
 
 
 def create_dataset_from_url(url, allow_local_file=False):

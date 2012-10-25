@@ -3,7 +3,6 @@ from pandas import concat, Series
 from bamboo.core.aggregations import Aggregation, AGGREGATIONS
 from bamboo.core.frame import BambooFrame
 from bamboo.lib.utils import split_groups
-from bamboo.models.observation import Observation
 
 
 class Aggregator(object):
@@ -26,6 +25,12 @@ class Aggregator(object):
             self.name, self.groups, self.dframe)
 
     def save(self, columns):
+        """
+        Save this aggregation applied to the passed in columns.  If an
+        aggregated dataset for this aggregations group already exists store in
+        this dataset, if not create a new aggregated dataset and store the
+        aggregation in this new aggregated dataset.
+        """
         new_dframe = BambooFrame(
             self.aggregation._eval(columns)
         ).add_parent_column(self.dataset.dataset_id)
@@ -36,8 +41,7 @@ class Aggregator(object):
         if agg_dataset is None:
             agg_dataset = self.dataset.__class__()
             agg_dataset.save()
-
-            Observation().save(new_dframe, agg_dataset)
+            agg_dataset.save_observations(new_dframe)
 
             # store a link to the new dataset
             aggregated_datasets_dict = self.dataset.aggregated_datasets_dict

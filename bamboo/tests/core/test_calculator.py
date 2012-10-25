@@ -2,7 +2,6 @@ from bamboo.core.parser import Parser
 from bamboo.core.calculator import Calculator
 from bamboo.lib.datetools import recognize_dates
 from bamboo.models.dataset import Dataset
-from bamboo.models.observation import Observation
 from bamboo.tests.test_base import TestBase
 
 
@@ -15,7 +14,7 @@ class TestCalculator(TestBase):
             self.test_dataset_ids['good_eats_with_calculations.csv'])
         dframe = recognize_dates(
             self.test_data['good_eats_with_calculations.csv'])
-        Observation().save(dframe, self.dataset)
+        self.dataset.save_observations(dframe)
         self.group = None
         self.parser = Parser(self.dataset)
         self.places = 5

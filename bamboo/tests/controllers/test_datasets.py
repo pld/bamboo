@@ -96,7 +96,7 @@ class TestDatasets(TestAbstractDatasets):
         if query != '{}':
             self.assertEqual(len(results), num_results)
 
-    def _test_mode_related(self, groups=['']):
+    def _test_related(self, groups=['']):
         results = json.loads(self.controller.related(self.dataset_id))
         self.assertTrue(isinstance(results, dict))
         self.assertEqual(len(results.keys()), len(groups))
@@ -107,11 +107,11 @@ class TestDatasets(TestAbstractDatasets):
         # inspect linked dataset
         return json.loads(self.controller.show(linked_dataset_id))
 
-    def test_PUT_dataset_id_update_bad_dataset_id(self):
+    def test_dataset_id_update_bad_dataset_id(self):
         result = json.loads(self.controller.update(dataset_id=111))
         assert(Datasets.ERROR in result)
 
-    def test_PUT_dataset_id_update(self):
+    def test_dataset_id_update(self):
         self._post_file(self._file_name_with_slashes)
         self._post_calculations(self.default_formulae)
         num_rows = len(json.loads(self.controller.show(self.dataset_id)))
@@ -151,7 +151,7 @@ class TestDatasets(TestAbstractDatasets):
                 self.assertTrue(
                     column in result.keys(),
                     "column %s not in %s" % (column, result.keys()))
-        self._test_mode_related()
+        self._test_related()
 
     def test_create_from_file(self):
         _file = open(self._file_path, 'r')
@@ -585,7 +585,7 @@ class TestDatasets(TestAbstractDatasets):
         self._post_file()
         self._post_calculations(
             formulae=self.default_formulae + ['sum(amount)'])
-        results = self._test_mode_related()
+        results = self._test_related()
         row_keys = ['sum_amount_']
         for row in results:
             self.assertEqual(row.keys(), row_keys)
@@ -595,7 +595,7 @@ class TestDatasets(TestAbstractDatasets):
         self._post_file()
         group = 'food_type'
         self._post_calculations(self.default_formulae + ['sum(amount)'], group)
-        results = self._test_mode_related([group])
+        results = self._test_related([group])
         row_keys = [group, 'sum_amount_']
         for row in results:
             self.assertEqual(row.keys(), row_keys)
@@ -606,7 +606,7 @@ class TestDatasets(TestAbstractDatasets):
         self._post_file()
         group = 'food_type,rating'
         self._post_calculations(self.default_formulae + ['sum(amount)'], group)
-        results = self._test_mode_related([group])
+        results = self._test_related([group])
         row_keys = (group.split(GROUP_DELIMITER) +
                     ['sum_amount_']).sort()
         for row in results:
@@ -621,7 +621,7 @@ class TestDatasets(TestAbstractDatasets):
         group = 'food_type'
         self._post_calculations(
             self.default_formulae + ['sum(amount)', 'sum(gps_alt)'], group)
-        results = self._test_mode_related([group])
+        results = self._test_related([group])
         row_keys = [group, 'sum_amount_', 'sum_gps_alt_']
         for row in results:
             self.assertEqual(row.keys(), row_keys)
@@ -635,7 +635,7 @@ class TestDatasets(TestAbstractDatasets):
         self._post_calculations(self.default_formulae + ['sum(amount)'])
         self._post_calculations(['sum(gps_alt)'], group)
         groups = ['', group]
-        results = self._test_mode_related(groups)
+        results = self._test_related(groups)
         for row in results:
             self.assertEqual(row.keys(), ['sum_amount_'])
             self.assertTrue(isinstance(row.values()[0], float))

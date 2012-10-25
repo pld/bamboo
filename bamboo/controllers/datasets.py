@@ -9,7 +9,6 @@ from bamboo.lib.jsontools import JSONError
 from bamboo.lib.io import create_dataset_from_url, create_dataset_from_csv
 from bamboo.models.calculation import Calculation
 from bamboo.models.dataset import Dataset
-from bamboo.models.observation import Observation
 
 
 class Datasets(AbstractController):

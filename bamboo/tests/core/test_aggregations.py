@@ -5,7 +5,6 @@ import numpy as np
 
 from bamboo.lib.utils import GROUP_DELIMITER
 from bamboo.models.dataset import Dataset
-from bamboo.models.observation import Observation
 from bamboo.tests.core.test_calculator import TestCalculator
 
 

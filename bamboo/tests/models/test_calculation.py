@@ -4,7 +4,6 @@ from pymongo.cursor import Cursor
 from bamboo.core.parser import ParseError
 from bamboo.models.calculation import Calculation
 from bamboo.models.dataset import Dataset
-from bamboo.models.observation import Observation
 from bamboo.tests.test_base import TestBase
 
 
@@ -18,7 +17,7 @@ class TestCalculation(TestBase):
         self.name = 'test'
 
     def _save_observations(self):
-        Observation().save(self.test_data['good_eats.csv'], self.dataset)
+        self.dataset.save_observations(self.test_data['good_eats.csv'])
 
     def _save_observations_and_calculation(self, formula=None):
         if not formula:
