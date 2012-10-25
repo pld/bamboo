@@ -4,16 +4,31 @@ from bamboo.config.db import Database
 from bamboo.config.settings import DB_BATCH_SIZE
 from bamboo.core.frame import BAMBOO_RESERVED_KEYS, DATASET_ID
 from bamboo.lib.decorators import classproperty
-from bamboo.lib.mongo import remove_mongo_reserved_keys
+from bamboo.lib.mongo import dict_for_mongo, remove_mongo_reserved_keys
 
 
 class AbstractModel(object):
 
     __collection__ = None
 
+    STATE = 'status'
+    STATE_PENDING = 'pending'
+    STATE_READY = 'ready'
+
+    @property
+    def status(self):
+        return self.record[self.STATE]
+
+    @property
+    def is_ready(self):
+        return self.status == self.STATE_READY
+
     @classmethod
     def set_collection(cls, collection_name):
         return Database.db()[collection_name]
+
+    def ready(self):
+        self.update({self.STATE: self.STATE_READY})
 
     @classproperty
     @classmethod
@@ -36,10 +51,6 @@ class AbstractModel(object):
         limit: apply a limit on the number of rows returned.
             limit is applied AFTER ordering.
         """
-
-        # apply ORDER BY
-        # Usage:
-        # sort='column' or sort='-column'
         if order_by:
             if order_by[0] in ('-', '+'):
                 sort_dir, field = -1 if order_by[0] == '-' else 1, order_by[1:]
@@ -88,6 +99,15 @@ class AbstractModel(object):
         self.collection.insert(record, safe=True)
         self.record = record
         return record
+
+    def update(self, record):
+        """
+        Update the model instance based on its *_id*, setting it to the passed
+        in *record*.
+        """
+        record = dict_for_mongo(record)
+        self.collection.update(
+            {'_id': self.record['_id']}, {'$set': record}, safe=True)
 
     def batch_save(self, records):
         """

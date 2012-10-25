@@ -39,8 +39,8 @@ def _merge_datasets_task(new_dataset, dataset_ids):
         raise MergeError(
             'merge requires 2 datasets (found %s)' % len(datasets))
 
-    # check that all datasets have 'ready' status
-    if any([Dataset.find_one(dataset.dataset_id).status != 'ready' for dataset
+    # check that all datasets are in a 'ready' state
+    if any([not Dataset.find_one(dataset.dataset_id).is_ready for dataset
             in datasets]):
         raise _merge_datasets_task.retry(countdown=1)
 

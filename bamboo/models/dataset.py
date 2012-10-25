@@ -10,7 +10,7 @@ from bamboo.core.calculator import Calculator
 from bamboo.core.frame import BambooFrame, BAMBOO_RESERVED_KEY_PREFIX,\
     DATASET_ID, DATASET_OBSERVATION_ID, PARENT_DATASET_ID
 from bamboo.core.summary import summarize
-from bamboo.lib.mongo import dict_for_mongo, reserve_encoded
+from bamboo.lib.mongo import reserve_encoded
 from bamboo.lib.schema_builder import DIMENSION, OLAP_TYPE,\
     schema_from_data_and_dtypes, SIMPLETYPE
 from bamboo.lib.utils import call_async, split_groups
@@ -46,7 +46,6 @@ class Dataset(AbstractModel):
     NUM_ROWS = 'num_rows'
     MERGED_DATASETS = 'merged_datasets'
     SCHEMA = 'schema'
-    STATUS = 'status'
     UPDATED_AT = 'updated_at'
 
     # commonly accessed variables
@@ -65,10 +64,6 @@ class Dataset(AbstractModel):
     @property
     def stats(self):
         return self.record.get(self.STATS, {})
-
-    @property
-    def status(self):
-        return self.record[self.STATUS]
 
     @property
     def aggregated_datasets_dict(self):
@@ -121,6 +116,10 @@ class Dataset(AbstractModel):
         """
         Store dataset with *dataset_id* as the unique internal ID.
         Create a new dataset_id if one is not passed.
+
+        Datasets are initially in a **pending** state.  After the dataset has
+        been uploaded and inserted into the database it is in a **ready** state
+        .
         """
         if dataset_id is None:
             dataset_id = uuid.uuid4().hex
@@ -130,7 +129,7 @@ class Dataset(AbstractModel):
             DATASET_OBSERVATION_ID: uuid.uuid4().hex,
             self.AGGREGATED_DATASETS: {},
             self.CREATED_AT: strftime("%Y-%m-%d %H:%M:%S", gmtime()),
-            self.STATUS: 'pending',
+            self.STATE: self.STATE_PENDING,
         }
         return super(self.__class__, self).save(record)
 
@@ -174,14 +173,12 @@ class Dataset(AbstractModel):
     def find(cls, dataset_id):
         return super(cls, cls).find({DATASET_ID: dataset_id})
 
-    def update(self, _dict):
+    def update(self, record):
         """
-        Update dataset *dataset* with *_dict*.
+        Update dataset *dataset* with *record*.
         """
-        _dict[self.UPDATED_AT] = strftime("%Y-%m-%d %H:%M:%S", gmtime())
-        _dict = dict_for_mongo(_dict)
-        self.collection.update({
-            DATASET_ID: self.dataset_id}, {'$set': _dict}, safe=True)
+        record[self.UPDATED_AT] = strftime("%Y-%m-%d %H:%M:%S", gmtime())
+        super(self.__class__, self).update(record)
         self.record = self.__class__.find_one(self.dataset_id).record
 
     def build_schema(self, dframe):

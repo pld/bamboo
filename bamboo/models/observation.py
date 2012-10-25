@@ -83,7 +83,7 @@ class Observation(AbstractModel):
         dataset.update({
             dataset.NUM_COLUMNS: len(columns),
             dataset.NUM_ROWS: len(dframe),
-            dataset.STATUS: 'ready',
+            dataset.STATE: self.STATE_READY,
         })
 
         call_async(dataset.summarize, dataset)

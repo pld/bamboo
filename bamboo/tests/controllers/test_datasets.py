@@ -281,7 +281,7 @@ class TestDatasets(TestAbstractDatasets):
         while True:
             datasets = [Dataset.find_one(dataset_id)
                         for dataset_id in [dataset_id1, dataset_id2]]
-            if all([dataset.status == 'ready' for dataset in datasets]):
+            if all([dataset.is_ready for dataset in datasets]):
                 break
             sleep(0.1)
 

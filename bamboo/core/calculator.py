@@ -37,7 +37,6 @@ class Calculator(object):
                     raise ParseError(
                         'Group %s not in dataset columns.' % group)
 
-    @task
     def calculate_column(self, formula, name, group_str=None):
         """
         Calculate a new column based on *formula* store as *name*.

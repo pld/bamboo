@@ -23,9 +23,19 @@ class TestCalculation(TestBase):
         if not formula:
             formula = self.formula
         self._save_observations()
-        return Calculation.create(self.dataset, formula, self.name)
+        self.calculation = Calculation()
+        return self.calculation.save(self.dataset, formula, self.name)
 
     def test_save(self):
+        record = self._save_observations_and_calculation()
+        self.assertTrue(isinstance(record, dict))
+        self.assertTrue(Calculation.FORMULA in record.keys())
+        self.assertTrue(Calculation.STATE in record.keys())
+        record = Calculation.find(self.dataset)[0].record
+        self.assertEqual(record[Calculation.STATE], Calculation.STATE_READY)
+        self.assertTrue(Calculation(record).is_ready)
+
+    def test_save_set_status(self):
         record = self._save_observations_and_calculation()
         self.assertTrue(isinstance(record, dict))
         self.assertTrue(Calculation.FORMULA in record.keys())
@@ -77,5 +87,10 @@ class TestCalculation(TestBase):
 
     def test_find(self):
         record = self._save_observations_and_calculation()
+        status = record.pop(Calculation.STATE)
+        self.assertEqual(status, Calculation.STATE_PENDING)
         rows = Calculation.find(self.dataset)
-        self.assertEqual(record, rows[0].record)
+        new_record = rows[0].record
+        status = new_record.pop(Calculation.STATE)
+        self.assertEqual(status, Calculation.STATE_READY)
+        self.assertEqual(record, new_record)

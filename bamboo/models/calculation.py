@@ -19,6 +19,13 @@ def delete_task(calculation, dataset):
     })
 
 
+@task
+def calculate_task(calculation, dataset, calculator, formula, name, group):
+    dataset.clear_summary_stats()
+    calculator.calculate_column(formula, name, group)
+    calculation.ready()
+
+
 class Calculation(AbstractModel):
 
     __collectionname__ = 'calculations'
@@ -49,6 +56,9 @@ class Calculation(AbstractModel):
         Attempt to parse formula, then save formula, and add a task to
         calculate formula.
 
+        Calculations are initial in a **pending** state, after the calculation
+        has finished processing it will be in a **ready** state.
+
         Raises a ParseError if an invalid formula is supplied.
         """
         calculator = Calculator(dataset)
@@ -61,13 +71,12 @@ class Calculation(AbstractModel):
             self.FORMULA: formula,
             self.GROUP: group,
             self.NAME: name,
+            self.STATE: self.STATE_PENDING,
         }
         super(self.__class__, self).save(record)
-        dataset.clear_summary_stats()
 
-        # call async calculate
-        call_async(calculator.calculate_column,
-                   calculator, formula, name, group)
+        call_async(calculate_task, self, dataset, calculator, formula, name,
+                   group)
         return record
 
     @classmethod

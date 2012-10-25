@@ -41,7 +41,7 @@ class TestCalculations(TestBase):
     def test_create_async(self):
         while True:
             dataset = Dataset.find_one(self.dataset_id)
-            if dataset.status == 'ready':
+            if dataset.is_ready:
                 break
             sleep(0.1)
         response = json.loads(self._post_formula())
