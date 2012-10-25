@@ -9,5 +9,5 @@ CELERY_MONGODB_BACKEND_SETTINGS = {
     'database': settings.DATABASE_NAME,
     'taskmeta_collection': 'celery_tasks',
 }
-CELERY_IMPORTS = ("bamboo.lib.io",)
+CELERY_IMPORTS = ('bamboo.lib.io', 'bamboo.core.merge')
 CELERYD_CONCURRENCY = 1
