@@ -97,7 +97,8 @@ class TestDataset(TestBase):
     def test_dframe(self):
         dataset = Dataset()
         dataset.save(self.test_dataset_ids['good_eats.csv'])
-        dataset.save_observations(recognize_dates(self.test_data['good_eats.csv']))
+        dataset.save_observations(
+            recognize_dates(self.test_data['good_eats.csv']))
         records = [x for x in Observation.find(dataset)]
         dframe = dataset.dframe()
 

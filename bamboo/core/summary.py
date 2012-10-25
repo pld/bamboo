@@ -26,7 +26,8 @@ def summarize_series(dtype, data):
 
 def summarizable(dframe, col, groups, dataset):
     if dataset.is_factor(col):
-        cardinality = dframe[col].nunique() if len(groups) else dataset.cardinality(col)
+        cardinality = dframe[col].nunique() if len(groups) else\
+            dataset.cardinality(col)
         if cardinality > MAX_CARDINALITY_FOR_COUNT:
             return False
     return not col in groups
@@ -40,8 +41,8 @@ def summarize_df(dframe, groups=[], dataset=None):
     return dict([
         (col, {
             SUMMARY: series_to_jsondict(summarize_series(dtypes[col], data))
-        }) for col, data in dframe.iteritems() if summarizable(dframe, col, groups,
-            dataset)
+        }) for col, data in dframe.iteritems() if summarizable(
+            dframe, col, groups, dataset)
     ])
 
 
@@ -68,7 +69,8 @@ def summarize(dataset, dframe, groups, group_str, no_cache):
     # check cached stats for group and update as necessary
     stats = dataset.stats
     if no_cache or not stats.get(group_str):
-        group_stats = summarize_df(dframe, dataset=dataset) if group_str == dataset.ALL else\
+        group_stats = summarize_df(dframe, dataset=dataset) if\
+            group_str == dataset.ALL else\
             summarize_with_groups(dframe, groups, dataset)
         stats.update({group_str: group_stats})
         if not no_cache:
