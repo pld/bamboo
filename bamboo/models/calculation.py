@@ -51,9 +51,11 @@ class Calculation(AbstractModel):
 
         Raises a ParseError if an invalid formula is supplied.
         """
+        print '>>> enter Calculation.save'
         calculator = Calculator(dataset)
 
         # ensure that the formula is parsable
+        print '>>> calling Calculator.validate'
         calculator.validate(formula, group)
 
         record = {
@@ -66,6 +68,7 @@ class Calculation(AbstractModel):
         dataset.clear_summary_stats()
 
         # call async calculate
+        print '>>> calling Calculator.calculate_column'
         call_async(calculator.calculate_column,
                    calculator, formula, name, group)
         return record

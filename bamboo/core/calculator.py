@@ -17,22 +17,23 @@ class Calculator(object):
 
     def __init__(self, dataset):
         self.dataset = dataset
-        self.dframe = dataset.dframe()
         self.parser = Parser(dataset)
+
+    def ensure_dframe(self):
+        if not hasattr(self, 'dframe'):
+            self.dframe = self.dataset.dframe()
 
     def validate(self, formula, group_str):
         # attempt to get a row from the dataframe
-        try:
-            row = self.dframe.irow(0)
-        except IndexError, err:
-            row = {}
+        dframe = self.dataset.dframe(limit=1)
+        row = dframe.irow(0) if len(dframe) else {}
 
         self.parser.validate_formula(formula, row)
 
         if group_str:
             groups = split_groups(group_str)
             for group in groups:
-                if not group in self.dframe.columns:
+                if not group in dframe.columns:
                     raise ParseError(
                         'Group %s not in dataset columns.' % group)
 
@@ -52,7 +53,9 @@ class Calculator(object):
 
         Therefore, perform these actions asychronously.
         """
+        self.ensure_dframe()
 
+        print '>>> enter Calculator.calculate_column'
         aggregation, new_columns = self._make_columns(formula, name)
 
         if aggregation:
@@ -60,12 +63,14 @@ class Calculator(object):
                              group_str, aggregation, name)
             agg.save(new_columns)
         else:
+            print '>>> calling dataset.replace_observations'
             self.dataset.replace_observations(self.dframe.join(new_columns[0]))
 
         # propagate calculation to any merged child datasets
         for merged_dataset in self.dataset.merged_datasets:
             merged_calculator = Calculator(merged_dataset)
             merged_calculator._propagate_column(self.dataset)
+        print '>>> exit Calculator.calculate_column'
 
     def _propagate_column(self, parent_dataset):
         """
@@ -106,6 +111,8 @@ class Calculator(object):
 
         Therefore, perform these actions asychronously.
         """
+        self.ensure_dframe()
+
         calculations = self.dataset.calculations()
         labels_to_slugs = self.dataset.build_labels_to_slugs()
         new_dframe = self._dframe_from_update(new_data, labels_to_slugs)
@@ -176,7 +183,6 @@ class Calculator(object):
                 function, axis=1, args=(self.parser.context, ))
             new_column.name = name
             new_columns.append(new_column)
-
 
         return aggregation, new_columns
 
@@ -265,5 +271,7 @@ class Calculator(object):
         """
         Get state for pickle.
         """
-        return dict(
-            dataset=self.dataset, dframe=self.dframe, parser=self.parser)
+        return [self.dataset, self.parser]
+
+    def __setstate__(self, state):
+        self.dataset, self.parser = state
