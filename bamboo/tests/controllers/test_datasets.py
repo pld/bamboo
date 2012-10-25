@@ -471,6 +471,15 @@ class TestDatasets(TestAbstractDatasets):
         results = self._test_summary_results(results)
         self._test_summary_no_group(results)
 
+    def test_summary_restrict_by_cardinality(self):
+        self._post_file('good_eats_huge.csv')
+        results = self.controller.summary(
+            self.dataset_id, select=self.controller.SELECT_ALL_FOR_SUMMARY)
+        results = self._test_summary_results(results)
+        # food_type has unique greater than the limit in this csv
+        self.assertEqual(len(results.keys()), self.NUM_COLS - 1)
+        self.assertFalse('food_type' in results.keys())
+
     def test_summary_illegal_keys(self):
         self._post_file(file_name='good_eats_illegal_keys.csv')
         results = self.controller.summary(
