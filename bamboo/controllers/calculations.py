@@ -16,7 +16,7 @@ class Calculations(AbstractController):
     All actions in the Calculations Controller can optionally take a *callback*
     parameter.  If passed the returned result will be wrapped this the
     parameter value.  E.g., is ``callback=parseResults`` the returned value
-    will be parseResults([some-JSON])``, where ``some-JSON`` is the function
+    will be ``parseResults([some-JSON])``, where ``some-JSON`` is the function
     return value.
     """
 
