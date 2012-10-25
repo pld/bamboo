@@ -11,7 +11,8 @@ from bamboo.core.frame import BambooFrame, BAMBOO_RESERVED_KEY_PREFIX,\
     DATASET_ID, DATASET_OBSERVATION_ID, PARENT_DATASET_ID
 from bamboo.core.summary import summarize
 from bamboo.lib.mongo import dict_for_mongo, reserve_encoded
-from bamboo.lib.schema_builder import schema_from_data_and_dtypes, SIMPLETYPE
+from bamboo.lib.schema_builder import DIMENSION, OLAP_TYPE,\
+    schema_from_data_and_dtypes, SIMPLETYPE
 from bamboo.lib.utils import call_async, split_groups
 from bamboo.models.abstract_model import AbstractModel
 from bamboo.models.calculation import Calculation
@@ -85,6 +86,13 @@ class Dataset(AbstractModel):
     @property
     def merged_datasets(self):
         return [self.find_one(_id) for _id in self.merged_dataset_ids]
+
+    def is_factor(self, col):
+        return self.schema[col][OLAP_TYPE] == DIMENSION
+
+    def cardinality(self, col):
+        if self.is_factor(col):
+            return self.schema[col][self.CARDINALITY]
 
     def dframe(self, query=None, select=None, keep_parent_ids=False,
                limit=0, order_by=None):
