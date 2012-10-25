@@ -5,6 +5,7 @@ from bamboo.lib.mongo import dict_for_mongo, MONGO_RESERVED_KEYS
 from bamboo.lib.schema_builder import DIMENSION, OLAP_TYPE
 
 
+MAX_CARDINALITY_FOR_COUNT = 10000
 SUMMARY = 'summary'
 
 
@@ -23,26 +24,33 @@ def summarize_series(dtype, data):
     }.get(dtype.type, None)
 
 
-def summarize_df(dframe, groups=[]):
+def summarizable(dframe, col, groups, dataset):
+    if dataset.is_factor(col):
+        cardinality = dframe[col].nunique() if len(groups) else dataset.cardinality(col)
+        if cardinality > MAX_CARDINALITY_FOR_COUNT:
+            return False
+    return not col in groups
+
+
+def summarize_df(dframe, groups=[], dataset=None):
     """
     Calculate summary statistics
     """
     dtypes = dframe.dtypes
-    # TODO handle empty data
-    # before we wrapped with filter(lambda d: d[DATA] and len(d[DATA]), array)
     return dict([
         (col, {
             SUMMARY: series_to_jsondict(summarize_series(dtypes[col], data))
-        }) for col, data in dframe.iteritems() if not col in groups
+        }) for col, data in dframe.iteritems() if summarizable(dframe, col, groups,
+            dataset)
     ])
 
 
-def summarize_with_groups(dframe, groups):
+def summarize_with_groups(dframe, groups, dataset):
     """
     Calculate summary statistics for group.
     """
     return series_to_jsondict(
-        dframe.groupby(groups).apply(summarize_df, groups))
+        dframe.groupby(groups).apply(summarize_df, groups, dataset))
 
 
 def summarize(dataset, dframe, groups, group_str, no_cache):
@@ -60,8 +68,8 @@ def summarize(dataset, dframe, groups, group_str, no_cache):
     # check cached stats for group and update as necessary
     stats = dataset.stats
     if no_cache or not stats.get(group_str):
-        group_stats = summarize_df(dframe) if group_str == dataset.ALL else\
-            summarize_with_groups(dframe, groups)
+        group_stats = summarize_df(dframe, dataset=dataset) if group_str == dataset.ALL else\
+            summarize_with_groups(dframe, groups, dataset)
         stats.update({group_str: group_stats})
         if not no_cache:
             dataset.update({dataset.STATS: dict_for_mongo(stats)})
