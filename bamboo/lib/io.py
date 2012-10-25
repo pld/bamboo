@@ -36,7 +36,7 @@ def create_dataset_from_url(url, allow_local_file=False):
 
     dataset = Dataset()
     dataset.save()
-    call_async(import_dataset, dataset, dataset, filepath_or_buffer=url)
+    call_async(import_dataset, dataset, filepath_or_buffer=url)
 
     return dataset
 
@@ -56,8 +56,7 @@ def create_dataset_from_csv(csv_file):
     dataset = Dataset()
     dataset.save()
 
-    call_async(
-        import_dataset, dataset, dataset,
-        filepath_or_buffer=tmpfile.name, delete=True)
+    call_async(import_dataset, dataset, filepath_or_buffer=tmpfile.name,
+               delete=True)
 
     return dataset

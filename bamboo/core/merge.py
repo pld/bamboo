@@ -23,7 +23,7 @@ def merge_dataset_ids(dataset_ids):
     new_dataset.save()
     dataset_ids = json.loads(dataset_ids)
 
-    call_async(_merge_datasets_task, new_dataset, new_dataset, dataset_ids)
+    call_async(_merge_datasets_task, new_dataset, dataset_ids)
 
     return new_dataset
 

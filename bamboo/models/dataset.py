@@ -215,7 +215,7 @@ class Dataset(AbstractModel):
         Update *dataset* with new *data*.
         """
         calculator = Calculator(self)
-        call_async(calculator.calculate_updates, self, calculator,
+        call_async(calculator.calculate_updates, calculator,
                    json.loads(json_data))
 
     def replace_observations(self, dframe):

@@ -34,8 +34,7 @@ class Calculations(AbstractController):
         calculation = Calculation.find_one(dataset_id, name)
         if calculation:
             dataset = Dataset.find_one(dataset_id)
-            task = call_async(
-                calculation.delete, dataset, calculation, dataset)
+            task = call_async(calculation.delete, calculation, dataset)
             result = {self.SUCCESS: 'deleted calculation: %s for dataset: %s' %
                       (name, dataset_id)}
         return self.dump_or_error(result,

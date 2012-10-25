@@ -86,4 +86,4 @@ class Observation(AbstractModel):
             dataset.STATUS: 'ready',
         })
 
-        call_async(dataset.summarize, dataset, dataset)
+        call_async(dataset.summarize, dataset)

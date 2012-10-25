@@ -63,7 +63,7 @@ class Calculation(AbstractModel):
 
         # call async calculate
         call_async(calculator.calculate_column,
-                   dataset, calculator, formula, name, group)
+                   calculator, formula, name, group)
         return record
 
     @classmethod
