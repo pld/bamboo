@@ -55,7 +55,6 @@ class Calculator(object):
         """
         self.ensure_dframe()
 
-        print '>>> enter Calculator.calculate_column'
         aggregation, new_columns = self._make_columns(formula, name)
 
         if aggregation:
@@ -63,14 +62,12 @@ class Calculator(object):
                              group_str, aggregation, name)
             agg.save(new_columns)
         else:
-            print '>>> calling dataset.replace_observations'
             self.dataset.replace_observations(self.dframe.join(new_columns[0]))
 
         # propagate calculation to any merged child datasets
         for merged_dataset in self.dataset.merged_datasets:
             merged_calculator = Calculator(merged_dataset)
             merged_calculator._propagate_column(self.dataset)
-        print '>>> exit Calculator.calculate_column'
 
     def _propagate_column(self, parent_dataset):
         """
