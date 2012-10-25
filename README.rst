@@ -40,8 +40,7 @@ start mongodb on localhost and standard port
 
 ::
 
-  $ cd bamboo
-  $ python run_server.py
+  $ python ./scripts/run_server.py
 
 Running the server as a daemon
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -124,7 +123,8 @@ To work on the code:
 
 ::
 
-  $ cd bamboo && ../scripts/test.sh
+  $ cd bamboo
+  $ ../scripts/test.sh
 
 6. submit a pull request
 
