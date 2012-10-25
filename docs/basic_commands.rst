@@ -549,7 +549,7 @@ returns::
 retrieve lists of related datasets for aggregations:
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-``curl -g http://bamboo.io/datasets/8a3d74711475d8a51c84484fe73f24bd151242ea?mode=related``
+``curl -g http://bamboo.io/datasets/8a3d74711475d8a51c84484fe73f24bd151242ea/related``
 
 Returns a map of groups (included an empty group) to dataset IDs for
 aggregation calculations.
