@@ -78,7 +78,8 @@ class MultiColumnAggregation(Aggregation):
 
 class MaxAggregation(Aggregation):
     """
-    Calculate the maximum.
+    Calculate the maximum. Written as ``max(FORMULA)``. Where *FORMULA* is a
+    valid formula.
     """
 
     formula_name = 'max'
@@ -86,7 +87,8 @@ class MaxAggregation(Aggregation):
 
 class MeanAggregation(MultiColumnAggregation):
     """
-    Calculate the arithmetic mean.
+    Calculate the arithmetic mean. Written as ``mean(FORMULA)``. Where
+    *FORMULA* is a valid formula.
     """
 
     formula_name = 'mean'
@@ -108,7 +110,8 @@ class MeanAggregation(MultiColumnAggregation):
 
 class MedianAggregation(Aggregation):
     """
-    Calculate the median.
+    Calculate the median. Written as ``median(FORMULA)``. Where *FORMULA* is a
+    valid formula.
     """
 
     formula_name = 'median'
@@ -116,7 +119,8 @@ class MedianAggregation(Aggregation):
 
 class MinAggregation(Aggregation):
     """
-    Calculate the minimum.
+    Calculate the minimum. Written as ``min(FORMULA)``. Where *FORMULA* is a
+    valid formula.
     """
 
     formula_name = 'min'
@@ -124,7 +128,8 @@ class MinAggregation(Aggregation):
 
 class SumAggregation(Aggregation):
     """
-    Calculate the sum.
+    Calculate the sum. Written as ``sum(FORMULA)``. Where *FORMULA* is a
+    valid formula.
     """
 
     formula_name = 'sum'
@@ -140,7 +145,8 @@ class RatioAggregation(MultiColumnAggregation):
     """
     Calculate the ratio. Columns with N/A for either the numerator or
     denominator are ignored.  This will store associated numerator and
-    denominator columns.
+    denominator columns.  Written as ``ratio(NUMERATOR, DENOMINATOR)``.
+    Where *NUMERATOR* and *DENOMINATOR* are both valid formulas.
     """
 
     formula_name = 'ratio'
@@ -160,6 +166,7 @@ class RatioAggregation(MultiColumnAggregation):
         return self._add_calculated_column(dframe)
 
 
+# dict of formula names to aggregation classes
 AGGREGATIONS = dict([
     (cls.formula_name, cls) for cls in
     Aggregation.__subclasses__() + MultiColumnAggregation.__subclasses__()

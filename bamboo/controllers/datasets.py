@@ -50,12 +50,13 @@ class Datasets(AbstractController):
     def summary(self, dataset_id, query=None, select=None,
                 group=None, limit=0, order_by=None, callback=False):
         """
+
           - The *select* argument is required, it can be 'all' or a MongoDB
             JSON query
           - If *group* is passed group the summary.
           - If *query* is passed restrict summary to rows matching query.
 
-        Returns an error message if *dataset_id* does not exiss or the JSON for
+        Returns an error message if *dataset_id* does not exist or the JSON for
         query or select is improperly formatted.
         """
         def _action(dataset, query=query, select=select, group=group,
