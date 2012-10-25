@@ -39,7 +39,7 @@ class TestDataset(TestBase):
             record.save(self.test_dataset_ids[dataset_name])
             records = Dataset.find(self.test_dataset_ids[dataset_name])
             self.assertNotEqual(records, [])
-            record.delete(record)
+            record.delete()
             records = Dataset.find(self.test_dataset_ids[dataset_name])
             self.assertEqual(records, [])
 

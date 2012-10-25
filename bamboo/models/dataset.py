@@ -21,6 +21,7 @@ from bamboo.models.observation import Observation
 @task
 def delete_task(dataset):
     Observation.delete_all(dataset)
+    super(dataset.__class__, dataset).delete({DATASET_ID: dataset.dataset_id})
 
 
 class Dataset(AbstractModel):
@@ -126,7 +127,6 @@ class Dataset(AbstractModel):
         return super(self.__class__, self).save(record)
 
     def delete(self):
-        super(self.__class__, self).delete({DATASET_ID: self.dataset_id})
         call_async(delete_task, self)
 
     @class_task
