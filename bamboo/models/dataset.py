@@ -2,7 +2,8 @@ import json
 import uuid
 from time import gmtime, strftime
 
-from celery.contrib.methods import task
+from celery.task import task
+from celery.contrib.methods import task as class_task
 import numpy as np
 
 from bamboo.core.calculator import Calculator
@@ -15,6 +16,11 @@ from bamboo.lib.utils import call_async, split_groups
 from bamboo.models.abstract_model import AbstractModel
 from bamboo.models.calculation import Calculation
 from bamboo.models.observation import Observation
+
+
+@task
+def delete_task(dataset):
+    Observation.delete_all(dataset)
 
 
 class Dataset(AbstractModel):
@@ -119,12 +125,11 @@ class Dataset(AbstractModel):
         }
         return super(self.__class__, self).save(record)
 
-    @task
     def delete(self):
         super(self.__class__, self).delete({DATASET_ID: self.dataset_id})
-        Observation.delete_all(self)
+        call_async(delete_task, self)
 
-    @task
+    @class_task
     def summarize(self, query=None, select=None,
                   group_str=None, limit=0, order_by=None):
         """
