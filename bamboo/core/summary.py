@@ -1,7 +1,7 @@
 import numpy as np
 
 from bamboo.lib.jsontools import series_to_jsondict
-from bamboo.lib.mongo import MONGO_RESERVED_KEYS
+from bamboo.lib.mongo import dict_for_mongo, MONGO_RESERVED_KEYS
 from bamboo.lib.schema_builder import DIMENSION, OLAP_TYPE
 
 
@@ -64,7 +64,7 @@ def summarize(dataset, dframe, groups, group_str, no_cache):
             summarize_with_groups(dframe, groups)
         stats.update({group_str: group_stats})
         if not no_cache:
-            dataset.update({dataset.STATS: stats})
+            dataset.update({dataset.STATS: dict_for_mongo(stats)})
     stats_to_return = stats.get(group_str)
 
     return stats_to_return if group_str == dataset.ALL else {

@@ -62,8 +62,8 @@ def dict_for_mongo(d):
 def _encode_for_mongo(key):
     # TODO: compile RE
     return reduce(lambda s, c: re.sub(c[0], b64encode(c[1]), s),
-                  [(r'^\$', '$'), (r'\.', '.')], key)
+                  [(r'\$', '$'), (r'\.', '.')], key)
 
 
 def _is_invalid_for_mongo(key):
-    return key.startswith('$') or key.count('.') > 0
+    return key.count('$') or key.count('.') > 0

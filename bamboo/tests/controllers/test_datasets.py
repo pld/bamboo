@@ -471,6 +471,12 @@ class TestDatasets(TestAbstractDatasets):
         results = self._test_summary_results(results)
         self._test_summary_no_group(results)
 
+    def test_summary_illegal_keys(self):
+        self._post_file(file_name='good_eats_illegal_keys.csv')
+        results = self.controller.summary(
+            self.dataset_id, select=self.controller.SELECT_ALL_FOR_SUMMARY)
+        results = self._test_summary_results(results)
+
     def test_summary_no_select(self):
         self._post_file()
         results = self.controller.summary(self.dataset_id)
