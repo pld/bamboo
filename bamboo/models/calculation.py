@@ -1,10 +1,22 @@
-from celery.contrib.methods import task
+from celery.task import task
 
 from bamboo.core.calculator import Calculator
 from bamboo.core.frame import DATASET_ID
 from bamboo.core.parser import Parser, ParserContext
 from bamboo.lib.utils import call_async
 from bamboo.models.abstract_model import AbstractModel
+
+
+@task
+def delete_task(calculation, dataset):
+    dframe = dataset.dframe()
+    slug = dataset.build_labels_to_slugs()[calculation.name]
+    del dframe[slug]
+    dataset.replace_observations(dframe)
+    super(calculation.__class__, calculation).delete({
+        DATASET_ID: calculation.dataset_id,
+        calculation.NAME: calculation.name
+    })
 
 
 class Calculation(AbstractModel):
@@ -29,16 +41,8 @@ class Calculation(AbstractModel):
     def formula(self):
         return self.record[self.FORMULA]
 
-    @task
     def delete(self, dataset):
-        dframe = dataset.dframe()
-        slug = dataset.build_labels_to_slugs()[self.name]
-        del dframe[slug]
-        dataset.replace_observations(dframe)
-        super(self.__class__, self).delete({
-            DATASET_ID: self.dataset_id,
-            self.NAME: self.name
-        })
+        call_async(delete_task, self, dataset)
 
     def save(self, dataset, formula, name, group=None):
         """
