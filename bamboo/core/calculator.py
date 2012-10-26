@@ -24,11 +24,15 @@ class Calculator(object):
             self.dframe = self.dataset.dframe()
 
     def validate(self, formula, group_str):
-        # attempt to get a row from the dataframe
+        """
+        Validate a formula by attempting to get a row from the dframe for the
+        dataset and then running the parser validation.
+        Returns the aggregation (or None) for the formula.
+        """
         dframe = self.dataset.dframe(limit=1)
         row = dframe.irow(0) if len(dframe) else {}
 
-        self.parser.validate_formula(formula, row)
+        aggregation = self.parser.validate_formula(formula, row)
 
         if group_str:
             groups = split_groups(group_str)
@@ -36,6 +40,7 @@ class Calculator(object):
                 if not group in dframe.columns:
                     raise ParseError(
                         'Group %s not in dataset columns.' % group)
+        return aggregation
 
     def calculate_column(self, formula, name, group_str=None):
         """

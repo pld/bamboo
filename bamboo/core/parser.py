@@ -244,7 +244,8 @@ class Parser(object):
 
     def validate_formula(self, formula, row):
         """
-        Validate the *formula* on an example *row* of data.  Rebuild the BNF
+        Validate the *formula* on an example *row* of data.  Rebuild the BNF.
+        Return the aggregation for the formula.
         """
         # remove saved aggregation
         self.aggregation = None
@@ -262,6 +263,8 @@ class Parser(object):
                 function(row, self.context)
         except KeyError, err:
             raise ParseError('Missing column reference: %s' % err)
+
+        return aggregation
 
     def __getstate__(self):
         """

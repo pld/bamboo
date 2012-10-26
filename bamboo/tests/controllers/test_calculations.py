@@ -35,7 +35,8 @@ class TestCalculations(TestBase):
     def test_create(self):
         response = json.loads(self._post_formula())
         self.assertTrue(isinstance(response, dict))
-        self.assertFalse(DATASET_ID in response)
+        self.assertTrue(self.controller.SUCCESS in response)
+        self.assertTrue(self.dataset_id in response[self.controller.SUCCESS])
 
     @requires_async
     def test_create_async(self):
@@ -85,3 +86,24 @@ class TestCalculations(TestBase):
         results = self.controller.show(self.dataset_id, callback='jsonp')
         self.assertEqual('jsonp(', results[0:6])
         self.assertEqual(')', results[-1])
+
+    def test_create_aggregation(self):
+        self.formula = 'sum(amount)'
+        self.name = 'test'
+        response = json.loads(self._post_formula())
+        self.assertTrue(isinstance(response, dict))
+        self.assertTrue(self.controller.SUCCESS in response)
+        self.assertTrue(self.dataset_id in response[self.controller.SUCCESS])
+        dataset = Dataset.find_one(self.dataset_id)
+        self.assertTrue('' in dataset.aggregated_datasets_dict.keys())
+
+    def test_delete_aggregation(self):
+        self.formula = 'sum(amount)'
+        self.name = 'test'
+        response = json.loads(self._post_formula())
+        result = json.loads(
+            self.controller.delete(self.dataset_id, self.name, ''))
+        self.assertTrue(AbstractController.SUCCESS in result)
+        dataset = Dataset.find_one(self.dataset_id)
+        agg_dataset = Dataset.find_one(dataset.aggregated_datasets_dict[''])
+        self.assertTrue(self.name not in agg_dataset.build_labels_to_slugs())
