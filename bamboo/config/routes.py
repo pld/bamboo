@@ -17,11 +17,17 @@ def connect_routes(dispatcher):
     # define routes as tuples:
     # (name, method, route, controller, action)
     routes = [
+        # cors
+        # TODO: figure out how to route all OPTIONS to one controller/function
+        ('dataset_options', 'OPTIONS',
+            '/datasets/:dataset_id', datasets, 'options'),
+        ('calculations_options', 'OPTIONS',
+            '/calculations/:dataset_id', calculations, 'options'),
+        ('calculations_options_alias', 'OPTIONS',
+            '/datasets/:dataset_id/calculations', calculations, 'options'),
         # root
         ('root', 'GET',
             '/', root, 'index'),
-        ('options', 'OPTIONS',
-            '.*', root, 'options'),
         # datasets
         ('datasets_delete', 'DELETE',
             '/datasets/:dataset_id', datasets, 'delete'),
