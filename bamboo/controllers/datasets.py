@@ -143,11 +143,13 @@ class Datasets(AbstractController):
         error = 'url or csv_file required'
 
         try:
+            dataset = None
             if url:
                 dataset = create_dataset_from_url(url)
             elif csv_file:
                 dataset = create_dataset_from_csv(csv_file)
-            result = {Dataset.ID: dataset.dataset_id}
+            if dataset:
+                result = {Dataset.ID: dataset.dataset_id}
         except IOError:
             error = 'could not get a filehandle for: %s' % csv_file
         except urllib2.URLError:
