@@ -242,3 +242,7 @@ class Dataset(AbstractModel):
         self.build_schema(dframe)
         Observation.delete_all(self)
         return self.save_observations(dframe)
+
+    def drop_columns(self, columns):
+        dframe = self.dframe(keep_parent_ids=True)
+        self.replace_observations(dframe.drop(columns, axis=1))

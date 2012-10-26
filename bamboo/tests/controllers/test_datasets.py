@@ -687,3 +687,28 @@ class TestDatasets(TestAbstractDatasets):
         results = self.controller.show(self.dataset_id, callback='jsonp')
         self.assertEqual('jsonp(', results[0:6])
         self.assertEqual(')', results[-1])
+
+    def test_drop_columns(self):
+        self._post_file()
+        results = json.loads(
+            self.controller.drop_columns(self.dataset_id, ['food_type']))
+        self.assertTrue(isinstance(results, dict))
+        self.assertTrue(AbstractController.SUCCESS in results)
+        self.assertTrue('dropped' in results[AbstractController.SUCCESS])
+        results = json.loads(self.controller.show(self.dataset_id))
+        self.assertTrue(isinstance(results, list))
+        self.assertTrue(isinstance(results[0], dict))
+        self.assertEqual(len(results[0].keys()), self.NUM_COLS - 1)
+
+    def test_drop_columns_non_existent_id(self):
+        results = json.loads(
+            self.controller.drop_columns('313514', ['food_type']))
+        self.assertTrue(isinstance(results, dict))
+        self.assertTrue(AbstractController.ERROR in results)
+
+    def test_drop_columns_non_existent_column(self):
+        self._post_file()
+        results = json.loads(
+            self.controller.drop_columns(self.dataset_id, ['foo']))
+        self.assertTrue(isinstance(results, dict))
+        self.assertTrue(AbstractController.ERROR in results)

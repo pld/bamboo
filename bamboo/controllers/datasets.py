@@ -167,6 +167,18 @@ class Datasets(AbstractController):
             result = {Dataset.ID: dataset_id}
         return self.dump_or_error(result, error, callback)
 
+    def drop_columns(self, dataset_id, columns, callback=False):
+        """
+        Drop columns in dataset with id *dataset_id*.  *columns* is an array of
+        columns within the dataset.  Returns an error if any column is not in
+        the dataset.
+        """
+        def _action(dataset, columns=columns):
+            dataset.drop_columns(columns)
+            return {self.SUCCESS: 'in dataset %s dropped columns: %s' %
+                    (dataset_id, columns)}
+        return self._safe_get_and_call(dataset_id, _action, callback)
+
     def _safe_get_and_call(self, dataset_id, action, callback, **kwargs):
         dataset = Dataset.find_one(dataset_id)
         error = 'id not found'
@@ -175,7 +187,7 @@ class Datasets(AbstractController):
         try:
             if dataset.record:
                 result = action(dataset, **kwargs)
-        except (ArgumentError, ColumnTypeError, JSONError) as e:
+        except (ArgumentError, ColumnTypeError, JSONError, ValueError) as e:
             error = e.__str__()
 
         return self.dump_or_error(result, error, callback)
