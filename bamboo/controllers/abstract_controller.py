@@ -1,3 +1,5 @@
+import cherrypy
+
 from bamboo.lib.mongo import dump_mongo_json
 
 
@@ -19,4 +21,7 @@ class AbstractController(object):
         if data is None:
             data = {self.ERROR: error_message}
         json = dump_mongo_json(data)
+        cherrypy.response.headers['Access-Control-Allow-Origin'] = '*'
+        cherrypy.response.headers['Access-Control-Allow-Methods'] = 'GET, POST, PUT, DELETE, OPTIONS'
+        cherrypy.response.headers['Access-Control-Allow-Headers'] = 'Content-Type'
         return '%s(%s)' % (callback, json) if callback else json

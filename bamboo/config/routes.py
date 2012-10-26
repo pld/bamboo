@@ -20,6 +20,8 @@ def connect_routes(dispatcher):
         # root
         ('root', 'GET',
             '/', root, 'index'),
+        ('options', 'OPTIONS',
+            '.*', root, 'options'),
         # datasets
         ('datasets_delete', 'DELETE',
             '/datasets/:dataset_id', datasets, 'delete'),
