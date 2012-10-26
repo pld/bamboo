@@ -9,7 +9,11 @@ from bamboo.models.abstract_model import AbstractModel
 
 @task
 def delete_task(calculation, dataset):
-    dframe = dataset.dframe()
+    if not calculation.group is None:
+        # it is an aggregate calculation
+        dataset = dataset.aggregated_datasets[calculation.group]
+
+    dframe = dataset.dframe(keep_parent_ids=True)
     slug = dataset.build_labels_to_slugs()[calculation.name]
     del dframe[slug]
     dataset.replace_observations(dframe)
@@ -41,12 +45,16 @@ class Calculation(AbstractModel):
         return self.record[DATASET_ID]
 
     @property
-    def name(self):
-        return self.record[self.NAME]
-
-    @property
     def formula(self):
         return self.record[self.FORMULA]
+
+    @property
+    def group(self):
+        return self.record[self.GROUP]
+
+    @property
+    def name(self):
+        return self.record[self.NAME]
 
     def delete(self, dataset):
         call_async(delete_task, self, dataset)
@@ -64,7 +72,11 @@ class Calculation(AbstractModel):
         calculator = Calculator(dataset)
 
         # ensure that the formula is parsable
-        calculator.validate(formula, group)
+        aggregation = calculator.validate(formula, group)
+
+        # set group if aggregation and group unset
+        if aggregation and not group:
+            group = ''
 
         record = {
             DATASET_ID: dataset.dataset_id,
@@ -85,11 +97,14 @@ class Calculation(AbstractModel):
         return calculation.save(dataset, formula, name, group)
 
     @classmethod
-    def find_one(cls, dataset_id, name):
-        return super(cls, cls).find_one({
+    def find_one(cls, dataset_id, name, group=None):
+        query = {
             DATASET_ID: dataset_id,
             cls.NAME: name,
-        })
+        }
+        if group:
+            query[cls.GROUP] = group
+        return super(cls, cls).find_one(query)
 
     @classmethod
     def find(cls, dataset):

@@ -43,6 +43,8 @@ def connect_routes(dispatcher):
             '/datasets/:dataset_id/related', datasets, 'related'),
         ('datasets_merge', 'POST',
             '/datasets/merge', datasets, 'merge'),
+        ('datasets_drop_columns', 'PUT',
+            '/datasets/drop_columns', datasets, 'drop_columns'),
         # calculations
         ('calculations_create', 'POST',
             '/calculations/:dataset_id', calculations, 'create'),

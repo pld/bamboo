@@ -1,5 +1,5 @@
 import json
-import time
+from time import sleep
 
 from bamboo.controllers.abstract_controller import AbstractController
 from bamboo.controllers.calculations import Calculations
@@ -16,7 +16,6 @@ class TestCalculations(TestBase):
 
     def setUp(self):
         TestBase.setUp(self)
-
         self.dataset_id = create_dataset_from_url(
             '%s%s' % (self._local_fixture_prefix(), 'good_eats.csv'),
             allow_local_file=True).dataset_id
@@ -35,7 +34,55 @@ class TestCalculations(TestBase):
     def test_create(self):
         response = json.loads(self._post_formula())
         self.assertTrue(isinstance(response, dict))
+        self.assertTrue(self.controller.SUCCESS in response)
+        self.assertTrue(self.dataset_id in response[self.controller.SUCCESS])
+
+    @requires_async
+    def test_create_async_not_ready(self):
+        self.dataset_id = create_dataset_from_url(
+            '%s%s' % (self._local_fixture_prefix(), 'good_eats_huge.csv'),
+            allow_local_file=True).dataset_id
+        response = json.loads(self._post_formula())
+        dataset = Dataset.find_one(self.dataset_id)
+        self.assertFalse(dataset.is_ready)
+        self.assertTrue(isinstance(response, dict))
         self.assertFalse(DATASET_ID in response)
+        while True:
+            dataset = Dataset.find_one(self.dataset_id)
+            if dataset.is_ready:
+                break
+            sleep(0.1)
+        self.assertFalse(self.name in dataset.schema.keys())
+
+    @requires_async
+    def test_create_async_sets_calculation_status(self):
+        self.dataset_id = create_dataset_from_url(
+            '%s%s' % (self._local_fixture_prefix(), 'good_eats_huge.csv'),
+            allow_local_file=True).dataset_id
+        while True:
+            dataset = Dataset.find_one(self.dataset_id)
+            if dataset.is_ready:
+                break
+            sleep(0.1)
+        response = json.loads(self._post_formula())
+        self.assertTrue(isinstance(response, dict))
+        self.assertTrue(self.controller.SUCCESS in response)
+        self.assertTrue(self.dataset_id in response[self.controller.SUCCESS])
+        response = json.loads(self.controller.show(self.dataset_id))[0]
+        self.assertTrue(isinstance(response, dict))
+        self.assertTrue(Calculation.STATE in response)
+        self.assertEqual(response[Calculation.STATE],
+                         Calculation.STATE_PENDING)
+        while True:
+            response = json.loads(self.controller.show(self.dataset_id))[0]
+            dataset = Dataset.find_one(self.dataset_id)
+            if response[Calculation.STATE] != Calculation.STATE_PENDING:
+                break
+            sleep(0.1)
+        self.assertEqual(response[Calculation.STATE],
+                         Calculation.STATE_READY)
+        dataset = Dataset.find_one(self.dataset_id)
+        self.assertTrue(self.name in dataset.schema.keys())
 
     @requires_async
     def test_create_async(self):
@@ -46,8 +93,14 @@ class TestCalculations(TestBase):
             sleep(0.1)
         response = json.loads(self._post_formula())
         self.assertTrue(isinstance(response, dict))
-        self.assertFalse(DATASET_ID in response)
-        time.sleep(1)
+        self.assertTrue(self.controller.SUCCESS in response)
+        self.assertTrue(self.dataset_id in response[self.controller.SUCCESS])
+        while True:
+            response = json.loads(self.controller.show(self.dataset_id))[0]
+            dataset = Dataset.find_one(self.dataset_id)
+            if response[Calculation.STATE] != Calculation.STATE_PENDING:
+                break
+            sleep(0.1)
         dataset = Dataset.find_one(self.dataset_id)
         self.assertTrue(self.name in dataset.schema.keys())
 
@@ -85,3 +138,24 @@ class TestCalculations(TestBase):
         results = self.controller.show(self.dataset_id, callback='jsonp')
         self.assertEqual('jsonp(', results[0:6])
         self.assertEqual(')', results[-1])
+
+    def test_create_aggregation(self):
+        self.formula = 'sum(amount)'
+        self.name = 'test'
+        response = json.loads(self._post_formula())
+        self.assertTrue(isinstance(response, dict))
+        self.assertTrue(self.controller.SUCCESS in response)
+        self.assertTrue(self.dataset_id in response[self.controller.SUCCESS])
+        dataset = Dataset.find_one(self.dataset_id)
+        self.assertTrue('' in dataset.aggregated_datasets_dict.keys())
+
+    def test_delete_aggregation(self):
+        self.formula = 'sum(amount)'
+        self.name = 'test'
+        response = json.loads(self._post_formula())
+        result = json.loads(
+            self.controller.delete(self.dataset_id, self.name, ''))
+        self.assertTrue(AbstractController.SUCCESS in result)
+        dataset = Dataset.find_one(self.dataset_id)
+        agg_dataset = Dataset.find_one(dataset.aggregated_datasets_dict[''])
+        self.assertTrue(self.name not in agg_dataset.build_labels_to_slugs())

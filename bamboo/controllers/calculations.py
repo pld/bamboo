@@ -20,17 +20,20 @@ class Calculations(AbstractController):
     return value.
     """
 
-    def delete(self, dataset_id, name, callback=False):
+    def delete(self, dataset_id, name, group=None, callback=False):
         """
         Delete the calculation for the dataset specified by the hash
         *dataset_id* from mongo and the column *name*.
+
+        If it is an aggregate calculation a *group* must also be passed to
+        determine the correct aggregate calculation to delete.
 
         This will also remove the column *name* from the data frame for
         dataset.
         """
         result = None
 
-        calculation = Calculation.find_one(dataset_id, name)
+        calculation = Calculation.find_one(dataset_id, name, group)
         if calculation:
             dataset = Dataset.find_one(dataset_id)
             calculation.delete(dataset)

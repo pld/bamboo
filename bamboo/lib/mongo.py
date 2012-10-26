@@ -15,8 +15,15 @@ MONGO_RESERVED_KEY_STRS = [MONGO_RESERVED_KEY_PREFIX + key
                            for key in MONGO_RESERVED_KEYS]
 
 
-def dump_mongo_json(_dict):
-    return json.dumps(_dict, default=json_util.default)
+def dump_mongo_json(obj):
+    """Dump JSON using BSON conversion
+
+    :param obj: datastructure to dump as JSON
+    :type obj: dict, list, or string
+    :return: JSON string
+    :rtype: string
+    """
+    return json.dumps(obj, default=json_util.default)
 
 
 def remove_mongo_reserved_keys(_dict):
