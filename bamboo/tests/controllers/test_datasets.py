@@ -214,6 +214,11 @@ class TestDatasets(TestAbstractDatasets):
         self.assertTrue(isinstance(result, dict))
         self.assertTrue(Datasets.ERROR in result)
 
+    def test_create_no_url_or_csv(self):
+        result = json.loads(self.controller.create())
+        self.assertTrue(isinstance(result, dict))
+        self.assertTrue(Datasets.ERROR in result)
+
     def test_merge_datasets_0_not_enough(self):
         result = json.loads(self.controller.merge(datasets=json.dumps([])))
         self.assertTrue(isinstance(result, dict))
