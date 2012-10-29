@@ -20,3 +20,8 @@ Root
 ----
 .. autoclass:: bamboo.controllers.root.Root
     :members:
+
+Version
+-------
+.. autoclass:: bamboo.controllers.version.Version
+    :members:

@@ -16,8 +16,13 @@ Calculator
 .. autoclass:: bamboo.core.calculator.Calculator
     :members:
 
+Frame
+-----
+.. automodule:: bamboo.core.frame
+    :members:
+
 Merge
-------------------
+-----
 .. automodule:: bamboo.core.merge
     :members:
 
