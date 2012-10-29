@@ -10,9 +10,17 @@ from bamboo.lib.utils import is_float_nan
 
 
 def recognize_dates(dframe):
-    """
+    """Convert data columns to datetimes.
+
     Check if object columns in a dataframe can be parsed as dates.
     If yes, rewrite column with values parsed as dates.
+
+    Args:
+
+    - dframe: The DataFrame to convert columns in.
+
+    Returns:
+        A DataFrame with column values convert to datetime types.
     """
     for idx, dtype in enumerate(dframe.dtypes):
         if dtype.type == np.object_:
@@ -20,10 +28,19 @@ def recognize_dates(dframe):
     return dframe
 
 
-def recognize_dates_from_schema(dataset, dframe):
-    # if it is a date column, recognize dates
+def recognize_dates_from_schema(schema, dframe):
+    """Convert columes to datetime if column in *schema* is of type datetime.
+
+    Args:
+
+    - schema: Schema to define columns of type datetime.
+    - dframe: The DataFrame to convert columns in.
+
+    Returns:
+        A DataFrame with column values convert to datetime types.
+    """
     dframe_columns = dframe.columns.tolist()
-    for column, column_schema in dataset.schema.items():
+    for column, column_schema in schema.items():
         if column in dframe_columns and\
                 column_schema[SIMPLETYPE] == DATETIME:
             dframe = _convert_column_to_date(dframe, column)
