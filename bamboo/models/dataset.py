@@ -205,7 +205,6 @@ class Dataset(AbstractModel):
     @classmethod
     def find(cls, dataset_id):
         """Return datasets for *dataset_id*."""
-        return super(cls, cls).find_one({DATASET_ID: dataset_id})
         return super(cls, cls).find({DATASET_ID: dataset_id})
 
     def update(self, record):

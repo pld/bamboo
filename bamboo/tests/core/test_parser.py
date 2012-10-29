@@ -12,7 +12,7 @@ class TestParser(TestBase):
     def _check_func(self, parse_result):
         agg, functions = parse_result
         for func in functions:
-            self.assertEqual(func.func.func_name, '_eval')
+            self.assertEqual(func.func.func_name, 'eval')
         return functions[0]
 
     def test_parse_formula(self):

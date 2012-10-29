@@ -1,11 +1,8 @@
 from  base64 import b64encode
 import json
-import numpy as np
 import re
 
 from bson import json_util
-
-from bamboo.lib.jsontools import get_json_value
 
 
 # MongoDB keys
@@ -13,23 +10,33 @@ MONGO_RESERVED_KEYS = ['_id']
 MONGO_RESERVED_KEY_PREFIX = 'MONGO_RESERVED_KEY'
 MONGO_RESERVED_KEY_STRS = [MONGO_RESERVED_KEY_PREFIX + key
                            for key in MONGO_RESERVED_KEYS]
+reserved_dollar_re = re.compile(r'\$')
+reserved_dot_re = re.compile(r'\.')
 
 
 def dump_mongo_json(obj):
-    """Dump JSON using BSON conversion
+    """Dump JSON using BSON conversion.
 
-    :param obj: datastructure to dump as JSON
-    :type obj: dict, list, or string
-    :return: JSON string
-    :rtype: string
+    Args:
+        obj: Datastructure to dump as JSON.
+
+    Returns:
+        JSON string of dumped *obj*.
     """
     return json.dumps(obj, default=json_util.default)
 
 
 def remove_mongo_reserved_keys(_dict):
-    """
+    """Remove any keys reserved for MongoDB from *_dict*.
+
     Check for *MONGO_RESERVED_KEYS* in stored dictionary.  If found replace
     with unprefixed, if not found remove reserved key from dictionary.
+
+    Args:
+        _dict: Dictionary to remove reserved keys from.
+
+    Returns:
+        Dictionary with reserved keys removed.
     """
     for key in MONGO_RESERVED_KEYS:
         prefixed_key = mongo_prefix_reserved_key(key)
@@ -42,35 +49,47 @@ def remove_mongo_reserved_keys(_dict):
 
 
 def mongo_prefix_reserved_key(key, prefix=MONGO_RESERVED_KEY_PREFIX):
-    """
-    Prefix reserved key
-    """
+    """Prefix reserved key."""
     return '%s%s' % (prefix, key)
 
 
 def reserve_encoded(string):
+    """Return encoding prefixed string."""
     return mongo_prefix_reserved_key(string) if\
         string in MONGO_RESERVED_KEYS else string
 
 
-def dict_for_mongo(d):
-    for key, value in d.items():
+def dict_for_mongo(_dict):
+    """Encode all keys in *_dict* for MongoDB."""
+    for key, value in _dict.items():
         if type(value) == list:
-            value = [dict_for_mongo(e)
-                     if type(e) == dict else e for e in value]
+            value = [dict_for_mongo(obj)
+                     if type(obj) == dict else obj for obj in value]
         elif type(value) == dict:
             value = dict_for_mongo(value)
         elif _is_invalid_for_mongo(key):
-            del d[key]
-            d[_encode_for_mongo(key)] = value
-    return d
+            del _dict[key]
+            _dict[_encode_for_mongo(key)] = value
+    return _dict
 
 
 def _encode_for_mongo(key):
-    # TODO: compile RE
-    return reduce(lambda s, c: re.sub(c[0], b64encode(c[1]), s),
-                  [(r'\$', '$'), (r'\.', '.')], key)
+    """Encode illegal MongoDB characters in string.
 
+    Base64 encode any characters in a string that cannot be MongoDB keys. This
+    includes any '$' and any '.'. '$' are supposed to be allowed as the
+    non-first character but the current version of MongoDB does not allow any
+    occurence of '$'.
+
+    Args:
+        key: The string to remove characters from.
+
+    Returns:
+        The string with illegal keys encoded.
+    """
+    return reduce(lambda s, expr: expr[0].sub(b64encode(expr[1]), s),
+        [(reserved_dollar_re, '$'), (reserved_dot_re, '.')], key)
 
 def _is_invalid_for_mongo(key):
+    """Return if string is invalid for storage in MongoDB."""
     return key.count('$') or key.count('.') > 0

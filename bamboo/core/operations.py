@@ -50,7 +50,7 @@ class EvalString(EvalTerm):
     Class to evaluate a parsed string.
     """
 
-    def _eval(self, row, context):
+    def eval(self, row, context):
         return self.value
 
 

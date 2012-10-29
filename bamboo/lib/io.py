@@ -4,7 +4,6 @@ import tempfile
 from celery.task import task
 from pandas import read_csv
 
-from bamboo.core.frame import DATASET_ID
 from bamboo.lib.datetools import recognize_dates
 from bamboo.lib.utils import call_async
 from bamboo.models.dataset import Dataset
@@ -13,9 +12,7 @@ from bamboo.models.dataset import Dataset
 @task
 def import_dataset(dataset, dframe=None, filepath_or_buffer=None,
                    delete=False):
-    """
-    For reading a URL and saving the corresponding dataset.
-    """
+    """For reading a URL and saving the corresponding dataset."""
     if filepath_or_buffer:
         dframe = recognize_dates(read_csv(filepath_or_buffer))
     if delete:
@@ -24,10 +21,17 @@ def import_dataset(dataset, dframe=None, filepath_or_buffer=None,
 
 
 def create_dataset_from_url(url, allow_local_file=False):
-    """
-    Load a URL, read from a CSV, create a dataset and return the unique ID.
+    """Load a URL, read from a CSV, create a dataset and return the unique ID.
 
-    Raises an IOError for a bad file or a ConnectionError for a bad URL.
+    Args:
+        url: URL to load file from.
+        allow_local_file: Allow URL to refer to a local file.
+
+    Raises:
+        IOError: For an unreadable file or a bad URL.
+
+    Returns:
+        The created dataset.
     """
     if not allow_local_file and isinstance(url, basestring)\
             and url[0:4] == 'file':
@@ -41,8 +45,13 @@ def create_dataset_from_url(url, allow_local_file=False):
 
 
 def create_dataset_from_csv(csv_file):
-    """
-    Create a dataset from the uploaded .csv file.
+    """Create a dataset from a CSV file.
+
+    Args:
+        csv_file: The CSV File to create a dataset from.
+
+    Returns:
+        The created dataset.
     """
     # need to write out to a named tempfile in order
     # to get a handle for pandas *read_csv* function
