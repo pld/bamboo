@@ -11,44 +11,54 @@ from bamboo.core.operations import EvalAndOp, EvalCaseOp, EvalComparisonOp,\
 
 
 class ParseError(Exception):
-    """
-    For errors while parsing formulas.
-    """
+    """For errors while parsing formulas."""
     pass
 
 
 class ParserContext(object):
-    """
-    Context to be passed into parser.
-    """
+    """Context to be passed into parser."""
 
     def __init__(self, dataset):
         self.schema = dataset.schema
 
 
 class Parser(object):
-    """
-    Class for parsing and evaluating formula.
+    """Class for parsing and evaluating formula.
+
+    Attributes:
+        aggregation: Aggregation parsed from formula.
+        aggregation_names: Possible aggregations.
+        bnf: Cached Backus-Naur Form of formula.
+        column_functions: Cached additional columns as aggregation parameters.
+        function_names: Names of possible functions in formulas.
+        operator_names: Names of possible operators in formulas.
+        parsed_expr: Cached parsed expression.
+        special_names: Names of possible reserved names in formulas.
+        reserved_words: List of all possible reserved words that may be used in
+            formulas.
     """
 
     aggregation = None
-    bnf = None
     aggregation_names = AGGREGATIONS.keys()
+    bnf = None
+    column_functions = None
     function_names = ['date', 'years']
     operator_names = ['and', 'or', 'not', 'in']
+    parsed_expr = None
     special_names = ['default']
     reserved_words = aggregation_names + function_names + operator_names +\
         special_names
 
     def __init__(self, dataset=None):
         self.context = ParserContext(dataset) if dataset else None
-        self.BNF()
+        self._build_bnf()
 
-    def store_aggregation(self, string, location, tokens):
+    def store_aggregation(self, _, _, tokens):
+        """Cached a parsed aggregation."""
         self.aggregation = tokens[0]
         self.column_functions = tokens[1:]
 
-    def BNF(self):
+    def _build_bnf(self):
         """
         Backus-Naur Form of formula language:
 
@@ -164,7 +174,8 @@ class Parser(object):
         # case statment
         default = CaselessLiteral('default')
 
-        reserved_words = MatchFirst(map(Keyword, self.reserved_words))
+        reserved_words = MatchFirst(
+            [Keyword(words) for word in self.reserved_words])
 
         # atoms
         integer = Word(nums)
@@ -243,9 +254,16 @@ class Parser(object):
         return self.aggregation, functions
 
     def validate_formula(self, formula, row):
-        """
-        Validate the *formula* on an example *row* of data.  Rebuild the BNF.
-        Return the aggregation for the formula.
+        """Validate the *formula* on an example *row* of data.
+
+        Rebuild the BNF then parse the *formula* given the sample *row*.
+
+        Args:
+            formula: The formula to validate.
+            row: A sample row to check the formula against.
+
+        Returns:
+            The aggregation for the formula.
         """
         # remove saved aggregation
         self.aggregation = None
@@ -267,9 +285,7 @@ class Parser(object):
         return aggregation
 
     def __getstate__(self):
-        """
-        Get state for pickle.
-        """
+        """Get state for pickle."""
         return [
             self.aggregation,
             self.aggregation_names,
@@ -282,10 +298,8 @@ class Parser(object):
         ]
 
     def __setstate__(self, state):
-        """
-        Set internal variables from pickled state.
-        """
+        """Set internal variables from pickled state."""
         self.aggregation, self.aggregation_names, self.function_names,\
             self.operator_names, self.special_names, self.reserved_words,\
             self.special_names, self.context = state
-        self.BNF()
+        self._build_bnf()
