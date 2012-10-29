@@ -1,17 +1,21 @@
 Bamboo
 ======
 
-
 .. image:: https://secure.travis-ci.org/modilabs/bamboo.png?branch=master
   :target: http://travis-ci.org/modilabs/bamboo
 
-Bamboo is a data analysis web service.
-Bamboo is `open source <https://github.com/modilabs/bamboo>`_ software.
+Bamboo is an application that systematizes realtime data analysis. Bamboo
+provides an interface for merging, aggregating and adding algebraic
+calculations to dynamic datasets.  Clients can interact with Bamboo through a
+a REST web interface and through Python.
 
 Bamboo supports a simple querying language to build calculations
 (e.g. student teacher ratio) and aggregations (e.g. average number of students
 per district) from datasets. These are updated as new data is received.
 
+Bamboo is `open source <https://github.com/modilabs/bamboo>`_ software released
+under the 3-clause BSD license, which is also known as the "Modified BSD
+License".
 
 Dependencies
 ------------
@@ -35,6 +39,9 @@ Installation
 
 Running the server
 ------------------
+
+Running the server in the foreground
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 start mongodb on localhost and standard port
 
@@ -63,6 +70,52 @@ stop the daemon using:
 
   $ /var/www/bamboo/current/scripts/bamboo.sh stop
 
+Example Usage
+-------------
+
+On the remote server
+^^^^^^^^^^^^^^^^^^^^
+
+running the example basic commands
+
+::
+
+  $ ./scripts/commands.sh
+
+using `pybamboo <https://github.com/modilabs/pybamboo>`_
+
+::
+
+  $ pip install pybamboo
+  $ python
+  >>> from pybamboo import PyBamboo
+  >>> pybamboo = PyBamboo()
+  >>> response = pybamboo.store_csv_file('http://formhub.org/mberg/forms/good_eats/data.csv')
+  >>> dataset_id = response['id']
+ ...
+
+posting a dataset
+
+::
+
+  $ curl -X POST -d "url=http://formhub.org/mberg/forms/good_eats/data.csv" http://bamboo.io/datasets
+
+On your local server
+^^^^^^^^^^^^^^^^^^^
+
+start the bamboo server as above, then
+
+run the example basic commands
+
+::
+
+  $ ./scripts/commands.sh -l
+
+make requests to your local server
+
+::
+
+  $ curl -X POST -d "url=http://formhub.org/mberg/forms/good_eats/data.csv" http://localhost:8080/datasets
 
 Testing
 -------
@@ -128,55 +181,9 @@ To work on the code:
 
 6. submit a pull request
 
-Example Usage
--------------
-
-On the remote server
-^^^^^^^^^^^^^^^^^^^^
-
-running the example basic commands
-
-::
-
-  $ ./scripts/commands.sh
-
-using `pybamboo <https://github.com/modilabs/pybamboo>`_
-
-::
-
-  $ pip install pybamboo
-  $ python
-  >>> from pybamboo import PyBamboo
-  >>> pybamboo = PyBamboo()
-  >>> response = pybamboo.store_csv_file('http://formhub.org/mberg/forms/good_eats/data.csv')
-  >>> dataset_id = response['id']
- ...
-
-posting a dataset
-
-::
-
-  $ curl -X POST -d "url=http://formhub.org/mberg/forms/good_eats/data.csv" http://bamboo.io/datasets
-
-On your local server
-^^^^^^^^^^^^^^^^^^^
-
-start the bamboo server as above, then
-
-run the example basic commands
-
-::
-
-  $ ./scripts/commands.sh -l
-
-make requests to your local server
-
-::
-
-  $ curl -X POST -d "url=http://formhub.org/mberg/forms/good_eats/data.csv" http://localhost:8080/datasets
-
 About
 -----
+
 Bamboo is an open source project. The project features, in chronological order,
 the combined efforts of
 
