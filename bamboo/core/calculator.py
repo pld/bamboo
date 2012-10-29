@@ -35,8 +35,9 @@ class Calculator(object):
         columns in the dataset.
 
         Args:
-            formula: The formula to validate.
-            group_str: A string of a group or comma separated groups.
+
+        - formula: The formula to validate.
+        - group_str: A string of a group or comma separated groups.
 
         Returns:
             The aggregation (or None) for the formula.
@@ -69,11 +70,13 @@ class Calculator(object):
         Therefore, perform these actions asychronously.
 
         Args:
-            formula: The formula parsed by *self.parser* and applied to
-                *self.dframe*.
-            name: The name of the new column or aggregate column.
-            group_str: A string or columns to group on for aggregate
-                calculations.
+
+        - formula: The formula parsed by *self.parser* and applied to
+          *self.dframe*.
+        - name: The name of the new column or aggregate column.
+        - group_str: A string or columns to group on for aggregate
+          calculations.
+
         """
         self.ensure_dframe()
 
@@ -99,7 +102,9 @@ class Calculator(object):
         child (merged) datasets.
 
         Args:
-            parent_dataset: The dataset to propagate to *self.dataset*.
+
+        - parent_dataset: The dataset to propagate to *self.dataset*.
+
         """
         # delete the rows in this dataset from the parent
         self.dataset.remove_parent_observations(parent_dataset.dataset_id)
@@ -134,9 +139,11 @@ class Calculator(object):
         Therefore, perform these actions asychronously.
 
         Args:
-            new_data: Data to update this dataset with.
-            parent_dataset_id: If passed add ID as parent ID to column, default
-                is None.
+
+        - new_data: Data to update this dataset with.
+        - parent_dataset_id: If passed add ID as parent ID to column, default
+          is None.
+
         """
         self.ensure_dframe()
 

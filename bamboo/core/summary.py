@@ -18,8 +18,9 @@ def summarize_series(dtype, data):
     """Call summary function dependent on dtype type.
 
     Args:
-        dtype: The dtype of the column to be summarized.
-        data: The data to be summarized.
+
+    - dtype: The dtype of the column to be summarized.
+    - data: The data to be summarized.
 
     Returns:
         The appropriate summarization for the type of *dtype*.
@@ -35,10 +36,11 @@ def summarizable(dframe, col, groups, dataset):
     """Check if column should be summarized.
 
     Args:
-        dframe: DataFrame to check unique values in.
-        col: Column to check for factor and number of uniques.
-        groups: List of groups if summarizing with group, can be empty.
-        dataset: Dataset to pull schema from.
+
+    - dframe: DataFrame to check unique values in.
+    - col: Column to check for factor and number of uniques.
+    - groups: List of groups if summarizing with group, can be empty.
+    - dataset: Dataset to pull schema from.
 
     Returns:
         True if column, with parameters should be summarized, otherwise False.

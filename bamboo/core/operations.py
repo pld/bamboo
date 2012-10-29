@@ -9,16 +9,14 @@ from bamboo.lib.datetools import col_is_date_simpletype,\
 
 
 class EvalTerm(object):
-    """
-    Base class for evaluation
-    """
+    """Base class for evaluation."""
 
     def __init__(self, tokens):
         self.tokens = tokens
         self.value = tokens[0]
 
     def operator_operands(self, tokenlist):
-        "generator to extract operators and operands in pairs"
+        "Generator to extract operators and operands in pairs."
         _it = iter(tokenlist)
         while 1:
             try:
@@ -46,18 +44,14 @@ class EvalConstant(EvalTerm):
 
 
 class EvalString(EvalTerm):
-    """
-    Class to evaluate a parsed string.
-    """
+    """Class to evaluate a parsed string."""
 
     def eval(self, row, context):
         return self.value
 
 
 class EvalSignOp(EvalTerm):
-    """
-    Class to evaluate expressions with a leading + or - sign
-    """
+    """Class to evaluate expressions with a leading + or - sign."""
 
     def __init__(self, tokens):
         self.sign, self.value = tokens[0]
@@ -68,9 +62,7 @@ class EvalSignOp(EvalTerm):
 
 
 class EvalBinaryArithOp(EvalTerm):
-    """
-    Class for evaluating binary arithmetic operations
-    """
+    """Class for evaluating binary arithmetic operations."""
 
     operations = {
         '+': operator.__add__,

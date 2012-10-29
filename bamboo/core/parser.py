@@ -26,16 +26,17 @@ class Parser(object):
     """Class for parsing and evaluating formula.
 
     Attributes:
-        aggregation: Aggregation parsed from formula.
-        aggregation_names: Possible aggregations.
-        bnf: Cached Backus-Naur Form of formula.
-        column_functions: Cached additional columns as aggregation parameters.
-        function_names: Names of possible functions in formulas.
-        operator_names: Names of possible operators in formulas.
-        parsed_expr: Cached parsed expression.
-        special_names: Names of possible reserved names in formulas.
-        reserved_words: List of all possible reserved words that may be used in
-            formulas.
+
+    - aggregation: Aggregation parsed from formula.
+    - aggregation_names: Possible aggregations.
+    - bnf: Cached Backus-Naur Form of formula.
+    - column_functions: Cached additional columns as aggregation parameters.
+    - function_names: Names of possible functions in formulas.
+    - operator_names: Names of possible operators in formulas.
+    - parsed_expr: Cached parsed expression.
+    - special_names: Names of possible reserved names in formulas.
+    - reserved_words: List of all possible reserved words that may be used in
+      formulas.
     """
 
     aggregation = None
@@ -259,8 +260,9 @@ class Parser(object):
         Rebuild the BNF then parse the *formula* given the sample *row*.
 
         Args:
-            formula: The formula to validate.
-            row: A sample row to check the formula against.
+
+        - formula: The formula to validate.
+        - row: A sample row to check the formula against.
 
         Returns:
             The aggregation for the formula.

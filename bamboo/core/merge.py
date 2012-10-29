@@ -29,8 +29,9 @@ def _merge_datasets_task(new_dataset, dataset_ids):
     """Merge datasets specified by dataset_ids.
 
     Args:
-        new_dataset: The dataset store the merged dataset in.
-        dataset_ids: A list of IDs to merge into *new_dataset*.
+
+    - new_dataset: The dataset store the merged dataset in.
+    - dataset_ids: A list of IDs to merge into *new_dataset*.
 
     Raises:
         MergeError: If less than 2 datasets are provided.

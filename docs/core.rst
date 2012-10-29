@@ -11,6 +11,11 @@ Aggregation
 .. automodule:: bamboo.core.aggregations
     :members:
 
+Calculator
+----------
+.. autoclass:: bamboo.core.calculator.Calculator
+    :members:
+
 Merge
 ------------------
 .. automodule:: bamboo.core.merge

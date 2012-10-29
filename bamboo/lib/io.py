@@ -24,8 +24,9 @@ def create_dataset_from_url(url, allow_local_file=False):
     """Load a URL, read from a CSV, create a dataset and return the unique ID.
 
     Args:
-        url: URL to load file from.
-        allow_local_file: Allow URL to refer to a local file.
+
+    - url: URL to load file from.
+    - allow_local_file: Allow URL to refer to a local file.
 
     Raises:
         IOError: For an unreadable file or a bad URL.
@@ -48,7 +49,8 @@ def create_dataset_from_csv(csv_file):
     """Create a dataset from a CSV file.
 
     Args:
-        csv_file: The CSV File to create a dataset from.
+
+    - csv_file: The CSV File to create a dataset from.
 
     Returns:
         The created dataset.
