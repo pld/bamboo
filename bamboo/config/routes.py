@@ -17,7 +17,7 @@ def connect_routes(dispatcher):
     # define routes as tuples:
     # (name, method, route, controller, action)
     routes = [
-        # cors
+        # Options for Cross Origin Resource Sharing (CORS)
         # TODO: figure out how to route all OPTIONS to one controller/function
         ('dataset_options', 'OPTIONS',
             '/datasets/:dataset_id', datasets, 'options'),

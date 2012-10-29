@@ -30,6 +30,13 @@ class AbstractController(object):
             'Content-Type, Accept'
 
     def options(self, dataset_id=None):
+        """Return Cross Origin Resource Sharing (CORS) headers.
+
+        Set the CORS headers required for AJAX non-GET requests.
+
+        Returns:
+            An empty string with the proper response headers for CORS.
+        """
         self._add_cors_headers()
         cherrypy.response.headers['Content-Length'] = 0
         cherrypy.response.status = 204
