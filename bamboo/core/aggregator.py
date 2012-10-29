@@ -32,7 +32,8 @@ class Aggregator(object):
         the aggregation in this new aggregated dataset.
 
         Args:
-            columns: The columns to aggregate.
+
+        - columns: The columns to aggregate.
         """
         new_dframe = BambooFrame(
             self.aggregation.eval(columns)

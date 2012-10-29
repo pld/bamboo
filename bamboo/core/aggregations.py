@@ -5,9 +5,10 @@ class Aggregation(object):
     """Abstract class for all aggregations.
 
     Attributes:
-        column: Column to aggregate.
-        columns: List of columns to aggregate.
-        formula_name: The string to refer to this aggregation.
+
+    - column: Column to aggregate.
+    - columns: List of columns to aggregate.
+    - formula_name: The string to refer to this aggregation.
     """
 
     column = None
