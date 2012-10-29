@@ -77,7 +77,7 @@ class Calculator(object):
         """
         self.ensure_dframe()
 
-        aggregation, new_columns = self._make_columns(formula, name)
+        aggregation, new_columns = self.make_columns(formula, name)
 
         if aggregation:
             agg = Aggregator(self.dataset, self.dframe,
@@ -195,7 +195,7 @@ class Calculator(object):
             call_async(merged_calculator.calculate_updates, merged_calculator,
                        slugified_data, self.dataset.dataset_id)
 
-    def _make_columns(self, formula, name, dframe=None):
+    def make_columns(self, formula, name, dframe=None):
         """Parse formula into function and variables."""
         if dframe is None:
             dframe = self.dframe
@@ -252,7 +252,7 @@ class Calculator(object):
               dataset
 
         """
-        aggregation, new_columns = self._make_columns(
+        aggregation, new_columns = self.make_columns(
             formula, name, new_dframe)
 
         agg = Aggregator(self.dataset, self.dframe,

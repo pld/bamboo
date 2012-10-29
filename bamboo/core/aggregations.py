@@ -19,7 +19,7 @@ class Aggregation(object):
         self.groups = groups
         self.dframe = dframe
 
-    def _eval(self, columns):
+    def eval(self, columns):
         self.columns = columns
         self.column = columns[0]
         return self.group() if self.groups else self.agg()
@@ -45,7 +45,7 @@ class MultiColumnAggregation(Aggregation):
         groupby = dframe.groupby(self.groups, as_index=False)
         return self._add_calculated_column(groupby.sum())
 
-    def _reduce(self, dframe, columns):
+    def reduce(self, dframe, columns):
         """Reduce the columns and store in *dframe*."""
         self.columns = columns
         self.column = columns[0]
@@ -138,7 +138,7 @@ class SumAggregation(Aggregation):
 
     formula_name = 'sum'
 
-    def _reduce(self, dframe, columns):
+    def reduce(self, dframe, columns):
         self.columns = columns
         self.column = columns[0]
         dframe[self.name] += self.agg()[self.name]

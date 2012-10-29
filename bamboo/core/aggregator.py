@@ -1,17 +1,17 @@
-from pandas import concat, Series
+from pandas import concat
 
-from bamboo.core.aggregations import Aggregation, AGGREGATIONS
+from bamboo.core.aggregations import AGGREGATIONS
 from bamboo.core.frame import BambooFrame
 from bamboo.lib.utils import split_groups
 
 
 class Aggregator(object):
-    """
+    """Performa aggregations on datasets.
+
     Apply the *aggregation* to group columns in *group_str* and the *columns*
-    of the *dframe*.
-    Store the resulting *dframe* as a linked dataset for *dataset*.
-    If a linked dataset with the same groups already exists update this
-    dataset.  Otherwise create a new linked dataset.
+    of the *dframe*. Store the resulting *dframe* as a linked dataset for
+    *dataset*. If a linked dataset with the same groups already exists update
+    this dataset.  Otherwise create a new linked dataset.
     """
 
     def __init__(self, dataset, dframe, group_str, _type, name):
@@ -25,14 +25,17 @@ class Aggregator(object):
             self.name, self.groups, self.dframe)
 
     def save(self, columns):
-        """
-        Save this aggregation applied to the passed in columns.  If an
-        aggregated dataset for this aggregations group already exists store in
-        this dataset, if not create a new aggregated dataset and store the
-        aggregation in this new aggregated dataset.
+        """Save this aggregation applied to the passed in columns.
+
+        If an aggregated dataset for this aggregations group already exists
+        store in this dataset, if not create a new aggregated dataset and store
+        the aggregation in this new aggregated dataset.
+
+        Args:
+            columns: The columns to aggregate.
         """
         new_dframe = BambooFrame(
-            self.aggregation._eval(columns)
+            self.aggregation.eval(columns)
         ).add_parent_column(self.dataset.dataset_id)
 
         aggregated_datasets = self.dataset.aggregated_datasets
@@ -65,10 +68,8 @@ class Aggregator(object):
             agg_dataset.replace_observations(new_dframe)
         self.new_dframe = new_dframe
 
-    def update(self, child_dataset, parser, formula, columns):
-        """
-        Attempt to reduce an update and store.
-        """
+    def update(self, child_dataset, calculator, formula, columns):
+        """Attempt to reduce an update and store."""
         parent_dataset_id = self.dataset.dataset_id
 
         # get dframe only including rows from this parent
@@ -78,13 +79,13 @@ class Aggregator(object):
         # remove rows in child from parent
         child_dataset.remove_parent_observations(parent_dataset_id)
 
-        if not self.groups and '_reduce' in dir(self.aggregation):
+        if not self.groups and 'reduce' in dir(self.aggregation):
             dframe = BambooFrame(
-                self.aggregation._reduce(dframe, columns))
+                self.aggregation.reduce(dframe, columns))
         else:
-            _, columns = parser._make_columns(
+            _, columns = calculator.make_columns(
                 formula, self.name, self.dframe)
-            new_dframe = self.aggregation._eval(columns)
+            new_dframe = self.aggregation.eval(columns)
             dframe[self.name] = new_dframe[self.name]
 
         new_agg_dframe = concat([child_dataset.dframe(), dframe])

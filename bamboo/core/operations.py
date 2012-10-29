@@ -1,6 +1,5 @@
 # future must be first
 from __future__ import division
-import datetime
 import operator
 
 import numpy as np
@@ -20,15 +19,15 @@ class EvalTerm(object):
 
     def operator_operands(self, tokenlist):
         "generator to extract operators and operands in pairs"
-        it = iter(tokenlist)
+        _it = iter(tokenlist)
         while 1:
             try:
-                yield (it.next(), it.next())
+                yield (_it.next(), _it.next())
             except StopIteration:
                 break
 
-    def operation(self, op, result, val):
-        return self.operations[op](result, val)
+    def operation(self, oper, result, val):
+        return self.operations[oper](result, val)
 
 
 class EvalConstant(EvalTerm):
@@ -36,7 +35,7 @@ class EvalConstant(EvalTerm):
     Class to evaluate a parsed constant or variable
     """
 
-    def _eval(self, row, context):
+    def eval(self, row, context):
         try:
             return np.float64(self.value)
         except ValueError:
@@ -63,9 +62,9 @@ class EvalSignOp(EvalTerm):
     def __init__(self, tokens):
         self.sign, self.value = tokens[0]
 
-    def _eval(self, row, context):
+    def eval(self, row, context):
         mult = {'+': 1, '-': -1}[self.sign]
-        return mult * self.value._eval(row, context)
+        return mult * self.value.eval(row, context)
 
 
 class EvalBinaryArithOp(EvalTerm):
@@ -81,11 +80,11 @@ class EvalBinaryArithOp(EvalTerm):
         '^': operator.__pow__,
     }
 
-    def _eval(self, row, context):
-        result = np.float64(self.value[0]._eval(row, context))
-        for op, val in self.operator_operands(self.value[1:]):
-            val = np.float64(val._eval(row, context))
-            result = self.operation(op, result, val)
+    def eval(self, row, context):
+        result = np.float64(self.value[0].eval(row, context))
+        for oper, val in self.operator_operands(self.value[1:]):
+            val = np.float64(val.eval(row, context))
+            result = self.operation(oper, result, val)
             if np.isinf(result):
                 return np.nan
         return result
@@ -126,11 +125,11 @@ class EvalComparisonOp(EvalTerm):
         "==": lambda a, b: a == b,
     }
 
-    def _eval(self, row, context):
-        val1 = np.float64(self.value[0]._eval(row, context))
-        for op, val in self.operator_operands(self.value[1:]):
-            fn = EvalComparisonOp.opMap[op]
-            val2 = np.float64(val._eval(row, context))
+    def eval(self, row, context):
+        val1 = np.float64(self.value[0].eval(row, context))
+        for oper, val in self.operator_operands(self.value[1:]):
+            fn = EvalComparisonOp.opMap[oper]
+            val2 = np.float64(val.eval(row, context))
             if not fn(val1, val2):
                 break
             val1 = val2
@@ -147,9 +146,9 @@ class EvalDate(EvalTerm):
     def __init__(self, tokens):
         self.value = tokens[0][1]
 
-    def _eval(self, row, context):
+    def eval(self, row, context):
         # parse date from string
-        return parse_str_to_unix_time(self.value._eval(row, context))
+        return parse_str_to_unix_time(self.value.eval(row, context))
 
 
 class EvalNotOp(EvalTerm):
@@ -160,8 +159,8 @@ class EvalNotOp(EvalTerm):
     def __init__(self, tokens):
         self.value = tokens[0][1]
 
-    def _eval(self, row, context):
-        return not self.value._eval(row, context)
+    def eval(self, row, context):
+        return not self.value.eval(row, context)
 
 
 class EvalBinaryBooleanOp(EvalTerm):
@@ -174,11 +173,11 @@ class EvalBinaryBooleanOp(EvalTerm):
         'or': lambda p, q: p or q,
     }
 
-    def _eval(self, row, context):
-        result = np.bool_(self.value[0]._eval(row, context))
-        for op, val in self.operator_operands(self.value[1:]):
-                val = np.bool_(val._eval(row, context))
-                result = self.operation(op, result, val)
+    def eval(self, row, context):
+        result = np.bool_(self.value[0].eval(row, context))
+        for oper, val in self.operator_operands(self.value[1:]):
+            val = np.bool_(val.eval(row, context))
+            result = self.operation(oper, result, val)
         return result
 
 
@@ -201,12 +200,12 @@ class EvalInOp(EvalTerm):
     Class to eval in expressions.
     """
 
-    def _eval(self, row, context):
-        val_to_test = str(self.value[0]._eval(row, context))
+    def eval(self, row, context):
+        val_to_test = str(self.value[0].eval(row, context))
         val_list = []
         # loop through values, skip atom literal
         for val in self.value[1:]:
-            val_list.append(val._eval(row, context))
+            val_list.append(val.eval(row, context))
         return val_to_test in val_list
 
 
@@ -215,10 +214,10 @@ class EvalCaseOp(EvalTerm):
     Class to eval case statements.
     """
 
-    def _eval(self, row, context):
+    def eval(self, row, context):
         # skip 'case' literal
         for token in self.value:
-            case_result = token._eval(row, context)
+            case_result = token.eval(row, context)
             if case_result:
                 return case_result
         return np.nan
@@ -229,7 +228,7 @@ class EvalMapOp(EvalTerm):
     Class to eval map statements.
     """
 
-    def _eval(self, row, context):
-        if self.tokens[0] == 'default' or self.tokens[0]._eval(row, context):
-            return self.tokens[1]._eval(row, context)
+    def eval(self, row, context):
+        if self.tokens[0] == 'default' or self.tokens[0].eval(row, context):
+            return self.tokens[1].eval(row, context)
         return False
