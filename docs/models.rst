@@ -1,6 +1,11 @@
 Models
 ======
 
+AbstractModel
+-------------
+.. autoclass:: bamboo.models.abstract_model.AbstractModel
+    :members:
+
 Calculation
 -----------
 .. autoclass:: bamboo.models.calculation.Calculation

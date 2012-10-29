@@ -43,8 +43,9 @@ def schema_from_data_and_dtypes(dataset, dframe):
     """Build schema from the DataFrame and the dataset.
 
     Args:
-        dataset: The dataset to store the schema in.
-        dframe: The DataFrame to build a schema for.
+
+    - dataset: The dataset to store the schema in.
+    - dframe: The DataFrame to build a schema for.
 
     Returns:
         A dictionary schema.

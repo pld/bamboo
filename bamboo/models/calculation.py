@@ -12,8 +12,9 @@ def delete_task(calculation, dataset):
     """Background task to delete *calculation* and its columns in *dataset*.
 
     Args:
-        calculation: Calculation to delete.
-        dataset: Dataset to delete columns from calculation in.
+
+    - calculation: Calculation to delete.
+    - dataset: Dataset to delete columns from calculation in.
     """
     if not calculation.group is None:
         # it is an aggregate calculation
@@ -34,9 +35,10 @@ def calculate_task(calculation, dataset, calculator):
     """Background task to run a calculation.
 
     Args:
-        calculation: Calculation to run.
-        dataset: Dataset to run calculation on.
-        calculator: Calculator model instantiated for this dataset.
+
+    - calculation: Calculation to run.
+    - dataset: Dataset to run calculation on.
+    - calculator: Calculator model instantiated for this dataset.
     """
     dataset.clear_summary_stats()
     calculator.calculate_column(calculation.formula, calculation.name,

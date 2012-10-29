@@ -94,15 +94,17 @@ class Dataset(AbstractModel):
         """Fetch the dframe for this dataset.
 
         Args:
-            query: An optional MongoDB query to limit the rows for the dframe.
-            select: An optional select to limit the fields in the dframe.
-            keep_parent_ids: Do not remove parent IDs from the dframe, default
-                False.
-            limit: Limit on the number of rows in the returned dframe.
-            order_by: Sort resulting rows according to a column value and sign
-                indicating ascending or descending. For example:
-                    order_by='mycolumn'
-                    order_by='-mycolumn'
+
+        - query: An optional MongoDB query to limit the rows for the dframe.
+        - select: An optional select to limit the fields in the dframe.
+        - keep_parent_ids: Do not remove parent IDs from the dframe, default
+          False.
+        - limit: Limit on the number of rows in the returned dframe.
+        - order_by: Sort resulting rows according to a column value and sign
+          indicating ascending or descending. For example:
+
+          - ``order_by='mycolumn'``
+          - ``order_by='-mycolumn'``
 
         Returns:
             Return BambooFrame with contents based on query parameters passed
@@ -137,7 +139,8 @@ class Dataset(AbstractModel):
         created at time to the current time and the state to pending.
 
         Args:
-            dataset_id: The ID to store for this dataset, default is None.
+
+        - dataset_id: The ID to store for this dataset, default is None.
 
         Returns:
             A dict representing this dataset.
@@ -168,10 +171,11 @@ class Dataset(AbstractModel):
         specified.
 
         Args:
-            query: An optional MongoDB query to limit the data summarized.
-            select: An optional select to limit the columns summarized.
-            group_str: A column in the dataset as a string or a list comma
-                separated columns to group on.
+
+        - query: An optional MongoDB query to limit the data summarized.
+        - select: An optional select to limit the columns summarized.
+        - group_str: A column in the dataset as a string or a list comma
+          separated columns to group on.
 
         Returns:
             A JSON summary of the dataset. Numeric columns will be summarized
@@ -243,11 +247,13 @@ class Dataset(AbstractModel):
         """Return observations for this dataset.
 
         Args:
-            query: Optional query for MongoDB to limit rows returned.
-            select: Optional select for MongoDB to limit columns.
-            limit: If greater than 0, limit number of observations returned to
-                this maximum.
-            order_by: Order the returned observations.
+
+        - query: Optional query for MongoDB to limit rows returned.
+        - select: Optional select for MongoDB to limit columns.
+        - limit: If greater than 0, limit number of observations returned to
+          this maximum.
+        - order_by: Order the returned observations.
+
         """
         return Observation.find(
             self, query, select, limit=limit, order_by=order_by)
@@ -260,8 +266,10 @@ class Dataset(AbstractModel):
         """Remove obervations for this dataset with the passed *parent_id*.
 
         Args:
-            parent_id: Remove observations with this ID as their parent dataset
-                ID.
+
+        - parent_id: Remove observations with this ID as their parent dataset
+          ID.
+
         """
         Observation.delete_all(self, {PARENT_DATASET_ID: parent_id})
 
@@ -280,7 +288,8 @@ class Dataset(AbstractModel):
         """Remove all rows for this dataset and save the rows in *dframe*.
 
         Args:
-            dframe: Replace rows in this dataset with this DataFrame's rows.
+
+        - dframe: Replace rows in this dataset with this DataFrame's rows.
 
         Returns:
             BambooFrame equivalent to the passed in *dframe*.
@@ -293,7 +302,9 @@ class Dataset(AbstractModel):
         """Remove columns from this dataset's observations.
 
         Args:
-            columns: List of columns to remove from this dataset.
+
+        - columns: List of columns to remove from this dataset.
+
         """
         dframe = self.dframe(keep_parent_ids=True)
         self.replace_observations(dframe.drop(columns, axis=1))

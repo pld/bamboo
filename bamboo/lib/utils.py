@@ -20,7 +20,8 @@ def slugify_columns(column_names):
     ensure that all column names are unique.
 
     Args:
-        column_names: A list of strings.
+
+    - column_names: A list of strings.
 
     Returns:
         A list slugified names with a one-to-one mapping to *column_names*.
@@ -46,9 +47,11 @@ def call_async(function, *args, **kwargs):
     """Potentially asynchronously call *function* with the arguments.
 
     Args:
-        function: The function to call.
-        args: Arguments for the function.
-        kwargs: Keyword arguments for the function.
+
+    - function: The function to call.
+    - args: Arguments for the function.
+    - kwargs: Keyword arguments for the function.
+
     """
     if not os.getenv('BAMBOO_ASYNC_OFF') and ASYNCHRONOUS_TASKS:
         function.__getattribute__('apply_async')(args=args, kwargs=kwargs)

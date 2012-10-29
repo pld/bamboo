@@ -19,8 +19,10 @@ class Observation(AbstractModel):
         """Delete the observations for *dataset*.
 
         Args:
-            dataset: The dataset to delete observations for.
-            query: An optional query to restrict deletion.
+
+        - dataset: The dataset to delete observations for.
+        - query: An optional query to restrict deletion.
+
         """
         query.update({
             DATASET_OBSERVATION_ID: dataset.dataset_observation_id
@@ -32,11 +34,12 @@ class Observation(AbstractModel):
         """Return observation rows matching parameters.
 
         Args:
-            dataset: Dataset to return rows for.
-            query: Optional query to restrict matching rows to.
-            select: Optional select to limit returned values.
-            limit: Limit on the number of returned rows.
-            order_by: Order parameter for rows.
+
+        - dataset: Dataset to return rows for.
+        - query: Optional query to restrict matching rows to.
+        - select: Optional select to limit returned values.
+        - limit: Limit on the number of returned rows.
+        - order_by: Order parameter for rows.
 
         Returns:
             A list of dictionaries matching the passed in *query* and other
@@ -73,8 +76,10 @@ class Observation(AbstractModel):
         dataset is launched.
 
         Args:
-            dframe: The DataFrame (or BambooFrame) to store.
-            dataset: The dataset to store the dframe in.
+
+        - dframe: The DataFrame (or BambooFrame) to store.
+        - dataset: The dataset to store the dframe in.
+
         """
         # build schema for the dataset after having read it from file.
         if not dataset.SCHEMA in dataset.record:

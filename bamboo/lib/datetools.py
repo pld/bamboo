@@ -62,9 +62,7 @@ def col_is_date_simpletype(column_schema):
 
 
 def parse_timestamp_query(query, schema):
-    """
-    Interpret date column queries as JSON.
-    """
+    """Interpret date column queries as JSON."""
     if query != {}:
         datetime_columns = [
             column for (column, schema) in

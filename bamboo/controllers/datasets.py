@@ -25,6 +25,7 @@ class Datasets(AbstractController):
 
     - SELECT_ALL_FOR_SUMMARY: a string the the client can pass to
     - indicate that all columns should be summarized.
+
     """
     SELECT_ALL_FOR_SUMMARY = 'all'
 

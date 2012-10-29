@@ -11,10 +11,12 @@ class AbstractModel(object):
     """An abstact class for all MongoDB models.
 
     Attributes:
-        __collection__: The MongoDB collection to communicate with.
-        STATE: A key with which to store state.
-        STATE_PENDING: A value for the pending state.
-        STATE_READY: A value for the ready state.
+
+    - __collection__: The MongoDB collection to communicate with.
+    - STATE: A key with which to store state.
+    - STATE_PENDING: A value for the pending state.
+    - STATE_READY: A value for the ready state.
+
     """
 
     __collection__ = None
@@ -36,7 +38,8 @@ class AbstractModel(object):
         """Return a MongoDB collection for the passed name.
 
         Args:
-            collection_name: The name of collection to return.
+
+        - collection_name: The name of collection to return.
 
         Returns:
             A MongoDB collection from the current database.
@@ -62,14 +65,16 @@ class AbstractModel(object):
         """An interface to MongoDB's find functionality.
 
         Args:
-            query: A query to pass to MongoDB.
-            select: An optional select statement to pass to MongoDB.
-            as_dict: If true, return dicts and not model instances.
-            limit: Limit on the number of rows returned.
-            order_by: Sort resulting rows according to a column value and sign
-                indicating ascending or descending. For example:
-                    order_by='mycolumn'
-                    order_by='-mycolumn'
+
+        - query: A query to pass to MongoDB.
+        - select: An optional select statement to pass to MongoDB.
+        - as_dict: If true, return dicts and not model instances.
+        - limit: Limit on the number of rows returned.
+        - order_by: Sort resulting rows according to a column value and sign
+          indicating ascending or descending. For example:
+
+          - ``order_by='mycolumn'``
+          - ``order_by='-mycolumn'``
 
         Returns:
             A list of dicts or model instances for each row returned.
@@ -93,8 +98,9 @@ class AbstractModel(object):
         """Return the first row matching *query* and *select* from MongoDB.
 
         Args:
-            query: A query to pass to MongoDB.
-            select: An optional select to pass to MongoDB.
+
+        - query: A query to pass to MongoDB.
+        - select: An optional select to pass to MongoDB.
 
         Returns:
             A model instance of the row returned for this query and select.
@@ -121,7 +127,9 @@ class AbstractModel(object):
         """Delete rows matching query.
 
         Args:
-            query: The query for rows to delete.
+
+        - query: The query for rows to delete.
+
         """
         self.collection.remove(query, safe=True)
 
@@ -132,7 +140,8 @@ class AbstractModel(object):
         record of this instance to the passed in record.
 
         Args:
-            record: The dict to save in the model's collection.
+
+        - record: The dict to save in the model's collection.
 
         Returns:
             The record passed in.
@@ -148,7 +157,8 @@ class AbstractModel(object):
         passed in *record*.
 
         Args:
-            record: The record to replace the instance's data with.
+        - record: The record to replace the instance's data with.
+
         """
         record = dict_for_mongo(record)
         self.collection.update(
@@ -158,7 +168,9 @@ class AbstractModel(object):
         """Save records in batches to avoid document size maximum setting.
 
         Args:
-            records: A list of dicts to save in the current model.
+
+        - records: A list of dicts to save in the current model.
+
         """
         batches = int(ceil(float(len(records)) / DB_BATCH_SIZE))
 

@@ -18,7 +18,8 @@ def dump_mongo_json(obj):
     """Dump JSON using BSON conversion.
 
     Args:
-        obj: Datastructure to dump as JSON.
+
+    - obj: Datastructure to dump as JSON.
 
     Returns:
         JSON string of dumped *obj*.
@@ -33,7 +34,8 @@ def remove_mongo_reserved_keys(_dict):
     with unprefixed, if not found remove reserved key from dictionary.
 
     Args:
-        _dict: Dictionary to remove reserved keys from.
+
+    - _dict: Dictionary to remove reserved keys from.
 
     Returns:
         Dictionary with reserved keys removed.
@@ -82,7 +84,8 @@ def _encode_for_mongo(key):
     occurence of '$'.
 
     Args:
-        key: The string to remove characters from.
+
+    - key: The string to remove characters from.
 
     Returns:
         The string with illegal keys encoded.
