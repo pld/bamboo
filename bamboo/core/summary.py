@@ -2,6 +2,7 @@ import numpy as np
 
 from bamboo.lib.jsontools import series_to_jsondict
 from bamboo.lib.schema_builder import DIMENSION, OLAP_TYPE
+from bamboo.lib.mongo import dict_for_mongo
 
 
 MAX_CARDINALITY_FOR_COUNT = 10000

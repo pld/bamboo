@@ -15,10 +15,10 @@ class Calculator(object):
     """Perform and store calculations and recalculations on update."""
 
     calcs_to_data = None
+    dframe = None
 
     def __init__(self, dataset):
         self.dataset = dataset
-        self.dframe = None
         self.parser = Parser(dataset)
 
     def ensure_dframe(self):

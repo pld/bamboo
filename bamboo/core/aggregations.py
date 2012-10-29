@@ -175,4 +175,4 @@ class RatioAggregation(MultiColumnAggregation):
 AGGREGATIONS = dict([
     (cls.formula_name, cls) for cls in
     Aggregation.__subclasses__() + MultiColumnAggregation.__subclasses__()
-    if hasattr(cls, 'formula_name')])
+    if cls.formula_name])

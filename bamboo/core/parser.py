@@ -53,7 +53,7 @@ class Parser(object):
         self.context = ParserContext(dataset) if dataset else None
         self._build_bnf()
 
-    def store_aggregation(self, _, _, tokens):
+    def store_aggregation(self, _, __, tokens):
         """Cached a parsed aggregation."""
         self.aggregation = tokens[0]
         self.column_functions = tokens[1:]
@@ -175,7 +175,7 @@ class Parser(object):
         default = CaselessLiteral('default')
 
         reserved_words = MatchFirst(
-            [Keyword(words) for word in self.reserved_words])
+            [Keyword(word) for word in self.reserved_words])
 
         # atoms
         integer = Word(nums)
@@ -248,9 +248,9 @@ class Parser(object):
 
         if self.aggregation:
             for column_function in self.column_functions:
-                functions.append(partial(column_function._eval))
+                functions.append(partial(column_function.eval))
         else:
-            functions.append(partial(self.parsed_expr._eval))
+            functions.append(partial(self.parsed_expr.eval))
         return self.aggregation, functions
 
     def validate_formula(self, formula, row):
