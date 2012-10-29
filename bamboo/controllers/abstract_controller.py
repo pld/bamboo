@@ -1,3 +1,5 @@
+import cherrypy
+
 from bamboo.lib.jsontools import JSONError
 from bamboo.lib.mongo import dump_mongo_json
 from bamboo.models.dataset import Dataset
@@ -20,6 +22,26 @@ class AbstractController(object):
     ERROR = 'error'
     SUCCESS = 'success'
 
+    def _add_cors_headers(self):
+        cherrypy.response.headers['Access-Control-Allow-Origin'] = '*'
+        cherrypy.response.headers['Access-Control-Allow-Methods'] =\
+            'GET, POST, PUT, DELETE, OPTIONS'
+        cherrypy.response.headers['Access-Control-Allow-Headers'] =\
+            'Content-Type, Accept'
+
+    def options(self, dataset_id=None):
+        """Return Cross Origin Resource Sharing (CORS) headers.
+
+        Set the CORS headers required for AJAX non-GET requests.
+
+        Returns:
+            An empty string with the proper response headers for CORS.
+        """
+        self._add_cors_headers()
+        cherrypy.response.headers['Content-Length'] = 0
+        cherrypy.response.status = 204
+        return ''
+
     def dump_or_error(self, obj, error_message, callback=False):
         """Dump JSON or return error message, potentially with callback.
 
@@ -37,6 +59,7 @@ class AbstractController(object):
         if obj is None:
             obj = {self.ERROR: error_message}
         json = dump_mongo_json(obj)
+        self._add_cors_headers()
         return '%s(%s)' % (callback, json) if callback else json
 
     def _safe_get_and_call(self, dataset_id, action, **kwargs):
