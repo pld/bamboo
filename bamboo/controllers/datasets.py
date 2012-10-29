@@ -6,7 +6,6 @@ from bamboo.controllers.abstract_controller import AbstractController,\
 from bamboo.core.merge import merge_dataset_ids, MergeError
 from bamboo.core.summary import ColumnTypeError
 from bamboo.lib.io import create_dataset_from_url, create_dataset_from_csv
-from bamboo.models.calculation import Calculation
 from bamboo.models.dataset import Dataset
 
 
@@ -117,20 +116,17 @@ class Datasets(AbstractController):
         return self._safe_get_and_call(dataset_id, _action, callback=callback)
 
     def show(self, dataset_id, query=None, select=None,
-             group=None, limit=0, order_by=None, callback=False):
+             limit=0, order_by=None, callback=False):
         """ Return rows for *dataset_id*, matching the passed parameters.
 
         Retrieve the dataset by ID then limit that data using the optional
         *query*, *select* and *limit* parameters. Order the results using
-        *order_by* if passed.  The return the results grouped by the *group*
-        parameter if it is passed.
+        *order_by* if passed.
 
         Args:
             dataset_id: The dataset ID of the dataset to return.
             select: This is a required argument, it can be 'all' or a MongoDB
                 JSON query
-            group: If passed, group the resuts by this column or list of
-                columns.
             query: If passed restrict results to rows matching this query.
             limit: If passed limit the rows to this number.
             order_by: If passed order the result using this column.
@@ -167,8 +163,8 @@ class Datasets(AbstractController):
         try:
             dataset = merge_dataset_ids(datasets)
             result = {Dataset.ID: dataset.dataset_id}
-        except (ValueError, MergeError) as e:
-            error = e.__str__()
+        except (ValueError, MergeError) as err:
+            error = err.__str__()
 
         return self.dump_or_error(result, error)
 
@@ -218,10 +214,10 @@ class Datasets(AbstractController):
                 dataset = create_dataset_from_csv(csv_file)
             if dataset:
                 result = {Dataset.ID: dataset.dataset_id}
-        except IOError:
-            error = 'could not get a filehandle for: %s' % csv_file
         except urllib2.URLError:
             error = 'could not load: %s' % url
+        except IOError:
+            error = 'could not get a filehandle for: %s' % csv_file
 
         return self.dump_or_error(result, error)
 

@@ -34,6 +34,10 @@ class AbstractController(object):
 
         Set the CORS headers required for AJAX non-GET requests.
 
+        Args:
+            dataset_id: Ignored argument so signature maps requests from
+                clients.
+
         Returns:
             An empty string with the proper response headers for CORS.
         """
@@ -94,7 +98,7 @@ class AbstractController(object):
         try:
             if dataset.record:
                 result = action(dataset, **kwargs)
-        except exceptions as e:
-            error = e.__str__()
+        except exceptions as err:
+            error = err.__str__()
 
         return self.dump_or_error(result, error, callback)
