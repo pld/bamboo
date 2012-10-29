@@ -16,8 +16,11 @@ class Observation(AbstractModel):
 
     @classmethod
     def delete_all(cls, dataset, query={}):
-        """
-        Delete the observations for *dataset*.
+        """Delete the observations for *dataset*.
+
+        Args:
+            dataset: The dataset to delete observations for.
+            query: An optional query to restrict deletion.
         """
         query.update({
             DATASET_OBSERVATION_ID: dataset.dataset_observation_id
@@ -26,16 +29,21 @@ class Observation(AbstractModel):
 
     @classmethod
     def find(cls, dataset, query=None, select=None, limit=0, order_by=None):
-        """
-        Try to parse query if exists, then get all rows for ID matching query,
-        or if no query all.  Decode rows from mongo and return.
+        """Return observation rows matching parameters.
 
-        order_by: sort resulting rows according to a column value (ASC or DESC)
-            Examples:   order_by='mycolumn'
-                        order_by='-mycolumn'
+        Args:
+            dataset: Dataset to return rows for.
+            query: Optional query to restrict matching rows to.
+            select: Optional select to limit returned values.
+            limit: Limit on the number of returned rows.
+            order_by: Order parameter for rows.
 
-        limit: apply a limit on the number of rows returned.
-            limit is applied AFTER ordering.
+        Returns:
+            A list of dictionaries matching the passed in *query* and other
+            parameters.
+
+        Raises:
+            JSONError: An error is the query could not be parsed.
         """
         try:
             query = (query and json.loads(

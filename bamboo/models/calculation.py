@@ -2,13 +2,19 @@ from celery.task import task
 
 from bamboo.core.calculator import Calculator
 from bamboo.core.frame import DATASET_ID
-from bamboo.core.parser import Parser, ParserContext
+from bamboo.core.parser import Parser
 from bamboo.lib.utils import call_async
 from bamboo.models.abstract_model import AbstractModel
 
 
 @task
 def delete_task(calculation, dataset):
+    """Background task to delete *calculation* and its columns in *dataset*.
+
+    Args:
+        calculation: Calculation to delete.
+        dataset: Dataset to delete columns from calculation in.
+    """
     if not calculation.group is None:
         # it is an aggregate calculation
         dataset = dataset.aggregated_datasets[calculation.group]
@@ -24,9 +30,17 @@ def delete_task(calculation, dataset):
 
 
 @task
-def calculate_task(calculation, dataset, calculator, formula, name, group):
+def calculate_task(calculation, dataset, calculator):
+    """Background task to run a calculation.
+
+    Args:
+        calculation: Calculation to run.
+        dataset: Dataset to run calculation on.
+        calculator: Calculator model instantiated for this dataset.
+    """
     dataset.clear_summary_stats()
-    calculator.calculate_column(formula, name, group)
+    calculator.calculate_column(calculation.formula, calculation.name,
+                                calculation.group)
     calculation.ready()
 
 
@@ -60,14 +74,18 @@ class Calculation(AbstractModel):
         call_async(delete_task, self, dataset)
 
     def save(self, dataset, formula, name, group=None):
-        """
-        Attempt to parse formula, then save formula, and add a task to
-        calculate formula.
+        """Parse, save, and calculate a formula.
 
-        Calculations are initial in a **pending** state, after the calculation
-        has finished processing it will be in a **ready** state.
+        Validate *formula* and *group* for the given *dataset*. If the formula
+        and group are valid for the dataset, then save a new calculation for
+        them under *name*. Finally, create a background task to compute the
+        calculation.
 
-        Raises a ParseError if an invalid formula is supplied.
+        Calculations are initially saved in a **pending** state, after the
+        calculation has finished processing it will be in a **ready** state.
+
+        Raises:
+            ParseError: An invalid formula was supplied.
         """
         calculator = Calculator(dataset)
 
@@ -87,8 +105,7 @@ class Calculation(AbstractModel):
         }
         super(self.__class__, self).save(record)
 
-        call_async(calculate_task, self, dataset, calculator, formula, name,
-                   group)
+        call_async(calculate_task, self, dataset, calculator)
         return record
 
     @classmethod
