@@ -91,7 +91,8 @@ def _encode_for_mongo(key):
         The string with illegal keys encoded.
     """
     return reduce(lambda s, expr: expr[0].sub(b64encode(expr[1]), s),
-        [(reserved_dollar_re, '$'), (reserved_dot_re, '.')], key)
+                  [(reserved_dollar_re, '$'), (reserved_dot_re, '.')], key)
+
 
 def _is_invalid_for_mongo(key):
     """Return if string is invalid for storage in MongoDB."""
