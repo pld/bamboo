@@ -65,5 +65,4 @@ def deploy(deployment_name):
 
     # restart the server
     with cd(env.code_src):
-        _run_in_virtualenv('./scripts/%s stop' % env.init_script)
-        _run_in_virtualenv('./scripts/%s start' % env.init_script)
+        _run_in_virtualenv('./scripts/%s restart' % env.init_script)
