@@ -1,8 +1,5 @@
-import json
-
 from bamboo.controllers.abstract_controller import AbstractController
 from bamboo.core.parser import ParseError
-from bamboo.lib.mongo import dump_mongo_json
 from bamboo.models.calculation import Calculation
 from bamboo.models.dataset import Dataset
 
