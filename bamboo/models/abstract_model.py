@@ -66,7 +66,7 @@ class AbstractModel(object):
             select: An optional select statement to pass to MongoDB.
             as_dict: If true, return dicts and not model instances.
             limit: Limit on the number of rows returned.
-            order_by: sort resulting rows according to a column value and sign
+            order_by: Sort resulting rows according to a column value and sign
                 indicating ascending or descending. For example:
                     order_by='mycolumn'
                     order_by='-mycolumn'

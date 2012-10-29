@@ -4,7 +4,6 @@ from time import gmtime, strftime
 
 from celery.task import task
 from celery.contrib.methods import task as class_task
-import numpy as np
 
 from bamboo.core.calculator import Calculator
 from bamboo.core.frame import BambooFrame, BAMBOO_RESERVED_KEY_PREFIX,\
@@ -12,7 +11,7 @@ from bamboo.core.frame import BambooFrame, BAMBOO_RESERVED_KEY_PREFIX,\
 from bamboo.core.summary import summarize
 from bamboo.lib.mongo import reserve_encoded
 from bamboo.lib.schema_builder import DIMENSION, OLAP_TYPE,\
-    schema_from_data_and_dtypes, SIMPLETYPE
+    schema_from_data_and_dtypes
 from bamboo.lib.utils import call_async, split_groups
 from bamboo.models.abstract_model import AbstractModel
 from bamboo.models.calculation import Calculation
@@ -21,6 +20,7 @@ from bamboo.models.observation import Observation
 
 @task
 def delete_task(dataset):
+    """Background task to delete dataset and its associated observations."""
     Observation.delete_all(dataset)
     super(dataset.__class__, dataset).delete({DATASET_ID: dataset.dataset_id})
 
@@ -91,6 +91,24 @@ class Dataset(AbstractModel):
 
     def dframe(self, query=None, select=None, keep_parent_ids=False,
                limit=0, order_by=None):
+        """Fetch the dframe for this dataset.
+
+        Args:
+            query: An optional MongoDB query to limit the rows for the dframe.
+            select: An optional select to limit the fields in the dframe.
+            keep_parent_ids: Do not remove parent IDs from the dframe, default
+                False.
+            limit: Limit on the number of rows in the returned dframe.
+            order_by: Sort resulting rows according to a column value and sign
+                indicating ascending or descending. For example:
+                    order_by='mycolumn'
+                    order_by='-mycolumn'
+
+        Returns:
+            Return BambooFrame with contents based on query parameters passed
+            to MongoDB. BambooFrame will not have parent ids if
+            *keep_parent_ids* is False.
+        """
         observations = self.observations(query=query, select=select,
                                          limit=limit, order_by=order_by)
         dframe = BambooFrame(observations)
@@ -99,27 +117,30 @@ class Dataset(AbstractModel):
         return dframe
 
     def add_merged_dataset(self, new_dataset):
+        """Add the ID of *new_dataset* to the list of merged datasets."""
         self.update({
             self.MERGED_DATASETS: self.merged_datasets +
             [new_dataset.dataset_id]})
 
     def clear_summary_stats(self, field=ALL):
-        """
-        Invalidate summary stats for *field*.
-        """
+        """Remove summary stats for *field*."""
         stats = self.stats
         if stats:
             stats.pop(field, None)
             self.update({self.STATS: stats})
 
     def save(self, dataset_id=None):
-        """
-        Store dataset with *dataset_id* as the unique internal ID.
-        Create a new dataset_id if one is not passed.
+        """Store dataset with *dataset_id* as the unique internal ID.
 
-        Datasets are initially in a **pending** state.  After the dataset has
-        been uploaded and inserted into the database it is in a **ready** state
-        .
+        Store a new dataset with an ID given by *dataset_id* is exists,
+        otherwise reate a random UUID for this dataset. Additionally, set the
+        created at time to the current time and the state to pending.
+
+        Args:
+            dataset_id: The ID to store for this dataset, default is None.
+
+        Returns:
+            A dict representing this dataset.
         """
         if dataset_id is None:
             dataset_id = uuid.uuid4().hex
@@ -134,17 +155,28 @@ class Dataset(AbstractModel):
         return super(self.__class__, self).save(record)
 
     def delete(self):
+        """Delete this dataset."""
         call_async(delete_task, self)
 
     @class_task
     def summarize(self, query=None, select=None,
                   group_str=None, limit=0, order_by=None):
-        """
-        Return a summary for the rows/values filtered by *query* and *select*
-        and grouped by *group_str* or the overall summary if no group is
+        """Build and return a summary of the data in this dataset.
+
+        Return a summary of the rows/values filtered by *query* and *select*
+        and grouped by *group_str*, or the overall summary if no group is
         specified.
 
-        *group_str* may be a string of many comma separated groups.
+        Args:
+            query: An optional MongoDB query to limit the data summarized.
+            select: An optional select to limit the columns summarized.
+            group_str: A column in the dataset as a string or a list comma
+                separated columns to group on.
+
+        Returns:
+            A JSON summary of the dataset. Numeric columns will be summarized
+            by the arithmetic mean, standard deviation, and percentiles.
+            Dimensional columns will be summarized by counts.
         """
         # interpret none as all
         if not group_str:
@@ -167,28 +199,28 @@ class Dataset(AbstractModel):
 
     @classmethod
     def find_one(cls, dataset_id):
+        """Return dataset for *dataset_id*."""
         return super(cls, cls).find_one({DATASET_ID: dataset_id})
 
     @classmethod
     def find(cls, dataset_id):
+        """Return datasets for *dataset_id*."""
+        return super(cls, cls).find_one({DATASET_ID: dataset_id})
         return super(cls, cls).find({DATASET_ID: dataset_id})
 
     def update(self, record):
-        """
-        Update dataset *dataset* with *record*.
-        """
+        """Update dataset *dataset* with *record*."""
         record[self.UPDATED_AT] = strftime("%Y-%m-%d %H:%M:%S", gmtime())
         super(self.__class__, self).update(record)
         self.record = self.__class__.find_one(self.dataset_id).record
 
     def build_schema(self, dframe):
-        """
-        Build schema for a dataset.
-        """
+        """Build schema for a dataset."""
         schema = schema_from_data_and_dtypes(self, dframe)
         self.update({self.SCHEMA: schema})
 
     def info(self):
+        """Return meta-data for this dataset."""
         return {
             self.ID: self.dataset_id,
             self.LABEL: '',
@@ -203,46 +235,66 @@ class Dataset(AbstractModel):
         }
 
     def build_labels_to_slugs(self):
-        """
-        Map the column labels back to their slugified versions
-        """
+        """Build dict from column labels to slugs."""
         return dict([
             (column_attrs[self.LABEL], reserve_encoded(column_name)) for
             (column_name, column_attrs) in self.schema.items()])
 
     def observations(self, query=None, select=None, limit=0, order_by=None):
-        return Observation.find(self, query, select,
-                                limit=limit, order_by=order_by)
+        """Return observations for this dataset.
+
+        Args:
+            query: Optional query for MongoDB to limit rows returned.
+            select: Optional select for MongoDB to limit columns.
+            limit: If greater than 0, limit number of observations returned to
+                this maximum.
+            order_by: Order the returned observations.
+        """
+        return Observation.find(
+            self, query, select, limit=limit, order_by=order_by)
 
     def calculations(self):
+        """Return the calculations for this dataset."""
         return Calculation.find(self)
 
     def remove_parent_observations(self, parent_id):
+        """Remove obervations for this dataset with the passed *parent_id*.
+
+        Args:
+            parent_id: Remove observations with this ID as their parent dataset
+                ID.
+        """
         Observation.delete_all(self, {PARENT_DATASET_ID: parent_id})
 
     def add_observations(self, json_data):
-        """
-        Update *dataset* with new *data*.
-        """
+        """Update *dataset* with new *data*."""
         calculator = Calculator(self)
         call_async(calculator.calculate_updates, calculator,
                    json.loads(json_data))
 
     def save_observations(self, dframe):
-        """
-        Save rows in *dframe* for this dataset.
-        """
+        """Save rows in *dframe* for this dataset."""
         Observation().save(dframe, self)
         return self.dframe()
 
     def replace_observations(self, dframe):
-        """
-        Remove all rows for this dataset and save the rows in *dframe*.
+        """Remove all rows for this dataset and save the rows in *dframe*.
+
+        Args:
+            dframe: Replace rows in this dataset with this DataFrame's rows.
+
+        Returns:
+            BambooFrame equivalent to the passed in *dframe*.
         """
         self.build_schema(dframe)
         Observation.delete_all(self)
         return self.save_observations(dframe)
 
     def drop_columns(self, columns):
+        """Remove columns from this dataset's observations.
+
+        Args:
+            columns: List of columns to remove from this dataset.
+        """
         dframe = self.dframe(keep_parent_ids=True)
         self.replace_observations(dframe.drop(columns, axis=1))

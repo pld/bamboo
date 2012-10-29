@@ -50,23 +50,31 @@ class Observation(AbstractModel):
                 query, object_hook=json_util.object_hook)) or {}
 
             query = parse_timestamp_query(query, dataset.schema)
-        except ValueError, e:
-            raise JSONError('cannot decode query: %s' % e.__str__())
+        except ValueError, err:
+            raise JSONError('cannot decode query: %s' % err.__str__())
 
         if select:
             try:
                 select = json.loads(select, object_hook=json_util.object_hook)
-            except ValueError, e:
-                raise JSONError('cannot decode select: %s' % e.__str__())
+            except ValueError, err:
+                raise JSONError('cannot decode select: %s' % err.__str__())
 
         query[DATASET_OBSERVATION_ID] = dataset.dataset_observation_id
         return super(cls, cls).find(query, select, as_dict=True,
                                     limit=limit, order_by=order_by)
 
     def save(self, dframe, dataset):
-        """
-        Convert *dframe* to mongo format, iterate through rows adding ids for
-        *dataset*, insert in chuncks of size *DB_BATCH_SIZE*.
+        """Save data in *dframe* with the *dataset*.
+
+        Encode *dframe* for MongoDB, and add fields to identify it with the
+        passed in *dataset*. All column names in *dframe* are converted to
+        slugs using the dataset's schema.  The dataset is update to store the
+        size of the stored data. A background task to cache a summary of the
+        dataset is launched.
+
+        Args:
+            dframe: The DataFrame (or BambooFrame) to store.
+            dataset: The dataset to store the dframe in.
         """
         # build schema for the dataset after having read it from file.
         if not dataset.SCHEMA in dataset.record:
