@@ -6,9 +6,6 @@
 Welcome to bamboo's documentation!
 ==================================
 
-.. image:: https://secure.travis-ci.org/modilabs/bamboo.png?branch=master
-  :target: http://travis-ci.org/modilabs/bamboo
-
 Bamboo is an application that systematizes realtime data analysis. Bamboo
 provides an interface for merging, aggregating and adding algebraic
 calculations to dynamic datasets.  Clients can interact with Bamboo through a
@@ -21,6 +18,9 @@ per district) from datasets. These are updated as new data is received.
 Bamboo is `open source <https://github.com/modilabs/bamboo>`_ software released
 under the 3-clause BSD license, which is also known as the "Modified BSD
 License".
+
+.. image:: https://secure.travis-ci.org/modilabs/bamboo.png?branch=master
+  :target: http://travis-ci.org/modilabs/bamboo
 
 General configuration notes:
 
