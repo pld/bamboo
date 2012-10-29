@@ -2,9 +2,17 @@ from pandas import DataFrame, Series
 
 
 class Aggregation(object):
+    """Abstract class for all aggregations.
+
+    Attributes:
+        column: Column to aggregate.
+        columns: List of columns to aggregate.
+        formula_name: The string to refer to this aggregation.
     """
-    Abstract class for all aggregations.
-    """
+
+    column = None
+    columns = None
+    formula_name = None
 
     def __init__(self, name, groups, dframe):
         self.name = name
@@ -17,25 +25,20 @@ class Aggregation(object):
         return self.group() if self.groups else self.agg()
 
     def group(self):
-        """
-        For when aggregation is called with a group parameter.
-        """
+        """For when aggregation is called with a group parameter."""
         groupby = self.dframe[self.groups].join(
             self.column).groupby(self.groups, as_index=False)
         return groupby.agg(self.formula_name)
 
     def agg(self):
-        """
-        For when aggregation is called without a group parameter.
-        """
+        """For when aggregation is called without a group parameter."""
         result = float(self.column.__getattribute__(self.formula_name)())
         return DataFrame({self.name: Series([result])})
 
 
 class MultiColumnAggregation(Aggregation):
-    """
-    Interface for aggregations that create multiple columns.
-    """
+    """Interface for aggregations that create multiple columns."""
+
     def group(self, columns):
         dframe = self.dframe[self.groups]
         dframe = self._build_dframe(dframe, columns)
@@ -43,6 +46,7 @@ class MultiColumnAggregation(Aggregation):
         return self._add_calculated_column(groupby.sum())
 
     def _reduce(self, dframe, columns):
+        """Reduce the columns and store in *dframe*."""
         self.columns = columns
         self.column = columns[0]
         new_dframe = self.agg()
@@ -77,18 +81,18 @@ class MultiColumnAggregation(Aggregation):
 
 
 class MaxAggregation(Aggregation):
-    """
-    Calculate the maximum. Written as ``max(FORMULA)``. Where *FORMULA* is a
-    valid formula.
+    """Calculate the maximum.
+
+    Written as ``max(FORMULA)``. Where *FORMULA* is a valid formula.
     """
 
     formula_name = 'max'
 
 
 class MeanAggregation(MultiColumnAggregation):
-    """
-    Calculate the arithmetic mean. Written as ``mean(FORMULA)``. Where
-    *FORMULA* is a valid formula.
+    """Calculate the arithmetic mean.
+
+    Written as ``mean(FORMULA)``. Where *FORMULA* is a valid formula.
     """
 
     formula_name = 'mean'
@@ -109,27 +113,27 @@ class MeanAggregation(MultiColumnAggregation):
 
 
 class MedianAggregation(Aggregation):
-    """
-    Calculate the median. Written as ``median(FORMULA)``. Where *FORMULA* is a
-    valid formula.
+    """Calculate the median. Written as ``median(FORMULA)``.
+
+    Where *FORMULA* is a valid formula.
     """
 
     formula_name = 'median'
 
 
 class MinAggregation(Aggregation):
-    """
-    Calculate the minimum. Written as ``min(FORMULA)``. Where *FORMULA* is a
-    valid formula.
+    """Calculate the minimum.
+
+    Written as ``min(FORMULA)``. Where *FORMULA* is a valid formula.
     """
 
     formula_name = 'min'
 
 
 class SumAggregation(Aggregation):
-    """
-    Calculate the sum. Written as ``sum(FORMULA)``. Where *FORMULA* is a
-    valid formula.
+    """Calculate the sum.
+
+    Written as ``sum(FORMULA)``. Where *FORMULA* is a valid formula.
     """
 
     formula_name = 'sum'
@@ -142,11 +146,12 @@ class SumAggregation(Aggregation):
 
 
 class RatioAggregation(MultiColumnAggregation):
-    """
-    Calculate the ratio. Columns with N/A for either the numerator or
-    denominator are ignored.  This will store associated numerator and
-    denominator columns.  Written as ``ratio(NUMERATOR, DENOMINATOR)``.
-    Where *NUMERATOR* and *DENOMINATOR* are both valid formulas.
+    """Calculate the ratio.
+
+    Columns with N/A for either the numerator or denominator are ignored.  This
+    will store associated numerator and denominator columns.  Written as
+    ``ratio(NUMERATOR, DENOMINATOR)``. Where *NUMERATOR* and *DENOMINATOR* are
+    both valid formulas.
     """
 
     formula_name = 'ratio'

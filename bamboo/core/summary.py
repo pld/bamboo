@@ -1,7 +1,6 @@
 import numpy as np
 
 from bamboo.lib.jsontools import series_to_jsondict
-from bamboo.lib.mongo import dict_for_mongo, MONGO_RESERVED_KEYS
 from bamboo.lib.schema_builder import DIMENSION, OLAP_TYPE
 
 
@@ -10,12 +9,19 @@ SUMMARY = 'summary'
 
 
 class ColumnTypeError(Exception):
+    """Exception when grouping on a non-dimensional column."""
     pass
 
 
 def summarize_series(dtype, data):
-    """
-    Call summary function dependent on dtype type
+    """Call summary function dependent on dtype type.
+
+    Args:
+        dtype: The dtype of the column to be summarized.
+        data: The data to be summarized.
+
+    Returns:
+        The appropriate summarization for the type of *dtype*.
     """
     return {
         np.object_: data.value_counts(),
@@ -25,6 +31,17 @@ def summarize_series(dtype, data):
 
 
 def summarizable(dframe, col, groups, dataset):
+    """Check if column should be summarized.
+
+    Args:
+        dframe: DataFrame to check unique values in.
+        col: Column to check for factor and number of uniques.
+        groups: List of groups if summarizing with group, can be empty.
+        dataset: Dataset to pull schema from.
+
+    Returns:
+        True if column, with parameters should be summarized, otherwise False.
+    """
     if dataset.is_factor(col):
         cardinality = dframe[col].nunique() if len(groups) else\
             dataset.cardinality(col)
@@ -34,9 +51,7 @@ def summarizable(dframe, col, groups, dataset):
 
 
 def summarize_df(dframe, groups=[], dataset=None):
-    """
-    Calculate summary statistics
-    """
+    """Calculate summary statistics."""
     dtypes = dframe.dtypes
     return dict([
         (col, {
@@ -47,17 +62,13 @@ def summarize_df(dframe, groups=[], dataset=None):
 
 
 def summarize_with_groups(dframe, groups, dataset):
-    """
-    Calculate summary statistics for group.
-    """
+    """Calculate summary statistics for group."""
     return series_to_jsondict(
         dframe.groupby(groups).apply(summarize_df, groups, dataset))
 
 
 def summarize(dataset, dframe, groups, group_str, no_cache):
-    """
-    Raises a ColumnTypeError if grouping on a non-dimensional column.
-    """
+    """Raises a ColumnTypeError if grouping on a non-dimensional column."""
     # do not allow group by numeric types
     for group in groups:
         group_type = dataset.schema.get(group)
