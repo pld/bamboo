@@ -6,12 +6,21 @@
 Welcome to bamboo's documentation!
 ==================================
 
-Bamboo is a data analysis web service.
-Bamboo is `open source <https://github.com/modilabs/bamboo>`_ software.
+.. image:: https://secure.travis-ci.org/modilabs/bamboo.png?branch=master
+  :target: http://travis-ci.org/modilabs/bamboo
+
+Bamboo is an application that systematizes realtime data analysis. Bamboo
+provides an interface for merging, aggregating and adding algebraic
+calculations to dynamic datasets.  Clients can interact with Bamboo through a
+a REST web interface and through Python.
 
 Bamboo supports a simple querying language to build calculations
 (e.g. student teacher ratio) and aggregations (e.g. average number of students
 per district) from datasets. These are updated as new data is received.
+
+Bamboo is `open source <https://github.com/modilabs/bamboo>`_ software released
+under the 3-clause BSD license, which is also known as the "Modified BSD
+License".
 
 General configuration notes:
 
