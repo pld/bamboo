@@ -13,8 +13,10 @@ class AbstractController(object):
     """Abstract controller class for web facing controllers.
 
     Attributes:
-        ERROR: constant string for error messages.
-        SUCCESS: constant string for success messages.
+
+    - ERROR: constant string for error messages.
+    - SUCCESS: constant string for success messages.
+
     """
 
     exposed = True
@@ -30,13 +32,14 @@ class AbstractController(object):
             'Content-Type, Accept'
 
     def options(self, dataset_id=None):
-        """Return Cross Origin Resource Sharing (CORS) headers.
+        """Set Cross Origin Resource Sharing (CORS) headers.
 
         Set the CORS headers required for AJAX non-GET requests.
 
         Args:
-            dataset_id: Ignored argument so signature maps requests from
-                clients.
+
+        - dataset_id: Ignored argument so signature maps requests from
+          clients.
 
         Returns:
             An empty string with the proper response headers for CORS.
@@ -53,9 +56,10 @@ class AbstractController(object):
         the returned string is wrapped in the callback for JSONP.
 
         Args:
-            obj: data to dump as JSON using BSON encoder.
-            error_message: error message to return is object is None.
-            callback: callback string to wrap obj in for JSONP.
+
+        - obj: data to dump as JSON using BSON encoder.
+        - error_message: error message to return is object is None.
+        - callback: callback string to wrap obj in for JSONP.
 
         Returns:
             A JSON string wrapped with callback if callback is not False.
@@ -75,12 +79,14 @@ class AbstractController(object):
         returns the resulting string.
 
         Args:
-            dataset_id: The dataset ID to fetch.
-            action: A function to call within a try block that takes a dataset
-                any kwargs.
-            callback: A JSONP callback that is passed through to dump_or_error.
-            exceptions: A set exceptions to additionally catch.
-            kwargs: A set of keyword arguments that are passed to the action.
+
+        - dataset_id: The dataset ID to fetch.
+        - action: A function to call within a try block that takes a
+                  dataset any kwargs.
+        - callback: A JSONP callback that is passed through to
+                    dump_or_error.
+        - exceptions: A set exceptions to additionally catch.
+        - kwargs: A set of keyword arguments that are passed to the action.
 
         Returns:
             A string that is the result of calling action or an error caught

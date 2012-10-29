@@ -22,8 +22,9 @@ class Datasets(AbstractController):
     return value.
 
     Attributes:
-        SELECT_ALL_FOR_SUMMARY: a string the the client can pass to
-        indicate that all columns should be summarized.
+
+    - SELECT_ALL_FOR_SUMMARY: a string the the client can pass to
+    - indicate that all columns should be summarized.
     """
     SELECT_ALL_FOR_SUMMARY = 'all'
 
@@ -34,7 +35,8 @@ class Datasets(AbstractController):
         dataset and observations are not recoverable.
 
         Args:
-            dataset_id: The dataset ID of the dataset to be deleted.
+
+        - dataset_id: The dataset ID of the dataset to be deleted.
 
         Returns:
             A string of success or error if that dataset could not be found.
@@ -51,8 +53,9 @@ class Datasets(AbstractController):
         """Fetch and return the meta-data for a dataset.
 
         Args:
-            dataset_id: The dataset ID of the dataset to return meta-data for.
-            callback: A JSONP callback function to wrap the result in.
+
+        - dataset_id: The dataset ID of the dataset to return meta-data for.
+        - callback: A JSONP callback function to wrap the result in.
 
         Returns:
             The data for *dataset_id*. Returns an error message if
@@ -72,15 +75,16 @@ class Datasets(AbstractController):
         results using *order_by* if passed.
 
         Args:
-            dataset_id: The dataset ID of the dataset to summarize.
-            select: This is a required argument, it can be 'all' or a MongoDB
-                JSON query
-            group: If passed, group the summary by this column or list of
-                columns.
-            query: If passed restrict summary to rows matching this query.
-            limit: If passed limit the rows to summarize to this number.
-            order_by: If passed order the result using this column.
-            callback: A JSONP callback function to wrap the result in.
+
+        - dataset_id: The dataset ID of the dataset to summarize.
+        - select: This is a required argument, it can be 'all' or a MongoDB
+          JSON query
+        - group: If passed, group the summary by this column or list of
+          columns.
+        - query: If passed restrict summary to rows matching this query.
+        - limit: If passed limit the rows to summarize to this number.
+        - order_by: If passed order the result using this column.
+        - callback: A JSONP callback function to wrap the result in.
 
         Returns:
             An error message if *dataset_id* does not exist or the JSON for
@@ -103,9 +107,10 @@ class Datasets(AbstractController):
         """Return a dict of aggregated data for the given *dataset_id*.
 
         Args:
-            dataset_id: The dataset ID of the dataset to return related data
-                for.
-            callback: A JSONP callback function to wrap the result in.
+
+        - dataset_id: The dataset ID of the dataset to return related data
+          for.
+        - callback: A JSONP callback function to wrap the result in.
 
         Returns:
             An error message if *dataset_id* does not exist. Otherwise, returns
@@ -124,13 +129,14 @@ class Datasets(AbstractController):
         *order_by* if passed.
 
         Args:
-            dataset_id: The dataset ID of the dataset to return.
-            select: This is a required argument, it can be 'all' or a MongoDB
-                JSON query
-            query: If passed restrict results to rows matching this query.
-            limit: If passed limit the rows to this number.
-            order_by: If passed order the result using this column.
-            callback: A JSONP callback function to wrap the result in.
+
+        - dataset_id: The dataset ID of the dataset to return.
+        - select: This is a required argument, it can be 'all' or a MongoDB
+          JSON query
+        - query: If passed restrict results to rows matching this query.
+        - limit: If passed limit the rows to this number.
+        - order_by: If passed order the result using this column.
+        - callback: A JSONP callback function to wrap the result in.
 
         Returns:
             An error message if *dataset_id* does not exist or the JSON for
@@ -149,8 +155,9 @@ class Datasets(AbstractController):
         """Merge the datasets with the dataset_ids in *datasets*.
 
         Args:
-            dataset: A JSON encoded array of dataset IDs for existing
-                datasets.
+
+        - dataset: A JSON encoded array of dataset IDs for existing
+          datasets.
 
         Returns:
             An error if the datasets could not be found or less than two
@@ -191,9 +198,10 @@ class Datasets(AbstractController):
             - years
 
         Args:
-            url: A URL to load a CSV file from. The URL must point to a CSV
-                file.
-            csv_file: An uploaded CSV file to read from.
+
+        - url: A URL to load a CSV file from. The URL must point to a CSV
+          file.
+        - csv_file: An uploaded CSV file to read from.
 
         Returns:
             An error message ff neither *url* nor *csv_file* are provided. An

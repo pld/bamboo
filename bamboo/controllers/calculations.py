@@ -26,9 +26,10 @@ class Calculations(AbstractController):
         dataframe for the dataset or the aggregate dataset.
 
         Args:
-            dataset_id: The dataset ID for which to delete the calculation.
-            name: The name of the calculation to delete.
-            group: The group of the calculation to delete, if an aggregation.
+
+        - dataset_id: The dataset ID for which to delete the calculation.
+        - name: The name of the calculation to delete.
+        - group: The group of the calculation to delete, if an aggregation.
 
         Returns:
             JSON with success if delete or an error string if the calculation
@@ -53,11 +54,12 @@ class Calculations(AbstractController):
         dataset.
 
         Args:
-            dataset_id: The dataset ID to add the calculation to.
-            formula: The formula for the calculation which must match the
-                parser language.
-            name: The name to assign the new column for this formula.
-            group: A column to group by for aggregations, must be a dimension.
+
+        - dataset_id: The dataset ID to add the calculation to.
+        - formula: The formula for the calculation which must match the
+          parser language.
+        - name: The name to assign the new column for this formula.
+        - group: A column to group by for aggregations, must be a dimension.
 
         Returns:
             A success string is the calculation is create. An error string if
@@ -77,8 +79,9 @@ class Calculations(AbstractController):
         """Retrieve the calculations for *dataset_id*.
 
         Args:
-            dataset_id: The dataset to show calculations for.
-            callback: A JSONP callback function string.
+
+        - dataset_id: The dataset to show calculations for.
+        - callback: A JSONP callback function string.
 
         Returns:
             A list of calculation records.  Each calculation record shows the
