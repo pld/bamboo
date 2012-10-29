@@ -235,7 +235,7 @@ class Calculator(object):
                         col not in filtered_row.keys():
                     filtered_row[col] = val
             filtered_data.append(filtered_row)
-        return recognize_dates_from_schema(self.dataset,
+        return recognize_dates_from_schema(self.dataset.schema,
                                            BambooFrame(filtered_data))
 
     def _update_aggregate_datasets(self, calculations, new_dframe):
