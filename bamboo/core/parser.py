@@ -225,11 +225,11 @@ class Parser(object):
             (case_op, 1, opAssoc.RIGHT, EvalCaseOp),
         ]) | prop_expr
 
-        agg_expr = (
-            (aggregations + open_paren + case_expr + ZeroOrMore(
-                comma + case_expr)
-             ).setParseAction(self.store_aggregation) + close_paren
-        ) | case_expr
+        agg_expr = ((
+                    aggregations + open_paren +
+                    Optional(case_expr + ZeroOrMore(comma + case_expr)))
+                    .setParseAction(self.store_aggregation) + close_paren)\
+            | case_expr
 
         # top level bnf
         self.bnf = agg_expr

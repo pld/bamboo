@@ -172,6 +172,32 @@ class RatioAggregation(MultiColumnAggregation):
         return self._add_calculated_column(dframe)
 
 
+class CountAggregation(Aggregation):
+    """Calculate the count of rows fulfilling the criteria in the formula.
+
+    N/A values are ignored unless there is no arguments to the
+    function, in which case is simply returns the number of rows
+    in the dataset.
+    Written as
+    ``count(CRITERIA)``. Where *CRITERIA* is an optional boolean expression
+    that signifies which rows are to be counted.
+    """
+
+    formula_name = 'count'
+
+    def group(self):
+        joined = self.dframe[self.groups].join(
+            self.column)
+        joined = joined[self.column]
+        groupby = joined.groupby(self.groups, as_index=False)
+        return groupby.agg(self.formula_name)[self.column.name].reset_index()
+
+    def agg(self):
+        self.column = self.column[self.column]
+        result = float(self.column.__getattribute__(self.formula_name)())
+        return DataFrame({self.name: Series([result])})
+
+
 # dict of formula names to aggregation classes
 AGGREGATIONS = dict([
     (cls.formula_name, cls) for cls in
