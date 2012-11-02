@@ -50,8 +50,8 @@ class TestAggregations(TestCalculator):
             'ratio(risk_factor in ["low_risk"], risk_factor in ["low_risk",'
             ' "medium_risk"])',
             'ratio(risk_factor in ["low_risk"], 1)',
-            #'count()',
             'count(risk_factor in ["low_risk"])',
+            'count()',
         ]
         self.expected_length = defaultdict(int)
         self.groups_list = None

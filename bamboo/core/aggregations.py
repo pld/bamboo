@@ -22,7 +22,7 @@ class Aggregation(object):
 
     def eval(self, columns):
         self.columns = columns
-        self.column = columns[0]
+        self.column = columns[0] if len(columns) else None
         return self.group() if self.groups else self.agg()
 
     def group(self):
@@ -186,15 +186,25 @@ class CountAggregation(Aggregation):
     formula_name = 'count'
 
     def group(self):
-        joined = self.dframe[self.groups].join(
-            self.column)
-        joined = joined[self.column]
-        groupby = joined.groupby(self.groups, as_index=False)
-        return groupby.agg(self.formula_name)[self.column.name].reset_index()
+        if self.column is not None:
+            joined = self.dframe[self.groups].join(
+                self.column)
+            joined = joined[self.column]
+            groupby = joined.groupby(self.groups, as_index=False)
+            result = groupby.agg(
+                self.formula_name)[self.column.name].reset_index()
+        else:
+            result = self.dframe[self.groups]
+            result = result.groupby(self.groups).apply(lambda x: len(x)).\
+                reset_index().rename(columns={0: self.name})
+        return result
 
     def agg(self):
-        self.column = self.column[self.column]
-        result = float(self.column.__getattribute__(self.formula_name)())
+        if self.column is not None:
+            self.column = self.column[self.column]
+            result = float(self.column.__getattribute__(self.formula_name)())
+        else:
+            result = len(self.dframe)
         return DataFrame({self.name: Series([result])})
 
 
