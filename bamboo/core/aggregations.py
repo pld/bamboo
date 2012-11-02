@@ -22,7 +22,7 @@ class Aggregation(object):
 
     def eval(self, columns):
         self.columns = columns
-        self.column = columns[0]
+        self.column = columns[0] if len(columns) else None
         return self.group() if self.groups else self.agg()
 
     def group(self):
@@ -170,6 +170,42 @@ class RatioAggregation(MultiColumnAggregation):
         dframe = DataFrame([dframe.sum().to_dict()])
 
         return self._add_calculated_column(dframe)
+
+
+class CountAggregation(Aggregation):
+    """Calculate the count of rows fulfilling the criteria in the formula.
+
+    N/A values are ignored unless there is no arguments to the
+    function, in which case is simply returns the number of rows
+    in the dataset.
+    Written as
+    ``count(CRITERIA)``. Where *CRITERIA* is an optional boolean expression
+    that signifies which rows are to be counted.
+    """
+
+    formula_name = 'count'
+
+    def group(self):
+        if self.column is not None:
+            joined = self.dframe[self.groups].join(
+                self.column)
+            joined = joined[self.column]
+            groupby = joined.groupby(self.groups, as_index=False)
+            result = groupby.agg(
+                self.formula_name)[self.column.name].reset_index()
+        else:
+            result = self.dframe[self.groups]
+            result = result.groupby(self.groups).apply(lambda x: len(x)).\
+                reset_index().rename(columns={0: self.name})
+        return result
+
+    def agg(self):
+        if self.column is not None:
+            self.column = self.column[self.column]
+            result = float(self.column.__getattribute__(self.formula_name)())
+        else:
+            result = len(self.dframe)
+        return DataFrame({self.name: Series([result])})
 
 
 # dict of formula names to aggregation classes
