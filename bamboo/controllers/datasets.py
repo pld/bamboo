@@ -273,6 +273,9 @@ class Datasets(AbstractController):
     def join(self, dataset_id, other_dataset_id, on=None):
         """Join the columns from two existing datasets.
 
+        The *on* column must exists in both dataset. The values in the *on*
+        *on* column of the other dataset must be unique.
+
         Args:
 
         - dataset_id: The left hand dataset to be joined onto.
