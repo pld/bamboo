@@ -308,3 +308,11 @@ class Dataset(AbstractModel):
         """
         dframe = self.dframe(keep_parent_ids=True)
         self.replace_observations(dframe.drop(columns, axis=1))
+
+    def join(self, other, on):
+        other_dframe = other.dframe().set_index(on)
+        merged_dframe = self.dframe().join(other_dframe, on=on)
+        merged_dataset = self.__class__()
+        merged_dataset.save()
+        merged_dataset.save_observations(merged_dframe)
+        return merged_dataset

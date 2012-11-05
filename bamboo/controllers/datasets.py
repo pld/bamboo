@@ -231,25 +231,66 @@ class Datasets(AbstractController):
         return self.dump_or_error(result, error)
 
     def update(self, dataset_id):
-        """
-        Update the *dataset_id* with the body as JSON.
+        """Update the *dataset_id* with the body as JSON.
+
+        Args:
+
+        - dataset_id: The ID of the dataset to update.
+
+        Returns:
+            A JSON dict with the ID of the dataset updated, or with an error
+            message.
         """
         result = None
         error = 'dataset for this id does not exist'
         dataset = Dataset.find_one(dataset_id)
-        if dataset.record:
+
+        def _action(dataset):
             dataset.add_observations(cherrypy.request.body.read())
-            result = {Dataset.ID: dataset_id}
-        return self.dump_or_error(result, error)
+            return {Dataset.ID: dataset_id}
+        return self._safe_get_and_call(dataset_id, _action)
 
     def drop_columns(self, dataset_id, columns):
-        """
-        Drop columns in dataset with id *dataset_id*.  *columns* is an array of
-        columns within the dataset.  Returns an error if any column is not in
-        the dataset.
+        """Drop columns in dataset.
+
+        Removes all the *columns* from the dataset with ID *dataset_id*.
+
+        Args:
+
+        - dataset_id: The ID of the dataset to update.
+        - columns: An array of columns within the dataset.
+
+        Returns:
+            An error if any column is not in the dataset. Otherwise a success
+            message.
         """
         def _action(dataset, columns=columns):
             dataset.drop_columns(columns)
             return {self.SUCCESS: 'in dataset %s dropped columns: %s' %
-                    (dataset_id, columns)}
+                    (dataset.dataset_id, columns)}
         return self._safe_get_and_call(dataset_id, _action)
+
+    def join(self, dataset_id, other_dataset_id, on=None):
+        """Join the columns from two existing datasets.
+
+        Args:
+
+        - dataset_id: The left hand dataset to be joined onto.
+        - other_dataset_id: The right hand to join.
+        - on: A column to join on, this column must be unique in the other
+          dataset.
+
+        Returns:
+            Success and merged dataset ID or error message.
+        """
+        def _action(dataset, other_dataset_id=other_dataset_id, on=None):
+            other_dataset = Dataset.find_one(other_dataset_id)
+            if other_dataset.record:
+                merged_dataset = dataset.join(other_dataset, on)
+                return {
+                    self.SUCCESS: 'joined dataset %s to %s on %s' % (
+                        other_dataset_id, dataset.dataset_id, on),
+                    Dataset.ID: merged_dataset.dataset_id,
+                }
+        return self._safe_get_and_call(
+            dataset_id, _action, other_dataset_id=other_dataset_id, on=on)

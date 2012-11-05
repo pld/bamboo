@@ -717,3 +717,13 @@ class TestDatasets(TestAbstractDatasets):
             self.controller.drop_columns(self.dataset_id, ['foo']))
         self.assertTrue(isinstance(results, dict))
         self.assertTrue(AbstractController.ERROR in results)
+
+    def test_join_datasets(self):
+        self._post_file()
+        left_dataset_id = self.dataset_id
+        self._post_file('good_eats_aux.csv')
+        results = json.loads(self.controller.join(
+            left_dataset_id, self.dataset_id, on='food_type'))
+        self.assertTrue(isinstance(results, dict))
+        self.assertTrue(AbstractController.SUCCESS in results.keys())
+        self.assertTrue(Dataset.ID in results.keys())
