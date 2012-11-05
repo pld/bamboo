@@ -737,3 +737,12 @@ class TestDatasets(TestAbstractDatasets):
                          left_dataset.joined_dataset_ids)
         self.assertEqual([('left', left_dataset_id, on, joined_dataset_id)],
                          right_dataset.joined_dataset_ids)
+
+    def test_join_datasets_non_unique_rhs(self):
+        self.assertTrue(False)
+
+    def test_join_datasets_on_col_not_in_lhs(self):
+        self.assertTrue(False)
+
+    def test_join_datasets_on_col_not_in_rhs(self):
+        self.assertTrue(False)

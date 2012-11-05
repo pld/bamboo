@@ -58,6 +58,16 @@ class TestDatasetsUpdateWithJoin(TestAbstractDatasets):
             self.joined_dataset_id,
             'tests/fixtures/updates_with_join/originals/joined_dataset.p')
 
+    def _test_update_left_no_join_col(self):
+        self._verify_dataset(
+            self.left_dataset_id,
+            'tests/fixtures/updates_with_join/update_left_no_join_col/left_dat'
+            'aset.p')
+        self._verify_dataset(
+            self.joined_dataset_id,
+            'tests/fixtures/updates_with_join/update_left_no_join_col/joined_d'
+            'ataset.p')
+
     def _test_update_left(self):
         self._verify_dataset(
             self.left_dataset_id,
@@ -67,5 +77,22 @@ class TestDatasetsUpdateWithJoin(TestAbstractDatasets):
             'tests/fixtures/updates_with_join/update_left/joined_dataset.p')
 
     def test_datasets_update_left(self):
-        self._put_row_updates(self.left_dataset_id)
+        self._put_row_updates(
+            self.left_dataset_id,
+            file_path='tests/fixtures/updates_with_join/update_left/update.jso'
+            'n'
+        )
         self._test_update_left()
+
+    def test_datasets_update_left_no_join_col(self):
+        self._put_row_updates(
+            self.left_dataset_id,
+            file_path='tests/fixtures/updates_with_join/update_left_no_join_co'
+            'l/update.json')
+        self._test_update_left_no_join_col()
+
+    def test_datasets_update_right(self):
+        self.assertTrue(False)
+
+    def test_datasets_update_right_non_unique_join(self):
+        self.assertTrue(False)
