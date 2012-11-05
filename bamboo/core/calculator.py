@@ -147,6 +147,10 @@ class Calculator(object):
         """
         self.ensure_dframe()
 
+        # TODO: check whether this is a right-hand side of any joins
+        # and deny the update if the update would produce an invalid
+        # join as a result
+
         calculations = self.dataset.calculations()
         labels_to_slugs = self.dataset.build_labels_to_slugs()
         new_dframe = self._dframe_from_update(new_data, labels_to_slugs)
@@ -201,6 +205,18 @@ class Calculator(object):
             merged_calculator = Calculator(merged_dataset)
             call_async(merged_calculator.calculate_updates, merged_calculator,
                        slugified_data, self.dataset.dataset_id)
+
+        # update any joined datasets
+        for direction, other_dataset, on, joined_dataset in self.dataset.joined_datasets():
+            if direction == 'left':
+                merged_dframe = other_dataset.dframe().left_join(self.dataset, on)
+                joined_dataset.replace_observations(merged_dframe)
+            else:
+                merged_dframe = new_dframe.join_dataset(other_dataset, on)
+                joined_calculator = Calculator(joined_dataset)
+                call_async(merged_calculator.calculate_updates, joined_calculator,
+                           merged_dframe.to_jsondict(), self.dataset.dataset_id)
+
 
     def make_columns(self, formula, name, dframe=None):
         """Parse formula into function and variables."""
