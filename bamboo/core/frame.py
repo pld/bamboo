@@ -72,3 +72,8 @@ class BambooFrame(DataFrame):
     def _column_intersect(self, _list):
         """Return the intersection of *_list* and this DataFrame's columns."""
         return list(set(_list).intersection(set(self.columns.tolist())))
+
+    def join_dataset(self, other, on):
+        """Left join an *other* dataset."""
+        right_dframe = other.dframe().set_index(on)
+        return self.__class__(self.join(right_dframe, on=on))
