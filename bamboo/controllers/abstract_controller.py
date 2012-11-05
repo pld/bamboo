@@ -85,7 +85,7 @@ class AbstractController(object):
                   dataset any kwargs.
         - callback: A JSONP callback that is passed through to
                     dump_or_error.
-        - exceptions: A set exceptions to additionally catch.
+        - exceptions: A set of exceptions to additionally catch.
         - kwargs: A set of keyword arguments that are passed to the action.
 
         Returns:
