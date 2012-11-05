@@ -153,7 +153,9 @@ class Calculator(object):
 
         calculations = self.dataset.calculations()
         labels_to_slugs = self.dataset.build_labels_to_slugs()
-        new_dframe = self._dframe_from_update(new_data, labels_to_slugs)
+        new_dframe_raw = self._dframe_from_update(new_data, labels_to_slugs)
+        new_dframe = recognize_dates_from_schema(
+            self.dataset.schema, new_dframe_raw)
 
         aggregate_calculations = []
 
@@ -208,15 +210,17 @@ class Calculator(object):
 
         # update any joined datasets
         for direction, other_dataset, on, joined_dataset in\
-                self.dataset.joined_datasets():
+                self.dataset.joined_datasets:
             if direction == 'left':
                 merged_dframe = other_dataset.dframe().left_join(
                     self.dataset, on)
                 joined_dataset.replace_observations(merged_dframe)
             else:
-                merged_dframe = new_dframe.join_dataset(other_dataset, on)
+                merged_dframe = new_dframe_raw
+                if on in merged_dframe:
+                    merged_dframe = new_dframe_raw.join_dataset(other_dataset, on)
                 joined_calculator = Calculator(joined_dataset)
-                call_async(merged_calculator.calculate_updates,
+                call_async(joined_calculator.calculate_updates,
                            joined_calculator, merged_dframe.to_jsondict(),
                            self.dataset.dataset_id)
 
@@ -253,8 +257,7 @@ class Calculator(object):
                         col not in filtered_row.keys():
                     filtered_row[col] = val
             filtered_data.append(filtered_row)
-        return recognize_dates_from_schema(self.dataset.schema,
-                                           BambooFrame(filtered_data))
+        return BambooFrame(filtered_data)
 
     def _update_aggregate_datasets(self, calculations, new_dframe):
         if not self.calcs_to_data:
