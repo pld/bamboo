@@ -739,10 +739,34 @@ class TestDatasets(TestAbstractDatasets):
                          right_dataset.joined_dataset_ids)
 
     def test_join_datasets_non_unique_rhs(self):
-        self.assertTrue(False)
+        self._post_file()
+        left_dataset_id = self.dataset_id
+        self._post_file()
+        results = json.loads(self.controller.join(
+            left_dataset_id, self.dataset_id, on='food_type'))
+        self.assertTrue(isinstance(results, dict))
+        self.assertTrue(AbstractController.ERROR in results.keys())
+        self.assertTrue('right' in results[AbstractController.ERROR])
+        self.assertTrue('not unique' in results[AbstractController.ERROR])
 
     def test_join_datasets_on_col_not_in_lhs(self):
-        self.assertTrue(False)
+        self._post_file()
+        left_dataset_id = self.dataset_id
+        self._post_file('good_eats_aux.csv')
+        on = 'code'
+        results = json.loads(self.controller.join(
+            left_dataset_id, self.dataset_id, on=on))
+        self.assertTrue(isinstance(results, dict))
+        self.assertTrue(AbstractController.ERROR in results.keys())
+        self.assertTrue('left' in results[AbstractController.ERROR])
 
     def test_join_datasets_on_col_not_in_rhs(self):
-        self.assertTrue(False)
+        self._post_file()
+        left_dataset_id = self.dataset_id
+        self._post_file('good_eats_aux.csv')
+        on = 'rating'
+        results = json.loads(self.controller.join(
+            left_dataset_id, self.dataset_id, on=on))
+        self.assertTrue(isinstance(results, dict))
+        self.assertTrue(AbstractController.ERROR in results.keys())
+        self.assertTrue('right' in results[AbstractController.ERROR])
