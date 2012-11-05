@@ -85,11 +85,11 @@ class Dataset(AbstractModel):
     def joined_datasets(self):
         result = []
         # TODO: fetch all datasets in single DB call
-        # TODO: convert to list iteration
-        return [(direction, self.find_one(other_dataset_id), on,
-                    self.find_one(joined_dataset_id)))
+        return [
+            (direction, self.find_one(other_dataset_id), on,
+             self.find_one(joined_dataset_id))
             for direction, other_dataset_id, on, joined_dataset_id in
-    self.joined_dataset_ids]
+            self.joined_dataset_ids]
 
     @property
     def merged_dataset_ids(self):
@@ -141,12 +141,12 @@ class Dataset(AbstractModel):
     def add_joined_dataset(self, new_data):
         """Add the ID of *new_dataset* to the list of joined datasets."""
         self._add_linked_data(self.JOINED_DATASETS, self.joined_dataset_ids,
-                new_data)
+                              new_data)
 
     def add_merged_dataset(self, new_dataset):
         """Add the ID of *new_dataset* to the list of merged datasets."""
         self._add_linked_data(self.MERGED_DATASETS, self.merged_datasets,
-                new_dataset.dataset_id)
+                              new_dataset.dataset_id)
 
     def _add_linked_data(self, link_key, existing_data, new_data):
         self.update({link_key: existing_data + [new_data]})
