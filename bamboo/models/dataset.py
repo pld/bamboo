@@ -86,10 +86,10 @@ class Dataset(AbstractModel):
         result = []
         # TODO: fetch all datasets in single DB call
         # TODO: convert to list iteration
-        for direction, other_dataset_id, on, joined_dataset_id in self.joined_dataset_ids:
-            result.append((direction, self.find_one(other_dataset_id), on,
+        return [(direction, self.find_one(other_dataset_id), on,
                     self.find_one(joined_dataset_id)))
-        return result
+            for direction, other_dataset_id, on, joined_dataset_id in
+    self.joined_dataset_ids]
 
     @property
     def merged_dataset_ids(self):
