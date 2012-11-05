@@ -218,7 +218,8 @@ class Calculator(object):
             else:
                 merged_dframe = new_dframe_raw
                 if on in merged_dframe:
-                    merged_dframe = new_dframe_raw.join_dataset(other_dataset, on)
+                    merged_dframe = new_dframe_raw.join_dataset(
+                        other_dataset, on)
                 joined_calculator = Calculator(joined_dataset)
                 call_async(joined_calculator.calculate_updates,
                            joined_calculator, merged_dframe.to_jsondict(),
