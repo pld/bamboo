@@ -728,12 +728,12 @@ class TestDatasets(TestAbstractDatasets):
         self.assertTrue(isinstance(results, dict))
         self.assertTrue(AbstractController.SUCCESS in results.keys())
         self.assertTrue(Dataset.ID in results.keys())
-        merged_dataset_id = results[Dataset.ID]
-        data = json.loads(self.controller.show(merged_dataset_id))
+        joined_dataset_id = results[Dataset.ID]
+        data = json.loads(self.controller.show(joined_dataset_id))
         self.assertTrue('code' in data[0].keys())
         left_dataset = Dataset.find_one(left_dataset_id)
         right_dataset = Dataset.find_one(self.dataset_id)
-        self.assertEqual([('right', self.dataset_id, on, merged_dataset_id)],
+        self.assertEqual([('right', self.dataset_id, on, joined_dataset_id)],
                          left_dataset.joined_dataset_ids)
-        self.assertEqual([('left', left_dataset_id, on, merged_dataset_id)],
+        self.assertEqual([('left', left_dataset_id, on, joined_dataset_id)],
                          right_dataset.joined_dataset_ids)
