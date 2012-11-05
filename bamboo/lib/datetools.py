@@ -1,4 +1,5 @@
 from calendar import timegm
+import copy
 from datetime import datetime
 
 from dateutil.parser import parse as date_parse
@@ -22,10 +23,11 @@ def recognize_dates(dframe):
     Returns:
         A DataFrame with column values convert to datetime types.
     """
+    new_dframe = copy.deepcopy(dframe)
     for idx, dtype in enumerate(dframe.dtypes):
         if dtype.type == np.object_:
-            dframe = _convert_column_to_date(dframe, dframe.columns[idx])
-    return dframe
+            _convert_column_to_date(new_dframe, dframe.columns[idx])
+    return new_dframe
 
 
 def recognize_dates_from_schema(schema, dframe):
@@ -39,12 +41,13 @@ def recognize_dates_from_schema(schema, dframe):
     Returns:
         A DataFrame with column values convert to datetime types.
     """
+    new_dframe = copy.deepcopy(dframe)
     dframe_columns = dframe.columns.tolist()
     for column, column_schema in schema.items():
         if column in dframe_columns and\
                 column_schema[SIMPLETYPE] == DATETIME:
-            dframe = _convert_column_to_date(dframe, column)
-    return dframe
+            _convert_column_to_date(new_dframe, column)
+    return new_dframe
 
 
 def _is_potential_date(value):
@@ -52,6 +55,7 @@ def _is_potential_date(value):
 
 
 def _convert_column_to_date(dframe, column):
+    """Inline conversion of column in dframe to date type."""
     try:
         new_column = Series([
             date_parse(field) if _is_potential_date(field) else field for
@@ -63,7 +67,6 @@ def _convert_column_to_date(dframe, column):
     except OverflowError:
         # it is a number that is too large to be a date
         pass
-    return dframe
 
 
 def parse_str_to_unix_time(value):
