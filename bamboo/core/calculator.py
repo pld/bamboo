@@ -207,16 +207,18 @@ class Calculator(object):
                        slugified_data, self.dataset.dataset_id)
 
         # update any joined datasets
-        for direction, other_dataset, on, joined_dataset in self.dataset.joined_datasets():
+        for direction, other_dataset, on, joined_dataset in\
+                self.dataset.joined_datasets():
             if direction == 'left':
-                merged_dframe = other_dataset.dframe().left_join(self.dataset, on)
+                merged_dframe = other_dataset.dframe().left_join(
+                    self.dataset, on)
                 joined_dataset.replace_observations(merged_dframe)
             else:
                 merged_dframe = new_dframe.join_dataset(other_dataset, on)
                 joined_calculator = Calculator(joined_dataset)
-                call_async(merged_calculator.calculate_updates, joined_calculator,
-                           merged_dframe.to_jsondict(), self.dataset.dataset_id)
-
+                call_async(merged_calculator.calculate_updates,
+                           joined_calculator, merged_dframe.to_jsondict(),
+                           self.dataset.dataset_id)
 
     def make_columns(self, formula, name, dframe=None):
         """Parse formula into function and variables."""

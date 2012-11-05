@@ -734,6 +734,6 @@ class TestDatasets(TestAbstractDatasets):
         left_dataset = Dataset.find_one(left_dataset_id)
         right_dataset = Dataset.find_one(self.dataset_id)
         self.assertEqual([('right', self.dataset_id, on, merged_dataset_id)],
-            left_dataset.joined_dataset_ids)
+                         left_dataset.joined_dataset_ids)
         self.assertEqual([('left', left_dataset_id, on, merged_dataset_id)],
-            right_dataset.joined_dataset_ids)
+                         right_dataset.joined_dataset_ids)
