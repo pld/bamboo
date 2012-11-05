@@ -69,17 +69,3 @@ class TestDatasetsUpdateWithJoin(TestAbstractDatasets):
     def test_datasets_update_left(self):
         self._put_row_updates(self.left_dataset_id)
         self._test_update_left()
-
-    def test_datasets_update1_and_update2(self):
-        self._put_row_updates(self.dataset1_id)
-        self._test_update1()
-        self._put_row_updates(self.right_dataset_id)
-        self._verify_dataset(
-            self.merged_dataset1_id,
-            'tests/fixtures/updates/update2/merged_dataset1.p')
-        self._verify_dataset(
-            self.linked_dataset1_id,
-            'tests/fixtures/updates/update2/linked_dataset1.p')
-        self._verify_dataset(
-            self.merged_dataset2_id,
-            'tests/fixtures/updates/update2/merged_dataset2.p')
