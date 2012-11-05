@@ -5,7 +5,8 @@ from bamboo.controllers.abstract_controller import AbstractController,\
     ArgumentError
 from bamboo.core.merge import merge_dataset_ids, MergeError
 from bamboo.core.summary import ColumnTypeError
-from bamboo.lib.io import create_dataset_from_url, create_dataset_from_csv
+from bamboo.lib.io import create_dataset_from_url, create_dataset_from_csv,\
+    create_dataset_from_schema
 from bamboo.models.dataset import Dataset
 
 
@@ -176,13 +177,14 @@ class Datasets(AbstractController):
 
         return self.dump_or_error(result, error)
 
-    def create(self, url=None, csv_file=None):
-        """Create a dataset by URL or passed CSV file.
+    def create(self, url=None, csv_file=None, schema=None):
+        """Create a dataset by URL, CSV or schema file.
 
         If *url* is provided, create a dataset by downloading a CSV from that
         URL. If *url* is not provided and *csv_file* is provided, create a
         dataset with the data in the passed *csv_file*. If both *url* and
-        *csv_file* are provided, *csv_file* is ignored.
+        *csv_file* are provided, *csv_file* is ignored. If *schema* is supplied,
+        an empty dataset is created with the associated column structure.
 
         The follow words are reserved and will lead to unexpected behavior if
         used as column names:
@@ -203,9 +205,10 @@ class Datasets(AbstractController):
         - url: A URL to load a CSV file from. The URL must point to a CSV
           file.
         - csv_file: An uploaded CSV file to read from.
+        - schema: A SDF schema file (JSON)
 
         Returns:
-            An error message ff neither *url* nor *csv_file* are provided. An
+            An error message ff *url*, *csv_file*, or *scehma* are not provided. An
             error message if an improperly formatted value raises a ValueError,
             e.g. an improperly formatted CSV file. An error message if the URL
             could not be loaded. Otherwise returns a JSON string with the
@@ -213,7 +216,7 @@ class Datasets(AbstractController):
             will not be fully loaded until its state is set to ready.
         """
         result = None
-        error = 'url or csv_file required'
+        error = 'url, csv_file or schema required'
 
         try:
             dataset = None
@@ -221,6 +224,8 @@ class Datasets(AbstractController):
                 dataset = create_dataset_from_url(url)
             elif csv_file:
                 dataset = create_dataset_from_csv(csv_file)
+            elif schema:
+                dataset = create_dataset_from_schema(schema)
             if dataset:
                 result = {Dataset.ID: dataset.dataset_id}
         except urllib2.URLError:

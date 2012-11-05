@@ -34,6 +34,7 @@ class TestDatasets(TestAbstractDatasets):
         TestAbstractDatasets.setUp(self)
         self._file_path = 'tests/fixtures/%s' % self._file_name
         self._file_uri = 'file://%s' % self._file_path
+        self._schema_path = 'tests/fixtures/good_eats.schema.json'
         self.url = 'http://formhub.org/mberg/forms/good_eats/data.csv'
         self._file_name_with_slashes = 'good_eats_with_slashes.csv'
         self.default_formulae = [
@@ -158,6 +159,17 @@ class TestDatasets(TestAbstractDatasets):
         mock_uploaded_file = MockUploadedFile(_file)
         result = json.loads(
             self.controller.create(csv_file=mock_uploaded_file))
+        self.assertTrue(isinstance(result, dict))
+        self.assertTrue(Dataset.ID in result)
+
+        results = self._test_summary_built(result)
+        self._test_summary_no_group(results)
+
+    def test_create_from_schema(self):
+        schema = open(self._schema_path)
+        mock_uploaded_file = MockUploadedFile(schema)
+        result = json.loads(
+            self.controller.create(schema=mock_uploaded_file))
         self.assertTrue(isinstance(result, dict))
         self.assertTrue(Dataset.ID in result)
 

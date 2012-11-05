@@ -70,3 +70,6 @@ def create_dataset_from_csv(csv_file):
                delete=True)
 
     return dataset
+
+def create_dataset_from_schema(schema):
+    return '1234'
