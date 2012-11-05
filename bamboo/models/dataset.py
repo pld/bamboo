@@ -40,6 +40,7 @@ class Dataset(AbstractModel):
     CREATED_AT = 'created_at'
     DESCRIPTION = 'description'
     ID = 'id'
+    JOINED_DATASETS = 'joined_datasets'
     LABEL = 'label'
     LICENSE = 'license'
     NUM_COLUMNS = 'num_columns'
@@ -75,12 +76,31 @@ class Dataset(AbstractModel):
                      self.aggregated_datasets_dict.items()])
 
     @property
+    def joined_dataset_ids(self):
+        return [
+            tuple(_list) for _list in self.record.get(self.JOINED_DATASETS, [])
+        ]
+
+    @property
+    def joined_datasets(self):
+        result = []
+        # TODO: fetch all datasets in single DB call
+        # TODO: convert to list iteration
+        for direction, other_dataset_id, on, joined_dataset_id in self.joined_dataset_ids:
+            result.append((direction, self.find_one(other_dataset_id), on,
+                    self.find_one(joined_dataset_id)))
+        return result
+
+    @property
     def merged_dataset_ids(self):
         return self.record.get(self.MERGED_DATASETS, [])
 
     @property
     def merged_datasets(self):
-        return [self.find_one(_id) for _id in self.merged_dataset_ids]
+        return self._linked_datasets(self.merged_dataset_ids)
+
+    def _linked_datasets(self, ids):
+        return [self.find_one(_id) for _id in ids]
 
     def is_factor(self, col):
         return self.schema[col][OLAP_TYPE] == DIMENSION
@@ -118,11 +138,18 @@ class Dataset(AbstractModel):
         dframe.remove_bamboo_reserved_keys(keep_parent_ids)
         return dframe
 
+    def add_joined_dataset(self, new_data):
+        """Add the ID of *new_dataset* to the list of joined datasets."""
+        self._add_linked_data(self.JOINED_DATASETS, self.joined_dataset_ids,
+                new_data)
+
     def add_merged_dataset(self, new_dataset):
         """Add the ID of *new_dataset* to the list of merged datasets."""
-        self.update({
-            self.MERGED_DATASETS: self.merged_datasets +
-            [new_dataset.dataset_id]})
+        self._add_linked_data(self.MERGED_DATASETS, self.merged_datasets,
+                new_dataset.dataset_id)
+
+    def _add_linked_data(self, link_key, existing_data, new_data):
+        self.update({link_key: existing_data + [new_data]})
 
     def clear_summary_stats(self, field=ALL):
         """Remove summary stats for *field*."""
@@ -310,9 +337,12 @@ class Dataset(AbstractModel):
         self.replace_observations(dframe.drop(columns, axis=1))
 
     def join(self, other, on):
-        other_dframe = other.dframe().set_index(on)
-        merged_dframe = self.dframe().join(other_dframe, on=on)
+        merged_dframe = self.dframe().join_dataset(other, on)
         merged_dataset = self.__class__()
         merged_dataset.save()
         merged_dataset.save_observations(merged_dframe)
+        self.add_joined_dataset(
+            ('right', other.dataset_id, on, merged_dataset.dataset_id))
+        other.add_joined_dataset(
+            ('left', self.dataset_id, on, merged_dataset.dataset_id))
         return merged_dataset
