@@ -3,6 +3,7 @@ import urllib2
 
 from bamboo.controllers.abstract_controller import AbstractController,\
     ArgumentError
+from bamboo.core.frame import NonUniqueJoinError
 from bamboo.core.merge import merge_dataset_ids, MergeError
 from bamboo.core.summary import ColumnTypeError
 from bamboo.lib.io import create_dataset_from_url, create_dataset_from_csv
@@ -248,7 +249,8 @@ class Datasets(AbstractController):
         def _action(dataset):
             dataset.add_observations(cherrypy.request.body.read())
             return {Dataset.ID: dataset_id}
-        return self._safe_get_and_call(dataset_id, _action)
+        return self._safe_get_and_call(
+            dataset_id, _action, exceptions=(NonUniqueJoinError,))
 
     def drop_columns(self, dataset_id, columns):
         """Drop columns in dataset.
@@ -296,4 +298,5 @@ class Datasets(AbstractController):
                     Dataset.ID: merged_dataset.dataset_id,
                 }
         return self._safe_get_and_call(
-            dataset_id, _action, other_dataset_id=other_dataset_id, on=on)
+            dataset_id, _action, other_dataset_id=other_dataset_id, on=on,
+            exceptions=(KeyError, NonUniqueJoinError))
