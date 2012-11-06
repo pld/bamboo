@@ -23,7 +23,7 @@ class TestAbstractDatasets(TestBase):
         self._update_check_file_path = 'tests/fixtures/%s' %\
             self._update_check_file_name
 
-    def _put_row_updates(self, dataset_id=None, file_path=None):
+    def _put_row_updates(self, dataset_id=None, file_path=None, validate=True):
         if not dataset_id:
             dataset_id = self.dataset_id
         # mock the cherrypy server by setting the POST request body
@@ -31,8 +31,9 @@ class TestAbstractDatasets(TestBase):
             file_path = self._update_file_path
         cherrypy.request.body = open(file_path, 'r')
         result = json.loads(self.controller.update(dataset_id=dataset_id))
-        self.assertTrue(isinstance(result, dict))
-        self.assertTrue(Dataset.ID in result)
+        if validate:
+            self.assertTrue(isinstance(result, dict))
+            self.assertTrue(Dataset.ID in result)
         # set up the (default) values to test against
         with open(self._update_check_file_path, 'r') as f:
             self._update_values = json.loads(f.read())
