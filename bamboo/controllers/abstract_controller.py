@@ -75,7 +75,8 @@ class AbstractController(object):
         return '%s(%s)' % (callback, json) if callback else json
 
     def _safe_get_and_call(self, dataset_id, action, callback=None,
-                           exceptions=(), success_status_code=200, **kwargs):
+                           exceptions=(), success_status_code=200,
+                           error = 'id not found', **kwargs):
         """Find dataset and call action with it and kwargs.
 
         Finds the dataset by *dataset_id* then calls function *action* and
@@ -91,6 +92,7 @@ class AbstractController(object):
         - callback: A JSONP callback that is passed through to
                     dump_or_error.
         - exceptions: A set of exceptions to additionally catch.
+        - error: Default error string.
         - kwargs: A set of keyword arguments that are passed to the action.
 
         Returns:
@@ -100,7 +102,6 @@ class AbstractController(object):
         exceptions += (ArgumentError, JSONError, ValueError)
 
         dataset = Dataset.find_one(dataset_id)
-        error = 'id not found'
         result = None
 
         try:
