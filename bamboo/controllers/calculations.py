@@ -39,8 +39,7 @@ class Calculations(AbstractController):
 
         calculation = Calculation.find_one(dataset_id, name, group)
         if calculation:
-            dataset = Dataset.find_one(dataset_id)
-            calculation.delete(dataset)
+            calculation.delete()
             result = {self.SUCCESS: 'deleted calculation: %s for dataset: %s' %
                       (name, dataset_id)}
         return self.dump_or_error(result,
@@ -90,8 +89,8 @@ class Calculations(AbstractController):
         dataset = Dataset.find_one(dataset_id)
         result = None
 
-        if dataset:
+        if dataset.record:
             # get the calculations
-            result = dataset.calculations()
+            result = Calculation.find(dataset)
             result = [x.clean_record for x in result]
         return self.dump_or_error(result, 'dataset_id not found', callback)
