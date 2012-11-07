@@ -15,7 +15,9 @@ request to the dataset id. The row(s) should be key-value pairs where the key
 is the column name. In the example that we have been using here, the dataset
 could be updated with a JSON dictionary like this:
 
-::
+**returns:**
+
+.. code-block:: javascript
 
     {
         "rating": "delectible",
@@ -29,7 +31,9 @@ given column.
 
 ``curl -X PUT -H "Accept: application/json" -H "Content-type: application/json" -d '{"rating":"delectible","amount":2,"food_type":"streat_sweets"}' http://bamboo.io/datasets/8a3d74711475d8a51c84484fe73f24bd151242ea``
 
-returns::
+**returns:**
+
+.. code-block:: javascript
 
     {"id": "8a3d74711475d8a51c84484fe73f24bd151242ea"}
 
@@ -44,7 +48,9 @@ the data has been merged.
 
 ``curl -X POST -d "datasets=[8123, 9123]" http://bamboo.io/datasets/merge``
 
-returns::
+**returns:**
+
+.. code-block:: javascript
 
     {"id": "8a3d74711475d8a51c84484fe73f24bd151242ea"}
 
@@ -65,6 +71,8 @@ right hand side that make the join column non-unique will be disallowed.
 
 ``curl -X POST -d "other_dataset_id=[9123]" http://bamboo.io/datasets/8123/join``
 
-returns::
+**returns:**
+
+.. code-block:: javascript
 
     {"id": "8a3d74711475d8a51c84484fe73f24bd151242ea"}
