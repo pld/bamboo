@@ -49,28 +49,33 @@ class AbstractController(object):
         cherrypy.response.status = 204
         return ''
 
-    def dump_or_error(self, obj, error_message, callback=False):
+    def dump_or_error(self, obj, error_message, callback=False,
+                      success_status_code=200):
         """Dump JSON or return error message, potentially with callback.
 
-        If *obj* is None *error_message* is returned.  If *callback* exists,
-        the returned string is wrapped in the callback for JSONP.
+        If *obj* is None *error_message* is returned and the HTTP status code is
+        set to 400. Otherwise the HTTP status code is set to
+        *success_status_code*. If *callback* exists, the returned string is wrapped in the callback for JSONP.
 
         Args:
 
-        - obj: data to dump as JSON using BSON encoder.
-        - error_message: error message to return is object is None.
-        - callback: callback string to wrap obj in for JSONP.
+        - obj: Data to dump as JSON using BSON encoder.
+        - error_message: Error message to return is object is None.
+        - callback: Callback string to wrap obj in for JSONP.
+        - success_status_code: The HTTP status code to return, default is 200.
 
         Returns:
             A JSON string wrapped with callback if callback is not False.
         """
+        cherrypy.response.status = success_status_code if obj else 400
         if obj is None:
             obj = {self.ERROR: error_message}
         json = dump_mongo_json(obj)
         self._add_cors_headers()
         return '%s(%s)' % (callback, json) if callback else json
 
-    def _safe_get_and_call(self, dataset_id, action, **kwargs):
+    def _safe_get_and_call(self, dataset_id, action, callback=None,
+                           exceptions=(), success_status_code=200, **kwargs):
         """Find dataset and call action with it and kwargs.
 
         Finds the dataset by *dataset_id* then calls function *action* and
@@ -92,10 +97,7 @@ class AbstractController(object):
             A string that is the result of calling action or an error caught
             when calling action.
         """
-        # kwargs that will not be passed through
-        callback = kwargs.pop('callback', None)
-        exceptions = (ArgumentError, JSONError, ValueError) +\
-            kwargs.pop('exceptions', ())
+        exceptions += (ArgumentError, JSONError, ValueError)
 
         dataset = Dataset.find_one(dataset_id)
         error = 'id not found'
@@ -107,4 +109,4 @@ class AbstractController(object):
         except exceptions as err:
             error = err.__str__()
 
-        return self.dump_or_error(result, error, callback)
+        return self.dump_or_error(result, error, callback, success_status_code)
