@@ -72,6 +72,7 @@ def create_dataset_from_csv(csv_file):
 
     return dataset
 
+
 def create_dataset_from_schema(schema):
     """Create a dataset from a SDF schema file (JSON).
 

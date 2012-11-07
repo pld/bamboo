@@ -181,8 +181,9 @@ class Datasets(AbstractController):
         If *url* is provided, create a dataset by downloading a CSV from that
         URL. If *url* is not provided and *csv_file* is provided, create a
         dataset with the data in the passed *csv_file*. If both *url* and
-        *csv_file* are provided, *csv_file* is ignored. If *schema* is supplied,
-        an empty dataset is created with the associated column structure.
+        *csv_file* are provided, *csv_file* is ignored. If *schema* is
+        supplied, an empty dataset is created with the associated column
+        structure.
 
         The follow words are reserved and will lead to unexpected behavior if
         used as column names:
@@ -206,12 +207,13 @@ class Datasets(AbstractController):
         - schema: A SDF schema file (JSON)
 
         Returns:
-            An error message ff *url*, *csv_file*, or *scehma* are not provided. An
-            error message if an improperly formatted value raises a ValueError,
-            e.g. an improperly formatted CSV file. An error message if the URL
-            could not be loaded. Otherwise returns a JSON string with the
-            dataset ID of the newly created dataset.  Note that the dataset
-            will not be fully loaded until its state is set to ready.
+            An error message ff *url*, *csv_file*, or *scehma* are not
+            provided. An error message if an improperly formatted value raises
+            a ValueError, e.g. an improperly formatted CSV file. An error
+            message if the URL could not be loaded. Otherwise returns a JSON
+            string with the dataset ID of the newly created dataset.  Note that
+            the dataset will not be fully loaded until its state is set to
+            ready.
         """
         result = None
         error = 'url, csv_file or schema required'
