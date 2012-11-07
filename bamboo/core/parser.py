@@ -18,8 +18,12 @@ class ParseError(Exception):
 class ParserContext(object):
     """Context to be passed into parser."""
 
-    def __init__(self, dataset):
-        self.schema = dataset.schema
+    dependent_columns = set()
+    schema = None
+
+    def __init__(self, dataset=None):
+        if dataset:
+            self.schema = dataset.schema
 
 
 class Parser(object):
@@ -51,7 +55,7 @@ class Parser(object):
         special_names
 
     def __init__(self, dataset=None):
-        self.context = ParserContext(dataset) if dataset else None
+        self.context = ParserContext(dataset)
         self._build_bnf()
 
     def store_aggregation(self, _, __, tokens):
