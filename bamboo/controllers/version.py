@@ -1,4 +1,4 @@
-import json
+import simplejson as json
 
 from bamboo.controllers.abstract_controller import AbstractController
 

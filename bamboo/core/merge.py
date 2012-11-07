@@ -1,4 +1,4 @@
-import json
+import simplejson as json
 
 from celery.task import task
 from pandas import concat

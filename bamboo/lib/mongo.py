@@ -1,5 +1,5 @@
 from  base64 import b64encode
-import json
+import simplejson as json
 import re
 
 from bson import json_util

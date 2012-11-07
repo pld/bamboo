@@ -1,4 +1,4 @@
-import json
+import simplejson as json
 
 from bson import json_util
 from pandas import Series
