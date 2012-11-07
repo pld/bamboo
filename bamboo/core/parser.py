@@ -239,9 +239,22 @@ class Parser(object):
         self.bnf = agg_expr
 
     def parse_formula(self, input_str):
+        """Parse formula and return evaluation function.
+
+        Parse the formula in *input_str* into an aggregation name and functions.
+        There will be multiple functions is the aggregation takes multiple
+        arguments, e.g. ratio which takes a numerator and denominator formula.
+
+        Args:
+            input_str: The string to parse.
+
+        Returns:
+            A tuple with the name of the aggregation in the formula, if any
+            and a list of functions built from the input string.
         """
-        Parse formula and return evaluation function.
-        """
+
+        # reset dependent columns before parsing
+        self.context.dependent_columns = set()
 
         try:
             self.parsed_expr = self.bnf.parseString(input_str)[0]
