@@ -7,6 +7,10 @@ from bamboo.lib.utils import call_async
 from bamboo.models.abstract_model import AbstractModel
 
 
+class DependencyError(Exception):
+    pass
+
+
 @task
 def delete_task(calculation, dataset):
     """Background task to delete *calculation* and columns in its dataset.
@@ -123,9 +127,13 @@ class Calculation(AbstractModel):
 
         - dataset: Dataset for this calculation.
 
-        Returns:
-            Whether dependent calculations exist.
+        Raises:
+            DependencyError: If dependent calculations exist.
         """
+        if len(self.dependent_calculations):
+            raise DependencyError(
+                'Cannot delete, the calculations %s depend on this calculation'
+                % self.dependent_calculations)
         call_async(delete_task, self, dataset)
 
     def save(self, dataset, formula, name, group=None):
