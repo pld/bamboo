@@ -15,18 +15,20 @@ Check the Bamboo version
 Storing data in Bamboo
 ----------------------
 
-upload data from a URL to Bamboo
+Upload data from a URL to Bamboo
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 ``curl -X POST -d "url=http://formhub.org/mberg/forms/good_eats/data.csv" http://bamboo.io/datasets``
 
-returns::
+**returns:**
+
+.. code-block:: javascript
 
     {
         "id": "8a3d74711475d8a51c84484fe73f24bd151242ea"
     }
 
-upload data from a file to Bamboo
+Upload data from a file to Bamboo
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 given the file ``/home/modilabs/good_eats.csv`` exists locally on your
@@ -34,7 +36,9 @@ filesystem
 
 ``curl -X POST -F csv_file=@/home/modilabs/good_eats.csv http://bamboo.io/datasets``
 
-returns::
+**returns:**
+
+.. code-block:: javascript
 
     {
         "id": "8a3d74711475d8a51c84484fe73f24bd151242ea"
@@ -47,7 +51,9 @@ given the id is ``8a3d74711475d8a51c84484fe73f24bd151242ea``
 
 ``curl http://bamboo.io/datasets/8a3d74711475d8a51c84484fe73f24bd151242ea/info``
 
-returns::
+**returns:**
+
+.. code-block:: javascript
 
     {
         "id": "8a3d74711475d8a51c84484fe73f24bd151242ea",
@@ -83,14 +89,16 @@ Retrieve data
 
 given the id is ``8a3d74711475d8a51c84484fe73f24bd151242ea``
 
-by ID
+By ID
 ^^^^^
 
 ``curl http://bamboo.io/datasets/8a3d74711475d8a51c84484fe73f24bd151242ea``
 
 This returns the dataset as JSON.
 
-returns::
+**returns:**
+
+.. code-block:: javascript
 
     [
         {
@@ -105,7 +113,7 @@ returns::
         ...
     ]
 
-by ID with select
+By ID with select
 ^^^^^^^^^^^^^^^^^
 
 ``curl -g http://bamboo.io/datasets/8a3d74711475d8a51c84484fe73f24bd151242ea?select='{"rating":1}'``
@@ -113,7 +121,9 @@ by ID with select
 This returns the dataset as JSON given the select, i.e. only the rating
 column.
 
-returns::
+**returns:**
+
+.. code-block:: javascript
 
     [
         {"rating": "epic_eat"},
@@ -140,7 +150,7 @@ returns::
     ]
 
 
-by ID and query
+By ID and query
 ^^^^^^^^^^^^^^^
 
 query must be valid MongoDB extended JSON
@@ -150,7 +160,9 @@ query must be valid MongoDB extended JSON
 This returns the dataset as JSON given the query, i.e. only rows with a
 food_type of "lunch".
 
-returns::
+**returns:**
+
+.. code-block:: javascript
 
     [
         {
@@ -174,7 +186,7 @@ returns::
         ...
     ]
 
-query with dates
+Query with dates
 ^^^^^^^^^^^^^^^^
 
 To query with dates use the MongoDB query format and specify dates as Unix
@@ -188,7 +200,7 @@ Returns the rows with a time stamp less than 1320000000, which is October 30th
 Retrieve summary statistics for dataset
 ---------------------------------------
 
-by ID
+By ID
 ^^^^^
 
 ``curl http://bamboo.io/datasets/8a3d74711475d8a51c84484fe73f24bd151242ea/summary?select=all``
@@ -200,7 +212,9 @@ counts of unique values.
 The select argument is required.  It can either be ``all`` or a MongoDB JSON
 select query.
 
-returns::
+**returns:**
+
+.. code-block:: javascript
 
     {
         "rating": {
@@ -224,7 +238,7 @@ returns::
         ...
     }
 
-with a query
+With a query
 ^^^^^^^^^^^^^
 
 ``curl -g http://bamboo.io/datasets/8a3d74711475d8a51c84484fe73f24bd151242ea/summary?query='{"food_type": "lunch"}'&select=all``
@@ -232,7 +246,9 @@ with a query
 Return the summary restricting to data that matches the Mongo query passed as
 *query*.
 
-returns::
+**returns:**
+
+.. code-block:: javascript
 
     {
         "rating": {
@@ -266,14 +282,16 @@ returns::
         ...
     }
 
-with a grouping
+With a grouping
 ^^^^^^^^^^^^^^^
 
 ``curl http://bamboo.io/datasets/8a3d74711475d8a51c84484fe73f24bd151242ea/summary?select=all&group=food_type``
 
 Return the summary grouping on the value passed as *group*.
 
-returns::
+**returns:**
+
+.. code-block:: javascript
 
     {
         "food_type": {
@@ -341,7 +359,7 @@ returns::
         }
     }
 
-with a grouping and a select
+With a grouping and a select
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 ``curl -g http://bamboo.io/datasets/8a3d74711475d8a51c84484fe73f24bd151242ea/summary?select='{"rating":1}'&group=food_type``
@@ -349,7 +367,9 @@ with a grouping and a select
 Return the summary grouping on the value passed as *group* and only showing the
 columns specified by the *select*.
 
-returns::
+**returns:**
+
+.. code-block:: javascript
 
     {
         "food_type": {
@@ -371,12 +391,14 @@ returns::
         }
     }
 
-with a multi-grouping
+With a multi-grouping
 ^^^^^^^^^^^^^^^^^^^^^
 
 ``curl http://bamboo.io/datasets/8a3d74711475d8a51c84484fe73f24bd151242ea/summary?select=all&group=food_type,rating``
 
-returns::
+**returns:**
+
+.. code-block:: javascript
 
     {
         "food_type,rating": {
@@ -463,12 +485,14 @@ The results of aggregations are stored in a dataset with one column for
 the unique groups and another for the result of the *formula*. This dataset is
 indexed by the group parameter and unique per dataset ID.
 
-store calculation formula:
+Store calculation formula:
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 ``curl -X POST -d "name=amount_less_than_10&formula=amount<10" http://bamboo.io/calculations/8a3d74711475d8a51c84484fe73f24bd151242ea``
 
-returns::
+**returns:**
+
+.. code-block:: javascript
 
     {
         "formula": "amount<10",
@@ -476,12 +500,14 @@ returns::
         "name": "amount_less_than_10"
     }
 
-retrieve newly calculated column:
+Retrieve newly calculated column:
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 ``curl -g http://bamboo.io/datasets/8a3d74711475d8a51c84484fe73f24bd151242ea?select='{"amount_less_than_10":1}'``
 
-returns::
+**returns:**
+
+.. code-block:: javascript
 
     [
         {"amount_less_than_10": true},
@@ -507,12 +533,14 @@ returns::
         {"amount_less_than_10": true}
     ]
 
-store aggregation formula:
+Store aggregation formula:
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 ``curl -X POST -d "name=sum_of_amount&formula=sum(amount)" http://bamboo.io/calculations/8a3d74711475d8a51c84484fe73f24bd151242ea``
 
-returns::
+**returns:**
+
+.. code-block:: javascript
 
     {
         "formula": "sum(amount)",
@@ -520,12 +548,14 @@ returns::
         "name": "sum_of_amount"
     }
 
-store aggregation formula with group:
+Store aggregation formula with group:
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 ``curl -X POST -d "name=sum_of_amount&formula=sum(amount)&group=food_type" http://bamboo.io/calculations/8a3d74711475d8a51c84484fe73f24bd151242ea``
 
-returns::
+**returns:**
+
+.. code-block:: javascript
 
     {
         "formula": "sum(amount)",
@@ -533,12 +563,14 @@ returns::
          "name": "sum_of_amount"
     }
 
-store aggregation formula with multi-group:
+Store aggregation formula with multi-group:
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 ``curl -X POST -d "name=sum_of_amount&formula=sum(amount)&group=food_type,rating" http://bamboo.io/calculations/8a3d74711475d8a51c84484fe73f24bd151242ea``
 
-returns::
+**returns:**
+
+.. code-block:: javascript
 
     {
         "formula": "sum(amount)",
@@ -546,7 +578,7 @@ returns::
          "name": "sum_of_amount"
     }
 
-retrieve lists of related datasets for aggregations:
+Retrieve lists of related datasets for aggregations:
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 ``curl -g http://bamboo.io/datasets/8a3d74711475d8a51c84484fe73f24bd151242ea/related``
@@ -554,7 +586,9 @@ retrieve lists of related datasets for aggregations:
 Returns a map of groups (included an empty group) to dataset IDs for
 aggregation calculations.
 
-returns::
+**returns:**
+
+.. code-block:: javascript
 
     {
         "": "9ae0ee32b78d445588742ac818c3d533",
@@ -562,14 +596,16 @@ returns::
         "food_type,rating": "10cedc551e40418caa72495d771703b3"
     }
 
-retrieve the linked datasets that groups on foodtype and rating:
+Retrieve the linked datasets that groups on foodtype and rating:
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 ``curl -g http://bamboo.io/datasets/10cedc551e40418caa72495d771703b3``
 
 Linked dataset are the same as any other dataset.
 
-returns::
+**returns:**
+
+.. code-block:: javascript
 
     [
         {
