@@ -157,7 +157,8 @@ class Calculator(object):
         if any([direction == 'left' for direction, _, on, __ in
                 self.dataset.joined_datasets]):
             if on in new_dframe_raw.columns:
-                merged_join_column = concat([new_dframe_raw[on], self.dframe[on]])
+                merged_join_column = concat(
+                    [new_dframe_raw[on], self.dframe[on]])
                 if len(merged_join_column) != merged_join_column.nunique():
                     raise NonUniqueJoinError(
                         'Cannot update. This is the right hand join and the'

@@ -49,7 +49,7 @@ def calculate_task(calculation, dataset, calculator):
     dataset.clear_summary_stats()
     calculator.calculate_column(calculation.formula, calculation.name,
                                 calculation.group)
-    dataset_calcs= dataset.calculations()
+    dataset_calcs = dataset.calculations()
     dataset_calc_names = [calc.name for calc in dataset_calcs]
     names_to_calcs = dict([(calc.name, calc) for calc in dataset_calcs])
     for column_name in calculator.parser.context.dependent_columns:
@@ -100,7 +100,7 @@ class Calculation(AbstractModel):
 
     def add_dependent_calculation(self, name):
         self._add_and_update_set(self.DEPENDENT_CALCULATIONS,
-                self.dependent_calculations, name)
+                                 self.dependent_calculations, name)
 
     def _add_and_update_set(self, link_key, existing, new):
         new_list = list(set(existing + [new]))

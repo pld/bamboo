@@ -163,7 +163,8 @@ class AbstractModel(object):
         record = dict_for_mongo(record)
         id_dict = {'_id': self.record['_id']}
         self.collection.update(id_dict, {'$set': record}, safe=True)
-        self.record = super(self.__class__, self.__class__).find_one(id_dict).record
+        self.record = super(
+            self.__class__, self.__class__).find_one(id_dict).record
 
     def batch_save(self, records):
         """Save records in batches to avoid document size maximum setting.

@@ -88,6 +88,6 @@ class BambooFrame(DataFrame):
 
         right_dframe = right_dframe.set_index(on)
         if len(right_dframe.index) != len(right_dframe.index.unique()):
-            raise NonUniqueJoinError(
-                'The join column (%s) of the right hand side dataset is not unique' % on)
+            raise NonUniqueJoinError('The join column (%s) of the right hand s'
+                                     'ide dataset is not unique' % on)
         return self.__class__(self.join(right_dframe, on=on))

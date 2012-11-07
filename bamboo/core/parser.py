@@ -241,7 +241,7 @@ class Parser(object):
     def parse_formula(self, input_str):
         """Parse formula and return evaluation function.
 
-        Parse the formula in *input_str* into an aggregation name and functions.
+        Parse *input_str* into an aggregation name and functions.
         There will be multiple functions is the aggregation takes multiple
         arguments, e.g. ratio which takes a numerator and denominator formula.
 

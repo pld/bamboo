@@ -53,9 +53,10 @@ class AbstractController(object):
                       success_status_code=200):
         """Dump JSON or return error message, potentially with callback.
 
-        If *obj* is None *error_message* is returned and the HTTP status code is
-        set to 400. Otherwise the HTTP status code is set to
-        *success_status_code*. If *callback* exists, the returned string is wrapped in the callback for JSONP.
+        If *obj* is None *error_message* is returned and the HTTP status code
+        is set to 400. Otherwise the HTTP status code is set to
+        *success_status_code*. If *callback* exists, the returned string is
+        wrapped in the callback for JSONP.
 
         Args:
 
