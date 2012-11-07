@@ -90,11 +90,12 @@ class Observation(AbstractModel):
         num_rows = 0
         if dframe is not None:
             labels_to_slugs = dataset.build_labels_to_slugs()
+
             # if column name is not in map assume it is already slugified
             # (i.e. NOT a label)
-            columns = dframe.columns = [
-                labels_to_slugs.get(column, column) for column in
-                dframe.columns.tolist()]
+            dframe = dframe.rename(columns=dict([
+                (column, labels_to_slugs.get(column, column)) for column in
+                dframe.columns.tolist()]))
 
             id_column = Series([dataset.dataset_observation_id] * len(dframe))
             id_column.name = DATASET_OBSERVATION_ID
@@ -104,7 +105,7 @@ class Observation(AbstractModel):
             self.batch_save(rows)
             num_rows = len(dframe)
 
-        # add metadata to dataset
+        # add metadata to dataset, discount ID column
         dataset.update({
             dataset.NUM_COLUMNS: num_columns,
             dataset.NUM_ROWS: num_rows,

@@ -1,6 +1,6 @@
 from bamboo.controllers.abstract_controller import AbstractController
 from bamboo.core.parser import ParseError
-from bamboo.models.calculation import Calculation
+from bamboo.models.calculation import Calculation, DependencyError
 from bamboo.models.dataset import Dataset
 
 
@@ -35,16 +35,18 @@ class Calculations(AbstractController):
             JSON with success if delete or an error string if the calculation
             could not be found.
         """
-        result = None
+        def _action(dataset, name=name, group=group):
+            calculation = Calculation.find_one(dataset.dataset_id, name, group)
+            if calculation:
+                calculation.delete(dataset)
+                return {
+                    self.SUCCESS: 'deleted calculation: %s for dataset: %s' % (
+                        name, dataset.dataset_id)}
 
-        calculation = Calculation.find_one(dataset_id, name, group)
-        if calculation:
-            dataset = Dataset.find_one(dataset_id)
-            calculation.delete(dataset)
-            result = {self.SUCCESS: 'deleted calculation: %s for dataset: %s' %
-                      (name, dataset_id)}
-        return self.dump_or_error(result,
-                                  'name and dataset_id combination not found')
+        return self._safe_get_and_call(
+            dataset_id, _action, exceptions=(DependencyError,), name=name,
+            group=group,
+            error = 'name and dataset_id combination not found')
 
     def create(self, dataset_id, formula, name, group=None):
         """Add a calculation to a dataset with the given fomula, etc.
@@ -73,7 +75,7 @@ class Calculations(AbstractController):
                 % (name, dataset_id)}
         return self._safe_get_and_call(
             dataset_id, _action, formula=formula, name=name, group=group,
-            exceptions=(ParseError,))
+            exceptions=(ParseError,), success_status_code=201)
 
     def show(self, dataset_id, callback=False):
         """Retrieve the calculations for *dataset_id*.
@@ -90,8 +92,8 @@ class Calculations(AbstractController):
         dataset = Dataset.find_one(dataset_id)
         result = None
 
-        if dataset:
+        if dataset.record:
             # get the calculations
-            result = dataset.calculations()
+            result = Calculation.find(dataset)
             result = [x.clean_record for x in result]
         return self.dump_or_error(result, 'dataset_id not found', callback)

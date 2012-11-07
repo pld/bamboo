@@ -16,7 +16,7 @@ class EvalTerm(object):
         self.value = tokens[0]
 
     def operator_operands(self, tokenlist):
-        "Generator to extract operators and operands in pairs."
+        """Generator to extract operators and operands in pairs."""
         _it = iter(tokenlist)
         while 1:
             try:
@@ -37,9 +37,13 @@ class EvalConstant(EvalTerm):
         try:
             return np.float64(self.value)
         except ValueError:
-            # test is date and parse as date
+            # it may be a variable
             field = row.get(self.value)
-            return parse_date_to_unix_time(field) if context and\
+            if field:
+                # it is a variable, save as dependency
+                context.dependent_columns.add(self.value)
+            # test is date and parse as date
+            return parse_date_to_unix_time(field) if context.schema and\
                 col_is_date_simpletype(context.schema[self.value]) else field
 
 

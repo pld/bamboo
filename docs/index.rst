@@ -28,12 +28,21 @@ General configuration notes:
       unique entries.  This is controlled by a parameter in the
       ``core/summary`` module.
 
-Contents:
+Usage:
+------
 
 .. toctree::
    :maxdepth: 2
 
    basic_commands
+   advanced_commands
+
+Code Documentation:
+-------------------
+
+.. toctree::
+   :maxdepth: 2
+
    config
    controllers
    core
@@ -46,4 +55,3 @@ Indices and tables
 * :ref:`genindex`
 * :ref:`modindex`
 * :ref:`search`
-

@@ -2,7 +2,7 @@ from nose.tools import assert_raises
 from pymongo.cursor import Cursor
 
 from bamboo.core.parser import ParseError
-from bamboo.models.calculation import Calculation
+from bamboo.models.calculation import Calculation, DependencyError
 from bamboo.models.dataset import Dataset
 from bamboo.tests.test_base import TestBase
 
@@ -16,15 +16,18 @@ class TestCalculation(TestBase):
         self.formula = 'rating'
         self.name = 'test'
 
+    def _save_calculation(self, formula):
+        if not formula:
+            formula = self.formula
+        return self.calculation.save(self.dataset, formula, self.name)
+
     def _save_observations(self):
         self.dataset.save_observations(self.test_data['good_eats.csv'])
 
     def _save_observations_and_calculation(self, formula=None):
-        if not formula:
-            formula = self.formula
         self._save_observations()
         self.calculation = Calculation()
-        return self.calculation.save(self.dataset, formula, self.name)
+        return self._save_calculation(formula)
 
     def test_save(self):
         record = self._save_observations_and_calculation()
@@ -94,3 +97,30 @@ class TestCalculation(TestBase):
         status = new_record.pop(Calculation.STATE)
         self.assertEqual(status, Calculation.STATE_READY)
         self.assertEqual(record, new_record)
+
+    def test_sets_dependent_calculations(self):
+        record = self._save_observations_and_calculation()
+        self.name = 'test1'
+        record = self._save_calculation('test')
+        calculation = Calculation.find_one(self.dataset.dataset_id, 'test')
+        self.assertEqual(calculation.dependent_calculations, ['test1'])
+
+    def test_removes_dependent_calculations(self):
+        record = self._save_observations_and_calculation()
+        self.name = 'test1'
+        record = self._save_calculation('test')
+        calculation = Calculation.find_one(self.dataset.dataset_id, 'test')
+        self.assertEqual(calculation.dependent_calculations, ['test1'])
+        calculation = Calculation.find_one(self.dataset.dataset_id, 'test1')
+        calculation.delete(self.dataset)
+        calculation = Calculation.find_one(self.dataset.dataset_id, 'test')
+        self.assertEqual(calculation.dependent_calculations, [])
+
+    def test_disallow_delete_dependent_calculation(self):
+        record = self._save_observations_and_calculation()
+        self.name = 'test1'
+        record = self._save_calculation('test')
+        calculation = Calculation.find_one(self.dataset.dataset_id, 'test')
+        self.assertEqual(calculation.dependent_calculations, ['test1'])
+        calculation = Calculation.find_one(self.dataset.dataset_id, 'test')
+        assert_raises(DependencyError, calculation.delete, self.dataset)

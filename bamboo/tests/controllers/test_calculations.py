@@ -159,3 +159,16 @@ class TestCalculations(TestBase):
         dataset = Dataset.find_one(self.dataset_id)
         agg_dataset = Dataset.find_one(dataset.aggregated_datasets_dict[''])
         self.assertTrue(self.name not in agg_dataset.build_labels_to_slugs())
+
+    def test_error_on_delete_calculation_with_dependency(self):
+        self._post_formula()
+        dep_name = self.name
+        self.formula = dep_name
+        self.name = 'test1'
+        response = json.loads(self._post_formula())
+        self.assertTrue(isinstance(response, dict))
+        self.assertTrue(self.controller.SUCCESS in response)
+        result = json.loads(
+            self.controller.delete(self.dataset_id, dep_name, ''))
+        self.assertTrue(AbstractController.ERROR in result)
+        self.assertTrue('depend' in result[AbstractController.ERROR])
