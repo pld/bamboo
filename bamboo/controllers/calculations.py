@@ -73,7 +73,7 @@ class Calculations(AbstractController):
                 % (name, dataset_id)}
         return self._safe_get_and_call(
             dataset_id, _action, formula=formula, name=name, group=group,
-            exceptions=(ParseError,))
+            exceptions=(ParseError,), success_status_code=201)
 
     def show(self, dataset_id, callback=False):
         """Retrieve the calculations for *dataset_id*.

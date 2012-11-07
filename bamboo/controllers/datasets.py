@@ -229,7 +229,7 @@ class Datasets(AbstractController):
         except IOError:
             error = 'could not get a filehandle for: %s' % csv_file
 
-        return self.dump_or_error(result, error)
+        return self.dump_or_error(result, error, success_status_code=201)
 
     def update(self, dataset_id):
         """Update the *dataset_id* with the body as JSON.
