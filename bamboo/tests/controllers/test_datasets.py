@@ -34,6 +34,7 @@ class TestDatasets(TestAbstractDatasets):
         TestAbstractDatasets.setUp(self)
         self._file_path = 'tests/fixtures/%s' % self._file_name
         self._file_uri = 'file://%s' % self._file_path
+        self._schema_path = 'tests/fixtures/good_eats.schema.json'
         self.url = 'http://formhub.org/mberg/forms/good_eats/data.csv'
         self._file_name_with_slashes = 'good_eats_with_slashes.csv'
         self.default_formulae = [
@@ -218,6 +219,29 @@ class TestDatasets(TestAbstractDatasets):
         result = json.loads(self.controller.create())
         self.assertTrue(isinstance(result, dict))
         self.assertTrue(Datasets.ERROR in result)
+
+    def test_create_from_schema(self):
+        schema = open(self._schema_path)
+        mock_uploaded_file = MockUploadedFile(schema)
+        result = json.loads(
+            self.controller.create(schema=mock_uploaded_file))
+        self.assertTrue(isinstance(result, dict))
+        self.assertTrue(Dataset.ID in result)
+        dataset_id = result[Dataset.ID]
+        self._test_summary_built(result)
+        results = json.loads(self.controller.show(self.dataset_id))
+        self.assertTrue(isinstance(results, list))
+        self.assertEqual(len(results), 0)
+        self._post_file()
+        results = json.loads(self.controller.info(dataset_id))
+        self.assertTrue(isinstance(results, dict))
+        self.assertTrue(Dataset.SCHEMA in results.keys())
+        self.assertTrue(Dataset.NUM_ROWS in results.keys())
+        self.assertEqual(results[Dataset.NUM_ROWS], 0)
+        self.assertTrue(Dataset.NUM_COLUMNS in results.keys())
+        self.assertEqual(results[Dataset.NUM_COLUMNS], self.NUM_COLS)
+
+    # TODO: test various create from schema errors
 
     def test_merge_datasets_0_not_enough(self):
         result = json.loads(self.controller.merge(datasets=json.dumps([])))

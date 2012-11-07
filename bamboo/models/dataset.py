@@ -248,6 +248,10 @@ class Dataset(AbstractModel):
         schema = schema_from_data_and_dtypes(self, dframe)
         self.update({self.SCHEMA: schema})
 
+    def set_schema(self, schema):
+        """Set the schema from an existing one."""
+        self.update({self.SCHEMA: schema})
+
     def info(self):
         """Return meta-data for this dataset."""
         return {

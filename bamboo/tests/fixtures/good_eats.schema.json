@@ -1,0 +1,78 @@
+{
+    "_id": {
+        "label": "_id",
+        "olap_type": "measure",
+        "simpletype": "float"
+    },
+    "_percentage_complete": {
+        "label": "_percentage_complete",
+        "olap_type": "measure",
+        "simpletype": "float"
+    },
+    "amount": {
+        "label": "amount",
+        "olap_type": "measure",
+        "simpletype": "float"
+    },
+    "comments": {
+        "label": "comments",
+        "olap_type": "dimension",
+        "simpletype": "string"
+    },
+    "food_photo": {
+        "label": "food_photo",
+        "olap_type": "dimension",
+        "simpletype": "string"
+    },
+    "food_type": {
+        "label": "food_type",
+        "olap_type": "dimension",
+        "simpletype": "string"
+    },
+    "gps": {
+        "cardinality": 18,
+        "label": "gps",
+        "olap_type": "dimension",
+        "simpletype": "string"
+    },
+    "gps_alt": {
+        "label": "gps_alt",
+        "olap_type": "measure",
+        "simpletype": "float"
+    },
+    "gps_latitude": {
+        "label": "gps_latitude",
+        "olap_type": "measure",
+        "simpletype": "float"
+    },
+    "gps_longitude": {
+        "label": "gps_longitude",
+        "olap_type": "measure",
+        "simpletype": "float"
+    },
+    "gps_precision": {
+        "label": "gps_precision",
+        "olap_type": "measure",
+        "simpletype": "float"
+    },
+    "location_name": {
+        "label": "location_name",
+        "olap_type": "dimension",
+        "simpletype": "string"
+    },
+    "rating": {
+        "label": "rating",
+        "olap_type": "dimension",
+        "simpletype": "string"
+    },
+    "risk_factor": {
+        "label": "risk_factor",
+        "olap_type": "dimension",
+        "simpletype": "string"
+    },
+    "submit_date": {
+        "label": "submit_date",
+        "olap_type": "measure",
+        "simpletype": "datetime"
+    }
+}
