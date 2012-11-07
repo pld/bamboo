@@ -20,5 +20,5 @@ if len(sys.argv) > 1 and 'celeryconfig_test' in sys.argv[1]:
 
 RUN_PROFILER = False
 
-# run async?
+# allow asyncronous tasks?
 ASYNCHRONOUS_TASKS = True
