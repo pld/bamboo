@@ -89,11 +89,7 @@ class Calculations(AbstractController):
             A list of calculation records.  Each calculation record shows the
             calculations name, formula, group (if it exists), and state.
         """
-        dataset = Dataset.find_one(dataset_id)
-        result = None
-
-        if dataset.record:
-            # get the calculations
+        def _action(dataset):
             result = Calculation.find(dataset)
-            result = [x.clean_record for x in result]
-        return self.dump_or_error(result, 'dataset_id not found', callback)
+            return [x.clean_record for x in result]
+        return self._safe_get_and_call(dataset_id, _action, callback=callback)

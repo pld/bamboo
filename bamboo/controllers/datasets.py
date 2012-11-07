@@ -43,13 +43,10 @@ class Datasets(AbstractController):
         Returns:
             A string of success or error if that dataset could not be found.
         """
-        dataset = Dataset.find_one(dataset_id)
-        result = None
-
-        if dataset.record:
+        def _action(dataset):
             dataset.delete()
-            result = {self.SUCCESS: 'deleted dataset: %s' % dataset_id}
-        return self.dump_or_error(result, 'id not found')
+            return {self.SUCCESS: 'deleted dataset: %s' % dataset_id}
+        return self._safe_get_and_call(dataset_id, _action)
 
     def info(self, dataset_id, callback=False):
         """Fetch and return the meta-data for a dataset.
