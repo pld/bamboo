@@ -2,7 +2,7 @@ from nose.tools import assert_raises
 from pymongo.cursor import Cursor
 
 from bamboo.core.parser import ParseError
-from bamboo.models.calculation import Calculation
+from bamboo.models.calculation import Calculation, DependencyError
 from bamboo.models.dataset import Dataset
 from bamboo.tests.test_base import TestBase
 
@@ -115,3 +115,12 @@ class TestCalculation(TestBase):
         calculation.delete(self.dataset)
         calculation = Calculation.find_one(self.dataset.dataset_id, 'test')
         self.assertEqual(calculation.dependent_calculations, [])
+
+    def test_disallow_delete_dependent_calculation(self):
+        record = self._save_observations_and_calculation()
+        self.name = 'test1'
+        record = self._save_calculation('test')
+        calculation = Calculation.find_one(self.dataset.dataset_id, 'test')
+        self.assertEqual(calculation.dependent_calculations, ['test1'])
+        calculation = Calculation.find_one(self.dataset.dataset_id, 'test')
+        assert_raises(DependencyError, calculation.delete, self.dataset)
