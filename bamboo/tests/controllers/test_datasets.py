@@ -165,17 +165,6 @@ class TestDatasets(TestAbstractDatasets):
         results = self._test_summary_built(result)
         self._test_summary_no_group(results)
 
-    def test_create_from_schema(self):
-        schema = open(self._schema_path)
-        mock_uploaded_file = MockUploadedFile(schema)
-        result = json.loads(
-            self.controller.create(schema=mock_uploaded_file))
-        self.assertTrue(isinstance(result, dict))
-        self.assertTrue(Dataset.ID in result)
-
-        results = self._test_summary_built(result)
-        self._test_summary_no_group(results)
-
     def test_create_from_file_for_nan_float_cell(self):
         """First data row has one cell blank, which is usually interpreted
         as nan, a float value."""
@@ -230,6 +219,29 @@ class TestDatasets(TestAbstractDatasets):
         result = json.loads(self.controller.create())
         self.assertTrue(isinstance(result, dict))
         self.assertTrue(Datasets.ERROR in result)
+
+    def test_create_from_schema(self):
+        schema = open(self._schema_path)
+        mock_uploaded_file = MockUploadedFile(schema)
+        result = json.loads(
+            self.controller.create(schema=mock_uploaded_file))
+        self.assertTrue(isinstance(result, dict))
+        self.assertTrue(Dataset.ID in result)
+        dataset_id = result[Dataset.ID]
+        self._test_summary_built(result)
+        results = json.loads(self.controller.show(self.dataset_id))
+        self.assertTrue(isinstance(results, list))
+        self.assertEqual(len(results), 0)
+        self._post_file()
+        results = json.loads(self.controller.info(dataset_id))
+        self.assertTrue(isinstance(results, dict))
+        self.assertTrue(Dataset.SCHEMA in results.keys())
+        self.assertTrue(Dataset.NUM_ROWS in results.keys())
+        self.assertEqual(results[Dataset.NUM_ROWS], 0)
+        self.assertTrue(Dataset.NUM_COLUMNS in results.keys())
+        self.assertEqual(results[Dataset.NUM_COLUMNS], self.NUM_COLS)
+
+    # TODO: test various create from schema errors
 
     def test_merge_datasets_0_not_enough(self):
         result = json.loads(self.controller.merge(datasets=json.dumps([])))

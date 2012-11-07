@@ -85,25 +85,29 @@ class Observation(AbstractModel):
         if not dataset.SCHEMA in dataset.record:
             dataset.build_schema(dframe)
 
-        labels_to_slugs = dataset.build_labels_to_slugs()
+        # save the data, if there is any
+        num_columns = len(dataset.record[dataset.SCHEMA].keys())
+        num_rows = 0
+        if dframe is not None:
+            labels_to_slugs = dataset.build_labels_to_slugs()
+            # if column name is not in map assume it is already slugified
+            # (i.e. NOT a label)
+            columns = dframe.columns = [
+                labels_to_slugs.get(column, column) for column in
+                dframe.columns.tolist()]
 
-        # if column name is not in map assume it is already slugified
-        # (i.e. NOT a label)
-        columns = dframe.columns = [
-            labels_to_slugs.get(column, column) for column in
-            dframe.columns.tolist()]
+            id_column = Series([dataset.dataset_observation_id] * len(dframe))
+            id_column.name = DATASET_OBSERVATION_ID
+            dframe = dframe.join(id_column)
 
-        id_column = Series([dataset.dataset_observation_id] * len(dframe))
-        id_column.name = DATASET_OBSERVATION_ID
-        dframe = dframe.join(id_column)
-
-        rows = [row.to_dict() for (_, row) in dframe.iterrows()]
-        self.batch_save(rows)
+            rows = [row.to_dict() for (_, row) in dframe.iterrows()]
+            self.batch_save(rows)
+            num_rows = len(dframe)
 
         # add metadata to dataset
         dataset.update({
-            dataset.NUM_COLUMNS: len(columns),
-            dataset.NUM_ROWS: len(dframe),
+            dataset.NUM_COLUMNS: num_columns,
+            dataset.NUM_ROWS: num_rows,
             dataset.STATE: self.STATE_READY,
         })
 

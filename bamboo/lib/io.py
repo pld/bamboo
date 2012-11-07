@@ -1,3 +1,4 @@
+import json
 import os
 import tempfile
 
@@ -72,4 +73,21 @@ def create_dataset_from_csv(csv_file):
     return dataset
 
 def create_dataset_from_schema(schema):
-    return '1234'
+    """Create a dataset from a SDF schema file (JSON).
+
+    Args:
+
+    - schema: The SDF (JSON) file to create a dataset from.
+
+    Returns:
+        The created dataset.
+    """
+    schema = json.loads(schema.file.read())
+
+    dataset = Dataset()
+    dataset.save()
+    dataset.set_schema(schema)
+
+    call_async(import_dataset, dataset)
+
+    return dataset

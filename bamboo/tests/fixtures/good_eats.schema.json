@@ -1,87 +1,78 @@
 {
-    "rating":{
-        "olap_type":"dimension",
-        "simpletype":"string",
-        "label":"rating"
+    "_id": {
+        "label": "_id",
+        "olap_type": "measure",
+        "simpletype": "float"
     },
-    "location_name":{
-        "olap_type":"dimension",
-        "simpletype":"string",
-        "label":"location_name"
+    "_percentage_complete": {
+        "label": "_percentage_complete",
+        "olap_type": "measure",
+        "simpletype": "float"
     },
-    "description":{
-        "olap_type":"dimension",
-        "simpletype":"string",
-        "label":"description"
+    "amount": {
+        "label": "amount",
+        "olap_type": "measure",
+        "simpletype": "float"
     },
-    "_gps_precision":{
-        "olap_type":"dimension",
-        "simpletype":"string",
-        "label":"_gps_precision"
+    "comments": {
+        "label": "comments",
+        "olap_type": "dimension",
+        "simpletype": "string"
     },
-    "submit_date":{
-        "olap_type":"measure",
-        "simpletype":"datetime",
-        "label":"submit_date"
+    "food_photo": {
+        "label": "food_photo",
+        "olap_type": "dimension",
+        "simpletype": "string"
     },
-    "_gps_latitude":{
-        "olap_type":"dimension",
-        "simpletype":"string",
-        "label":"_gps_latitude"
+    "food_type": {
+        "label": "food_type",
+        "olap_type": "dimension",
+        "simpletype": "string"
     },
-    "_gps_altitude":{
-        "olap_type":"dimension",
-        "simpletype":"string",
-        "label":"_gps_altitude"
+    "gps": {
+        "cardinality": 18,
+        "label": "gps",
+        "olap_type": "dimension",
+        "simpletype": "string"
     },
-    "submit_data":{
-        "olap_type":"measure",
-        "simpletype":"datetime",
-        "label":"submit_data"
+    "gps_alt": {
+        "label": "gps_alt",
+        "olap_type": "measure",
+        "simpletype": "float"
     },
-    "_gps_longitude":{
-        "olap_type":"dimension",
-        "simpletype":"string",
-        "label":"_gps_longitude"
+    "gps_latitude": {
+        "label": "gps_latitude",
+        "olap_type": "measure",
+        "simpletype": "float"
     },
-    "comments":{
-        "olap_type":"dimension",
-        "simpletype":"string",
-        "label":"comments"
+    "gps_longitude": {
+        "label": "gps_longitude",
+        "olap_type": "measure",
+        "simpletype": "float"
     },
-    "amount":{
-        "olap_type":"measure",
-        "simpletype":"float",
-        "label":"amount"
+    "gps_precision": {
+        "label": "gps_precision",
+        "olap_type": "measure",
+        "simpletype": "float"
     },
-    "risk_factor":{
-        "olap_type":"dimension",
-        "simpletype":"string",
-        "label":"risk_factor"
+    "location_name": {
+        "label": "location_name",
+        "olap_type": "dimension",
+        "simpletype": "string"
     },
-    "imei":{
-        "olap_type":"dimension",
-        "simpletype":"string",
-        "label":"imei"
+    "rating": {
+        "label": "rating",
+        "olap_type": "dimension",
+        "simpletype": "string"
     },
-    "food_type":{
-        "olap_type":"dimension",
-        "simpletype":"string",
-        "label":"food_type"
+    "risk_factor": {
+        "label": "risk_factor",
+        "olap_type": "dimension",
+        "simpletype": "string"
     },
-    "gps":{
-        "olap_type":"dimension",
-        "simpletype":"string",
-        "label":"gps"
-    },
-    "location_photo":{
-        "olap_type":"dimension",
-        "simpletype":"string",
-        "label":"location_photo"
-    },
-    "food_photo":{
-        "olap_type":"dimension",
-        "simpletype":"string",
-        "label":"food_photo"
+    "submit_date": {
+        "label": "submit_date",
+        "olap_type": "measure",
+        "simpletype": "datetime"
     }
 }
