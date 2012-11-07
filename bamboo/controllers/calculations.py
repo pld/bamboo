@@ -39,7 +39,7 @@ class Calculations(AbstractController):
 
         calculation = Calculation.find_one(dataset_id, name, group)
         if calculation:
-            calculation.delete()
+            calculation.delete(Dataset.find_one(dataset_id))
             result = {self.SUCCESS: 'deleted calculation: %s for dataset: %s' %
                       (name, dataset_id)}
         return self.dump_or_error(result,
