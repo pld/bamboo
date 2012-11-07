@@ -1,6 +1,6 @@
 from bamboo.controllers.abstract_controller import AbstractController
 from bamboo.core.parser import ParseError
-from bamboo.models.calculation import Calculation
+from bamboo.models.calculation import Calculation, DependencyError
 from bamboo.models.dataset import Dataset
 
 
@@ -35,15 +35,16 @@ class Calculations(AbstractController):
             JSON with success if delete or an error string if the calculation
             could not be found.
         """
-        result = None
+        def _action(dataset, name=name, group=group):
+            calculation = Calculation.find_one(dataset.dataset_id, name, group)
+            if calculation:
+                calculation.delete(dataset)
+                return {self.SUCCESS: 'deleted calculation: %s for dataset: %s' %
+                      (name, dataset.dataset_id)}
 
-        calculation = Calculation.find_one(dataset_id, name, group)
-        if calculation:
-            calculation.delete(Dataset.find_one(dataset_id))
-            result = {self.SUCCESS: 'deleted calculation: %s for dataset: %s' %
-                      (name, dataset_id)}
-        return self.dump_or_error(result,
-                                  'name and dataset_id combination not found')
+        return self._safe_get_and_call(dataset_id, _action,
+                exceptions=(DependencyError,), name=name, group=group,
+                error = 'name and dataset_id combination not found')
 
     def create(self, dataset_id, formula, name, group=None):
         """Add a calculation to a dataset with the given fomula, etc.
