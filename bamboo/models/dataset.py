@@ -242,7 +242,6 @@ class Dataset(AbstractModel):
         """Update dataset *dataset* with *record*."""
         record[self.UPDATED_AT] = strftime("%Y-%m-%d %H:%M:%S", gmtime())
         super(self.__class__, self).update(record)
-        self.record = self.__class__.find_one(self.dataset_id).record
 
     def build_schema(self, dframe):
         """Build schema for a dataset."""
