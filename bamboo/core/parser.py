@@ -55,6 +55,7 @@ class Parser(object):
         special_names
 
     def __init__(self, dataset=None):
+        """Create parser and set context."""
         self.context = ParserContext(dataset)
         self._build_bnf()
 
@@ -64,7 +65,8 @@ class Parser(object):
         self.column_functions = tokens[1:]
 
     def _build_bnf(self):
-        """
+        """Parse formula to function based on language definition.
+
         Backus-Naur Form of formula language:
 
         =========   ==========
@@ -94,51 +96,6 @@ class Parser(object):
         case        'case' disj: atom[, disj: atom]*[, 'default': atom]
         agg         agg ( case[, case]* )
         =========   ==========
-
-        Examples:
-
-        - constants
-            - ``9 + 5``,
-        - aliases
-            - ``rating``,
-            - ``gps``,
-        - arithmetic
-            - ``amount + gps_alt``,
-            - ``amount - gps_alt``,
-            - ``amount + 5``,
-            - ``amount - gps_alt + 2.5``,
-            - ``amount * gps_alt``,
-            - ``amount / gps_alt``,
-            - ``amount * gps_alt / 2.5``,
-            - ``amount + gps_alt * gps_precision``,
-        - precedence
-            - ``(amount + gps_alt) * gps_precision``,
-        - comparison
-            - ``amount == 2``,
-            - ``10 < amount``,
-            - ``10 < amount + gps_alt``,
-        - logical
-            - ``not amount == 2``,
-            - ``not(amount == 2)``,
-            - ``amount == 2 and 10 < amount``,
-            - ``amount == 2 or 10 < amount``,
-            - ``not not amount == 2 or 10 < amount``,
-            - ``not amount == 2 or 10 < amount``,
-            - ``not amount == 2) or 10 < amount``,
-            - ``not(amount == 2 or 10 < amount)``,
-            - ``amount ^ 3``,
-            - ``amount + gps_alt) ^ 2 + 100``,
-            - ``amount``,
-            - ``amount < gps_alt - 100``,
-        - membership
-            - ``rating in ["delectible"]``,
-            - ``risk_factor in ["low_risk"]``,
-            - ``amount in ["9.0", "2.0", "20.0"]``,
-            - ``risk_factor in ["low_risk"]) and (amount in ["9.0", "20.0"])``,
-        - dates
-            - ``date("09-04-2012") - submit_date > 21078000``,
-        - cases
-            - ``case food_type in ["morning_food"]: 1, default: 3``
 
         """
         if self.bnf:
@@ -244,6 +201,55 @@ class Parser(object):
         Parse *input_str* into an aggregation name and functions.
         There will be multiple functions is the aggregation takes multiple
         arguments, e.g. ratio which takes a numerator and denominator formula.
+
+        Examples:
+
+        - constants
+            - ``9 + 5``,
+        - aliases
+            - ``rating``,
+            - ``gps``,
+        - arithmetic
+            - ``amount + gps_alt``,
+            - ``amount - gps_alt``,
+            - ``amount + 5``,
+            - ``amount - gps_alt + 2.5``,
+            - ``amount * gps_alt``,
+            - ``amount / gps_alt``,
+            - ``amount * gps_alt / 2.5``,
+            - ``amount + gps_alt * gps_precision``,
+        - precedence
+            - ``(amount + gps_alt) * gps_precision``,
+        - comparison
+            - ``amount == 2``,
+            - ``10 < amount``,
+            - ``10 < amount + gps_alt``,
+        - logical
+            - ``not amount == 2``,
+            - ``not(amount == 2)``,
+            - ``amount == 2 and 10 < amount``,
+            - ``amount == 2 or 10 < amount``,
+            - ``not not amount == 2 or 10 < amount``,
+            - ``not amount == 2 or 10 < amount``,
+            - ``not amount == 2) or 10 < amount``,
+            - ``not(amount == 2 or 10 < amount)``,
+            - ``amount ^ 3``,
+            - ``amount + gps_alt) ^ 2 + 100``,
+            - ``amount``,
+            - ``amount < gps_alt - 100``,
+        - membership
+            - ``rating in ["delectible"]``,
+            - ``risk_factor in ["low_risk"]``,
+            - ``amount in ["9.0", "2.0", "20.0"]``,
+            - ``risk_factor in ["low_risk"]) and (amount in ["9.0", "20.0"])``,
+        - dates
+            - ``date("09-04-2012") - submit_date > 21078000``,
+        - cases
+            - ``case food_type in ["morning_food"]: 1, default: 3``
+
+        Args:
+
+        - dataset: The dataset to base context on, default is None.
 
         Args:
             input_str: The string to parse.
