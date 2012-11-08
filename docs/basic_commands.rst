@@ -58,7 +58,7 @@ given the id is ``8a3d74711475d8a51c84484fe73f24bd151242ea``
     {
         "id": "8a3d74711475d8a51c84484fe73f24bd151242ea",
         "schema": {
-            "food_type": {
+            "amount": {
                 "label": "Amount",
                 "olap_type": "measure",
                 "simpletype": "float"
