@@ -1,7 +1,7 @@
 from math import ceil
 
 from bamboo.config.db import Database
-from bamboo.config.settings import DB_BATCH_SIZE
+from bamboo.config.settings import DB_SAVE_BATCH_SIZE
 from bamboo.core.frame import BAMBOO_RESERVED_KEYS
 from bamboo.lib.decorators import classproperty
 from bamboo.lib.mongo import dict_for_mongo, remove_mongo_reserved_keys
@@ -61,7 +61,7 @@ class AbstractModel(object):
 
     @classmethod
     def find(cls, query, select=None, as_dict=False,
-             limit=0, order_by=None):
+             limit=0, order_by=None, as_cursor=False):
         """An interface to MongoDB's find functionality.
 
         Args:
@@ -89,9 +89,12 @@ class AbstractModel(object):
         records = cls.collection.find(
             query, select, sort=order_by, limit=limit)
 
-        return [record for record in records] if as_dict else [
-            cls(record) for record in records
-        ]
+        if as_cursor:
+            return records
+        else:
+            return [record for record in records] if as_dict else [
+                cls(record) for record in records
+            ]
 
     @classmethod
     def find_one(cls, query, select=None):
@@ -174,10 +177,10 @@ class AbstractModel(object):
         - dframe: A DataFrame to save in the current model.
 
         """
-        batches = int(ceil(float(len(dframe)) / DB_BATCH_SIZE))
+        batches = int(ceil(float(len(dframe)) / DB_SAVE_BATCH_SIZE))
 
         for batch in xrange(0, batches):
-            start = batch * DB_BATCH_SIZE
-            end = (batch + 1) * DB_BATCH_SIZE
+            start = batch * DB_SAVE_BATCH_SIZE
+            end = (batch + 1) * DB_SAVE_BATCH_SIZE
             records = [row.to_dict() for (_, row) in dframe[start:end].iterrows()]
             self.collection.insert(records, safe=True)
