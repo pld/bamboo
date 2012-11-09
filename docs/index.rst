@@ -37,6 +37,14 @@ Usage:
    basic_commands
    advanced_commands
 
+Code Structure:
+---------------
+
+.. toctree::
+   :maxdepth: 2
+
+   class_structure
+
 Code Documentation:
 -------------------
 
