@@ -82,3 +82,21 @@ Creating a Dataset from a Schema
 
 You can create a dataset from a schema. Your schema must be written in the
 `Simple Data Format (SDF) <http://www.dataprotocols.org/en/latest/simple-data-format.html>`_.
+
+Below is an example SDF schema file:
+
+.. literalinclude:: ../bamboo/tests/fixtures/good_eats.schema.json
+   :language: javascript
+
+Supposing this file was saved as ``good_eats.schema.json``, you can create a
+dataset from this scema using:
+
+``curl -X POST -d "schema=good_eats.schema.json" http://bamboo.io/datasets``
+
+**returns:**
+
+.. code-block:: javascript
+
+    {
+        "id": "8a3d74711475d8a51c84484fe73f24bd151242ea"
+    }
