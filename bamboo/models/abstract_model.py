@@ -182,5 +182,6 @@ class AbstractModel(object):
         for batch in xrange(0, batches):
             start = batch * DB_SAVE_BATCH_SIZE
             end = (batch + 1) * DB_SAVE_BATCH_SIZE
-            records = [row.to_dict() for (_, row) in dframe[start:end].iterrows()]
+            records = [
+                row.to_dict() for (_, row) in dframe[start:end].iterrows()]
             self.collection.insert(records, safe=True)

@@ -135,9 +135,11 @@ class Dataset(AbstractModel):
             *keep_parent_ids* is False.
         """
         observations = self.observations(
-            query=query, select=select, limit=limit, order_by=order_by, as_cursor=True)
+            query=query, select=select, limit=limit, order_by=order_by,
+            as_cursor=True)
 
-        batches = int(ceil(float(observations.count(with_limit_and_skip=True)) / DB_READ_BATCH_SIZE))
+        batches = int(ceil(float(observations.count(with_limit_and_skip=True))
+                      / DB_READ_BATCH_SIZE))
         dframes = []
 
         for batch in xrange(0, batches):
@@ -285,7 +287,8 @@ class Dataset(AbstractModel):
             (column_attrs[self.LABEL], reserve_encoded(column_name)) for
             (column_name, column_attrs) in self.schema.items()])
 
-    def observations(self, query=None, select=None, limit=0, order_by=None, as_cursor=False):
+    def observations(self, query=None, select=None, limit=0, order_by=None,
+                     as_cursor=False):
         """Return observations for this dataset.
 
         Args:
@@ -297,8 +300,8 @@ class Dataset(AbstractModel):
         - order_by: Order the returned observations.
 
         """
-        return Observation.find(
-            self, query, select, limit=limit, order_by=order_by, as_cursor=as_cursor)
+        return Observation.find(self, query, select, limit=limit,
+                                order_by=order_by, as_cursor=as_cursor)
 
     def calculations(self):
         """Return the calculations for this dataset."""

@@ -53,6 +53,7 @@ ROUTES = [
         '/', 'version', 'index'),
 ]
 
+
 def connect_routes(dispatcher):
     """
     This function takes the dispatcher and attaches the routes.
