@@ -81,4 +81,4 @@ Creating a Dataset from a Schema
 --------------------------------
 
 You can create a dataset from a schema. Your schema must be written in the
-`Simple Data Format(SDF)<http://www.dataprotocols.org/en/latest/simple-data-format.html>`_.
+`Simple Data Format (SDF) <http://www.dataprotocols.org/en/latest/simple-data-format.html>`_.
