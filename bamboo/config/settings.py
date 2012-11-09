@@ -4,7 +4,8 @@ import sys
 # database config
 DATABASE_NAME = 'bamboo_dev'
 TEST_DATABASE_NAME = DATABASE_NAME + '_test'
-DB_BATCH_SIZE = 1000
+DB_SAVE_BATCH_SIZE = 3000
+DB_READ_BATCH_SIZE = 1000
 
 # test settings
 TESTING = 'test' in sys.argv[0].split('/')[-1]
