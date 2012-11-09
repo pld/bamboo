@@ -1,10 +1,13 @@
+from math import ceil
 import simplejson as json
 import uuid
 from time import gmtime, strftime
 
 from celery.task import task
 from celery.contrib.methods import task as class_task
+from pandas import concat
 
+from bamboo.config.settings import DB_READ_BATCH_SIZE
 from bamboo.core.calculator import Calculator
 from bamboo.core.frame import BambooFrame, BAMBOO_RESERVED_KEY_PREFIX,\
     DATASET_ID, DATASET_OBSERVATION_ID, PARENT_DATASET_ID
@@ -131,9 +134,19 @@ class Dataset(AbstractModel):
             to MongoDB. BambooFrame will not have parent ids if
             *keep_parent_ids* is False.
         """
-        observations = self.observations(query=query, select=select,
-                                         limit=limit, order_by=order_by)
-        dframe = BambooFrame(observations)
+        observations = self.observations(
+            query=query, select=select, limit=limit, order_by=order_by, as_cursor=True)
+
+        batches = int(ceil(float(observations.count(with_limit_and_skip=True)) / DB_READ_BATCH_SIZE))
+        dframes = []
+
+        for batch in xrange(0, batches):
+            start = batch * DB_READ_BATCH_SIZE
+            end = (batch + 1) * DB_READ_BATCH_SIZE
+            dframes.append(BambooFrame([ob for ob in observations[start:end]]))
+            observations.rewind()
+
+        dframe = BambooFrame(concat(dframes))
         dframe.decode_mongo_reserved_keys()
         dframe.remove_bamboo_reserved_keys(keep_parent_ids)
         return dframe
@@ -222,7 +235,6 @@ class Dataset(AbstractModel):
             select.update(dict(zip(groups, [1] * len(groups))))
             select = json.dumps(select)
 
-        # narrow list of observations via query/select
         dframe = self.dframe(query=query, select=select,
                              limit=limit, order_by=order_by)
 
@@ -273,7 +285,7 @@ class Dataset(AbstractModel):
             (column_attrs[self.LABEL], reserve_encoded(column_name)) for
             (column_name, column_attrs) in self.schema.items()])
 
-    def observations(self, query=None, select=None, limit=0, order_by=None):
+    def observations(self, query=None, select=None, limit=0, order_by=None, as_cursor=False):
         """Return observations for this dataset.
 
         Args:
@@ -286,7 +298,7 @@ class Dataset(AbstractModel):
 
         """
         return Observation.find(
-            self, query, select, limit=limit, order_by=order_by)
+            self, query, select, limit=limit, order_by=order_by, as_cursor=as_cursor)
 
     def calculations(self):
         """Return the calculations for this dataset."""
