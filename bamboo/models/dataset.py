@@ -145,6 +145,8 @@ class Dataset(AbstractModel):
         for batch in xrange(0, batches):
             start = batch * DB_READ_BATCH_SIZE
             end = (batch + 1) * DB_READ_BATCH_SIZE
+            if limit > 0 and end > limit:
+                end = limit
             dframes.append(BambooFrame([ob for ob in observations[start:end]]))
             observations.rewind()
 
