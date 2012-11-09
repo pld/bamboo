@@ -101,8 +101,7 @@ class Observation(AbstractModel):
             id_column.name = DATASET_OBSERVATION_ID
             dframe = dframe.join(id_column)
 
-            rows = [row.to_dict() for (_, row) in dframe.iterrows()]
-            self.batch_save(rows)
+            self.batch_save(dframe)
             num_rows = len(dframe)
 
         # add metadata to dataset, discount ID column

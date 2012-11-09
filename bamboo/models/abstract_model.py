@@ -166,17 +166,18 @@ class AbstractModel(object):
         self.record = super(
             self.__class__, self.__class__).find_one(id_dict).record
 
-    def batch_save(self, records):
+    def batch_save(self, dframe):
         """Save records in batches to avoid document size maximum setting.
 
         Args:
 
-        - records: A list of dicts to save in the current model.
+        - dframe: A DataFrame to save in the current model.
 
         """
-        batches = int(ceil(float(len(records)) / DB_BATCH_SIZE))
+        batches = int(ceil(float(len(dframe)) / DB_BATCH_SIZE))
 
-        for batch in range(0, batches):
+        for batch in xrange(0, batches):
             start = batch * DB_BATCH_SIZE
             end = (batch + 1) * DB_BATCH_SIZE
-            self.collection.insert(records[start:end], safe=True)
+            records = [row.to_dict() for (_, row) in dframe[start:end].iterrows()]
+            self.collection.insert(records, safe=True)
