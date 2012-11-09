@@ -1,4 +1,4 @@
-from pandas import DataFrame, Series
+from pandas import concat, DataFrame, Series
 
 
 class Aggregation(object):
@@ -65,9 +65,7 @@ class MultiColumnAggregation(Aggregation):
     def _build_dframe(self, dframe, columns):
         for idx, column in enumerate(columns):
             column.name = self._name_for_idx(idx)
-            dframe = dframe.join(column)
-
-        return dframe
+        return concat([dframe] + [DataFrame(col) for col in columns], axis=1)
 
     def _add_calculated_column(self, dframe):
         column = dframe[self._name_for_idx(0)].apply(float) /\
