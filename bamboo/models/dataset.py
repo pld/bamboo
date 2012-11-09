@@ -148,7 +148,7 @@ class Dataset(AbstractModel):
             dframes.append(BambooFrame([ob for ob in observations[start:end]]))
             observations.rewind()
 
-        dframe = BambooFrame(concat(dframes))
+        dframe = BambooFrame(concat(dframes) if len(dframes) else [])
         dframe.decode_mongo_reserved_keys()
         dframe.remove_bamboo_reserved_keys(keep_parent_ids)
         return dframe
