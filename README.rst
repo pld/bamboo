@@ -151,6 +151,12 @@ The latest docs are available at http://bamboo.io/
 Building Documentation
 ^^^^^^^^^^^^^^^^^^^^^^
 
+Install graphviz for class structure diagrams:
+
+on Arch Linux: ``# pacman -S graphviz``
+
+on Debian based: ``# apt-get install graphviz``
+
 ::
 
   $ pip install -r requirements-docs.pip
