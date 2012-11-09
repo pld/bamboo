@@ -82,17 +82,30 @@ running the example basic commands
 
   $ ./scripts/commands.sh
 
+using `Bamboo.JS <http://modilabs.github.com/bamboo_js/>`_
+
+.. code-block:: javascript
+
+  var dataset = new bamboo.Dataset({url: 'http://bitly.com/ZfzBwP'});
+  bamboo.dataset_exists('nonexistentdataset_id');
+  dataset.query_info();
+  ...
+
+
 using `pybamboo <https://github.com/modilabs/pybamboo>`_
 
 ::
 
   $ pip install pybamboo
   $ python
-  >>> from pybamboo import PyBamboo
-  >>> pybamboo = PyBamboo()
-  >>> response = pybamboo.store_csv_file('http://formhub.org/mberg/forms/good_eats/data.csv')
-  >>> dataset_id = response['id']
- ...
+
+.. code-block:: python
+
+  from pybamboo import PyBamboo
+  pybamboo = PyBamboo()
+  response = pybamboo.store_csv_file('http://formhub.org/mberg/forms/good_eats/data.csv')
+  dataset_id = response['id']
+  ...
 
 posting a dataset
 
