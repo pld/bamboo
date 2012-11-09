@@ -86,7 +86,7 @@ case "$1" in
     do_stop
     case "$?" in
       0|1)
-        sleep 3
+        sleep 5
         do_start
         case "$?" in
             0) echo 0 ;;
