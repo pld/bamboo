@@ -578,8 +578,8 @@ Store aggregation formula with multi-group:
          "name": "sum_of_amount"
     }
 
-Retrieve lists of related datasets for aggregations:
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Retrieve lists of aggregated datasets:
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 ``curl -g http://bamboo.io/datasets/8a3d74711475d8a51c84484fe73f24bd151242ea/related``
 
