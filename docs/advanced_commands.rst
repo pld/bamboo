@@ -76,3 +76,9 @@ right hand side that make the join column non-unique will be disallowed.
 .. code-block:: javascript
 
     {"id": "8a3d74711475d8a51c84484fe73f24bd151242ea"}
+
+Creating a Dataset from a Schema
+--------------------------------
+
+You can create a dataset from a schema. Your schema must be written in the
+`Simple Data Format(SDF)<http://www.dataprotocols.org/en/latest/simple-data-format.html>`_.
