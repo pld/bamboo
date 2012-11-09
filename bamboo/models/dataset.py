@@ -158,7 +158,7 @@ class Dataset(AbstractModel):
 
     def add_merged_dataset(self, new_dataset):
         """Add the ID of *new_dataset* to the list of merged datasets."""
-        self._add_linked_data(self.MERGED_DATASETS, self.merged_datasets,
+        self._add_linked_data(self.MERGED_DATASETS, self.merged_dataset_ids,
                               new_dataset.dataset_id)
 
     def _add_linked_data(self, link_key, existing_data, new_data):
