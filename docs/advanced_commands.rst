@@ -88,10 +88,10 @@ Below is an example SDF schema file:
 .. literalinclude:: ../bamboo/tests/fixtures/good_eats.schema.json
    :language: javascript
 
-Supposing this file was saved as ``good_eats.schema.json``, you can create a
-dataset from this scema using:
+Supposing this file is saved locally as ``/home/modilabs/good_eats.schema.json``,
+you can create a dataset from this scema using:
 
-``curl -X POST -d "schema=good_eats.schema.json" http://bamboo.io/datasets``
+``curl -X POST -d "schema=/home/modilabs/good_eats.schema.json" http://bamboo.io/datasets``
 
 **returns:**
 
