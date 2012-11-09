@@ -30,7 +30,7 @@ class Observation(AbstractModel):
         cls.collection.remove(query, safe=True)
 
     @classmethod
-    def find(cls, dataset, query=None, select=None, limit=0, order_by=None):
+    def find(cls, dataset, query=None, select=None, limit=0, order_by=None, as_cursor=False):
         """Return observation rows matching parameters.
 
         Args:
@@ -64,7 +64,7 @@ class Observation(AbstractModel):
 
         query[DATASET_OBSERVATION_ID] = dataset.dataset_observation_id
         return super(cls, cls).find(query, select, as_dict=True,
-                                    limit=limit, order_by=order_by)
+                                    limit=limit, order_by=order_by, as_cursor=as_cursor)
 
     def save(self, dframe, dataset):
         """Save data in *dframe* with the *dataset*.
