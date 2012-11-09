@@ -28,8 +28,21 @@ General configuration notes:
       unique entries.  This is controlled by a parameter in the
       ``core/summary`` module.
 
-Usage:
-------
+Libraries that connect to Bamboo
+--------------------------------
+
+JavaScript
+^^^^^^^^^^
+
+`Bamboo.JS <http://modilabs.github.com/bamboo_js/>`_
+
+Python
+^^^^^^
+
+`PyBamboo <https://github.com/modilabs/pybamboo>`_
+
+Usage
+-----
 
 .. toctree::
    :maxdepth: 2
@@ -37,16 +50,16 @@ Usage:
    basic_commands
    advanced_commands
 
-Code Structure:
----------------
+Code Structure
+--------------
 
 .. toctree::
    :maxdepth: 2
 
    class_structure
 
-Code Documentation:
--------------------
+Code Documentation
+------------------
 
 .. toctree::
    :maxdepth: 2
