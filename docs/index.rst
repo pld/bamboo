@@ -9,7 +9,7 @@ Welcome to bamboo's documentation!
 Bamboo is an application that systematizes realtime data analysis. Bamboo
 provides an interface for merging, aggregating and adding algebraic
 calculations to dynamic datasets.  Clients can interact with Bamboo through a
-a REST web interface and through Python.
+REST web interface and through Python.
 
 Bamboo supports a simple querying language to build calculations
 (e.g. student teacher ratio) and aggregations (e.g. average number of students
