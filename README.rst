@@ -1,4 +1,4 @@
-Bamboo
+`Bamboo <http://bamboo.io>`_
 ======
 
 .. image:: https://secure.travis-ci.org/modilabs/bamboo.png?branch=master
