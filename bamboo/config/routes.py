@@ -39,7 +39,7 @@ ROUTES = [
     ('calculations_create', 'POST',
         '/calculations/:dataset_id', 'calculations', 'create'),
     ('calculations_create_alias', 'POST',
-        '/datasets/:dataset_id/calculations', 'calculations', 'show'),
+        '/datasets/:dataset_id/calculations', 'calculations', 'create'),
     ('calculations_show', 'GET',
         '/calculations/:dataset_id', 'calculations', 'show'),
     ('calculations_show_alias', 'GET',
