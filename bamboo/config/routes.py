@@ -29,6 +29,8 @@ ROUTES = [
         '/datasets/:dataset_id/summary', 'datasets', 'summary'),
     ('datasets_related', 'GET',
         '/datasets/:dataset_id/related', 'datasets', 'related'),
+    ('datasets_update', 'PUT',
+        '/datasets/:dataset_id', 'datasets', 'update'),
     ('datasets_merge', 'POST',
         '/datasets/merge', 'datasets', 'merge'),
     ('datasets_join', 'POST',
