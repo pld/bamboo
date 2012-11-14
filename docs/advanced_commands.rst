@@ -91,7 +91,7 @@ Below is an example SDF schema file:
 Supposing this file is saved locally as ``/home/modilabs/good_eats.schema.json``,
 you can create a dataset from this scema using:
 
-``curl -X POST -d "schema=/home/modilabs/good_eats.schema.json" http://bamboo.io/datasets``
+``curl -X POST -F schema=@/home/modilabs/good_eats.schema.json http://bamboo.io/datasets``
 
 **returns:**
 
