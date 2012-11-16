@@ -83,7 +83,10 @@ def create_dataset_from_schema(schema):
     Returns:
         The created dataset.
     """
-    schema = json.loads(schema.file.read())
+    try:
+        schema = json.loads(schema.file.read())
+    except AttributeError:
+        schema = json.loads(schema)
 
     dataset = Dataset()
     dataset.save()
