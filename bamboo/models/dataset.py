@@ -366,3 +366,6 @@ class Dataset(AbstractModel):
         other.add_joined_dataset(
             ('left', self.dataset_id, on, merged_dataset.dataset_id))
         return merged_dataset
+
+    def reload(self):
+        self.record = Dataset.find_one(self.dataset_id).record

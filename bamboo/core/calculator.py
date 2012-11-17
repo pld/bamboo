@@ -147,6 +147,11 @@ class Calculator(object):
         """
         self.ensure_dframe()
 
+        # dataset must not be pending
+        if not self.dataset.is_ready:
+            self.dataset.reload()
+            raise self.calculate_updates.retry(countdown=1)
+
         calculations = self.dataset.calculations()
         labels_to_slugs = self.dataset.build_labels_to_slugs()
         new_dframe_raw = self._dframe_from_update(new_data, labels_to_slugs)
