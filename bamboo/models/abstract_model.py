@@ -177,6 +177,11 @@ class AbstractModel(object):
         - dframe: A DataFrame to save in the current model.
 
         """
+        def command(records):
+            self.collection.insert(records, safe=True)
+        self._batch_command(command, dframe)
+
+    def _batch_command(self, command, dframe):
         batches = int(ceil(float(len(dframe)) / DB_SAVE_BATCH_SIZE))
 
         for batch in xrange(0, batches):
@@ -184,4 +189,4 @@ class AbstractModel(object):
             end = (batch + 1) * DB_SAVE_BATCH_SIZE
             records = [
                 row.to_dict() for (_, row) in dframe[start:end].iterrows()]
-            self.collection.insert(records, safe=True)
+            command(records)
