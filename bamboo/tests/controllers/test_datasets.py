@@ -51,8 +51,8 @@ class TestDatasets(TestAbstractDatasets):
         # must call after _post_file
         controller = Calculations()
         for idx, formula in enumerate(formulae):
-            name = 'calc_%d' % idx if formula in self.schema.keys()\
-                else formula
+            name = 'calc_%d' % idx if not self.schema or\
+                formula in self.schema.keys() else formula
             controller.create(self.dataset_id, formula, name, group)
 
     def _test_summary_results(self, results):
@@ -331,6 +331,22 @@ class TestDatasets(TestAbstractDatasets):
                          list(expected_dframe.columns))
 
         self._check_dframes_are_equal(merged_dframe, expected_dframe)
+
+    @requires_async
+    def test_merge_datasets_add_calc_async(self):
+        self._post_file('good_eats_large.csv')
+        dataset_id1 = self.dataset_id
+        self._post_file('good_eats_large.csv')
+        dataset_id2 = self.dataset_id
+        result = json.loads(self.controller.merge(
+            datasets=json.dumps([dataset_id1, dataset_id2])))
+        self.assertTrue(isinstance(result, dict))
+        self.assertTrue(Dataset.ID in result)
+        self.dataset_id = result[Dataset.ID]
+        self.schema = json.loads(
+            self.controller.info(self.dataset_id))[Dataset.SCHEMA]
+        self._post_calculations(['amount < 4'])
+
 
     def test_merge_datasets_no_reserved_keys(self):
         self._post_file()
