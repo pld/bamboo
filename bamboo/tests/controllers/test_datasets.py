@@ -112,14 +112,30 @@ class TestDatasets(TestAbstractDatasets):
         result = json.loads(self.controller.update(dataset_id=111))
         assert(Datasets.ERROR in result)
 
+    @requires_async
+    def test_dataset_update_pending(self):
+        self._post_file(self._file_name_with_slashes)
+        dataset = Dataset.find_one(self.dataset_id)
+        self.assertEqual(dataset.status, Dataset.STATE_PENDING)
+        self._put_row_updates()
+        while True:
+            results = json.loads(self.controller.show(self.dataset_id))
+            if len(results):
+                break
+            sleep(0.1)
+        # wait for the update to finish
+        sleep(1)
+        results = json.loads(self.controller.show(self.dataset_id))
+        num_rows_after_update = len(results)
+        self.assertEqual(num_rows_after_update, self.NUM_ROWS + 1)
+
     def test_dataset_id_update(self):
         self._post_file(self._file_name_with_slashes)
         self._post_calculations(self.default_formulae)
-        num_rows = len(json.loads(self.controller.show(self.dataset_id)))
         self._put_row_updates()
         results = json.loads(self.controller.show(self.dataset_id))
         num_rows_after_update = len(results)
-        self.assertEqual(num_rows_after_update, num_rows + 1)
+        self.assertEqual(num_rows_after_update, self.NUM_ROWS + 1)
         for result in results:
             for column in self.schema.keys():
                 self.assertTrue(
@@ -243,15 +259,25 @@ class TestDatasets(TestAbstractDatasets):
 
     # TODO: test various create from schema errors
 
+    @requires_async
     def test_merge_datasets_0_not_enough(self):
         result = json.loads(self.controller.merge(datasets=json.dumps([])))
         self.assertTrue(isinstance(result, dict))
         self.assertTrue(Datasets.ERROR in result)
 
+    @requires_async
     def test_merge_datasets_1_not_enough(self):
         self._post_file()
         result = json.loads(self.controller.merge(
             datasets=json.dumps([self.dataset_id])))
+        self.assertTrue(isinstance(result, dict))
+        self.assertTrue(Datasets.ERROR in result)
+
+    @requires_async
+    def test_merge_datasets_must_exist(self):
+        self._post_file()
+        result = json.loads(self.controller.merge(
+            datasets=json.dumps([self.dataset_id, 0000])))
         self.assertTrue(isinstance(result, dict))
         self.assertTrue(Datasets.ERROR in result)
 

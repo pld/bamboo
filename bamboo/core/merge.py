@@ -14,37 +14,43 @@ class MergeError(Exception):
 
 
 def merge_dataset_ids(dataset_ids):
-    """Load a JSON array of dataset IDs and start a background merge task."""
+    """Load a JSON array of dataset IDs and start a background merge task.
+
+    Args:
+
+    - dataset_ids: An array of dataset IDs to merge.
+
+    Raises:
+        MergeError: If less than 2 datasets are provided.
+    """
+    dataset_ids = json.loads(dataset_ids)
+    datasets = [Dataset.find_one(dataset_id) for dataset_id in dataset_ids]
+    datasets = [dataset for dataset in datasets if dataset.record]
+
+    if len(datasets) < 2:
+        raise MergeError(
+            'merge requires 2 datasets (found %s)' % len(datasets))
+
     new_dataset = Dataset()
     new_dataset.save()
-    dataset_ids = json.loads(dataset_ids)
 
-    call_async(_merge_datasets_task, new_dataset, dataset_ids)
+    call_async(_merge_datasets_task, new_dataset, datasets)
 
     return new_dataset
 
 
 @task
-def _merge_datasets_task(new_dataset, dataset_ids):
+def _merge_datasets_task(new_dataset, datasets):
     """Merge datasets specified by dataset_ids.
 
     Args:
 
     - new_dataset: The dataset store the merged dataset in.
     - dataset_ids: A list of IDs to merge into *new_dataset*.
-
-    Raises:
-        MergeError: If less than 2 datasets are provided.
     """
-    datasets = [Dataset.find_one(dataset_id) for dataset_id in dataset_ids]
-
-    if len(datasets) < 2:
-        raise MergeError(
-            'merge requires 2 datasets (found %s)' % len(datasets))
-
     # check that all datasets are in a 'ready' state
-    if any([not Dataset.find_one(dataset.dataset_id).is_ready for dataset
-            in datasets]):
+    if any([not dataset.is_ready for dataset in datasets]):
+        [dataset.reload() for dataset in datasets]
         raise _merge_datasets_task.retry(countdown=1)
 
     new_dframe = _merge_datasets(datasets)
