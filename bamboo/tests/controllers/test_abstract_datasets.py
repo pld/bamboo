@@ -52,9 +52,16 @@ class TestAbstractDatasets(TestBase):
         self._check_dframe_is_subset(dframe2, dframe1)
 
     def _check_dframe_is_subset(self, dframe1, dframe2):
-        dframe2_rows = BambooFrame(dframe2).to_jsondict()
+        dframe2_rows = [self._reduce_precision(row) for row in
+            BambooFrame(dframe2).to_jsondict()]
         for row in dframe1.iterrows():
-            dframe1_row = series_to_jsondict(row[1])
+            dframe1_row = self._reduce_precision(series_to_jsondict(row[1]))
             self.assertTrue(dframe1_row in dframe2_rows,
                             'dframe1_row: %s\n\ndframe2_rows: %s' % (
-                                dframe1_row, dframe2_rows[-1]))
+                                dframe1_row, dframe2_rows))
+
+    def _reduce_precision(self, row):
+        for key, value in row.iteritems():
+            if isinstance(value, float):
+                row[key] = round(value, 10)
+        return row
