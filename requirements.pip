@@ -3,7 +3,7 @@ python-dateutil==1.5
 
 # for pandas
 numpy==1.6.2
-pandas==0.9.0
+pandas==0.9.1
 scipy==0.10.1
 
 # for celery
