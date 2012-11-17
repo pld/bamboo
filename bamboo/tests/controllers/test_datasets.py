@@ -538,6 +538,17 @@ class TestDatasets(TestAbstractDatasets):
         results = self._test_summary_results(results)
         self._test_summary_no_group(results)
 
+    @requires_async
+    def test_summary_async(self):
+        self._post_file()
+        results = self.controller.summary(
+            self.dataset_id, select=self.controller.SELECT_ALL_FOR_SUMMARY)
+        dataset = Dataset.find_one(self.dataset_id)
+        self.assertEqual(dataset.status, Dataset.STATE_PENDING)
+        results = self._test_summary_results(results)
+        self.assertTrue(Datasets.ERROR in results.keys())
+        self.assertTrue('not finished' in results[Datasets.ERROR])
+
     def test_summary_restrict_by_cardinality(self):
         self._post_file('good_eats_huge.csv')
         results = self.controller.summary(

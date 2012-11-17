@@ -90,9 +90,15 @@ class Datasets(AbstractController):
             An error message if *dataset_id* does not exist or the JSON for
             query or select is improperly formatted.  Otherwise the summary as
             a JSON string.
+
+        Raises:
+          ArgumentError: If no select is supplied or dataset is not in ready
+              state.
         """
         def _action(dataset, query=query, select=select, group=group,
                     limit=limit, order_by=order_by):
+            if not dataset.is_ready:
+                raise ArgumentError('dataset is not finished importing')
             if select is None:
                 raise ArgumentError('no select')
             if select == self.SELECT_ALL_FOR_SUMMARY:
