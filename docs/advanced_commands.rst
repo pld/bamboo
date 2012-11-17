@@ -70,7 +70,7 @@ hand side dataset will be propagated to the joined dataset. Updates to the
 right hand side that make the join column non-unique will be disallowed.
 
 For example supposing the 'food_type' column is in dataset with ID 8123 and
-9123, you can execute:
+9123, you can join the two datasets on that column by executing:
 
 ``curl -X POST -d "dataset_id=8123&other_dataset_id=9123&on=food_type" http://bamboo.io/datasets/join``
 
