@@ -347,7 +347,6 @@ class TestDatasets(TestAbstractDatasets):
             self.controller.info(self.dataset_id))[Dataset.SCHEMA]
         self._post_calculations(['amount < 4'])
 
-
     def test_merge_datasets_no_reserved_keys(self):
         self._post_file()
         dataset_id1 = self.dataset_id
