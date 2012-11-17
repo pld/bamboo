@@ -35,6 +35,8 @@ ROUTES = [
         '/datasets/merge', 'datasets', 'merge'),
     ('datasets_join', 'POST',
         '/datasets/:dataset_id/join', 'datasets', 'join'),
+    ('datasets_join_alias', 'POST',
+        '/datasets/join', 'datasets', 'join'),
     ('datasets_drop_columns', 'PUT',
         '/datasets/drop_columns', 'datasets', 'drop_columns'),
     # calculations
