@@ -62,7 +62,7 @@ class TestDatasetsUpdateWithAggs(TestAbstractDatasets):
                 self.dataset2_id, aggregation, name, group='food_type')
 
         result = json.loads(
-            self.controller.related(self.dataset2_id))
+            self.controller.aggregations(self.dataset2_id))
 
         self.linked_dataset1_id = result['']
 

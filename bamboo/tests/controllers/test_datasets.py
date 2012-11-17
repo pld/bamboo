@@ -97,8 +97,8 @@ class TestDatasets(TestAbstractDatasets):
         if query != '{}':
             self.assertEqual(len(results), num_results)
 
-    def _test_related(self, groups=['']):
-        results = json.loads(self.controller.related(self.dataset_id))
+    def _test_aggregations(self, groups=['']):
+        results = json.loads(self.controller.aggregations(self.dataset_id))
         self.assertTrue(isinstance(results, dict))
         self.assertEqual(len(results.keys()), len(groups))
         self.assertEqual(results.keys(), groups)
@@ -152,7 +152,7 @@ class TestDatasets(TestAbstractDatasets):
                 self.assertTrue(
                     column in result.keys(),
                     "column %s not in %s" % (column, result.keys()))
-        self._test_related()
+        self._test_aggregations()
 
     def test_create_from_file(self):
         _file = open(self._file_path, 'r')
@@ -618,39 +618,39 @@ class TestDatasets(TestAbstractDatasets):
         results = self._test_summary_results(results)
         self.assertEqual(len(results[query_column].keys()), 1)
 
-    def test_related_datasets_empty(self):
+    def test_aggregations_datasets_empty(self):
         self._post_file()
         self._post_calculations(formulae=self.default_formulae)
-        results = json.loads(self.controller.related(self.dataset_id))
+        results = json.loads(self.controller.aggregations(self.dataset_id))
         self.assertTrue(isinstance(results, dict))
         self.assertEqual(len(results.keys()), 0)
 
-    def test_related_datasets(self):
+    def test_aggregations_datasets(self):
         self._post_file()
         self._post_calculations(
             formulae=self.default_formulae + ['sum(amount)'])
-        results = self._test_related()
+        results = self._test_aggregations()
         row_keys = ['sum_amount_']
         for row in results:
             self.assertEqual(row.keys(), row_keys)
             self.assertTrue(isinstance(row.values()[0], float))
 
-    def test_related_datasets_with_group(self):
+    def test_aggregations_datasets_with_group(self):
         self._post_file()
         group = 'food_type'
         self._post_calculations(self.default_formulae + ['sum(amount)'], group)
-        results = self._test_related([group])
+        results = self._test_aggregations([group])
         row_keys = [group, 'sum_amount_']
         for row in results:
             self.assertEqual(row.keys(), row_keys)
             self.assertTrue(isinstance(row.values()[0], basestring))
             self.assertTrue(isinstance(row.values()[1], float))
 
-    def test_related_datasets_with_multigroup(self):
+    def test_aggregations_datasets_with_multigroup(self):
         self._post_file()
         group = 'food_type,rating'
         self._post_calculations(self.default_formulae + ['sum(amount)'], group)
-        results = self._test_related([group])
+        results = self._test_aggregations([group])
         row_keys = (group.split(GROUP_DELIMITER) +
                     ['sum_amount_']).sort()
         for row in results:
@@ -660,12 +660,12 @@ class TestDatasets(TestAbstractDatasets):
             self.assertTrue(isinstance(row.values()[1], basestring))
             self.assertTrue(isinstance(row.values()[2], float))
 
-    def test_related_datasets_with_group_two_calculations(self):
+    def test_aggregations_datasets_with_group_two_calculations(self):
         self._post_file()
         group = 'food_type'
         self._post_calculations(
             self.default_formulae + ['sum(amount)', 'sum(gps_alt)'], group)
-        results = self._test_related([group])
+        results = self._test_aggregations([group])
         row_keys = [group, 'sum_amount_', 'sum_gps_alt_']
         for row in results:
             self.assertEqual(row.keys(), row_keys)
@@ -673,19 +673,19 @@ class TestDatasets(TestAbstractDatasets):
             for value in row.values()[1:]:
                 self.assertTrue(isinstance(value, float) or value == 'null')
 
-    def test_related_datasets_with_two_groups(self):
+    def test_aggregations_datasets_with_two_groups(self):
         self._post_file()
         group = 'food_type'
         self._post_calculations(self.default_formulae + ['sum(amount)'])
         self._post_calculations(['sum(gps_alt)'], group)
         groups = ['', group]
-        results = self._test_related(groups)
+        results = self._test_aggregations(groups)
         for row in results:
             self.assertEqual(row.keys(), ['sum_amount_'])
             self.assertTrue(isinstance(row.values()[0], float))
 
         # get second linked dataset
-        results = json.loads(self.controller.related(self.dataset_id))
+        results = json.loads(self.controller.aggregations(self.dataset_id))
         self.assertEqual(len(results.keys()), len(groups))
         self.assertEqual(results.keys(), groups)
         linked_dataset_id = results[group]

@@ -46,7 +46,7 @@ class TestDatasetsUpdateWithCalcs(TestAbstractDatasets):
         self.calculations.create(
             self.dataset2_id, 'sum(amount)', 'sum of amount')
         result = json.loads(
-            self.controller.related(self.dataset2_id))
+            self.controller.aggregations(self.dataset2_id))
         self.linked_dataset1_id = result['']
 
         # create merged datasets

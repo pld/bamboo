@@ -43,7 +43,7 @@ class TestDatasetsUpdate(TestAbstractDatasets):
         self.formula1 = 'sum(amount)'
         self.calculations.create(self.dataset2_id, self.formula1, self.name1)
         result = json.loads(
-            self.controller.related(self.dataset2_id))
+            self.controller.aggregations(self.dataset2_id))
         self.linked_dataset1_id = result['']
 
         # create merged datasets

@@ -103,13 +103,12 @@ class Datasets(AbstractController):
         return self._safe_get_and_call(dataset_id, _action, callback=callback,
                                        exceptions=(ColumnTypeError,))
 
-    def related(self, dataset_id, callback=False):
+    def aggregations(self, dataset_id, callback=False):
         """Return a dict of aggregated data for the given *dataset_id*.
 
         Args:
 
-        - dataset_id: The dataset ID of the dataset to return related data
-          for.
+        - dataset_id: The dataset ID of the dataset to return aggregations for.
         - callback: A JSONP callback function to wrap the result in.
 
         Returns:

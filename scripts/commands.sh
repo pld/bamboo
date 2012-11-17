@@ -94,7 +94,7 @@ echo $RET
 sleep $WAIT_TIME
 
 echo -e "\nRetrieve linked dataset IDs"
-RET=$(curl -#g $HOST/datasets/$ID/related)
+RET=$(curl -#g $HOST/datasets/$ID/aggregations)
 echo $RET
 
 sleep $WAIT_TIME
@@ -113,7 +113,7 @@ echo $RET
 sleep $WAIT_TIME
 
 echo -e "\nRetrieve linked dataset IDs"
-RET=$(curl -#g $HOST/datasets/$ID/related)
+RET=$(curl -#g $HOST/datasets/$ID/aggregations)
 echo $RET
 
 sleep $WAIT_TIME
