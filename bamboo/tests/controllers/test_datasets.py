@@ -391,12 +391,9 @@ class TestDatasets(TestAbstractDatasets):
         self.assertTrue(Dataset.SCHEMA in results.keys())
         schema = results[Dataset.SCHEMA]
         for key, column in schema.items():
-            if column[OLAP_TYPE] == DIMENSION:
-                self.assertTrue(Dataset.CARDINALITY in column.keys())
-                self.assertEqual(
-                    column[Dataset.CARDINALITY], self.cardinalities[key])
-            else:
-                self.assertFalse(Dataset.CARDINALITY in column.keys())
+            self.assertTrue(Dataset.CARDINALITY in column.keys())
+            self.assertEqual(
+                column[Dataset.CARDINALITY], self.cardinalities[key])
 
     def test_info_after_row_update(self):
         self._post_file()

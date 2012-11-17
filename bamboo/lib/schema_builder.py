@@ -78,10 +78,8 @@ def schema_from_data_and_dtypes(dataset, dframe):
                 SIMPLETYPE: _simpletype_for_data_and_dtype(
                     dframe[name], dtype),
             }
-
-            if column_schema[OLAP_TYPE] == DIMENSION:
-                column_schema[dataset.CARDINALITY] = dframe[
-                    name].nunique()
+            column_schema[dataset.CARDINALITY] = dframe[
+                name].nunique()
             schema[encoded_names[name]] = column_schema
 
     return schema
