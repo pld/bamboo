@@ -21,7 +21,11 @@ def merge_dataset_ids(dataset_ids):
     - dataset_ids: An array of dataset IDs to merge.
 
     Raises:
-        MergeError: If less than 2 datasets are provided.
+        MergeError: If less than 2 datasets are provided. If a dataset cannot
+            be found for a dataset ID it is ignored. Therefore if 2 dataset IDs
+            are provided and one of them is bad an error is raised.  However,
+            if three dataset IDs are provided and one of them is bad, an error
+            is not raised.
     """
     dataset_ids = json.loads(dataset_ids)
     datasets = [Dataset.find_one(dataset_id) for dataset_id in dataset_ids]
