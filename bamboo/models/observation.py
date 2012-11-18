@@ -53,7 +53,8 @@ class Observation(AbstractModel):
             query = (query and json.loads(
                 query, object_hook=json_util.object_hook)) or {}
 
-            query = parse_timestamp_query(query, dataset.schema)
+            if dataset.schema:
+                query = parse_timestamp_query(query, dataset.schema)
         except ValueError, err:
             raise JSONError('cannot decode query: %s' % err.__str__())
 

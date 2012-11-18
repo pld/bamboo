@@ -466,9 +466,13 @@ class TestDatasets(TestAbstractDatasets):
         self.assertTrue(Datasets.ERROR in results)
 
     def test_show_with_query(self):
-        # (sic)
         self._test_get_with_query_or_select('{"rating": "delectible"}',
                                             num_results=11)
+
+    @requires_async
+    def test_show_with_query_async(self):
+        self._test_get_with_query_or_select('{"rating": "delectible"}',
+                                            num_results=0)
 
     def test_show_with_query_limit_order_by(self):
 
