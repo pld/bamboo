@@ -1,12 +1,9 @@
 import cherrypy
 
+from bamboo.lib.exceptions import ArgumentError
 from bamboo.lib.jsontools import JSONError
 from bamboo.lib.mongo import dump_mongo_json
 from bamboo.models.dataset import Dataset
-
-
-class ArgumentError(Exception):
-    pass
 
 
 class AbstractController(object):

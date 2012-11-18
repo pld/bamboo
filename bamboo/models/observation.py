@@ -85,11 +85,11 @@ class Observation(AbstractModel):
 
         """
         # build schema for the dataset after having read it from file.
-        if not dataset.SCHEMA in dataset.record:
+        if not dataset.schema:
             dataset.build_schema(dframe)
 
         # save the data, if there is any
-        num_columns = len(dataset.record[dataset.SCHEMA].keys())
+        num_columns = len(dataset.schema.keys())
         num_rows = 0
         if dframe is not None:
             labels_to_slugs = dataset.build_labels_to_slugs()

@@ -3,6 +3,7 @@ from celery.task import task
 from bamboo.core.calculator import Calculator
 from bamboo.core.frame import DATASET_ID
 from bamboo.core.parser import Parser
+from bamboo.lib.exceptions import ArgumentError
 from bamboo.lib.utils import call_async
 from bamboo.models.abstract_model import AbstractModel
 
@@ -12,7 +13,7 @@ class DependencyError(Exception):
 
 
 @task
-def delete_task(calculation, dataset):
+def delete_task(calculation, dataset, slug):
     """Background task to delete *calculation* and columns in its dataset.
 
     Args:
@@ -21,12 +22,7 @@ def delete_task(calculation, dataset):
     - dataset: Dataset for this calculation.
 
     """
-    if not calculation.group is None:
-        # it is an aggregate calculation
-        dataset = dataset.aggregated_datasets[calculation.group]
-
     dframe = dataset.dframe(keep_parent_ids=True)
-    slug = dataset.build_labels_to_slugs()[calculation.name]
     del dframe[slug]
     dataset.replace_observations(dframe)
     calculation.remove_dependencies()
@@ -134,7 +130,21 @@ class Calculation(AbstractModel):
             raise DependencyError(
                 'Cannot delete, the calculations %s depend on this calculation'
                 % self.dependent_calculations)
-        call_async(delete_task, self, dataset)
+        if not self.group is None:
+            # it is an aggregate calculation
+            if not self.group in dataset.aggregated_datasets:
+                raise ArgumentError('Aggregation with group "%s" does not exists yet'
+                                    'for dataset' % self.group)
+            dataset = dataset.aggregated_datasets[self.group]
+
+        labels_to_slugs = dataset.build_labels_to_slugs()
+        slug = labels_to_slugs.get(self.name)
+
+        if slug is None:
+            raise ArgumentError('Calculation "%s" does not exists for dataset' %
+                                self.name)
+
+        call_async(delete_task, self, dataset, slug)
 
     def save(self, dataset, formula, name, group=None):
         """Parse, save, and calculate a formula.

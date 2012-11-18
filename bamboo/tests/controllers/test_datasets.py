@@ -318,6 +318,12 @@ class TestDatasets(TestAbstractDatasets):
         dataset_id1 = self.dataset_id
         self._post_file()
         dataset_id2 = self.dataset_id
+        self.assertEqual(
+            Dataset.find_one(dataset_id1).status,
+            Dataset.STATE_PENDING)
+        self.assertEqual(
+            Dataset.find_one(dataset_id2).status,
+            Dataset.STATE_PENDING)
         result = json.loads(self.controller.merge(
             datasets=json.dumps([dataset_id1, dataset_id2])))
         self.assertTrue(isinstance(result, dict))

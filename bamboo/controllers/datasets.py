@@ -1,11 +1,11 @@
 import cherrypy
 import urllib2
 
-from bamboo.controllers.abstract_controller import AbstractController,\
-    ArgumentError
+from bamboo.controllers.abstract_controller import AbstractController
 from bamboo.core.frame import NonUniqueJoinError
 from bamboo.core.merge import merge_dataset_ids, MergeError
 from bamboo.core.summary import ColumnTypeError
+from bamboo.lib.exceptions import ArgumentError
 from bamboo.lib.io import create_dataset_from_url, create_dataset_from_csv,\
     create_dataset_from_schema
 from bamboo.models.dataset import Dataset
