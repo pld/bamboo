@@ -262,16 +262,19 @@ class Calculator(object):
             new_data = [new_data]
 
         filtered_data = []
+        columns = self.dframe.columns
         for row in new_data:
             filtered_row = dict()
             for col, val in row.iteritems():
-                if labels_to_slugs.get(col, None) in self.dframe.columns:
-                    filtered_row[labels_to_slugs[col]] = val
                 # special case for reserved keys (e.g. _id)
-                if col in MONGO_RESERVED_KEYS and\
-                    col in self.dframe.columns and\
-                        col not in filtered_row.keys():
-                    filtered_row[col] = val
+                if col in MONGO_RESERVED_KEYS:
+                    if (not len(columns) or col in columns) and\
+                            col not in filtered_row.keys():
+                        filtered_row[col] = val
+                else:
+                    slug = labels_to_slugs.get(col)
+                    if slug and (not len(columns) or slug in columns):
+                        filtered_row[slug] = val
             filtered_data.append(filtered_row)
         return BambooFrame(filtered_data)
 

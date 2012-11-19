@@ -257,6 +257,22 @@ class TestDatasets(TestAbstractDatasets):
         self.assertTrue(Dataset.NUM_COLUMNS in results.keys())
         self.assertEqual(results[Dataset.NUM_COLUMNS], self.NUM_COLS)
 
+    def test_create_from_schema_and_update(self):
+        schema = open(self._schema_path)
+        mock_uploaded_file = MockUploadedFile(schema)
+        result = json.loads(
+            self.controller.create(schema=mock_uploaded_file))
+        self.assertTrue(isinstance(result, dict))
+        self.assertTrue(Dataset.ID in result)
+        self.dataset_id = result[Dataset.ID]
+        results = json.loads(self.controller.show(self.dataset_id))
+        self._put_row_updates()
+        results = json.loads(self.controller.show(self.dataset_id))
+        self.assertTrue(len(results))
+        for result in results:
+            self.assertTrue(isinstance(result, dict))
+            self.assertTrue(len(result.keys()))
+
     # TODO: test various create from schema errors
 
     @requires_async
