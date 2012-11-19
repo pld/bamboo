@@ -635,6 +635,15 @@ class TestDatasets(TestAbstractDatasets):
                 self.assertFalse(group in results.keys())
                 self.assertTrue(Datasets.ERROR in results.keys())
 
+    def test_summary_with_select_as_list(self):
+        self._post_file()
+        json_results = self.controller.summary(
+            self.dataset_id,
+            select=json.dumps('[]'))
+        results = self._test_summary_results(json_results)
+        self.assertTrue(Datasets.ERROR in results.keys())
+        self.assertTrue('must be a' in results[Datasets.ERROR])
+
     def test_summary_with_group_select(self):
         self._post_file()
         group = 'food_type'

@@ -12,6 +12,7 @@ from bamboo.core.calculator import Calculator
 from bamboo.core.frame import BambooFrame, BAMBOO_RESERVED_KEY_PREFIX,\
     DATASET_ID, DATASET_OBSERVATION_ID, PARENT_DATASET_ID
 from bamboo.core.summary import summarize
+from bamboo.lib.exceptions import ArgumentError
 from bamboo.lib.mongo import reserve_encoded
 from bamboo.lib.schema_builder import DIMENSION, OLAP_TYPE,\
     schema_from_data_and_dtypes
@@ -236,6 +237,9 @@ class Dataset(AbstractModel):
         # if select append groups to select
         if select:
             select = json.loads(select)
+            if not isinstance(select, dict):
+                raise ArgumentError('select argument must be a JSON dictionary,'
+                    'found: %s.' % select)
             select.update(dict(zip(groups, [1] * len(groups))))
             select = json.dumps(select)
 
