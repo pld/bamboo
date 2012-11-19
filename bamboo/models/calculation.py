@@ -133,16 +133,17 @@ class Calculation(AbstractModel):
         if not self.group is None:
             # it is an aggregate calculation
             if not self.group in dataset.aggregated_datasets:
-                raise ArgumentError('Aggregation with group "%s" does not exists yet'
-                                    'for dataset' % self.group)
+                raise ArgumentError(
+                    'Aggregation with group "%s" does not exists yet for '
+                    'dataset' % self.group)
             dataset = dataset.aggregated_datasets[self.group]
 
         labels_to_slugs = dataset.build_labels_to_slugs()
         slug = labels_to_slugs.get(self.name)
 
         if slug is None:
-            raise ArgumentError('Calculation "%s" does not exists for dataset' %
-                                self.name)
+            raise ArgumentError(
+                'Calculation "%s" does not exists for dataset' % self.name)
 
         call_async(delete_task, self, dataset, slug)
 
