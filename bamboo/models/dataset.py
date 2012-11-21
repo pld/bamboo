@@ -63,6 +63,10 @@ class Dataset(AbstractModel):
         return self.record[DATASET_ID]
 
     @property
+    def num_rows(self):
+        return self.record.get(self.NUM_ROWS, 0)
+
+    @property
     def schema(self):
         return self.record.get(self.SCHEMA)
 
@@ -238,8 +242,8 @@ class Dataset(AbstractModel):
         if select:
             select = json.loads(select)
             if not isinstance(select, dict):
-                raise ArgumentError('select argument must be a JSON dictionary,'
-                    'found: %s.' % select)
+                raise ArgumentError('select argument must be a JSON dictionary'
+                                    ', found: %s.' % select)
             select.update(dict(zip(groups, [1] * len(groups))))
             select = json.dumps(select)
 
@@ -284,7 +288,7 @@ class Dataset(AbstractModel):
             self.CREATED_AT: self.record.get(self.CREATED_AT),
             self.UPDATED_AT: self.record.get(self.UPDATED_AT),
             self.NUM_COLUMNS: self.record.get(self.NUM_COLUMNS),
-            self.NUM_ROWS: self.record.get(self.NUM_ROWS),
+            self.NUM_ROWS: self.num_rows,
         }
 
     def build_labels_to_slugs(self):
@@ -360,11 +364,25 @@ class Dataset(AbstractModel):
         dframe = self.dframe(keep_parent_ids=True)
         self.replace_observations(dframe.drop(columns, axis=1))
 
+    def place_holder_dframe(self):
+        columns = self.build_labels_to_slugs().keys()
+        return BambooFrame([[''] * len(columns)], columns=columns)
+
     def join(self, other, on):
-        merged_dframe = self.dframe().join_dataset(other, on)
+        merged_dframe = self.dframe()
+
+        if not len(merged_dframe.columns):
+            # Empty dataset, simulate columns
+            merged_dframe = self.place_holder_dframe()
+
+        merged_dframe = merged_dframe.join_dataset(other, on)
         merged_dataset = self.__class__()
         merged_dataset.save()
-        merged_dataset.save_observations(merged_dframe)
+        if self.num_rows and other.num_rows:
+            merged_dataset.save_observations(merged_dframe)
+        else:
+            merged_dataset.build_schema(merged_dframe)
+
         self.add_joined_dataset(
             ('right', other.dataset_id, on, merged_dataset.dataset_id))
         other.add_joined_dataset(

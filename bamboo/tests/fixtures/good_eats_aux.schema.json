@@ -1,0 +1,12 @@
+{
+    "food_type": {
+        "label": "food_type",
+        "olap_type": "dimension",
+        "simpletype": "string"
+    },
+    "code": {
+        "label": "code",
+        "olap_type": "dimension",
+        "simpletype": "string"
+    }
+}

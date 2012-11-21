@@ -80,6 +80,11 @@ class BambooFrame(DataFrame):
     def join_dataset(self, other, on):
         """Left join an *other* dataset."""
         right_dframe = other.dframe()
+        print right_dframe.columns
+
+        if not len(right_dframe.columns):
+            # Empty dataset, simulate columns
+            right_dframe = other.place_holder_dframe()
 
         if on not in self.columns:
             raise KeyError('no item named %s in left hand side dataset' % on)

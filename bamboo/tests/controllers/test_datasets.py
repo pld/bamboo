@@ -273,6 +273,73 @@ class TestDatasets(TestAbstractDatasets):
             self.assertTrue(isinstance(result, dict))
             self.assertTrue(len(result.keys()))
 
+    def test_create_one_from_schema_and_join(self):
+        schema = open(self._schema_path)
+        mock_uploaded_file = MockUploadedFile(schema)
+        result = json.loads(
+            self.controller.create(schema=mock_uploaded_file))
+        self.assertTrue(isinstance(result, dict))
+        self.assertTrue(Dataset.ID in result)
+        left_dataset_id = result[Dataset.ID]
+        self._post_file('good_eats_aux.csv')
+
+        on = 'food_type'
+        dataset_id_tuples = [
+            (left_dataset_id, self.dataset_id),
+            (self.dataset_id, left_dataset_id),
+        ]
+
+        for dataset_ids in dataset_id_tuples:
+            result = json.loads(self.controller.join(*dataset_ids, on=on))
+            expected_schema_keys = set(sum([
+                Dataset.find_one(dataset_id).schema.keys()
+                for dataset_id in dataset_ids], []))
+
+            self.assertTrue(isinstance(result, dict))
+            self.assertTrue(Dataset.ID in result)
+            merge_dataset_id = result[Dataset.ID]
+            dataset = Dataset.find_one(merge_dataset_id)
+            self.assertEqual(dataset.num_rows, 0)
+            schema_keys = set(dataset.schema.keys())
+            self.assertEqual(schema_keys, expected_schema_keys)
+
+    def test_create_two_from_schema_and_join(self):
+        schema = open(self._schema_path)
+        mock_uploaded_file = MockUploadedFile(schema)
+        result = json.loads(
+            self.controller.create(schema=mock_uploaded_file))
+        self.assertTrue(isinstance(result, dict))
+        self.assertTrue(Dataset.ID in result)
+        left_dataset_id = result[Dataset.ID]
+
+        schema = open('tests/fixtures/good_eats_aux.schema.json')
+        mock_uploaded_file = MockUploadedFile(schema)
+        result = json.loads(
+            self.controller.create(schema=mock_uploaded_file))
+        self.assertTrue(isinstance(result, dict))
+        self.assertTrue(Dataset.ID in result)
+        right_dataset_id = result[Dataset.ID]
+
+        on = 'food_type'
+        dataset_id_tuples = [
+            (left_dataset_id, right_dataset_id),
+            (right_dataset_id, left_dataset_id),
+        ]
+
+        for dataset_ids in dataset_id_tuples:
+            result = json.loads(self.controller.join(*dataset_ids, on=on))
+            expected_schema_keys = set(sum([
+                Dataset.find_one(dataset_id).schema.keys()
+                for dataset_id in dataset_ids], []))
+
+            self.assertTrue(isinstance(result, dict))
+            self.assertTrue(Dataset.ID in result)
+            merge_dataset_id = result[Dataset.ID]
+            dataset = Dataset.find_one(merge_dataset_id)
+            self.assertEqual(dataset.num_rows, 0)
+            schema_keys = set(dataset.schema.keys())
+            self.assertEqual(schema_keys, expected_schema_keys)
+
     # TODO: test various create from schema errors
 
     @requires_async
