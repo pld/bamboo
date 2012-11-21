@@ -80,7 +80,6 @@ class BambooFrame(DataFrame):
     def join_dataset(self, other, on):
         """Left join an *other* dataset."""
         right_dframe = other.dframe()
-        print right_dframe.columns
 
         if not len(right_dframe.columns):
             # Empty dataset, simulate columns
