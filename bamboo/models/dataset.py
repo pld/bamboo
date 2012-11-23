@@ -299,7 +299,7 @@ class Dataset(AbstractModel):
             num_columns = len(new_schema.keys())
             self.update({self.NUM_COLUMNS: num_columns, self.SCHEMA: new_schema})
         else:
-            set_schema(new_schema)
+            self.set_schema(new_schema)
 
     def set_schema(self, schema):
         """Set the schema from an existing one."""
