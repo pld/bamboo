@@ -266,12 +266,25 @@ class TestDatasets(TestAbstractDatasets):
         self.assertTrue(Dataset.ID in result)
         self.dataset_id = result[Dataset.ID]
         results = json.loads(self.controller.show(self.dataset_id))
+        self.assertFalse(len(results))
+        dataset = Dataset.find_one(self.dataset_id)
+        self.assertEqual(dataset.num_rows, 0)
+        old_schema = dataset.schema
+
         self._put_row_updates()
         results = json.loads(self.controller.show(self.dataset_id))
+
         self.assertTrue(len(results))
         for result in results:
             self.assertTrue(isinstance(result, dict))
             self.assertTrue(len(result.keys()))
+        dataset = Dataset.find_one(self.dataset_id)
+        self.assertEqual(dataset.num_rows, 1)
+        new_schema = dataset.schema
+        self.assertEqual(set(old_schema.keys()), set(new_schema.keys()))
+        for column in new_schema.keys():
+            if new_schema[column].get(Dataset.CARDINALITY):
+                self.assertEqual(new_schema[column][Dataset.CARDINALITY], 1)
 
     def test_create_one_from_schema_and_join(self):
         schema = open(self._schema_path)
@@ -947,10 +960,10 @@ class TestDatasets(TestAbstractDatasets):
         self.assertTrue('right' in results[AbstractController.ERROR])
 
     def test_bad_date(self):
-      self._post_file('bad_date.csv')
-      dataset = Dataset.find_one(self.dataset_id)
-      self.assertEqual(dataset.num_rows, 1)
-      self.assertEqual(len(dataset.schema.keys()), 3)
-      result = json.loads(self.controller.summary(
+        self._post_file('bad_date.csv')
+        dataset = Dataset.find_one(self.dataset_id)
+        self.assertEqual(dataset.num_rows, 1)
+        self.assertEqual(len(dataset.schema.keys()), 3)
+        result = json.loads(self.controller.summary(
             self.dataset_id, select='all', group='name'))
-      self.assertTrue('name' in result.keys())
+        self.assertTrue('name' in result.keys())

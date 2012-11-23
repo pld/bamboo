@@ -268,9 +268,26 @@ class Dataset(AbstractModel):
         super(self.__class__, self).update(record)
 
     def build_schema(self, dframe):
-        """Build schema for a dataset."""
-        schema = schema_from_data_and_dtypes(self, dframe)
-        self.update({self.SCHEMA: schema})
+        """Build schema for a dataset.
+
+        If no schema exists, build a schema from the passed *dframe* and store
+        that schema for this dataset.  Otherwise, if a schema does exist, build
+        a schema for the passed *dframe* and merge this schema with the current
+        schema.  Keys in the new schema replace keys in the current schema but
+        keys in the current schema not in the new schema are retained.
+
+        Args:
+
+        - dframe: The DataFrame whose schema to merge with the current schema.
+
+        """
+        current_schema = self.schema
+        new_schema = schema_from_data_and_dtypes(self, dframe)
+        if current_schema:
+            # merge new schema with existing schema
+            current_schema.update(new_schema)
+            new_schema = current_schema
+        self.set_schema(new_schema)
 
     def set_schema(self, schema):
         """Set the schema from an existing one."""
