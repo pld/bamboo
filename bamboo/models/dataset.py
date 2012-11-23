@@ -297,7 +297,8 @@ class Dataset(AbstractModel):
             new_schema = current_schema
         if set_num_columns:
             num_columns = len(new_schema.keys())
-            self.update({self.NUM_COLUMNS: num_columns, self.SCHEMA: new_schema})
+            self.update({
+                self.NUM_COLUMNS: num_columns, self.SCHEMA: new_schema})
         else:
             self.set_schema(new_schema)
 
@@ -411,6 +412,7 @@ class Dataset(AbstractModel):
             merged_dataset.save_observations(merged_dframe)
         else:
             merged_dataset.build_schema(merged_dframe, set_num_columns=True)
+            merged_dataset.ready()
 
         self.add_joined_dataset(
             ('right', other.dataset_id, on, merged_dataset.dataset_id))
