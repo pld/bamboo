@@ -63,6 +63,10 @@ class Dataset(AbstractModel):
         return self.record[DATASET_ID]
 
     @property
+    def num_columns(self):
+        return self.record.get(self.NUM_COLUMNS, 0)
+
+    @property
     def num_rows(self):
         return self.record.get(self.NUM_ROWS, 0)
 
@@ -267,7 +271,7 @@ class Dataset(AbstractModel):
         record[self.UPDATED_AT] = strftime("%Y-%m-%d %H:%M:%S", gmtime())
         super(self.__class__, self).update(record)
 
-    def build_schema(self, dframe):
+    def build_schema(self, dframe, set_num_columns=False):
         """Build schema for a dataset.
 
         If no schema exists, build a schema from the passed *dframe* and store
@@ -276,9 +280,13 @@ class Dataset(AbstractModel):
         schema.  Keys in the new schema replace keys in the current schema but
         keys in the current schema not in the new schema are retained.
 
+        If *set_num_columns* is True the number of columns will be set to the
+        number of keys (columns) in the new schema.
+
         Args:
 
         - dframe: The DataFrame whose schema to merge with the current schema.
+        - set_num_columns: If True also set the number of columns.
 
         """
         current_schema = self.schema
@@ -287,7 +295,11 @@ class Dataset(AbstractModel):
             # merge new schema with existing schema
             current_schema.update(new_schema)
             new_schema = current_schema
-        self.set_schema(new_schema)
+        if set_num_columns:
+            num_columns = len(new_schema.keys())
+            self.update({self.NUM_COLUMNS: num_columns, self.SCHEMA: new_schema})
+        else:
+            set_schema(new_schema)
 
     def set_schema(self, schema):
         """Set the schema from an existing one."""
@@ -304,7 +316,7 @@ class Dataset(AbstractModel):
             self.ATTRIBUTION: '',
             self.CREATED_AT: self.record.get(self.CREATED_AT),
             self.UPDATED_AT: self.record.get(self.UPDATED_AT),
-            self.NUM_COLUMNS: self.record.get(self.NUM_COLUMNS),
+            self.NUM_COLUMNS: self.num_columns,
             self.NUM_ROWS: self.num_rows,
         }
 
@@ -398,7 +410,7 @@ class Dataset(AbstractModel):
         if self.num_rows and other.num_rows:
             merged_dataset.save_observations(merged_dframe)
         else:
-            merged_dataset.build_schema(merged_dframe)
+            merged_dataset.build_schema(merged_dframe, set_num_columns=True)
 
         self.add_joined_dataset(
             ('right', other.dataset_id, on, merged_dataset.dataset_id))

@@ -86,10 +86,9 @@ class Observation(AbstractModel):
         """
         # build schema for the dataset after having read it from file.
         if not dataset.schema:
-            dataset.build_schema(dframe)
+            dataset.build_schema(dframe, set_num_columns=True)
 
         # save the data, if there is any
-        num_columns = len(dataset.schema.keys())
         num_rows = 0
         if dframe is not None:
             labels_to_slugs = dataset.build_labels_to_slugs()
@@ -109,7 +108,6 @@ class Observation(AbstractModel):
 
         # add metadata to dataset, discount ID column
         dataset.update({
-            dataset.NUM_COLUMNS: num_columns,
             dataset.NUM_ROWS: num_rows,
             dataset.STATE: self.STATE_READY,
         })

@@ -313,6 +313,7 @@ class TestDatasets(TestAbstractDatasets):
             merge_dataset_id = result[Dataset.ID]
             dataset = Dataset.find_one(merge_dataset_id)
             self.assertEqual(dataset.num_rows, 0)
+            self.assertEqual(dataset.num_columns, len(expected_schema_keys))
             schema_keys = set(dataset.schema.keys())
             self.assertEqual(schema_keys, expected_schema_keys)
 
@@ -350,6 +351,7 @@ class TestDatasets(TestAbstractDatasets):
             merge_dataset_id = result[Dataset.ID]
             dataset = Dataset.find_one(merge_dataset_id)
             self.assertEqual(dataset.num_rows, 0)
+            self.assertEqual(dataset.num_columns, len(expected_schema_keys))
             schema_keys = set(dataset.schema.keys())
             self.assertEqual(schema_keys, expected_schema_keys)
 
