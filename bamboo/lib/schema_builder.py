@@ -78,8 +78,11 @@ def schema_from_data_and_dtypes(dataset, dframe):
                 SIMPLETYPE: _simpletype_for_data_and_dtype(
                     dframe[name], dtype),
             }
-            column_schema[dataset.CARDINALITY] = dframe[
-                name].nunique()
+            try:
+                column_schema[dataset.CARDINALITY] = dframe[
+                    name].nunique()
+            except AttributeError as e:
+                pass
             schema[encoded_names[name]] = column_schema
 
     return schema

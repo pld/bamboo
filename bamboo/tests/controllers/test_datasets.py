@@ -945,3 +945,12 @@ class TestDatasets(TestAbstractDatasets):
         self.assertTrue(isinstance(results, dict))
         self.assertTrue(AbstractController.ERROR in results.keys())
         self.assertTrue('right' in results[AbstractController.ERROR])
+
+    def test_bad_date(self):
+      self._post_file('bad_date.csv')
+      dataset = Dataset.find_one(self.dataset_id)
+      self.assertEqual(dataset.num_rows, 1)
+      self.assertEqual(len(dataset.schema.keys()), 3)
+      result = json.loads(self.controller.summary(
+            self.dataset_id, select='all', group='name'))
+      self.assertTrue('name' in result.keys())
