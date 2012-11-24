@@ -122,7 +122,7 @@ class Dataset(AbstractModel):
             return self.schema[col][self.CARDINALITY]
 
     def dframe(self, query=None, select=None, keep_parent_ids=False,
-               limit=0, order_by=None):
+               limit=0, order_by=None, padded=False):
         """Fetch the dframe for this dataset.
 
         Args:
@@ -162,6 +162,14 @@ class Dataset(AbstractModel):
         dframe = BambooFrame(concat(dframes) if len(dframes) else [])
         dframe.decode_mongo_reserved_keys()
         dframe.remove_bamboo_reserved_keys(keep_parent_ids)
+
+        if padded:
+            if len(dframe.columns):
+                on = dframe.columns[0]
+                place_holder = self.place_holder_dframe(dframe).set_index(on)
+                dframe = BambooFrame(dframe.join(place_holder, on=on))
+            else:
+                dframe = self.place_holder_dframe()
         return dframe
 
     def add_joined_dataset(self, new_data):
@@ -271,7 +279,7 @@ class Dataset(AbstractModel):
         record[self.UPDATED_AT] = strftime("%Y-%m-%d %H:%M:%S", gmtime())
         super(self.__class__, self).update(record)
 
-    def build_schema(self, dframe, set_num_columns=False):
+    def build_schema(self, dframe, set_num_columns=True):
         """Build schema for a dataset.
 
         If no schema exists, build a schema from the passed *dframe* and store
@@ -295,16 +303,14 @@ class Dataset(AbstractModel):
             # merge new schema with existing schema
             current_schema.update(new_schema)
             new_schema = current_schema
-        if set_num_columns:
-            num_columns = len(new_schema.keys())
-            self.update({
-                self.NUM_COLUMNS: num_columns, self.SCHEMA: new_schema})
-        else:
-            self.set_schema(new_schema)
+        self.set_schema(new_schema, set_num_columns=set_num_columns)
 
-    def set_schema(self, schema):
+    def set_schema(self, schema, set_num_columns=True):
         """Set the schema from an existing one."""
-        self.update({self.SCHEMA: schema})
+        update_dict = {self.SCHEMA: schema}
+        if set_num_columns:
+            update_dict.update({self.NUM_COLUMNS: len(schema.keys())})
+        self.update(update_dict)
 
     def info(self):
         """Return meta-data for this dataset."""
@@ -369,7 +375,7 @@ class Dataset(AbstractModel):
         Observation().save(dframe, self)
         return self.dframe()
 
-    def replace_observations(self, dframe):
+    def replace_observations(self, dframe, set_num_columns=True):
         """Remove all rows for this dataset and save the rows in *dframe*.
 
         Args:
@@ -379,7 +385,7 @@ class Dataset(AbstractModel):
         Returns:
             BambooFrame equivalent to the passed in *dframe*.
         """
-        self.build_schema(dframe)
+        self.build_schema(dframe, set_num_columns=set_num_columns)
         Observation.delete_all(self)
         return self.save_observations(dframe)
 
@@ -394,8 +400,10 @@ class Dataset(AbstractModel):
         dframe = self.dframe(keep_parent_ids=True)
         self.replace_observations(dframe.drop(columns, axis=1))
 
-    def place_holder_dframe(self):
-        columns = self.build_labels_to_slugs().keys()
+    def place_holder_dframe(self, dframe=None):
+        columns = self.schema.keys()
+        if dframe is not None:
+            columns = [col for col in columns if col not in dframe.columns[1:]]
         return BambooFrame([[''] * len(columns)], columns=columns)
 
     def join(self, other, on):
