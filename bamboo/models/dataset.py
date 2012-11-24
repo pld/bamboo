@@ -279,7 +279,7 @@ class Dataset(AbstractModel):
         record[self.UPDATED_AT] = strftime("%Y-%m-%d %H:%M:%S", gmtime())
         super(self.__class__, self).update(record)
 
-    def build_schema(self, dframe, set_num_columns=True):
+    def build_schema(self, dframe, overwrite=False, set_num_columns=True):
         """Build schema for a dataset.
 
         If no schema exists, build a schema from the passed *dframe* and store
@@ -299,11 +299,12 @@ class Dataset(AbstractModel):
         """
         current_schema = self.schema
         new_schema = schema_from_data_and_dtypes(self, dframe)
-        if current_schema:
+        if current_schema and not overwrite:
             # merge new schema with existing schema
             current_schema.update(new_schema)
             new_schema = current_schema
-        self.set_schema(new_schema, set_num_columns=set_num_columns)
+        self.set_schema(new_schema,
+                        set_num_columns=(set_num_columns or overwrite))
 
     def set_schema(self, schema, set_num_columns=True):
         """Set the schema from an existing one."""
@@ -375,7 +376,8 @@ class Dataset(AbstractModel):
         Observation().save(dframe, self)
         return self.dframe()
 
-    def replace_observations(self, dframe, set_num_columns=True):
+    def replace_observations(self, dframe, overwrite=False,
+                             set_num_columns=True):
         """Remove all rows for this dataset and save the rows in *dframe*.
 
         Args:
@@ -385,7 +387,8 @@ class Dataset(AbstractModel):
         Returns:
             BambooFrame equivalent to the passed in *dframe*.
         """
-        self.build_schema(dframe, set_num_columns=set_num_columns)
+        self.build_schema(dframe, overwrite=overwrite,
+                          set_num_columns=set_num_columns)
         Observation.delete_all(self)
         return self.save_observations(dframe)
 
