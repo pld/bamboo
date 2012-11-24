@@ -10,6 +10,7 @@ from bamboo.config.settings import TEST_DATABASE_NAME
 
 class TestBase(unittest.TestCase):
 
+    SLEEP_DELAY = 0.2
     TEST_DATASETS = [
         'good_eats.csv',
         'good_eats_large.csv',

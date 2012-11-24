@@ -124,7 +124,7 @@ class TestDatasets(TestAbstractDatasets):
             # wait for the update to finish, or loop forever...
             if len(results) > 19:
                 break
-            sleep(0.1)
+            sleep(self.SLEEP_DELAY)
         results = json.loads(self.controller.show(self.dataset_id))
         num_rows_after_update = len(results)
         self.assertEqual(num_rows_after_update, self.NUM_ROWS + 1)
@@ -471,14 +471,14 @@ class TestDatasets(TestAbstractDatasets):
             results3 = json.loads(self.controller.show(merged_id))
             if all([len(res) for res in [results1, results2, results3]]):
                 break
-            sleep(0.1)
+            sleep(self.SLEEP_DELAY)
 
         while True:
             datasets = [Dataset.find_one(dataset_id)
                         for dataset_id in [dataset_id1, dataset_id2]]
             if all([dataset.is_ready for dataset in datasets]):
                 break
-            sleep(0.1)
+            sleep(self.SLEEP_DELAY)
 
         for dataset in datasets:
             self.assertTrue(merged_id in dataset.merged_dataset_ids)
@@ -541,7 +541,7 @@ class TestDatasets(TestAbstractDatasets):
             results = json.loads(self.controller.show(self.dataset_id))
             if len(results):
                 break
-            sleep(0.1)
+            sleep(self.SLEEP_DELAY)
         self.assertTrue(isinstance(results, list))
         self.assertTrue(isinstance(results[0], dict))
         self.assertEqual(len(results), self.NUM_ROWS)
@@ -1022,6 +1022,6 @@ class TestDatasets(TestAbstractDatasets):
     def test_boolean_column(self):
         self._post_file('water_points.csv')
         summaries = json.loads(self.controller.summary(self.dataset_id,
-                    select=self.controller.SELECT_ALL_FOR_SUMMARY))
+                               select=self.controller.SELECT_ALL_FOR_SUMMARY))
         for summary in summaries.values():
             self.assertFalse(summary is None)

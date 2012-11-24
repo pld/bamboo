@@ -51,7 +51,7 @@ class TestCalculations(TestBase):
             dataset = Dataset.find_one(self.dataset_id)
             if dataset.is_ready:
                 break
-            sleep(0.1)
+            sleep(self.SLEEP_DELAY)
         self.assertFalse(self.name in dataset.schema.keys())
 
     @requires_async
@@ -63,7 +63,7 @@ class TestCalculations(TestBase):
             dataset = Dataset.find_one(self.dataset_id)
             if dataset.is_ready:
                 break
-            sleep(0.1)
+            sleep(self.SLEEP_DELAY)
         response = json.loads(self._post_formula())
         self.assertTrue(isinstance(response, dict))
         self.assertTrue(self.controller.SUCCESS in response)
@@ -78,7 +78,7 @@ class TestCalculations(TestBase):
             dataset = Dataset.find_one(self.dataset_id)
             if response[Calculation.STATE] != Calculation.STATE_PENDING:
                 break
-            sleep(0.1)
+            sleep(self.SLEEP_DELAY)
         self.assertEqual(response[Calculation.STATE],
                          Calculation.STATE_READY)
         dataset = Dataset.find_one(self.dataset_id)
@@ -90,7 +90,7 @@ class TestCalculations(TestBase):
             dataset = Dataset.find_one(self.dataset_id)
             if dataset.is_ready:
                 break
-            sleep(0.1)
+            sleep(self.SLEEP_DELAY)
         response = json.loads(self._post_formula())
         self.assertTrue(isinstance(response, dict))
         self.assertTrue(self.controller.SUCCESS in response)
@@ -100,7 +100,7 @@ class TestCalculations(TestBase):
             dataset = Dataset.find_one(self.dataset_id)
             if response[Calculation.STATE] != Calculation.STATE_PENDING:
                 break
-            sleep(0.1)
+            sleep(self.SLEEP_DELAY)
         dataset = Dataset.find_one(self.dataset_id)
         self.assertTrue(self.name in dataset.schema.keys())
 
