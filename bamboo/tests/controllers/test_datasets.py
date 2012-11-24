@@ -1,3 +1,4 @@
+from base64 import b64encode
 from datetime import datetime
 import os
 import pickle
@@ -14,7 +15,7 @@ from bamboo.core.frame import BAMBOO_RESERVED_KEYS, PARENT_DATASET_ID
 from bamboo.core.summary import SUMMARY
 from bamboo.tests.decorators import requires_async, requires_internet
 from bamboo.lib.datetools import DATETIME
-from bamboo.lib.mongo import MONGO_RESERVED_KEY_PREFIX,\
+from bamboo.lib.mongo import ILLEGAL_VALUES, MONGO_RESERVED_KEY_PREFIX,\
     MONGO_RESERVED_KEY_STRS, MONGO_RESERVED_KEYS
 from bamboo.lib.schema_builder import DIMENSION, OLAP_TYPE, SIMPLETYPE
 from bamboo.lib.utils import GROUP_DELIMITER
@@ -707,6 +708,18 @@ class TestDatasets(TestAbstractDatasets):
             self.dataset_id, select=self.controller.SELECT_ALL_FOR_SUMMARY)
         results = self._test_summary_results(results)
 
+    def test_summary_decode_illegal_keys(self):
+        self._post_file('good_eats_illegal_keys.csv')
+        summaries = json.loads(self.controller.summary(
+            self.dataset_id, select=self.controller.SELECT_ALL_FOR_SUMMARY))
+        from bamboo.lib.mongo import _encode_for_mongo
+        encoded_values = [b64encode(value) for value in ILLEGAL_VALUES]
+        for summary in summaries.values():
+            for key in summary.values()[0].keys():
+                for encoded_value in encoded_values:
+                    self.assertFalse(encoded_value in key, '%s in %s' %
+                                     (encoded_value, key))
+
     def test_summary_no_select(self):
         self._post_file()
         results = self.controller.summary(self.dataset_id)
@@ -1002,12 +1015,13 @@ class TestDatasets(TestAbstractDatasets):
         self.assertEqual(dataset.num_rows, 1)
         self.assertEqual(len(dataset.schema.keys()), 3)
         result = json.loads(self.controller.summary(
-            self.dataset_id, select='all', group='name'))
+            self.dataset_id, select=self.controller.SELECT_ALL_FOR_SUMMARY,
+            group='name'))
         self.assertTrue('name' in result.keys())
 
     def test_boolean_column(self):
         self._post_file('water_points.csv')
         summaries = json.loads(self.controller.summary(self.dataset_id,
-                    select='all'))
+                    select=self.controller.SELECT_ALL_FOR_SUMMARY))
         for summary in summaries.values():
             self.assertFalse(summary is None)
