@@ -27,6 +27,7 @@ def summarize_series(dtype, data):
     """
     return {
         np.object_: data.value_counts(),
+        np.bool_: data.value_counts(),
         np.float64: data.describe(),
         np.int64: data.describe(),
     }.get(dtype.type, None)

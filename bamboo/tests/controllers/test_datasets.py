@@ -1004,3 +1004,10 @@ class TestDatasets(TestAbstractDatasets):
         result = json.loads(self.controller.summary(
             self.dataset_id, select='all', group='name'))
         self.assertTrue('name' in result.keys())
+
+    def test_boolean_column(self):
+        self._post_file('water_points.csv')
+        summaries = json.loads(self.controller.summary(self.dataset_id,
+                    select='all'))
+        for summary in summaries.values():
+            self.assertFalse(summary is None)
