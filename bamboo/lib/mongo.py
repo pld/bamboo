@@ -13,10 +13,10 @@ MONGO_RESERVED_KEY_STRS = [MONGO_RESERVED_KEY_PREFIX + key
 ILLEGAL_VALUES = ['$', '.']
 REPLACEMENT_VALUES = [b64encode(value) for value in ILLEGAL_VALUES]
 
-RE_ILLEGAL_MAP = [(re.compile(r'\%s' % value), REPLACEMENT_VALUES[idx]) for idx, value in
-                  enumerate(ILLEGAL_VALUES)]
-RE_LEGAL_MAP = [(re.compile(r'\%s' % value), ILLEGAL_VALUES[idx]) for idx, value in
-                  enumerate(REPLACEMENT_VALUES)]
+RE_ILLEGAL_MAP = [(re.compile(r'\%s' % value), REPLACEMENT_VALUES[idx]) for
+                  idx, value in enumerate(ILLEGAL_VALUES)]
+RE_LEGAL_MAP = [(re.compile(r'\%s' % value), ILLEGAL_VALUES[idx]) for
+                idx, value in enumerate(REPLACEMENT_VALUES)]
 
 
 def dump_mongo_json(obj):
