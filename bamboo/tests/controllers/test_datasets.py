@@ -120,11 +120,10 @@ class TestDatasets(TestAbstractDatasets):
         self._put_row_updates()
         while True:
             results = json.loads(self.controller.show(self.dataset_id))
-            if len(results):
+            # wait for the update to finish, or loop forever...
+            if len(results) > 19:
                 break
             sleep(0.1)
-        # wait for the update to finish
-        sleep(1)
         results = json.loads(self.controller.show(self.dataset_id))
         num_rows_after_update = len(results)
         self.assertEqual(num_rows_after_update, self.NUM_ROWS + 1)
@@ -355,7 +354,43 @@ class TestDatasets(TestAbstractDatasets):
             schema_keys = set(dataset.schema.keys())
             self.assertEqual(schema_keys, expected_schema_keys)
 
-    # TODO: test various create from schema errors
+    def test_create_two_from_schema_and_join_and_update(self):
+        schema = open(self._schema_path)
+        mock_uploaded_file = MockUploadedFile(schema)
+        result = json.loads(
+            self.controller.create(schema=mock_uploaded_file))
+        left_dataset_id = result[Dataset.ID]
+
+        schema = open('tests/fixtures/good_eats_aux.schema.json')
+        mock_uploaded_file = MockUploadedFile(schema)
+        result = json.loads(
+            self.controller.create(schema=mock_uploaded_file))
+        right_dataset_id = result[Dataset.ID]
+
+        on = 'food_type'
+        result = json.loads(self.controller.join(
+            left_dataset_id, right_dataset_id, on=on))
+        merged_dataset_id = self.dataset_id = result[Dataset.ID]
+
+        num_rows = 0
+        results = json.loads(self.controller.show(merged_dataset_id))
+        self.assertEqual(num_rows, len(results))
+
+        num_rows += 1
+        self._put_row_updates()
+        results = json.loads(self.controller.show(merged_dataset_id))
+        self.assertEqual(num_rows, len(results))
+
+        num_rows += 1
+        self.dataset_id = left_dataset_id
+        self._put_row_updates()
+        results = json.loads(self.controller.show(merged_dataset_id))
+        self.assertEqual(num_rows, len(results))
+
+        self.dataset_id = right_dataset_id
+        self._put_row_updates()
+        results = json.loads(self.controller.show(merged_dataset_id))
+        self.assertEqual(num_rows, len(results))
 
     @requires_async
     def test_merge_datasets_0_not_enough(self):
