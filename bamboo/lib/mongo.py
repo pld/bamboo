@@ -10,8 +10,13 @@ MONGO_RESERVED_KEYS = ['_id']
 MONGO_RESERVED_KEY_PREFIX = 'MONGO_RESERVED_KEY'
 MONGO_RESERVED_KEY_STRS = [MONGO_RESERVED_KEY_PREFIX + key
                            for key in MONGO_RESERVED_KEYS]
-reserved_dollar_re = re.compile(r'\$')
-reserved_dot_re = re.compile(r'\.')
+ILLEGAL_VALUES = ['$', '.']
+REPLACEMENT_VALUES = [b64encode(value) for value in ILLEGAL_VALUES]
+
+RE_ILLEGAL_MAP = [(re.compile(r'\%s' % value), REPLACEMENT_VALUES[idx]) for idx, value in
+                  enumerate(ILLEGAL_VALUES)]
+RE_LEGAL_MAP = [(re.compile(r'\%s' % value), ILLEGAL_VALUES[idx]) for idx, value in
+                  enumerate(REPLACEMENT_VALUES)]
 
 
 def dump_mongo_json(obj):
@@ -61,13 +66,31 @@ def reserve_encoded(string):
         string in MONGO_RESERVED_KEYS else string
 
 
+def dict_from_mongo(_dict):
+    for key, value in _dict.items():
+        if isinstance(value, list):
+            value = [dict_from_mongo(obj)
+                     if isinstance(obj, dict) else obj for obj in value]
+        elif isinstance(value, dict):
+            value = dict_from_mongo(value)
+        elif _was_encoded_for_mongo(key):
+            del _dict[key]
+            _dict[_decode_from_mongo(key)] = value
+    return _dict
+
+
+def _decode_from_mongo(key):
+    return reduce(lambda s, expr: expr[0].sub(expr[1], s),
+                  RE_LEGAL_MAP, key)
+
+
 def dict_for_mongo(_dict):
     """Encode all keys in *_dict* for MongoDB."""
     for key, value in _dict.items():
-        if type(value) == list:
+        if isinstance(value, list):
             value = [dict_for_mongo(obj)
-                     if type(obj) == dict else obj for obj in value]
-        elif type(value) == dict:
+                     if isinstance(obj, dict) else obj for obj in value]
+        elif isinstance(value, dict):
             value = dict_for_mongo(value)
         elif _is_invalid_for_mongo(key):
             del _dict[key]
@@ -90,10 +113,14 @@ def _encode_for_mongo(key):
     Returns:
         The string with illegal keys encoded.
     """
-    return reduce(lambda s, expr: expr[0].sub(b64encode(expr[1]), s),
-                  [(reserved_dollar_re, '$'), (reserved_dot_re, '.')], key)
+    return reduce(lambda s, expr: expr[0].sub(expr[1], s),
+                  RE_ILLEGAL_MAP, key)
 
 
 def _is_invalid_for_mongo(key):
     """Return if string is invalid for storage in MongoDB."""
-    return key.count('$') or key.count('.') > 0
+    return any([key.count(value) > 0 for value in ILLEGAL_VALUES])
+
+
+def _was_encoded_for_mongo(key):
+    return any([key.count(value) > 0 for value in REPLACEMENT_VALUES])
