@@ -86,7 +86,7 @@ class Observation(AbstractModel):
         """
         # build schema for the dataset after having read it from file.
         if not dataset.schema:
-            dataset.build_schema(dframe, set_num_columns=True)
+            dataset.build_schema(dframe)
 
         # save the data, if there is any
         num_rows = 0
