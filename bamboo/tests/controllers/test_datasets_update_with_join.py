@@ -42,8 +42,8 @@ class TestDatasetsUpdateWithJoin(TestAbstractDatasets):
         self.joined_dataset_id = results[Dataset.ID]
 
     def _verify_dataset(self, dataset_id, fixture_path):
-        dframe = Dataset.find_one(dataset_id).dframe()
-        print len(dframe)
+        dataset = Dataset.find_one(dataset_id)
+        dframe = dataset.dframe()
         expected_dframe = recognize_dates(
             pickle.load(open(fixture_path, 'rb')))
         self._check_dframes_are_equal(dframe, expected_dframe)
