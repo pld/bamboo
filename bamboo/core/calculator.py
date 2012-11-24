@@ -161,7 +161,7 @@ class Calculator(object):
         # join as a result
         if any([direction == 'left' for direction, _, on, __ in
                 self.dataset.joined_datasets]):
-            if on in new_dframe_raw.columns:
+            if on in new_dframe_raw.columns and on in self.dframe.columns:
                 merged_join_column = concat(
                     [new_dframe_raw[on], self.dframe[on]])
                 if len(merged_join_column) != merged_join_column.nunique():
@@ -228,14 +228,15 @@ class Calculator(object):
         for direction, other_dataset, on, joined_dataset in\
                 self.dataset.joined_datasets:
             if direction == 'left':
-                # only proceed if new row is in on column in lhs
                 if on in new_dframe_raw.columns:
-                    # pad dframe
+                    # only proceed if on in new dframe
                     other_dframe = other_dataset.dframe(padded=True)
-
-                    merged_dframe = other_dframe.join_dataset(
-                        self.dataset, on)
-                    joined_dataset.replace_observations(merged_dframe)
+                    if len(set(new_dframe_raw[on]).intersection(
+                            set(other_dframe[on]))):
+                        # only proceed if new on value is in on column in lhs
+                        merged_dframe = other_dframe.join_dataset(
+                            self.dataset, on)
+                        joined_dataset.replace_observations(merged_dframe)
             else:
                 merged_dframe = new_dframe_raw
                 if on in merged_dframe:
