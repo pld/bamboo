@@ -1,5 +1,4 @@
 from nose.tools import assert_raises
-from pymongo.cursor import Cursor
 
 from bamboo.core.parser import ParseError
 from bamboo.models.calculation import Calculation, DependencyError

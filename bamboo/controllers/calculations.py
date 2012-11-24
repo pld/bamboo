@@ -1,7 +1,6 @@
 from bamboo.controllers.abstract_controller import AbstractController
 from bamboo.core.parser import ParseError
 from bamboo.models.calculation import Calculation, DependencyError
-from bamboo.models.dataset import Dataset
 
 
 class Calculations(AbstractController):

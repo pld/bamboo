@@ -1,4 +1,3 @@
-from bamboo.lib import decorators
 from bamboo.tests import decorators as test_decorators
 from bamboo.tests.test_base import TestBase
 

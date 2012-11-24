@@ -3,7 +3,6 @@ import pickle
 
 from bamboo.controllers.calculations import Calculations
 from bamboo.controllers.datasets import Datasets
-from bamboo.core.frame import PARENT_DATASET_ID
 from bamboo.models.dataset import Dataset
 from bamboo.lib.datetools import recognize_dates
 from bamboo.tests.controllers.test_abstract_datasets import\

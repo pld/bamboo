@@ -1,22 +1,18 @@
 from base64 import b64encode
 from datetime import datetime
-import os
 import pickle
 from time import mktime, sleep
 
-import numpy as np
 import simplejson as json
 
 from bamboo.controllers.abstract_controller import AbstractController
 from bamboo.controllers.datasets import Datasets
 from bamboo.core.summary import SUMMARY
 from bamboo.lib.datetools import DATETIME
-from bamboo.lib.mongo import ILLEGAL_VALUES, MONGO_RESERVED_KEY_PREFIX,\
-    MONGO_RESERVED_KEY_STRS, MONGO_RESERVED_KEYS
-from bamboo.lib.schema_builder import DIMENSION, OLAP_TYPE, SIMPLETYPE
+from bamboo.lib.mongo import ILLEGAL_VALUES, MONGO_RESERVED_KEYS
+from bamboo.lib.schema_builder import SIMPLETYPE
 from bamboo.lib.utils import GROUP_DELIMITER
 from bamboo.models.dataset import Dataset
-from bamboo.models.calculation import Calculation
 from bamboo.tests.controllers.test_abstract_datasets import\
     TestAbstractDatasets
 from bamboo.tests.decorators import requires_async, requires_internet

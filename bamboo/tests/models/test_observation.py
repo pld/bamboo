@@ -1,5 +1,3 @@
-from pymongo.cursor import Cursor
-
 from bamboo.lib.datetools import recognize_dates
 from bamboo.lib.jsontools import JSONError
 from bamboo.models.dataset import Dataset
