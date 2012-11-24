@@ -201,7 +201,8 @@ class Calculator(object):
         updated_dframe = concat([existing_dframe, new_dframe])
 
         # update (overwrite) the dataset with the new merged version
-        self.dframe = self.dataset.replace_observations(updated_dframe)
+        self.dframe = self.dataset.replace_observations(
+            updated_dframe, set_num_columns=False)
         self.dataset.clear_summary_stats()
 
         self._update_aggregate_datasets(aggregate_calculations, new_dframe)
@@ -227,9 +228,14 @@ class Calculator(object):
         for direction, other_dataset, on, joined_dataset in\
                 self.dataset.joined_datasets:
             if direction == 'left':
-                merged_dframe = other_dataset.dframe().join_dataset(
-                    self.dataset, on)
-                joined_dataset.replace_observations(merged_dframe)
+                # only proceed if new row is in on column in lhs
+                if on in new_dframe_raw.columns:
+                    # pad dframe
+                    other_dframe = other_dataset.dframe(padded=True)
+
+                    merged_dframe = other_dframe.join_dataset(
+                        self.dataset, on)
+                    joined_dataset.replace_observations(merged_dframe)
             else:
                 merged_dframe = new_dframe_raw
                 if on in merged_dframe:
@@ -263,6 +269,8 @@ class Calculator(object):
 
         filtered_data = []
         columns = self.dframe.columns
+        if not len(columns):
+            columns = self.dataset.schema.keys()
         for row in new_data:
             filtered_row = dict()
             for col, val in row.iteritems():
