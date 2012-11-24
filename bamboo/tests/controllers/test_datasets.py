@@ -2,18 +2,14 @@ from base64 import b64encode
 from datetime import datetime
 import os
 import pickle
-import simplejson as json
 from time import mktime, sleep
 
 import numpy as np
-from pandas import concat
+import simplejson as json
 
 from bamboo.controllers.abstract_controller import AbstractController
 from bamboo.controllers.datasets import Datasets
-from bamboo.controllers.calculations import Calculations
-from bamboo.core.frame import BAMBOO_RESERVED_KEYS, PARENT_DATASET_ID
 from bamboo.core.summary import SUMMARY
-from bamboo.tests.decorators import requires_async, requires_internet
 from bamboo.lib.datetools import DATETIME
 from bamboo.lib.mongo import ILLEGAL_VALUES, MONGO_RESERVED_KEY_PREFIX,\
     MONGO_RESERVED_KEY_STRS, MONGO_RESERVED_KEYS
@@ -23,19 +19,16 @@ from bamboo.models.dataset import Dataset
 from bamboo.models.calculation import Calculation
 from bamboo.tests.controllers.test_abstract_datasets import\
     TestAbstractDatasets
+from bamboo.tests.decorators import requires_async, requires_internet
 from bamboo.tests.mock import MockUploadedFile
 
 
 class TestDatasets(TestAbstractDatasets):
 
-    NUM_COLS = 15
-    NUM_ROWS = 19
-
     def setUp(self):
         TestAbstractDatasets.setUp(self)
         self._file_path = 'tests/fixtures/%s' % self._file_name
         self._file_uri = 'file://%s' % self._file_path
-        self._schema_path = 'tests/fixtures/good_eats.schema.json'
         self.url = 'http://formhub.org/mberg/forms/good_eats/data.csv'
         self._file_name_with_slashes = 'good_eats_with_slashes.csv'
         self.default_formulae = [
@@ -47,19 +40,6 @@ class TestDatasets(TestAbstractDatasets):
             open('tests/fixtures/good_eats_cardinalities.p', 'rb'))
         self.simpletypes = pickle.load(
             open('tests/fixtures/good_eats_simpletypes.p', 'rb'))
-
-    def _post_calculations(self, formulae=[], group=None):
-        # must call after _post_file
-        controller = Calculations()
-        for idx, formula in enumerate(formulae):
-            name = 'calc_%d' % idx if not self.schema or\
-                formula in self.schema.keys() else formula
-            controller.create(self.dataset_id, formula, name, group)
-
-    def _test_summary_results(self, results):
-        results = json.loads(results)
-        self.assertTrue(isinstance(results, dict))
-        return results
 
     def _test_summary_no_group(self, results, group=None):
         group = [group] if group else []
@@ -76,14 +56,6 @@ class TestDatasets(TestAbstractDatasets):
             self.assertTrue(slug in result_keys,
                             'col (slug): %s in: %s' % (slug, result_keys))
             self.assertTrue(SUMMARY in results[slug].keys())
-
-    def _test_summary_built(self, result):
-        # check that summary is created
-        self.dataset_id = result[Dataset.ID]
-        results = self.controller.summary(
-            self.dataset_id,
-            select=self.controller.SELECT_ALL_FOR_SUMMARY)
-        return self._test_summary_results(results)
 
     def _test_get_with_query_or_select(self, query='{}', select=None,
                                        num_results=None, result_keys=None):
@@ -148,8 +120,7 @@ class TestDatasets(TestAbstractDatasets):
         self._post_file(self._file_name_with_slashes)
         num_rows = len(json.loads(self.controller.show(self.dataset_id)))
         num_update_rows = 2
-        self._put_row_updates(
-            file_path='tests/fixtures/good_eats_update_multiple.json')
+        self._put_row_updates(file_name='good_eats_update_multiple.json')
         results = json.loads(self.controller.show(self.dataset_id))
         num_rows_after_update = len(results)
         self.assertEqual(num_rows_after_update, num_rows + num_update_rows)
@@ -235,297 +206,6 @@ class TestDatasets(TestAbstractDatasets):
         result = json.loads(self.controller.create())
         self.assertTrue(isinstance(result, dict))
         self.assertTrue(Datasets.ERROR in result)
-
-    def test_create_from_schema(self):
-        schema = open(self._schema_path)
-        mock_uploaded_file = MockUploadedFile(schema)
-        result = json.loads(
-            self.controller.create(schema=mock_uploaded_file))
-        self.assertTrue(isinstance(result, dict))
-        self.assertTrue(Dataset.ID in result)
-        dataset_id = result[Dataset.ID]
-        self._test_summary_built(result)
-        results = json.loads(self.controller.show(self.dataset_id))
-        self.assertTrue(isinstance(results, list))
-        self.assertEqual(len(results), 0)
-        self._post_file()
-        results = json.loads(self.controller.info(dataset_id))
-        self.assertTrue(isinstance(results, dict))
-        self.assertTrue(Dataset.SCHEMA in results.keys())
-        self.assertTrue(Dataset.NUM_ROWS in results.keys())
-        self.assertEqual(results[Dataset.NUM_ROWS], 0)
-        self.assertTrue(Dataset.NUM_COLUMNS in results.keys())
-        self.assertEqual(results[Dataset.NUM_COLUMNS], self.NUM_COLS)
-
-    def test_create_from_schema_and_update(self):
-        schema = open(self._schema_path)
-        mock_uploaded_file = MockUploadedFile(schema)
-        result = json.loads(
-            self.controller.create(schema=mock_uploaded_file))
-        self.assertTrue(isinstance(result, dict))
-        self.assertTrue(Dataset.ID in result)
-        self.dataset_id = result[Dataset.ID]
-        results = json.loads(self.controller.show(self.dataset_id))
-        self.assertFalse(len(results))
-        dataset = Dataset.find_one(self.dataset_id)
-        self.assertEqual(dataset.num_rows, 0)
-        old_schema = dataset.schema
-
-        self._put_row_updates()
-        results = json.loads(self.controller.show(self.dataset_id))
-
-        self.assertTrue(len(results))
-        for result in results:
-            self.assertTrue(isinstance(result, dict))
-            self.assertTrue(len(result.keys()))
-        dataset = Dataset.find_one(self.dataset_id)
-        self.assertEqual(dataset.num_rows, 1)
-        new_schema = dataset.schema
-        self.assertEqual(set(old_schema.keys()), set(new_schema.keys()))
-        for column in new_schema.keys():
-            if new_schema[column].get(Dataset.CARDINALITY):
-                self.assertEqual(new_schema[column][Dataset.CARDINALITY], 1)
-
-    def test_create_one_from_schema_and_join(self):
-        schema = open(self._schema_path)
-        mock_uploaded_file = MockUploadedFile(schema)
-        result = json.loads(
-            self.controller.create(schema=mock_uploaded_file))
-        self.assertTrue(isinstance(result, dict))
-        self.assertTrue(Dataset.ID in result)
-        left_dataset_id = result[Dataset.ID]
-        self._post_file('good_eats_aux.csv')
-
-        on = 'food_type'
-        dataset_id_tuples = [
-            (left_dataset_id, self.dataset_id),
-            (self.dataset_id, left_dataset_id),
-        ]
-
-        for dataset_ids in dataset_id_tuples:
-            result = json.loads(self.controller.join(*dataset_ids, on=on))
-            expected_schema_keys = set(sum([
-                Dataset.find_one(dataset_id).schema.keys()
-                for dataset_id in dataset_ids], []))
-
-            self.assertTrue(isinstance(result, dict))
-            self.assertTrue(Dataset.ID in result)
-            merge_dataset_id = result[Dataset.ID]
-            dataset = Dataset.find_one(merge_dataset_id)
-            self.assertEqual(dataset.num_rows, 0)
-            self.assertEqual(dataset.num_columns, len(expected_schema_keys))
-            schema_keys = set(dataset.schema.keys())
-            self.assertEqual(schema_keys, expected_schema_keys)
-
-    def test_create_two_from_schema_and_join(self):
-        schema = open(self._schema_path)
-        mock_uploaded_file = MockUploadedFile(schema)
-        result = json.loads(
-            self.controller.create(schema=mock_uploaded_file))
-        self.assertTrue(isinstance(result, dict))
-        self.assertTrue(Dataset.ID in result)
-        left_dataset_id = result[Dataset.ID]
-
-        schema = open('tests/fixtures/good_eats_aux.schema.json')
-        mock_uploaded_file = MockUploadedFile(schema)
-        result = json.loads(
-            self.controller.create(schema=mock_uploaded_file))
-        self.assertTrue(isinstance(result, dict))
-        self.assertTrue(Dataset.ID in result)
-        right_dataset_id = result[Dataset.ID]
-
-        on = 'food_type'
-        dataset_id_tuples = [
-            (left_dataset_id, right_dataset_id),
-            (right_dataset_id, left_dataset_id),
-        ]
-
-        for dataset_ids in dataset_id_tuples:
-            result = json.loads(self.controller.join(*dataset_ids, on=on))
-            expected_schema_keys = set(sum([
-                Dataset.find_one(dataset_id).schema.keys()
-                for dataset_id in dataset_ids], []))
-
-            self.assertTrue(isinstance(result, dict))
-            self.assertTrue(Dataset.ID in result)
-            merge_dataset_id = result[Dataset.ID]
-            dataset = Dataset.find_one(merge_dataset_id)
-            self.assertEqual(dataset.num_rows, 0)
-            self.assertEqual(dataset.num_columns, len(expected_schema_keys))
-            schema_keys = set(dataset.schema.keys())
-            self.assertEqual(schema_keys, expected_schema_keys)
-
-    def test_create_two_from_schema_and_join_and_update(self):
-        schema = open(self._schema_path)
-        mock_uploaded_file = MockUploadedFile(schema)
-        result = json.loads(
-            self.controller.create(schema=mock_uploaded_file))
-        left_dataset_id = result[Dataset.ID]
-
-        schema = open('tests/fixtures/good_eats_aux.schema.json')
-        mock_uploaded_file = MockUploadedFile(schema)
-        result = json.loads(
-            self.controller.create(schema=mock_uploaded_file))
-        right_dataset_id = result[Dataset.ID]
-
-        on = 'food_type'
-        result = json.loads(self.controller.join(
-            left_dataset_id, right_dataset_id, on=on))
-        merged_dataset_id = self.dataset_id = result[Dataset.ID]
-
-        num_rows = 0
-        results = json.loads(self.controller.show(merged_dataset_id))
-        self.assertEqual(num_rows, len(results))
-
-        num_rows += 1
-        self._put_row_updates()
-        results = json.loads(self.controller.show(merged_dataset_id))
-        self.assertEqual(num_rows, len(results))
-
-        num_rows += 1
-        self.dataset_id = left_dataset_id
-        self._put_row_updates()
-        results = json.loads(self.controller.show(merged_dataset_id))
-        self.assertEqual(num_rows, len(results))
-
-        self.dataset_id = right_dataset_id
-        self._put_row_updates()
-        results = json.loads(self.controller.show(merged_dataset_id))
-        self.assertEqual(num_rows, len(results))
-
-    @requires_async
-    def test_merge_datasets_0_not_enough(self):
-        result = json.loads(self.controller.merge(datasets=json.dumps([])))
-        self.assertTrue(isinstance(result, dict))
-        self.assertTrue(Datasets.ERROR in result)
-
-    @requires_async
-    def test_merge_datasets_1_not_enough(self):
-        self._post_file()
-        result = json.loads(self.controller.merge(
-            datasets=json.dumps([self.dataset_id])))
-        self.assertTrue(isinstance(result, dict))
-        self.assertTrue(Datasets.ERROR in result)
-
-    @requires_async
-    def test_merge_datasets_must_exist(self):
-        self._post_file()
-        result = json.loads(self.controller.merge(
-            datasets=json.dumps([self.dataset_id, 0000])))
-        self.assertTrue(isinstance(result, dict))
-        self.assertTrue(Datasets.ERROR in result)
-
-    def test_merge_datasets(self):
-        self._post_file()
-        dataset_id1 = self.dataset_id
-        self._post_file()
-        dataset_id2 = self.dataset_id
-        result = json.loads(self.controller.merge(
-            datasets=json.dumps([dataset_id1, dataset_id2])))
-        self.assertTrue(isinstance(result, dict))
-        self.assertTrue(Dataset.ID in result)
-
-        datasets = [Dataset.find_one(dataset_id)
-                    for dataset_id in [dataset_id1, dataset_id2]]
-
-        for dataset in datasets:
-            self.assertTrue(result[Dataset.ID] in dataset.merged_dataset_ids)
-
-        dframe1 = datasets[0].dframe()
-        merged_dataset = Dataset.find_one(result[Dataset.ID])
-        merged_rows = merged_dataset.observations()
-        for row in merged_rows:
-            self.assertTrue(PARENT_DATASET_ID in row.keys())
-        merged_dframe = merged_dataset.dframe()
-
-        self.assertEqual(len(merged_dframe), 2 * len(dframe1))
-        expected_dframe = concat([dframe1, dframe1],
-                                 ignore_index=True)
-        self.assertEqual(list(merged_dframe.columns),
-                         list(expected_dframe.columns))
-
-        self._check_dframes_are_equal(merged_dframe, expected_dframe)
-
-    @requires_async
-    def test_merge_datasets_async(self):
-        self._post_file()
-        dataset_id1 = self.dataset_id
-        self._post_file()
-        dataset_id2 = self.dataset_id
-        self.assertEqual(
-            Dataset.find_one(dataset_id1).status,
-            Dataset.STATE_PENDING)
-        self.assertEqual(
-            Dataset.find_one(dataset_id2).status,
-            Dataset.STATE_PENDING)
-        result = json.loads(self.controller.merge(
-            datasets=json.dumps([dataset_id1, dataset_id2])))
-        self.assertTrue(isinstance(result, dict))
-        self.assertTrue(Dataset.ID in result)
-        merged_id = result[Dataset.ID]
-
-        # wait for background tasks for finish
-        while True:
-            results1 = json.loads(self.controller.show(dataset_id1))
-            results2 = json.loads(self.controller.show(dataset_id2))
-            results3 = json.loads(self.controller.show(merged_id))
-            if all([len(res) for res in [results1, results2, results3]]):
-                break
-            sleep(self.SLEEP_DELAY)
-
-        while True:
-            datasets = [Dataset.find_one(dataset_id)
-                        for dataset_id in [dataset_id1, dataset_id2]]
-            if all([dataset.is_ready for dataset in datasets]):
-                break
-            sleep(self.SLEEP_DELAY)
-
-        for dataset in datasets:
-            self.assertTrue(merged_id in dataset.merged_dataset_ids)
-
-        dframe1 = datasets[0].dframe()
-        merged_dataset = Dataset.find_one(merged_id)
-        merged_rows = merged_dataset.observations()
-        for row in merged_rows:
-            self.assertTrue(PARENT_DATASET_ID in row.keys())
-        merged_dframe = merged_dataset.dframe()
-
-        self.assertEqual(len(merged_dframe), 2 * len(dframe1))
-        expected_dframe = concat([dframe1, dframe1],
-                                 ignore_index=True)
-        self.assertEqual(list(merged_dframe.columns),
-                         list(expected_dframe.columns))
-
-        self._check_dframes_are_equal(merged_dframe, expected_dframe)
-
-    @requires_async
-    def test_merge_datasets_add_calc_async(self):
-        self._post_file('good_eats_large.csv')
-        dataset_id1 = self.dataset_id
-        self._post_file('good_eats_large.csv')
-        dataset_id2 = self.dataset_id
-        result = json.loads(self.controller.merge(
-            datasets=json.dumps([dataset_id1, dataset_id2])))
-        self.assertTrue(isinstance(result, dict))
-        self.assertTrue(Dataset.ID in result)
-        self.dataset_id = result[Dataset.ID]
-        self.schema = json.loads(
-            self.controller.info(self.dataset_id))[Dataset.SCHEMA]
-        self._post_calculations(['amount < 4'])
-
-    def test_merge_datasets_no_reserved_keys(self):
-        self._post_file()
-        dataset_id1 = self.dataset_id
-        self._post_file()
-        dataset_id2 = self.dataset_id
-        result = json.loads(self.controller.merge(
-            datasets=json.dumps([dataset_id1, dataset_id2])))
-        self.assertTrue(isinstance(result, dict))
-        self.assertTrue(Dataset.ID in result)
-        response = json.loads(self.controller.show(result[Dataset.ID]))
-        row_keys = sum([row.keys() for row in response], [])
-        for reserved_key in BAMBOO_RESERVED_KEYS + MONGO_RESERVED_KEY_STRS:
-            self.assertFalse(reserved_key in row_keys)
 
     def test_show(self):
         self._post_file()

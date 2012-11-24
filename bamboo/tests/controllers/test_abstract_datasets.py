@@ -1,8 +1,9 @@
-import json
 import os
 
 import cherrypy
+import simplejson as json
 
+from bamboo.controllers.calculations import Calculations
 from bamboo.controllers.datasets import Datasets
 from bamboo.core.frame import BambooFrame
 from bamboo.lib.io import create_dataset_from_url
@@ -12,6 +13,9 @@ from bamboo.tests.test_base import TestBase
 
 
 class TestAbstractDatasets(TestBase):
+
+    NUM_COLS = 15
+    NUM_ROWS = 19
 
     def setUp(self):
         TestBase.setUp(self)
@@ -23,13 +27,13 @@ class TestAbstractDatasets(TestBase):
         self._update_check_file_path = 'tests/fixtures/%s' %\
             self._update_check_file_name
 
-    def _put_row_updates(self, dataset_id=None, file_path=None, validate=True):
+    def _put_row_updates(self, dataset_id=None, file_name=None, validate=True):
         if not dataset_id:
             dataset_id = self.dataset_id
         # mock the cherrypy server by setting the POST request body
-        if not file_path:
-            file_path = self._update_file_path
-        cherrypy.request.body = open(file_path, 'r')
+        if not file_name:
+            file_name = self._update_file_name
+        cherrypy.request.body = open('tests/fixtures/%s' % file_name, 'r')
         result = json.loads(self.controller.update(dataset_id=dataset_id))
         if validate:
             self.assertTrue(isinstance(result, dict))
@@ -65,3 +69,26 @@ class TestAbstractDatasets(TestBase):
             if isinstance(value, float):
                 row[key] = round(value, 10)
         return row
+
+    def _test_summary_built(self, result):
+        # check that summary is created
+        self.assertTrue(isinstance(result, dict))
+        self.assertTrue(Dataset.ID in result)
+        self.dataset_id = result[Dataset.ID]
+        results = self.controller.summary(
+            self.dataset_id,
+            select=self.controller.SELECT_ALL_FOR_SUMMARY)
+        return self._test_summary_results(results)
+
+    def _test_summary_results(self, results):
+        results = json.loads(results)
+        self.assertTrue(isinstance(results, dict))
+        return results
+
+    def _post_calculations(self, formulae=[], group=None):
+        # must call after _post_file
+        controller = Calculations()
+        for idx, formula in enumerate(formulae):
+            name = 'calc_%d' % idx if not self.schema or\
+                formula in self.schema.keys() else formula
+            controller.create(self.dataset_id, formula, name, group)

@@ -1,0 +1,24 @@
+{
+    "_attachments": [], 
+    "_bamboo_dataset_id": "", 
+    "_geolocation": [
+        "38.691816622303804", 
+        "-78.75"
+    ], 
+    "_id": 231324, 
+    "_status": "submitted_via_web", 
+    "_submission_time": "2012-08-13T14:44:54", 
+    "_userform_id": "mejymejy_good_eats", 
+    "_uuid": "928a5547b57e4327af4c65c9cb1e69b3", 
+    "_xform_id_string": "good_eats", 
+    "amount": 2.0, 
+    "description": "donut", 
+    "food_type": "baked_goods", 
+    "formhub/uuid": "d4e144776e00452c874c5b36093ac91d", 
+    "gps": "38.691816622303804 -78.75 0.0", 
+    "location_name": "here", 
+    "rating": "delectible", 
+    "risk_factor": "medium_risk", 
+    "submit_data": "2012-08-13", 
+    "submit_date": "2012-08-13"
+}
