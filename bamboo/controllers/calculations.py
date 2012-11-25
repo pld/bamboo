@@ -1,5 +1,8 @@
+import simplejson as json
+
 from bamboo.controllers.abstract_controller import AbstractController
 from bamboo.core.parser import ParseError
+from bamboo.lib.exceptions import ArgumentError
 from bamboo.models.calculation import Calculation, DependencyError
 
 
@@ -47,7 +50,8 @@ class Calculations(AbstractController):
             group=group,
             error = 'name and dataset_id combination not found')
 
-    def create(self, dataset_id, formula, name, group=None):
+    def create(self, dataset_id, formula=None, name=None, data=None,
+               group=None):
         """Add a calculation to a dataset with the given fomula, etc.
 
         Create a new calculation for *dataset_id* named *name* that calulates
@@ -67,14 +71,30 @@ class Calculations(AbstractController):
             the dataset could not be found, the formula could not be parsed, or
             the group was invalid.
         """
-        def _action(dataset, formula=formula, name=name, group=group):
-            Calculation.create(dataset, formula, name, group)
+        def _action(dataset, formula=formula, name=name, data=data,
+                    group=group):
+            if (formula is None or name is None) and data is None:
+                raise ArgumentError(
+                    'Must provide both formula and name, or data arguments')
+            if data is None:
+                calculations = [{'name':name, 'formula': formula}]
+            else:
+                calculations = json.loads(data)
+            if not len(calculations) or not isinstance(calculations, list):
+                raise ArgumentError(
+                    'Improper format for JSON calculations.')
+            try:
+                for calc in calculations:
+                    Calculation.create(dataset, calc['formula'], calc['name'],
+                                       group)
+            except KeyError as e:
+                raise ArgumentError('Required key %s not found in JSON' % e)
             return {
                 self.SUCCESS: 'created calulcation: %s for dataset: %s'
                 % (name, dataset_id)}
         return self._safe_get_and_call(
-            dataset_id, _action, formula=formula, name=name, group=group,
-            exceptions=(ParseError,), success_status_code=201)
+            dataset_id, _action, formula=formula, name=name, data=data,
+            group=group, exceptions=(ParseError,), success_status_code=201)
 
     def show(self, dataset_id, callback=False):
         """Retrieve the calculations for *dataset_id*.
