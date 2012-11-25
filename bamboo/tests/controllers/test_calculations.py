@@ -1,5 +1,6 @@
-import json
 from time import sleep
+
+import simplejson as json
 
 from bamboo.controllers.abstract_controller import AbstractController
 from bamboo.controllers.calculations import Calculations
@@ -25,6 +26,14 @@ class TestCalculations(TestBase):
 
     def _post_formula(self):
         return self.controller.create(self.dataset_id, self.formula, self.name)
+
+    def _test_error(self, response, error_text=None):
+        response = json.loads(response)
+        self.assertTrue(isinstance(response, dict))
+        self.assertTrue(self.controller.ERROR in response)
+        if not error_text:
+            error_text = 'Must provide'
+        self.assertTrue(error_text in response[self.controller.ERROR])
 
     def test_show(self):
         self._post_formula()
@@ -172,3 +181,51 @@ class TestCalculations(TestBase):
             self.controller.delete(self.dataset_id, dep_name, ''))
         self.assertTrue(AbstractController.ERROR in result)
         self.assertTrue('depend' in result[AbstractController.ERROR])
+
+    def test_create_multiple(self):
+        prev_columns = len(Dataset.find_one(self.dataset_id).dframe().columns)
+        data = open('tests/fixtures/good_eats.calculations.json', 'r')
+        response = json.loads(
+            self.controller.create(self.dataset_id, data=data.read()))
+        self.assertTrue(isinstance(response, dict))
+        self.assertTrue(self.controller.SUCCESS in response)
+        self.assertTrue(self.dataset_id in response[self.controller.SUCCESS])
+        self.assertEqual(
+            2, len(json.loads(self.controller.show(self.dataset_id))))
+        self.assertEqual(
+            prev_columns + 2,
+            len(Dataset.find_one(self.dataset_id).dframe().columns))
+
+    def test_create_multiple_with_group(self):
+        prev_columns = len(Dataset.find_one(self.dataset_id).dframe().columns)
+        data = json.loads(
+            open('tests/fixtures/good_eats.calculations.json', 'r').read())
+        data.append({"name": "sum of amount", "formula": "sum(amount)"})
+        response = json.loads(self.controller.create(
+            self.dataset_id, data=json.dumps(data), group='risk_factor'))
+        self.assertTrue(isinstance(response, dict))
+        self.assertTrue(self.controller.SUCCESS in response)
+        self.assertTrue(self.dataset_id in response[self.controller.SUCCESS])
+        dataset = Dataset.find_one(self.dataset_id)
+        self.assertEqual(
+            3, len(json.loads(self.controller.show(self.dataset_id))))
+        self.assertEqual(
+            prev_columns + 2,
+            len(dataset.dframe().columns))
+        self.assertTrue(
+            'risk_factor' in dataset.aggregated_datasets_dict.keys())
+
+    def test_create_with_missing_args(self):
+        self._test_error(self.controller.create(self.dataset_id))
+        self._test_error(
+            self.controller.create(self.dataset_id, formula='gps_alt'))
+        self._test_error(
+            self.controller.create(self.dataset_id, name='test'))
+
+    def test_create_with_bad_json(self):
+        self._test_error(
+            self.controller.create(self.dataset_id, data='{"name": "test"}'),
+            error_text='Improper')
+        self._test_error(
+            self.controller.create(self.dataset_id, data='[{"name": "test"}]'),
+            error_text='Required')
