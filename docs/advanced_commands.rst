@@ -105,8 +105,8 @@ you can create a dataset from this scema using:
 Creating Multiple Calculations via JSON
 ---------------------------------------
 
-You can create multiple calculations by uploading a properly formatted JSON file
-to the create calculations endpoint.
+You can create multiple calculations by uploading a properly formatted JSON
+file to the create calculations endpoint.
 
 Below is an example calculations JSON file:
 
@@ -124,4 +124,13 @@ you can create a dataset from this scema using:
 
     {
         "id": "8a3d74711475d8a51c84484fe73f24bd151242ea"
+    }
+
+Note that the file can also contain a single dictionary, for example:
+
+.. code-block:: javascript
+
+    {
+        "name": "in northern hemisphere",
+        "formula": "gps_latitude > 0"
     }
