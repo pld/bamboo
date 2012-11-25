@@ -91,4 +91,5 @@ class TestAbstractDatasets(TestBase):
         for idx, formula in enumerate(formulae):
             name = 'calc_%d' % idx if not self.schema or\
                 formula in self.schema.keys() else formula
-            controller.create(self.dataset_id, formula, name, group)
+            controller.create(self.dataset_id, formula=formula, name=name,
+                              group=group)
