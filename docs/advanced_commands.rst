@@ -15,8 +15,6 @@ request to the dataset id. The row(s) should be key-value pairs where the key
 is the column name. In the example that we have been using here, the dataset
 could be updated with a JSON dictionary like this:
 
-**returns:**
-
 .. code-block:: javascript
 
     {
@@ -95,6 +93,30 @@ Supposing this file is saved locally as ``/home/modilabs/good_eats.schema.json``
 you can create a dataset from this scema using:
 
 ``curl -X POST -F schema=@/home/modilabs/good_eats.schema.json http://bamboo.io/datasets``
+
+**returns:**
+
+.. code-block:: javascript
+
+    {
+        "id": "8a3d74711475d8a51c84484fe73f24bd151242ea"
+    }
+
+Creating Multiple Calculations via JSON
+---------------------------------------
+
+You can create multiple calculations by uploading a properly formatted JSON file
+to the create calculations endpoint.
+
+Below is an example calculations JSON file:
+
+.. literalinclude:: ../bamboo/tests/fixtures/good_eats.calculations.json
+   :language: javascript
+
+Supposing this file is saved locally as ``/home/modilabs/good_eats.calculations.json``,
+you can create a dataset from this scema using:
+
+``curl -X POST -F schema=@/home/modilabs/good_eats.calculations.json http://bamboo.io/calculations``
 
 **returns:**
 
