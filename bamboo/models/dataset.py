@@ -433,3 +433,4 @@ class Dataset(AbstractModel):
 
     def reload(self):
         self.record = Dataset.find_one(self.dataset_id).record
+        return self

@@ -64,6 +64,7 @@ class Calculations(AbstractController):
         - formula: The formula for the calculation which must match the
           parser language.
         - name: The name to assign the new column for this formula.
+        - data: A dict or list of dicts mapping calculation names and formulas.
         - group: A column to group by for aggregations, must be a dimension.
 
         Returns:
@@ -80,6 +81,8 @@ class Calculations(AbstractController):
                 calculations = [{'name':name, 'formula': formula}]
             else:
                 calculations = json.loads(data)
+            if isinstance(calculations, dict):
+                calculations = [calculations]
             if not len(calculations) or not isinstance(calculations, list):
                 raise ArgumentError(
                     'Improper format for JSON calculations.')

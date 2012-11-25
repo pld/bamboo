@@ -35,6 +35,22 @@ class TestCalculations(TestBase):
             error_text = 'Must provide'
         self.assertTrue(error_text in response[self.controller.ERROR])
 
+    def _test_create_from_json(self, data, non_agg_cols, group=None):
+        dataset = Dataset.find_one(self.dataset_id)
+        prev_columns = len(dataset.dframe().columns)
+        response = json.loads(self.controller.create(
+            self.dataset_id, data=json.dumps(data), group=group))
+        self.assertTrue(isinstance(response, dict))
+        self.assertTrue(self.controller.SUCCESS in response)
+        self.assertTrue(self.dataset_id in response[self.controller.SUCCESS])
+        ex_len = len(data) if isinstance(data, list) else 1
+        self.assertEqual(
+            ex_len, len(json.loads(self.controller.show(self.dataset_id))))
+        self.assertEqual(
+            prev_columns + non_agg_cols,
+            len(dataset.reload().dframe().columns))
+        return dataset
+
     def test_show(self):
         self._post_formula()
         response = self.controller.show(self.dataset_id)
@@ -183,37 +199,23 @@ class TestCalculations(TestBase):
         self.assertTrue('depend' in result[AbstractController.ERROR])
 
     def test_create_multiple(self):
+        data = json.loads(
+            open('tests/fixtures/good_eats.calculations.json', 'r').read())
+        self._test_create_from_json(data, 2)
+
+    def test_create_json_single(self):
         prev_columns = len(Dataset.find_one(self.dataset_id).dframe().columns)
-        data = open('tests/fixtures/good_eats.calculations.json', 'r')
-        response = json.loads(
-            self.controller.create(self.dataset_id, data=data.read()))
-        self.assertTrue(isinstance(response, dict))
-        self.assertTrue(self.controller.SUCCESS in response)
-        self.assertTrue(self.dataset_id in response[self.controller.SUCCESS])
-        self.assertEqual(
-            2, len(json.loads(self.controller.show(self.dataset_id))))
-        self.assertEqual(
-            prev_columns + 2,
-            len(Dataset.find_one(self.dataset_id).dframe().columns))
+        self._test_create_from_json(
+            {'name': 'test', 'formula': 'gps_alt + amount'}, 1)
 
     def test_create_multiple_with_group(self):
         prev_columns = len(Dataset.find_one(self.dataset_id).dframe().columns)
         data = json.loads(
             open('tests/fixtures/good_eats.calculations.json', 'r').read())
         data.append({"name": "sum of amount", "formula": "sum(amount)"})
-        response = json.loads(self.controller.create(
-            self.dataset_id, data=json.dumps(data), group='risk_factor'))
-        self.assertTrue(isinstance(response, dict))
-        self.assertTrue(self.controller.SUCCESS in response)
-        self.assertTrue(self.dataset_id in response[self.controller.SUCCESS])
-        dataset = Dataset.find_one(self.dataset_id)
-        self.assertEqual(
-            3, len(json.loads(self.controller.show(self.dataset_id))))
-        self.assertEqual(
-            prev_columns + 2,
-            len(dataset.dframe().columns))
-        self.assertTrue(
-            'risk_factor' in dataset.aggregated_datasets_dict.keys())
+        group = 'risk_factor'
+        dataset = self._test_create_from_json(data, 2, group=group)
+        self.assertTrue(group in dataset.aggregated_datasets_dict.keys())
 
     def test_create_with_missing_args(self):
         self._test_error(self.controller.create(self.dataset_id))
@@ -225,7 +227,7 @@ class TestCalculations(TestBase):
     def test_create_with_bad_json(self):
         self._test_error(
             self.controller.create(self.dataset_id, data='{"name": "test"}'),
-            error_text='Improper')
+            error_text='Required')
         self._test_error(
             self.controller.create(self.dataset_id, data='[{"name": "test"}]'),
             error_text='Required')
