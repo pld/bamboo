@@ -95,6 +95,10 @@ class Datasets(AbstractController):
           ArgumentError: If no select is supplied or dataset is not in ready
               state.
         """
+        try:
+            limit = int(limit)
+        except ValueError:
+            pass
         def _action(dataset, query=query, select=select, group=group,
                     limit=limit, order_by=order_by):
             if not dataset.is_ready:
@@ -148,6 +152,10 @@ class Datasets(AbstractController):
             query or select is improperly formatted. Otherwise a JSON string of
             the rows matching the parameters.
         """
+        try:
+            limit = int(limit)
+        except ValueError:
+            pass
         def _action(dataset, query=query, select=select,
                     limit=limit, order_by=order_by):
             return dataset.dframe(
