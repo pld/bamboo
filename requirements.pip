@@ -7,6 +7,7 @@ pandas==0.9.1
 scipy==0.10.1
 
 # for celery
+kombu==2.4.7
 celery==3.0.11
 pymongo==2.3
 
