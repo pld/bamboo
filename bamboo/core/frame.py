@@ -22,7 +22,7 @@ class NonUniqueJoinError(Exception):
 
 
 class BambooFrame(DataFrame):
-    """Add Bamboo related functionality to DataFrame class."""
+    """Add bamboo related functionality to DataFrame class."""
 
     def add_parent_column(self, parent_dataset_id):
         """Add parent ID column to this DataFrame."""

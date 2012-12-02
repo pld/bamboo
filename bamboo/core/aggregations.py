@@ -207,7 +207,8 @@ class CountAggregation(Aggregation):
 
 
 # dict of formula names to aggregation classes
-AGGREGATIONS = dict([
-    (cls.formula_name, cls) for cls in
+AGGREGATIONS = {
+    cls.formula_name: cls for cls in
     Aggregation.__subclasses__() + MultiColumnAggregation.__subclasses__()
-    if cls.formula_name])
+    if cls.formula_name
+}

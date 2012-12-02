@@ -57,12 +57,12 @@ def summarizable(dframe, col, groups, dataset):
 def summarize_df(dframe, groups=[], dataset=None):
     """Calculate summary statistics."""
     dtypes = dframe.dtypes
-    return dict([
-        (col, {
+    return {
+        col: {
             SUMMARY: series_to_jsondict(summarize_series(dtypes[col], data))
-        }) for col, data in dframe.iteritems() if summarizable(
+        } for col, data in dframe.iteritems() if summarizable(
             dframe, col, groups, dataset)
-    ])
+    }
 
 
 def summarize_with_groups(dframe, groups, dataset):

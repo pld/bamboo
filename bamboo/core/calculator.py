@@ -331,8 +331,9 @@ class Calculator(object):
     def _create_calculations_to_groups_and_datasets(self, calculations):
         """Create list of groups and calculations."""
         self.calcs_to_data = defaultdict(list)
-        names_to_formulas = dict([(calc.name, calc.formula) for calc in
-                                  calculations])
+        names_to_formulas = {
+            calc.name: calc.formula for calc in calculations
+        }
         calculations = set([calc.name for calc in calculations])
         for group, dataset in self.dataset.aggregated_datasets.items():
             labels_to_slugs = dataset.build_labels_to_slugs()

@@ -84,8 +84,8 @@ class Dataset(AbstractModel):
 
     @property
     def aggregated_datasets(self):
-        return dict([(group, self.find_one(_id)) for (group, _id) in
-                     self.aggregated_datasets_dict.items()])
+        return {group: self.find_one(_id) for (group, _id) in
+                     self.aggregated_datasets_dict.items()}
 
     @property
     def joined_dataset_ids(self):
@@ -330,9 +330,9 @@ class Dataset(AbstractModel):
 
     def build_labels_to_slugs(self):
         """Build dict from column labels to slugs."""
-        return dict([
-            (column_attrs[self.LABEL], reserve_encoded(column_name)) for
-            (column_name, column_attrs) in self.schema.items()])
+        return {
+            column_attrs[self.LABEL]: reserve_encoded(column_name) for
+            (column_name, column_attrs) in self.schema.items()}
 
     def observations(self, query=None, select=None, limit=0, order_by=None,
                      as_cursor=False):
