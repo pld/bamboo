@@ -7,15 +7,15 @@ the commands to function correctly.  E.g. ``&`` as ``\&``, ``?`` as ``\?``,
 
 Note: [*SIC*] all spelling errors in the example dataset.
 
-Check the Bamboo version
-------------------------
+Check the *bamboo* version
+--------------------------
 
 ``curl http://bamboo.io/version``
 
-Storing data in Bamboo
-----------------------
+Storing data in *bamboo*
+------------------------
 
-Upload data from a URL to Bamboo
+Upload data from a URL to *bamboo*
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 ``curl -X POST -d "url=http://formhub.org/mberg/forms/good_eats/data.csv" http://bamboo.io/datasets``
@@ -28,8 +28,8 @@ Upload data from a URL to Bamboo
         "id": "8a3d74711475d8a51c84484fe73f24bd151242ea"
     }
 
-Upload data from a file to Bamboo
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Upload data from a file to *bamboo*
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 given the file ``/home/modilabs/good_eats.csv`` exists locally on your
 filesystem

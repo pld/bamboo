@@ -1,23 +1,18 @@
-.. bamboo documentation master file, created by
-   sphinx-quickstart on Fri May 25 12:48:30 2012.
-   You can adapt this file completely to your liking, but it should at least
-   contain the root `toctree` directive.
+Welcome to the *bamboo* documentation!
+====================================
 
-Welcome to bamboo's documentation!
-==================================
-
-Bamboo is an application that systematizes realtime data analysis. Bamboo
+*bamboo* is an application that systematizes realtime data analysis. *bamboo*
 provides an interface for merging, aggregating and adding algebraic
-calculations to dynamic datasets.  Clients can interact with Bamboo through a
+calculations to dynamic datasets.  Clients can interact with *bamboo* through a
 REST web interface and through Python.
 
-Bamboo supports a simple querying language to build calculations
+*bamboo* supports a simple querying language to build calculations
 (e.g. student teacher ratio) and aggregations (e.g. average number of students
 per district) from datasets. These are updated as new data is received.
 
-Bamboo is `open source <https://github.com/modilabs/bamboo>`_ software released
-under the 3-clause BSD license, which is also known as the "Modified BSD
-License".
+*bamboo* is `open source <https://github.com/modilabs/bamboo>`_ software
+released under the 3-clause BSD license, which is also known as the "Modified
+BSD License".
 
 .. image:: https://secure.travis-ci.org/modilabs/bamboo.png?branch=master
   :target: http://travis-ci.org/modilabs/bamboo
@@ -28,13 +23,13 @@ General configuration notes:
       unique entries.  This is controlled by a parameter in the
       ``core/summary`` module.
 
-Libraries that connect to Bamboo
---------------------------------
+Libraries that connect to *bamboo*
+----------------------------------
 
 JavaScript
 ^^^^^^^^^^
 
-`Bamboo.JS <http://modilabs.github.com/bamboo_js/>`_
+`bamboo.JS <http://modilabs.github.com/bamboo_js/>`_
 
 Python
 ^^^^^^
