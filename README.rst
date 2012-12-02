@@ -1,19 +1,19 @@
-`Bamboo <http://bamboo.io>`_
+`*bamboo* <http://bamboo.io>`_
 ======
 
 .. image:: https://secure.travis-ci.org/modilabs/bamboo.png?branch=master
   :target: http://travis-ci.org/modilabs/bamboo
 
-Bamboo is an application that systematizes realtime data analysis. Bamboo
+*bamboo* is an application that systematizes realtime data analysis. *bamboo*
 provides an interface for merging, aggregating and adding algebraic
-calculations to dynamic datasets.  Clients can interact with Bamboo through a
+calculations to dynamic datasets.  Clients can interact with *bamboo* through a
 a REST web interface and through Python.
 
-Bamboo supports a simple querying language to build calculations
+*bamboo* supports a simple querying language to build calculations
 (e.g. student teacher ratio) and aggregations (e.g. average number of students
 per district) from datasets. These are updated as new data is received.
 
-Bamboo is `open source <https://github.com/modilabs/bamboo>`_ software released
+*bamboo* is `open source <https://github.com/modilabs/bamboo>`_ software released
 under the 3-clause BSD license, which is also known as the "Modified BSD
 License".
 
@@ -82,7 +82,7 @@ running the example basic commands
 
   $ ./scripts/commands.sh
 
-using `Bamboo.JS <http://modilabs.github.com/bamboo_js/>`_
+using `bamboo.JS <http://modilabs.github.com/bamboo_js/>`_
 
 .. code-block:: javascript
 
@@ -203,7 +203,7 @@ To work on the code:
 About
 -----
 
-Bamboo is an open source project. The project features, in chronological order,
+*bamboo* is an open source project. The project features, in chronological order,
 the combined efforts of
 
 * Peter Lubell-Doughtie

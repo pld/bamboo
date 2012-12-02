@@ -235,7 +235,7 @@ man_pages = [
 texinfo_documents = [
     ('index', 'bamboo', u'bamboo Documentation',
      u'Peter Lubell-Doughtie, Mark Johnston', 'bamboo',
-     'Bamboo is a data analysis web service.',
+     'bamboo is a data analysis web service.',
      'Miscellaneous'),
 ]
 
