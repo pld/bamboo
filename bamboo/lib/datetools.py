@@ -89,8 +89,8 @@ def parse_timestamp_query(query, schema):
             schema.items() if
             schema[SIMPLETYPE] == DATETIME and column in query.keys()]
         for date_column in datetime_columns:
-            query[date_column] = dict([(
-                key,
-                datetime.fromtimestamp(int(value))) for (key, value) in
-                query[date_column].items()])
+            query[date_column] = {
+                key: datetime.fromtimestamp(int(value)) for (key, value) in
+                query[date_column].items()
+            }
     return query

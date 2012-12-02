@@ -95,9 +95,9 @@ class Observation(AbstractModel):
 
             # if column name is not in map assume it is already slugified
             # (i.e. NOT a label)
-            dframe = dframe.rename(columns=dict([
-                (column, labels_to_slugs.get(column, column)) for column in
-                dframe.columns.tolist()]))
+            dframe = dframe.rename(columns={
+                column: labels_to_slugs.get(column, column) for column in
+                dframe.columns.tolist()})
 
             id_column = Series([dataset.dataset_observation_id] * len(dframe))
             id_column.name = DATASET_OBSERVATION_ID

@@ -120,10 +120,10 @@ class AbstractModel(object):
     @property
     def clean_record(self):
         """Remove reserved keys from records."""
-        _dict = dict([
-            (key, value) for (key, value) in self.record.items() if not key in
+        _dict = {
+            key: value for (key, value) in self.record.items() if not key in
             BAMBOO_RESERVED_KEYS
-        ])
+        }
         return remove_mongo_reserved_keys(_dict)
 
     def delete(self, query):

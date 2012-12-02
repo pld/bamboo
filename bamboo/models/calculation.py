@@ -47,7 +47,7 @@ def calculate_task(calculation, dataset, calculator):
                                 calculation.group)
     dataset_calcs = dataset.calculations()
     dataset_calc_names = [calc.name for calc in dataset_calcs]
-    names_to_calcs = dict([(calc.name, calc) for calc in dataset_calcs])
+    names_to_calcs = {calc.name: calc for calc in dataset_calcs}
     for column_name in calculator.parser.context.dependent_columns:
         calc = names_to_calcs.get(column_name)
         if calc:

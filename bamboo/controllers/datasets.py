@@ -96,6 +96,7 @@ class Datasets(AbstractController):
               state.
         """
         limit = self._parse_int(limit, 0)
+
         def _action(dataset, query=query, select=select, group=group,
                     limit=limit, order_by=order_by):
             if not dataset.is_ready:
@@ -150,6 +151,7 @@ class Datasets(AbstractController):
             the rows matching the parameters.
         """
         limit = self._parse_int(limit, 0)
+
         def _action(dataset, query=query, select=select,
                     limit=limit, order_by=order_by):
             return dataset.dframe(
