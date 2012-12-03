@@ -85,7 +85,7 @@ class Dataset(AbstractModel):
     @property
     def aggregated_datasets(self):
         return {group: self.find_one(_id) for (group, _id) in
-                     self.aggregated_datasets_dict.items()}
+                self.aggregated_datasets_dict.items()}
 
     @property
     def joined_dataset_ids(self):

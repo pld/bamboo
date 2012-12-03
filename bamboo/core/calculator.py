@@ -281,8 +281,11 @@ class Calculator(object):
                             col not in filtered_row.keys():
                         filtered_row[col] = val
                 else:
-                    slug = labels_to_slugs.get(col)
-                    if slug and (not len(columns) or slug in columns):
+                    # if col is a label take slug, if it's a slug take col
+                    slug = labels_to_slugs.get(
+                        col, col if col in labels_to_slugs.values() else None)
+                    if (slug or col in labels_to_slugs.keys()) and (
+                            not len(columns) or slug in columns):
                         filtered_row[slug] = val
             filtered_data.append(filtered_row)
         return BambooFrame(filtered_data)

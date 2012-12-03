@@ -8,6 +8,13 @@ from bamboo.config.settings import ASYNCHRONOUS_TASKS
 GROUP_DELIMITER = ','
 
 
+def parse_int(value, default):
+    try:
+        return int(value)
+    except ValueError:
+        return default
+
+
 def is_float_nan(num):
     """Return True is *num* is a float and NaN."""
     return isinstance(num, float) and isnan(num)

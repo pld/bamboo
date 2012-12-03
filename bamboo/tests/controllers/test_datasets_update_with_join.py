@@ -1,14 +1,11 @@
 import json
-import pickle
 
-from bamboo.controllers.datasets import Datasets
 from bamboo.models.dataset import Dataset
-from bamboo.lib.datetools import recognize_dates
-from bamboo.tests.controllers.test_abstract_datasets import\
-    TestAbstractDatasets
+from bamboo.tests.controllers.test_abstract_datasets_update import\
+    TestAbstractDatasetsUpdate
 
 
-class TestDatasetsUpdateWithJoin(TestAbstractDatasets):
+class TestDatasetsUpdateWithJoin(TestAbstractDatasetsUpdate):
 
     def setUp(self):
         """
@@ -24,8 +21,7 @@ class TestDatasetsUpdateWithJoin(TestAbstractDatasets):
 
         Dependencies flow from top to bottom.
         """
-        TestAbstractDatasets.setUp(self)
-        self.controller = Datasets()
+        TestAbstractDatasetsUpdate.setUp(self)
 
         # create original datasets
         self._post_file()
@@ -39,23 +35,16 @@ class TestDatasetsUpdateWithJoin(TestAbstractDatasets):
             self.left_dataset_id, self.right_dataset_id, on=self.on))
         self.joined_dataset_id = results[Dataset.ID]
 
-    def _verify_dataset(self, dataset_id, fixture_path):
-        dataset = Dataset.find_one(dataset_id)
-        dframe = dataset.dframe()
-        expected_dframe = recognize_dates(
-            pickle.load(open(fixture_path, 'rb')))
-        self._check_dframes_are_equal(dframe, expected_dframe)
-
     def test_setup_datasets(self):
         self._verify_dataset(
             self.left_dataset_id,
-            'tests/fixtures/updates_with_join/originals/left_dataset.p')
+            'updates_with_join/originals/left_dataset.p')
         self._verify_dataset(
             self.right_dataset_id,
-            'tests/fixtures/updates_with_join/originals/right_dataset.p')
+            'updates_with_join/originals/right_dataset.p')
         self._verify_dataset(
             self.joined_dataset_id,
-            'tests/fixtures/updates_with_join/originals/joined_dataset.p')
+            'updates_with_join/originals/joined_dataset.p')
 
     def test_datasets_update_left(self):
         self._put_row_updates(
@@ -64,10 +53,10 @@ class TestDatasetsUpdateWithJoin(TestAbstractDatasets):
         )
         self._verify_dataset(
             self.left_dataset_id,
-            'tests/fixtures/updates_with_join/update_left/left_dataset.p')
+            'updates_with_join/update_left/left_dataset.p')
         self._verify_dataset(
             self.joined_dataset_id,
-            'tests/fixtures/updates_with_join/update_left/joined_dataset.p')
+            'updates_with_join/update_left/joined_dataset.p')
 
     def test_datasets_update_left_no_join_col(self):
         self._put_row_updates(
@@ -76,11 +65,11 @@ class TestDatasetsUpdateWithJoin(TestAbstractDatasets):
             'l/update.json')
         self._verify_dataset(
             self.left_dataset_id,
-            'tests/fixtures/updates_with_join/update_left_no_join_col/left_dat'
+            'updates_with_join/update_left_no_join_col/left_dat'
             'aset.p')
         self._verify_dataset(
             self.joined_dataset_id,
-            'tests/fixtures/updates_with_join/update_left_no_join_col/joined_d'
+            'updates_with_join/update_left_no_join_col/joined_d'
             'ataset.p')
 
     def test_datasets_update_right(self):
@@ -95,13 +84,13 @@ class TestDatasetsUpdateWithJoin(TestAbstractDatasets):
         )
         self._verify_dataset(
             self.left_dataset_id,
-            'tests/fixtures/updates_with_join/update_right/left_dataset.p')
+            'updates_with_join/update_right/left_dataset.p')
         self._verify_dataset(
             self.right_dataset_id,
-            'tests/fixtures/updates_with_join/update_right/right_dataset.p')
+            'updates_with_join/update_right/right_dataset.p')
         self._verify_dataset(
             self.joined_dataset_id,
-            'tests/fixtures/updates_with_join/update_right/joined_dataset.p')
+            'updates_with_join/update_right/joined_dataset.p')
 
     def test_datasets_update_right_non_unique_join(self):
         self._put_row_updates(
@@ -111,7 +100,7 @@ class TestDatasetsUpdateWithJoin(TestAbstractDatasets):
         )
         self._verify_dataset(
             self.right_dataset_id,
-            'tests/fixtures/updates_with_join/originals/right_dataset.p')
+            'updates_with_join/originals/right_dataset.p')
         self._verify_dataset(
             self.joined_dataset_id,
-            'tests/fixtures/updates_with_join/originals/joined_dataset.p')
+            'updates_with_join/originals/joined_dataset.p')

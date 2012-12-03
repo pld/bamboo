@@ -31,7 +31,7 @@ class TestProfile(TestBase):
         for i in xrange(0, exponent):
             other = df.rename(
                 columns={col: '%s-%s' % (col, idx) for (idx, col) in
-                             enumerate(df.columns)})
+                         enumerate(df.columns)})
             df = df.join(other)
             df.rename(columns={col: str(idx) for (idx, col) in
                       enumerate(df.columns)}, inplace=True)
