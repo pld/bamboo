@@ -21,11 +21,6 @@ class Calculator(object):
         self.dataset = dataset
         self.parser = Parser(dataset)
 
-    def ensure_dframe(self):
-        """Ensure *dframe* for the calculator's dataset is defined."""
-        if not self.dframe:
-            self.dframe = self.dataset.dframe()
-
     def validate(self, formula, group_str):
         """Validate *formula* and *group_str* for calculator's dataset.
 
@@ -78,7 +73,7 @@ class Calculator(object):
           calculations.
 
         """
-        self.ensure_dframe()
+        self._ensure_dframe()
 
         aggregation, new_columns = self.make_columns(formula, name)
 
@@ -145,20 +140,48 @@ class Calculator(object):
           is None.
 
         """
-        self.ensure_dframe()
+        self._ensure_dframe()
+        self._ensure_ready()
 
-        # dataset must not be pending
-        if not self.dataset.is_ready:
-            self.dataset.reload()
-            raise self.calculate_updates.retry(countdown=1)
-
-        calculations = self.dataset.calculations()
         labels_to_slugs = self.dataset.build_labels_to_slugs()
         new_dframe_raw = self._dframe_from_update(new_data, labels_to_slugs)
 
-        # check whether this is a right-hand side of any joins
-        # and deny the update if the update would produce an invalid
-        # join as a result
+        self._check_update_is_valid(new_dframe_raw)
+
+        new_dframe = recognize_dates_from_schema(self.dataset.schema,
+                                                 new_dframe_raw)
+
+        new_dframe, aggregations = self._add_calcs_and_find_aggregations(
+            new_dframe, labels_to_slugs)
+
+        # set parent id if provided
+        if parent_dataset_id:
+            new_dframe = new_dframe.add_parent_column(parent_dataset_id)
+
+        existing_dframe = self.dataset.dframe(keep_parent_ids=True)
+
+        # merge the two dframes
+        updated_dframe = concat([existing_dframe, new_dframe])
+
+        # update (overwrite) the dataset with the new merged dframe
+        self.dframe = self.dataset.replace_observations(
+            updated_dframe, set_num_columns=False)
+        self.dataset.clear_summary_stats()
+
+        self._update_aggregate_datasets(aggregations, new_dframe)
+        self._update_merged_datasets(new_data, labels_to_slugs)
+        self._update_joined_datasets(new_dframe_raw)
+
+    def _check_update_is_valid(self, new_dframe_raw):
+        """Check if the update is valid.
+
+        Check whether this is a right-hand side of any joins
+        and deny the update if the update would produce an invalid
+        join as a result.
+
+        Raises:
+            NonUniqueJoinError: If update is illegal given joins of dataset.
+        """
         if any([direction == 'left' for direction, _, on, __ in
                 self.dataset.joined_datasets]):
             if on in new_dframe_raw.columns and on in self.dframe.columns:
@@ -169,11 +192,36 @@ class Calculator(object):
                         'Cannot update. This is the right hand join and the'
                         'column "%s" will become non-unique.' % on)
 
-        new_dframe = recognize_dates_from_schema(
-            self.dataset.schema, new_dframe_raw)
+    def make_columns(self, formula, name, dframe=None):
+        """Parse formula into function and variables."""
+        if dframe is None:
+            dframe = self.dframe
 
-        aggregate_calculations = []
+        aggregation, functions = self.parser.parse_formula(formula)
 
+        new_columns = []
+        for function in functions:
+            new_column = dframe.apply(
+                function, axis=1, args=(self.parser.context, ))
+            new_column.name = name
+            new_columns.append(new_column)
+
+        return aggregation, new_columns
+
+    def _ensure_dframe(self):
+        """Ensure *dframe* for the calculator's dataset is defined."""
+        if not self.dframe:
+            self.dframe = self.dataset.dframe()
+
+    def _ensure_ready(self):
+        # dataset must not be pending
+        if not self.dataset.is_ready:
+            self.dataset.reload()
+            raise self.calculate_updates.retry(countdown=1)
+
+    def _add_calcs_and_find_aggregations(self, new_dframe, labels_to_slugs):
+        aggregations = []
+        calculations = self.dataset.calculations()
         for calculation in calculations:
             _, function =\
                 self.parser.parse_formula(calculation.formula)
@@ -183,30 +231,16 @@ class Calculator(object):
             if potential_name not in self.dframe.columns:
                 if potential_name not in labels_to_slugs:
                     # it is an aggregate calculation, update after
-                    aggregate_calculations.append(calculation)
+                    aggregations.append(calculation)
                     continue
                 else:
                     new_column.name = labels_to_slugs[potential_name]
             else:
                 new_column.name = potential_name
             new_dframe = new_dframe.join(new_column)
+        return new_dframe, aggregations
 
-        # set parent id if provided
-        if parent_dataset_id:
-            new_dframe = new_dframe.add_parent_column(parent_dataset_id)
-
-        existing_dframe = self.dataset.dframe(keep_parent_ids=True)
-
-        # merge the two
-        updated_dframe = concat([existing_dframe, new_dframe])
-
-        # update (overwrite) the dataset with the new merged version
-        self.dframe = self.dataset.replace_observations(
-            updated_dframe, set_num_columns=False)
-        self.dataset.clear_summary_stats()
-
-        self._update_aggregate_datasets(aggregate_calculations, new_dframe)
-
+    def _update_merged_datasets(self, new_data, labels_to_slugs):
         # store slugs as labels for child datasets
         slugified_data = []
         if not isinstance(new_data, list):
@@ -224,6 +258,7 @@ class Calculator(object):
             call_async(merged_calculator.calculate_updates, merged_calculator,
                        slugified_data, self.dataset.dataset_id)
 
+    def _update_joined_datasets(self, new_dframe_raw):
         # update any joined datasets
         for direction, other_dataset, on, joined_dataset in\
                 self.dataset.joined_datasets:
@@ -246,22 +281,6 @@ class Calculator(object):
                 call_async(joined_calculator.calculate_updates,
                            joined_calculator, merged_dframe.to_jsondict(),
                            self.dataset.dataset_id)
-
-    def make_columns(self, formula, name, dframe=None):
-        """Parse formula into function and variables."""
-        if dframe is None:
-            dframe = self.dframe
-
-        aggregation, functions = self.parser.parse_formula(formula)
-
-        new_columns = []
-        for function in functions:
-            new_column = dframe.apply(
-                function, axis=1, args=(self.parser.context, ))
-            new_column.name = name
-            new_columns.append(new_column)
-
-        return aggregation, new_columns
 
     def _dframe_from_update(self, new_data, labels_to_slugs):
         """Make a single-row dataframe for the additional data to add."""
