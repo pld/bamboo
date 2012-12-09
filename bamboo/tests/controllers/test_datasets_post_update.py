@@ -16,7 +16,8 @@ class TestDatasetsPostUpdate(TestAbstractDatasets):
         self._file_name_with_slashes = 'good_eats_with_slashes.csv'
 
     def test_dataset_id_update_bad_dataset_id(self):
-        result = json.loads(self.controller.update(dataset_id=111))
+        result = json.loads(self.controller.update(dataset_id=111, 
+                                                   update=None))
         assert(Datasets.ERROR in result)
 
     @requires_async
@@ -25,12 +26,15 @@ class TestDatasetsPostUpdate(TestAbstractDatasets):
         dataset = Dataset.find_one(self.dataset_id)
         self.assertEqual(dataset.status, Dataset.STATE_PENDING)
         self._put_row_updates()
+
         while True:
             results = json.loads(self.controller.show(self.dataset_id))
+
             # wait for the update to finish, or loop forever...
             if len(results) > 19:
                 break
             sleep(self.SLEEP_DELAY)
+
         results = json.loads(self.controller.show(self.dataset_id))
         num_rows_after_update = len(results)
         self.assertEqual(num_rows_after_update, self.NUM_ROWS + 1)
@@ -42,11 +46,13 @@ class TestDatasetsPostUpdate(TestAbstractDatasets):
         results = json.loads(self.controller.show(self.dataset_id))
         num_rows_after_update = len(results)
         self.assertEqual(num_rows_after_update, self.NUM_ROWS + 1)
+
         for result in results:
             for column in self.schema.keys():
                 self.assertTrue(
                     column in result.keys(),
                     "column %s not in %s" % (column, result.keys()))
+
         # ensure new row is in results
         self.assertTrue(self._update_values in results)
 
@@ -58,11 +64,13 @@ class TestDatasetsPostUpdate(TestAbstractDatasets):
         num_rows_after_update = len(results)
         self.assertEqual(num_rows_after_update, self.NUM_ROWS + 1)
         [v['label'] for v in self.schema.values()]
+
         for result in results:
             for column in self.schema.keys():
                 self.assertTrue(
                     column in result.keys(),
                     "column %s not in %s" % (column, result.keys()))
+
         # ensure new row is in results
         self.assertTrue(self._update_values in results)
 
@@ -84,9 +92,11 @@ class TestDatasetsPostUpdate(TestAbstractDatasets):
         results = json.loads(self.controller.show(self.dataset_id))
         num_rows_after_update = len(results)
         self.assertEqual(num_rows_after_update, num_rows + 1)
+
         for result in results:
             for column in self.schema.keys():
                 self.assertTrue(
                     column in result.keys(),
                     "column %s not in %s" % (column, result.keys()))
+
         self._test_aggregations()

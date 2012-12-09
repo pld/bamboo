@@ -46,8 +46,10 @@ class BambooFrame(DataFrame):
             keep_parent_ids: Keep parent column if True, default False.
         """
         reserved_keys = self._column_intersect(BAMBOO_RESERVED_KEYS)
+
         if keep_parent_ids and PARENT_DATASET_ID in reserved_keys:
             reserved_keys.remove(PARENT_DATASET_ID)
+
         for column in reserved_keys:
             del self[column]
 
@@ -83,11 +85,14 @@ class BambooFrame(DataFrame):
 
         if on not in self.columns:
             raise KeyError('no item named %s in left hand side dataset' % on)
+
         if on not in right_dframe.columns:
             raise KeyError('no item named %s in right hand side dataset' % on)
 
         right_dframe = right_dframe.set_index(on)
+
         if len(right_dframe.index) != len(right_dframe.index.unique()):
             raise NonUniqueJoinError('The join column (%s) of the right hand s'
                                      'ide dataset is not unique' % on)
+
         return self.__class__(self.join(right_dframe, on=on))

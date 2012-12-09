@@ -26,6 +26,7 @@ def delete_task(calculation, dataset, slug):
     del dframe[slug]
     dataset.replace_observations(dframe, overwrite=True)
     calculation.remove_dependencies()
+
     super(calculation.__class__, calculation).delete({
         DATASET_ID: calculation.dataset_id,
         calculation.NAME: calculation.name
@@ -48,11 +49,13 @@ def calculate_task(calculation, dataset, calculator):
     dataset_calcs = dataset.calculations()
     dataset_calc_names = [calc.name for calc in dataset_calcs]
     names_to_calcs = {calc.name: calc for calc in dataset_calcs}
+
     for column_name in calculator.parser.context.dependent_columns:
         calc = names_to_calcs.get(column_name)
         if calc:
             calculation.add_dependency(calc.name)
             calc.add_dependent_calculation(calculation.name)
+
     calculation.ready()
 
 
@@ -100,6 +103,7 @@ class Calculation(AbstractModel):
 
     def _add_and_update_set(self, link_key, existing, new):
         new_list = list(set(existing + [new]))
+
         if new_list != existing:
             self.update({link_key: new_list})
 
@@ -130,6 +134,7 @@ class Calculation(AbstractModel):
             raise DependencyError(
                 'Cannot delete, the calculations %s depend on this calculation'
                 % self.dependent_calculations)
+
         if not self.group is None:
             # it is an aggregate calculation
             if not self.group in dataset.aggregated_datasets:
@@ -180,6 +185,7 @@ class Calculation(AbstractModel):
         super(self.__class__, self).save(record)
 
         call_async(calculate_task, self, dataset, calculator)
+
         return record
 
     @classmethod
@@ -193,8 +199,10 @@ class Calculation(AbstractModel):
             DATASET_ID: dataset_id,
             cls.NAME: name,
         }
+
         if group:
             query[cls.GROUP] = group
+
         return super(cls, cls).find_one(query)
 
     @classmethod

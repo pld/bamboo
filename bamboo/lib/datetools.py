@@ -24,9 +24,11 @@ def recognize_dates(dframe):
         A DataFrame with column values convert to datetime types.
     """
     new_dframe = copy.deepcopy(dframe)
+
     for idx, dtype in enumerate(dframe.dtypes):
         if dtype.type == np.object_:
             _convert_column_to_date(new_dframe, dframe.columns[idx])
+
     return new_dframe
 
 
@@ -43,10 +45,12 @@ def recognize_dates_from_schema(schema, dframe):
     """
     new_dframe = copy.deepcopy(dframe)
     dframe_columns = dframe.columns.tolist()
+
     for column, column_schema in schema.items():
         if column in dframe_columns and\
                 column_schema[SIMPLETYPE] == DATETIME:
             _convert_column_to_date(new_dframe, column)
+
     return new_dframe
 
 
@@ -93,4 +97,5 @@ def parse_timestamp_query(query, schema):
                 key: datetime.fromtimestamp(int(value)) for (key, value) in
                 query[date_column].items()
             }
+
     return query

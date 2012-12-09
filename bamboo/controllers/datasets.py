@@ -111,6 +111,7 @@ class Datasets(AbstractController):
             return dataset.summarize(dataset, query, select,
                                      group, limit=limit,
                                      order_by=order_by)
+
         return self._safe_get_and_call(dataset_id, _action, callback=callback,
                                        exceptions=(ColumnTypeError,))
 
@@ -248,19 +249,20 @@ class Datasets(AbstractController):
 
         return self.dump_or_error(result, error, success_status_code=201)
 
-    def update(self, dataset_id):
-        """Update the *dataset_id* with the body as JSON.
+    def update(self, dataset_id, update):
+        """Update the *dataset_id* with the new rows as JSON.
 
         Args:
 
         - dataset_id: The ID of the dataset to update.
+        - update: The JSON to update the dataset with.
 
         Returns:
             A JSON dict with the ID of the dataset updated, or with an error
             message.
         """
         def _action(dataset):
-            dataset.add_observations(cherrypy.request.body.read())
+            dataset.add_observations(update)
             return {Dataset.ID: dataset_id}
 
         return self._safe_get_and_call(

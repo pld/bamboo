@@ -170,6 +170,7 @@ class Dataset(AbstractModel):
                 dframe = BambooFrame(dframe.join(place_holder, on=on))
             else:
                 dframe = self.place_holder_dframe()
+
         return dframe
 
     def add_joined_dataset(self, new_data):
@@ -188,6 +189,7 @@ class Dataset(AbstractModel):
     def clear_summary_stats(self, field=ALL):
         """Remove summary stats for *field*."""
         stats = self.stats
+
         if stats:
             stats.pop(field, None)
             self.update({self.STATS: stats})
@@ -216,6 +218,7 @@ class Dataset(AbstractModel):
             self.CREATED_AT: strftime("%Y-%m-%d %H:%M:%S", gmtime()),
             self.STATE: self.STATE_PENDING,
         }
+
         return super(self.__class__, self).save(record)
 
     def delete(self):
@@ -407,6 +410,7 @@ class Dataset(AbstractModel):
         columns = self.schema.keys()
         if dframe is not None:
             columns = [col for col in columns if col not in dframe.columns[1:]]
+
         return BambooFrame([[''] * len(columns)], columns=columns)
 
     def join(self, other, on):
@@ -429,6 +433,7 @@ class Dataset(AbstractModel):
             ('right', other.dataset_id, on, merged_dataset.dataset_id))
         other.add_joined_dataset(
             ('left', self.dataset_id, on, merged_dataset.dataset_id))
+
         return merged_dataset
 
     def reload(self):

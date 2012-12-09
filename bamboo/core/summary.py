@@ -51,12 +51,14 @@ def summarizable(dframe, col, groups, dataset):
             dataset.cardinality(col)
         if cardinality > MAX_CARDINALITY_FOR_COUNT:
             return False
+
     return not col in groups
 
 
 def summarize_df(dframe, groups=[], dataset=None):
     """Calculate summary statistics."""
     dtypes = dframe.dtypes
+
     return {
         col: {
             SUMMARY: series_to_jsondict(summarize_series(dtypes[col], data))
@@ -90,6 +92,7 @@ def summarize(dataset, dframe, groups, group_str, no_cache):
         stats.update({group_str: group_stats})
         if not no_cache:
             dataset.update({dataset.STATS: dict_for_mongo(stats)})
+
     stats_to_return = dict_from_mongo(stats.get(group_str))
 
     return stats_to_return if group_str == dataset.ALL else {

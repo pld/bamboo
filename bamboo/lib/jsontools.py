@@ -20,6 +20,7 @@ def get_json_value(value):
         value = int(value)
     elif isinstance(value, np.bool_):
         value = bool(value)
+
     return value
 
 

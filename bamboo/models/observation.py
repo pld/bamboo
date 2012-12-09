@@ -65,6 +65,7 @@ class Observation(AbstractModel):
                 raise JSONError('cannot decode select: %s' % err.__str__())
 
         query[DATASET_OBSERVATION_ID] = dataset.dataset_observation_id
+
         return super(cls, cls).find(
             query, select, as_dict=True, limit=limit, order_by=order_by,
             as_cursor=as_cursor)
@@ -90,6 +91,7 @@ class Observation(AbstractModel):
 
         # save the data, if there is any
         num_rows = 0
+
         if dframe is not None:
             labels_to_slugs = dataset.build_labels_to_slugs()
 
