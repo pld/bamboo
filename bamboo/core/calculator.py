@@ -48,6 +48,7 @@ class Calculator(object):
                 if not group in dframe.columns:
                     raise ParseError(
                         'Group %s not in dataset columns.' % group)
+
         return aggregation
 
     def calculate_column(self, formula, name, group_str=None):
@@ -103,6 +104,7 @@ class Calculator(object):
         """
         # delete the rows in this dataset from the parent
         self.dataset.remove_parent_observations(parent_dataset.dataset_id)
+
         # get this dataset without the out-of-date parent rows
         dframe = self.dataset.dframe(keep_parent_ids=True)
 
@@ -200,6 +202,7 @@ class Calculator(object):
         aggregation, functions = self.parser.parse_formula(formula)
 
         new_columns = []
+
         for function in functions:
             new_column = dframe.apply(
                 function, axis=1, args=(self.parser.context, ))
@@ -222,12 +225,14 @@ class Calculator(object):
     def _add_calcs_and_find_aggregations(self, new_dframe, labels_to_slugs):
         aggregations = []
         calculations = self.dataset.calculations()
+
         for calculation in calculations:
             _, function =\
                 self.parser.parse_formula(calculation.formula)
             new_column = new_dframe.apply(function[0], axis=1,
                                           args=(self.parser.context, ))
             potential_name = calculation.name
+
             if potential_name not in self.dframe.columns:
                 if potential_name not in labels_to_slugs:
                     # it is an aggregate calculation, update after
@@ -238,6 +243,7 @@ class Calculator(object):
             else:
                 new_column.name = potential_name
             new_dframe = new_dframe.join(new_column)
+
         return new_dframe, aggregations
 
     def _update_merged_datasets(self, new_data, labels_to_slugs):
@@ -245,6 +251,7 @@ class Calculator(object):
         slugified_data = []
         if not isinstance(new_data, list):
             new_data = [new_data]
+
         for row in new_data:
             for key, value in row.iteritems():
                 if labels_to_slugs.get(key) and key not in MONGO_RESERVED_KEYS:
@@ -266,6 +273,7 @@ class Calculator(object):
                 if on in new_dframe_raw.columns:
                     # only proceed if on in new dframe
                     other_dframe = other_dataset.dframe(padded=True)
+
                     if len(set(new_dframe_raw[on]).intersection(
                             set(other_dframe[on]))):
                         # only proceed if new on value is in on column in lhs
@@ -274,9 +282,11 @@ class Calculator(object):
                         joined_dataset.replace_observations(merged_dframe)
             else:
                 merged_dframe = new_dframe_raw
+
                 if on in merged_dframe:
                     merged_dframe = new_dframe_raw.join_dataset(
                         other_dataset, on)
+
                 joined_calculator = Calculator(joined_dataset)
                 call_async(joined_calculator.calculate_updates,
                            joined_calculator, merged_dframe.to_jsondict(),
@@ -289,8 +299,10 @@ class Calculator(object):
 
         filtered_data = []
         columns = self.dframe.columns
+
         if not len(columns):
             columns = self.dataset.schema.keys()
+
         for row in new_data:
             filtered_row = dict()
             for col, val in row.iteritems():
@@ -303,10 +315,13 @@ class Calculator(object):
                     # if col is a label take slug, if it's a slug take col
                     slug = labels_to_slugs.get(
                         col, col if col in labels_to_slugs.values() else None)
+
                     if (slug or col in labels_to_slugs.keys()) and (
                             not len(columns) or slug in columns):
                         filtered_row[slug] = val
+
             filtered_data.append(filtered_row)
+
         return BambooFrame(filtered_data)
 
     def _update_aggregate_datasets(self, calculations, new_dframe):
@@ -357,13 +372,16 @@ class Calculator(object):
             calc.name: calc.formula for calc in calculations
         }
         calculations = set([calc.name for calc in calculations])
+
         for group, dataset in self.dataset.aggregated_datasets.items():
             labels_to_slugs = dataset.build_labels_to_slugs()
+
             for calc in list(
                     set(labels_to_slugs.keys()).intersection(calculations)):
                 self.calcs_to_data[calc].append(
                     (names_to_formulas[calc],
                      labels_to_slugs[calc], group, dataset))
+
         self.calcs_to_data = [
             item for sublist in self.calcs_to_data.values() for item in sublist
         ]

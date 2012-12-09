@@ -92,9 +92,11 @@ class Calculations(AbstractController):
                                        group)
             except KeyError as e:
                 raise ArgumentError('Required key %s not found in JSON' % e)
+
             return {
                 self.SUCCESS: 'created calulcation: %s for dataset: %s'
                 % (name, dataset_id)}
+
         return self._safe_get_and_call(
             dataset_id, _action, formula=formula, name=name, data=data,
             group=group, exceptions=(ParseError,), success_status_code=201)
@@ -114,4 +116,5 @@ class Calculations(AbstractController):
         def _action(dataset):
             result = Calculation.find(dataset)
             return [x.clean_record for x in result]
+
         return self._safe_get_and_call(dataset_id, _action, callback=callback)

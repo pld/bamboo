@@ -57,6 +57,7 @@ class AbstractModel(object):
         if not cls.__collection__:
             cls.__collection__ = AbstractModel.set_collection(
                 cls.__collectionname__)
+
         return cls.__collection__
 
     @classmethod
@@ -179,6 +180,7 @@ class AbstractModel(object):
         """
         def command(records):
             self.collection.insert(records, safe=True)
+
         self._batch_command(command, dframe)
 
     def _batch_command(self, command, dframe):

@@ -67,6 +67,7 @@ class Aggregator(object):
                 new_dframe = new_dframe.reset_index()
 
             agg_dataset.replace_observations(new_dframe)
+
         self.new_dframe = new_dframe
 
     def update(self, child_dataset, calculator, formula, columns):
@@ -90,5 +91,6 @@ class Aggregator(object):
             dframe[self.name] = new_dframe[self.name]
 
         new_agg_dframe = concat([child_dataset.dframe(), dframe])
+
         return child_dataset.replace_observations(
             new_agg_dframe.add_parent_column(parent_dataset_id))

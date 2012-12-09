@@ -42,6 +42,7 @@ def slugify_columns(column_names):
         while new_col_name in encoded_names:
             new_col_name += '_'
         encoded_names.append(new_col_name)
+
     return encoded_names
 
 

@@ -29,6 +29,7 @@ class Aggregation(object):
         """For when aggregation is called with a group parameter."""
         groupby = self.dframe[self.groups].join(
             self.column).groupby(self.groups, as_index=False)
+
         return groupby.agg(self.formula_name)
 
     def agg(self):
@@ -51,9 +52,12 @@ class MultiColumnAggregation(Aggregation):
         self.columns = columns
         self.column = columns[0]
         new_dframe = self.agg()
+
         for column in new_dframe.columns:
             dframe[column] += new_dframe[column]
+
         dframe[self.name] = self._agg_dframe(dframe)
+
         return dframe
 
     def _name_for_idx(self, idx):
@@ -65,6 +69,7 @@ class MultiColumnAggregation(Aggregation):
     def _build_dframe(self, dframe, columns):
         for idx, column in enumerate(columns):
             column.name = self._name_for_idx(idx)
+
         return concat([dframe] + [DataFrame(col) for col in columns], axis=1)
 
     def _add_calculated_column(self, dframe):
@@ -105,9 +110,10 @@ class MeanAggregation(MultiColumnAggregation):
 
         columns = [
             Series([col]) for col in [self.column.sum(), len(self.column)]]
-        dframe = self._build_dframe(dframe, columns)
 
+        dframe = self._build_dframe(dframe, columns)
         dframe = DataFrame([dframe.sum().to_dict()])
+
         return self._add_calculated_column(dframe)
 
 
@@ -141,6 +147,7 @@ class SumAggregation(Aggregation):
         self.columns = columns
         self.column = columns[0]
         dframe[self.name] += self.agg()[self.name]
+
         return dframe
 
 
@@ -195,6 +202,7 @@ class CountAggregation(Aggregation):
             result = self.dframe[self.groups]
             result = result.groupby(self.groups).apply(lambda x: len(x)).\
                 reset_index().rename(columns={0: self.name})
+
         return result
 
     def agg(self):
@@ -203,6 +211,7 @@ class CountAggregation(Aggregation):
             result = float(self.column.__getattribute__(self.formula_name)())
         else:
             result = len(self.dframe)
+
         return DataFrame({self.name: Series([result])})
 
 

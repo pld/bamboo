@@ -44,6 +44,7 @@ class AbstractController(object):
         self._add_cors_headers()
         cherrypy.response.headers['Content-Length'] = 0
         cherrypy.response.status = 204
+
         return ''
 
     def dump_or_error(self, obj, error_message, callback=False,
@@ -70,6 +71,7 @@ class AbstractController(object):
             obj = {self.ERROR: error_message}
         json = dump_mongo_json(obj)
         self._add_cors_headers()
+
         return '%s(%s)' % (callback, json) if callback else json
 
     def _safe_get_and_call(self, dataset_id, action, callback=None,

@@ -52,6 +52,7 @@ def remove_mongo_reserved_keys(_dict):
         else:
             # remove mongo reserved keys
             del _dict[key]
+
     return _dict
 
 
@@ -76,6 +77,7 @@ def dict_from_mongo(_dict):
         elif _was_encoded_for_mongo(key):
             del _dict[key]
             _dict[_decode_from_mongo(key)] = value
+
     return _dict
 
 
@@ -95,6 +97,7 @@ def dict_for_mongo(_dict):
         elif _is_invalid_for_mongo(key):
             del _dict[key]
             _dict[_encode_for_mongo(key)] = value
+
     return _dict
 
 

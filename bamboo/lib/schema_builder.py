@@ -69,6 +69,7 @@ def schema_from_data_and_dtypes(dataset, dframe):
     encoded_names = dict(zip(column_names, slugify_columns(column_names)))
 
     schema = {}
+
     for (name, dtype) in dtypes.items():
         if name not in BAMBOO_RESERVED_KEYS:
             column_schema = {

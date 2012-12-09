@@ -18,6 +18,7 @@ class EvalTerm(object):
     def operator_operands(self, tokenlist):
         """Generator to extract operators and operands in pairs."""
         _it = iter(tokenlist)
+
         while 1:
             try:
                 yield (_it.next(), _it.next())
@@ -42,6 +43,7 @@ class EvalConstant(EvalTerm):
             if field:
                 # it is a variable, save as dependency
                 context.dependent_columns.add(self.value)
+
             # test is date and parse as date
             return parse_date_to_unix_time(field) if context.schema and\
                 col_is_date_simpletype(context.schema[self.value]) else field
@@ -78,11 +80,13 @@ class EvalBinaryArithOp(EvalTerm):
 
     def eval(self, row, context):
         result = np.float64(self.value[0].eval(row, context))
+
         for oper, val in self.operator_operands(self.value[1:]):
             val = np.float64(val.eval(row, context))
             result = self.operation(oper, result, val)
             if np.isinf(result):
                 return np.nan
+
         return result
 
 
@@ -123,6 +127,7 @@ class EvalComparisonOp(EvalTerm):
 
     def eval(self, row, context):
         val1 = np.float64(self.value[0].eval(row, context))
+
         for oper, val in self.operator_operands(self.value[1:]):
             fn = EvalComparisonOp.opMap[oper]
             val2 = np.float64(val.eval(row, context))
@@ -131,6 +136,7 @@ class EvalComparisonOp(EvalTerm):
             val1 = val2
         else:
             return True
+
         return False
 
 
@@ -171,9 +177,11 @@ class EvalBinaryBooleanOp(EvalTerm):
 
     def eval(self, row, context):
         result = np.bool_(self.value[0].eval(row, context))
+
         for oper, val in self.operator_operands(self.value[1:]):
             val = np.bool_(val.eval(row, context))
             result = self.operation(oper, result, val)
+
         return result
 
 
@@ -199,9 +207,11 @@ class EvalInOp(EvalTerm):
     def eval(self, row, context):
         val_to_test = str(self.value[0].eval(row, context))
         val_list = []
+
         # loop through values, skip atom literal
         for val in self.value[1:]:
             val_list.append(val.eval(row, context))
+
         return val_to_test in val_list
 
 
@@ -216,6 +226,7 @@ class EvalCaseOp(EvalTerm):
             case_result = token.eval(row, context)
             if case_result:
                 return case_result
+
         return np.nan
 
 
@@ -227,4 +238,5 @@ class EvalMapOp(EvalTerm):
     def eval(self, row, context):
         if self.tokens[0] == 'default' or self.tokens[0].eval(row, context):
             return self.tokens[1].eval(row, context)
+
         return False

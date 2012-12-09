@@ -18,6 +18,7 @@ def import_dataset(dataset, dframe=None, filepath_or_buffer=None,
         dframe = recognize_dates(read_csv(filepath_or_buffer))
     if delete:
         os.unlink(filepath_or_buffer)
+
     dataset.save_observations(dframe)
 
 
