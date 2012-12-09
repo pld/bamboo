@@ -27,7 +27,7 @@ N/A values will be added when the dictionary does not supply a value for a
 given column.
 
 
-``curl -X PUT -H "Accept: application/json" -H "Content-type: application/json" -d '{"rating":"delectible","amount":2,"food_type":"streat_sweets"}' http://bamboo.io/datasets/8a3d74711475d8a51c84484fe73f24bd151242ea``
+``curl -X PUT -H "Accept: application/json" -H "Content-type: application/json" -d 'update={"rating":"delectible","amount":2,"food_type":"streat_sweets"}' http://bamboo.io/datasets/8a3d74711475d8a51c84484fe73f24bd151242ea``
 
 **returns:**
 
