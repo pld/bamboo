@@ -1,4 +1,3 @@
-import cherrypy
 import urllib2
 
 from bamboo.controllers.abstract_controller import AbstractController

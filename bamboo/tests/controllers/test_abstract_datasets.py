@@ -1,4 +1,3 @@
-import cherrypy
 import simplejson as json
 
 from bamboo.controllers.calculations import Calculations
