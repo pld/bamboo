@@ -1,5 +1,5 @@
 `bamboo <http://bamboo.io>`_
-======
+============================
 
 .. image:: https://secure.travis-ci.org/modilabs/bamboo.png?branch=master
   :target: http://travis-ci.org/modilabs/bamboo
@@ -114,7 +114,7 @@ posting a dataset
   $ curl -X POST -d "url=http://formhub.org/mberg/forms/good_eats/data.csv" http://bamboo.io/datasets
 
 On your local server
-^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^
 
 start the bamboo server as above, then
 
