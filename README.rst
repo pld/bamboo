@@ -94,11 +94,6 @@ using `bamboo.JS <http://modilabs.github.com/bamboo_js/>`_
 
 using `pybamboo <https://github.com/modilabs/pybamboo>`_
 
-::
-
-  $ pip install pybamboo
-  $ python
-
 .. code-block:: python
 
   from pybamboo import PyBamboo
@@ -203,6 +198,8 @@ To work on the code:
 About
 -----
 
+Join the `bamboo-dev mailing list <https://groups.google.com/forum/#!forum/bamboo-dev>`_.
+
 *bamboo* is an open source project. The project features, in chronological order,
 the combined efforts of
 
@@ -210,3 +207,11 @@ the combined efforts of
 * Mark Johnston
 
 and other developers.
+
+Projects using *bamboo*
+-----------------------
+
+* `formhub <http://formhub.org>`_ - Mobile Data Collection made easy
+* `AFSIS <http://www.africasoils.net/>`_ - Africa Soil Information Service
+
+Is your project using bamboo? `Let us know <https://groups.google.com/forum/#!forum/bamboo-dev>`_!
