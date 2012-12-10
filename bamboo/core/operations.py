@@ -140,19 +140,6 @@ class EvalComparisonOp(EvalTerm):
         return False
 
 
-class EvalDate(EvalTerm):
-    """
-    Class to evaluate not expressions
-    """
-
-    def __init__(self, tokens):
-        self.value = tokens[0][1]
-
-    def eval(self, row, context):
-        # parse date from string
-        return parse_str_to_unix_time(self.value.eval(row, context))
-
-
 class EvalNotOp(EvalTerm):
     """
     Class to evaluate not expressions
@@ -240,3 +227,26 @@ class EvalMapOp(EvalTerm):
             return self.tokens[1].eval(row, context)
 
         return False
+
+
+class EvalFunction(object):
+    """Class to eval functions."""
+
+    def __init__(self, tokens):
+        self.value = tokens[0][1]
+
+
+class EvalDate(EvalFunction):
+    """Class to evaluate date expressions."""
+
+    def eval(self, row, context):
+        # parse date from string
+        return parse_str_to_unix_time(self.value.eval(row, context))
+
+
+class EvalPercentile(EvalFunction):
+    """Class to evaluate percentile expressions."""
+
+    def eval(self, row, context):
+        # parse date from string
+        return self.value.eval(row, context)
