@@ -11,31 +11,29 @@ class Calculations(AbstractController):
 
     Calculations are formulas and names that (for now) must be linked to a
     specific dataset via that dataset's ID. All actions in the Calculations
-    Controller can optionally take a *callback* parameter.  If passed the
-    returned result will be wrapped this the parameter value.  E.g., is
+    Controller can optionally take a `callback` parameter.  If passed the
+    returned result will be wrapped this the parameter value.  E.g., if
     ``callback=parseResults`` the returned value will be
     ``parseResults([some-JSON])``, where ``some-JSON`` is the function return
     value.
     """
 
     def delete(self, dataset_id, name, group=None):
-        """Delete the calculation with *name* from the dataset.
+        """Delete the calculation with `name` from the dataset.
 
-        Delete the calculation with column *name* from the dataset specified by
-        the hash *dataset_id* from mongo. If it is an aggregate calculation a
-        *group* must also be passed to determine the correct aggregate
-        calculation to delete. This will also remove the column *name* from the
+        Delete the calculation with column `name` from the dataset specified by
+        the hash `dataset_id` from mongo. If it is an aggregate calculation a
+        `group` must also be passed to determine the correct aggregate
+        calculation to delete. This will also remove the column `name` from the
         dataframe for the dataset or the aggregate dataset.
 
-        Args:
+        :param dataset_id: The dataset ID for which to delete the calculation.
+        :param name: The name of the calculation to delete.
+        :param group: The group of the calculation to delete, if an
+            aggregation.
 
-        - dataset_id: The dataset ID for which to delete the calculation.
-        - name: The name of the calculation to delete.
-        - group: The group of the calculation to delete, if an aggregation.
-
-        Returns:
-            JSON with success if delete or an error string if the calculation
-            could not be found.
+        :returns: JSON with success if delete or an error string if the
+            calculation could not be found.
         """
         def _action(dataset, name=name, group=group):
             calculation = Calculation.find_one(dataset.dataset_id, name, group)
@@ -54,23 +52,22 @@ class Calculations(AbstractController):
                group=None):
         """Add a calculation to a dataset with the given fomula, etc.
 
-        Create a new calculation for *dataset_id* named *name* that calulates
-        the *formula*.  Variables in formula can only refer to columns in the
+        Create a new calculation for `dataset_id` named `name` that calulates
+        the `formula`.  Variables in formula can only refer to columns in the
         dataset.
 
-        Args:
+        :param dataset_id: The dataset ID to add the calculation to.
+        :param formula: The formula for the calculation which must match the
+            parser language.
+        :param name: The name to assign the new column for this formula.
+        :param data: A dict or list of dicts mapping calculation names and
+            formulas.
+        :param group: A column to group by for aggregations, must be a
+            dimension.
 
-        - dataset_id: The dataset ID to add the calculation to.
-        - formula: The formula for the calculation which must match the
-          parser language.
-        - name: The name to assign the new column for this formula.
-        - data: A dict or list of dicts mapping calculation names and formulas.
-        - group: A column to group by for aggregations, must be a dimension.
-
-        Returns:
-            A success string is the calculation is create. An error string if
-            the dataset could not be found, the formula could not be parsed, or
-            the group was invalid.
+        :returns: A success string is the calculation is create. An error
+            string if the dataset could not be found, the formula could not be
+            parsed, or the group was invalid.
         """
         def _action(dataset, formula=formula, name=name, data=data,
                     group=group):
@@ -102,16 +99,14 @@ class Calculations(AbstractController):
             group=group, exceptions=(ParseError,), success_status_code=201)
 
     def show(self, dataset_id, callback=False):
-        """Retrieve the calculations for *dataset_id*.
+        """Retrieve the calculations for `dataset_id`.
 
-        Args:
+        :param dataset_id: The dataset to show calculations for.
+        :param callback: A JSONP callback function string.
 
-        - dataset_id: The dataset to show calculations for.
-        - callback: A JSONP callback function string.
-
-        Returns:
-            A list of calculation records.  Each calculation record shows the
-            calculations name, formula, group (if it exists), and state.
+        :returns: A list of calculation records.  Each calculation record
+            shows the calculations name, formula, group (if it exists), and
+            state.
         """
         def _action(dataset):
             result = Calculation.find(dataset)

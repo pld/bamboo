@@ -4,11 +4,9 @@ from pandas import concat, DataFrame, Series
 class Aggregation(object):
     """Abstract class for all aggregations.
 
-    Attributes:
-
-    - column: Column to aggregate.
-    - columns: List of columns to aggregate.
-    - formula_name: The string to refer to this aggregation.
+    :param column: Column to aggregate.
+    :param columns: List of columns to aggregate.
+    :param formula_name: The string to refer to this aggregation.
     """
 
     column = None
@@ -48,7 +46,11 @@ class MultiColumnAggregation(Aggregation):
         return self._add_calculated_column(groupby.sum())
 
     def reduce(self, dframe, columns):
-        """Reduce the columns and store in *dframe*."""
+        """Reduce the columns and store in `dframe`.
+
+        :param dframe: The DataFrame to reduce.
+        :param columns: Columns in the DataFrame to reduce on.
+        """
         self.columns = columns
         self.column = columns[0]
         new_dframe = self.agg()
@@ -87,7 +89,7 @@ class MultiColumnAggregation(Aggregation):
 class MaxAggregation(Aggregation):
     """Calculate the maximum.
 
-    Written as ``max(FORMULA)``. Where *FORMULA* is a valid formula.
+    Written as ``max(FORMULA)``. Where `FORMULA` is a valid formula.
     """
 
     formula_name = 'max'
@@ -96,7 +98,7 @@ class MaxAggregation(Aggregation):
 class MeanAggregation(MultiColumnAggregation):
     """Calculate the arithmetic mean.
 
-    Written as ``mean(FORMULA)``. Where *FORMULA* is a valid formula.
+    Written as ``mean(FORMULA)``. Where `FORMULA` is a valid formula.
     """
 
     formula_name = 'mean'
@@ -120,7 +122,7 @@ class MeanAggregation(MultiColumnAggregation):
 class MedianAggregation(Aggregation):
     """Calculate the median. Written as ``median(FORMULA)``.
 
-    Where *FORMULA* is a valid formula.
+    Where `FORMULA` is a valid formula.
     """
 
     formula_name = 'median'
@@ -129,7 +131,7 @@ class MedianAggregation(Aggregation):
 class MinAggregation(Aggregation):
     """Calculate the minimum.
 
-    Written as ``min(FORMULA)``. Where *FORMULA* is a valid formula.
+    Written as ``min(FORMULA)``. Where `FORMULA` is a valid formula.
     """
 
     formula_name = 'min'
@@ -138,7 +140,7 @@ class MinAggregation(Aggregation):
 class SumAggregation(Aggregation):
     """Calculate the sum.
 
-    Written as ``sum(FORMULA)``. Where *FORMULA* is a valid formula.
+    Written as ``sum(FORMULA)``. Where `FORMULA` is a valid formula.
     """
 
     formula_name = 'sum'
@@ -156,7 +158,7 @@ class RatioAggregation(MultiColumnAggregation):
 
     Columns with N/A for either the numerator or denominator are ignored.  This
     will store associated numerator and denominator columns.  Written as
-    ``ratio(NUMERATOR, DENOMINATOR)``. Where *NUMERATOR* and *DENOMINATOR* are
+    ``ratio(NUMERATOR, DENOMINATOR)``. Where `NUMERATOR` and `DENOMINATOR` are
     both valid formulas.
     """
 
@@ -184,7 +186,7 @@ class CountAggregation(Aggregation):
     function, in which case is simply returns the number of rows
     in the dataset.
     Written as
-    ``count(CRITERIA)``. Where *CRITERIA* is an optional boolean expression
+    ``count(CRITERIA)``. Where `CRITERIA` is an optional boolean expression
     that signifies which rows are to be counted.
     """
 

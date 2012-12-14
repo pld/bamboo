@@ -14,12 +14,12 @@ class DependencyError(Exception):
 
 @task
 def delete_task(calculation, dataset, slug):
-    """Background task to delete *calculation* and columns in its dataset.
+    """Background task to delete `calculation` and columns in its dataset.
 
     Args:
 
-    - calculation: Calculation to delete.
-    - dataset: Dataset for this calculation.
+    :param calculation: Calculation to delete.
+    :param dataset: Dataset for this calculation.
 
     """
     dframe = dataset.dframe(keep_parent_ids=True)
@@ -37,11 +37,9 @@ def delete_task(calculation, dataset, slug):
 def calculate_task(calculation, dataset, calculator):
     """Background task to run a calculation.
 
-    Args:
-
-    - calculation: Calculation to run.
-    - dataset: Dataset to run calculation on.
-    - calculator: Calculator model instantiated for this dataset.
+    :param calculation: Calculation to run.
+    :param dataset: Dataset to run calculation on.
+    :param calculator: Calculator model instantiated for this dataset.
     """
     dataset.clear_summary_stats()
     calculator.calculate_column(calculation.formula, calculation.name,
@@ -123,12 +121,11 @@ class Calculation(AbstractModel):
         First ensure that there are no other calculations which depend on this
         one. If not, start a background task to delete the calculation.
 
-        Args:
+        :param dataset: Dataset for this calculation.
 
-        - dataset: Dataset for this calculation.
-
-        Raises:
-            DependencyError: If dependent calculations exist.
+        :raises: `DependencyError` if dependent calculations exist.
+        :raises: `ArgumentError` if group is not in DataSet or calculation does
+            not exist for DataSet.
         """
         if len(self.dependent_calculations):
             raise DependencyError(
@@ -155,16 +152,21 @@ class Calculation(AbstractModel):
     def save(self, dataset, formula, name, group=None):
         """Parse, save, and calculate a formula.
 
-        Validate *formula* and *group* for the given *dataset*. If the formula
+        Validate `formula` and `group` for the given `dataset`. If the formula
         and group are valid for the dataset, then save a new calculation for
-        them under *name*. Finally, create a background task to compute the
+        them under `name`. Finally, create a background task to compute the
         calculation.
 
         Calculations are initially saved in a **pending** state, after the
         calculation has finished processing it will be in a **ready** state.
 
-        Raises:
-            ParseError: An invalid formula was supplied.
+        :param dataset: The DataSet to save.
+        :param formula: The formula to save.
+        :param name: The name of the formula.
+        :param group: The group of the formula.
+        :type group: String, list or strings, or None.
+
+        :raises: `ParseError` if an invalid formula was supplied.
         """
         calculator = Calculator(dataset)
 

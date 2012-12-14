@@ -24,26 +24,24 @@ def dump_mongo_json(obj):
 
     Args:
 
-    - obj: Datastructure to dump as JSON.
+    :param obj: Datastructure to dump as JSON.
 
-    Returns:
-        JSON string of dumped *obj*.
+    :returns: JSON string of dumped `obj`.
     """
     return json.dumps(obj, default=json_util.default)
 
 
 def remove_mongo_reserved_keys(_dict):
-    """Remove any keys reserved for MongoDB from *_dict*.
+    """Remove any keys reserved for MongoDB from `_dict`.
 
-    Check for *MONGO_RESERVED_KEYS* in stored dictionary.  If found replace
+    Check for `MONGO_RESERVED_KEYS` in stored dictionary.  If found replace
     with unprefixed, if not found remove reserved key from dictionary.
 
     Args:
 
-    - _dict: Dictionary to remove reserved keys from.
+    :param _dict: Dictionary to remove reserved keys from.
 
-    Returns:
-        Dictionary with reserved keys removed.
+    :returns: Dictionary with reserved keys removed.
     """
     for key in MONGO_RESERVED_KEYS:
         prefixed_key = mongo_prefix_reserved_key(key)
@@ -87,7 +85,7 @@ def _decode_from_mongo(key):
 
 
 def dict_for_mongo(_dict):
-    """Encode all keys in *_dict* for MongoDB."""
+    """Encode all keys in `_dict` for MongoDB."""
     for key, value in _dict.items():
         if isinstance(value, list):
             value = [dict_for_mongo(obj)
@@ -109,12 +107,9 @@ def _encode_for_mongo(key):
     non-first character but the current version of MongoDB does not allow any
     occurence of '$'.
 
-    Args:
+    :param key: The string to remove characters from.
 
-    - key: The string to remove characters from.
-
-    Returns:
-        The string with illegal keys encoded.
+    :returns: The string with illegal keys encoded.
     """
     return reduce(lambda s, expr: expr[0].sub(expr[1], s),
                   RE_ILLEGAL_MAP, key)
