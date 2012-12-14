@@ -34,6 +34,7 @@ class Database(object):
         :param name: The name of the database to create.
         :returns: The created database.
         """
-        if not cls._db and name:
+        # TODO why is this or?
+        if not cls._db or name:
             cls.create_db(name or settings.DATABASE_NAME)
         return cls._db
