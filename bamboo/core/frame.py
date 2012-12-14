@@ -42,8 +42,7 @@ class BambooFrame(DataFrame):
     def remove_bamboo_reserved_keys(self, keep_parent_ids=False):
         """Remove reserved internal columns in this DataFrame.
 
-        Args:
-            keep_parent_ids: Keep parent column if True, default False.
+        :param keep_parent_ids: Keep parent column if True, default False.
         """
         reserved_keys = self._column_intersect(BAMBOO_RESERVED_KEYS)
 
@@ -54,14 +53,12 @@ class BambooFrame(DataFrame):
             del self[column]
 
     def only_rows_for_parent_id(self, parent_id):
-        """DataFrame with only rows for *parent_id*.
+        """DataFrame with only rows for `parent_id`.
 
-        Args:
-            parent_id: The ID to restrict rows to.
+        :param parent_id: The ID to restrict rows to.
 
-        Returns:
-            A DataFrame including only rows with a parent ID equal to that
-            passed in.
+        :returns: A DataFrame including only rows with a parent ID equal to
+            that passed in.
         """
         return self[self[PARENT_DATASET_ID] == parent_id].drop(
             PARENT_DATASET_ID, 1)
@@ -76,11 +73,11 @@ class BambooFrame(DataFrame):
         return dump_mongo_json(jsondict)
 
     def _column_intersect(self, _list):
-        """Return the intersection of *_list* and this DataFrame's columns."""
+        """Return the intersection of `_list` and this DataFrame's columns."""
         return list(set(_list).intersection(set(self.columns.tolist())))
 
     def join_dataset(self, other, on):
-        """Left join an *other* dataset."""
+        """Left join an `other` dataset."""
         right_dframe = other.dframe(padded=True)
 
         if on not in self.columns:

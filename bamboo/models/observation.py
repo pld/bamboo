@@ -16,13 +16,10 @@ class Observation(AbstractModel):
 
     @classmethod
     def delete_all(cls, dataset, query={}):
-        """Delete the observations for *dataset*.
+        """Delete the observations for `dataset`.
 
-        Args:
-
-        - dataset: The dataset to delete observations for.
-        - query: An optional query to restrict deletion.
-
+        :param dataset: The dataset to delete observations for.
+        :param query: An optional query to restrict deletion.
         """
         query.update({
             DATASET_OBSERVATION_ID: dataset.dataset_observation_id
@@ -34,20 +31,16 @@ class Observation(AbstractModel):
              as_cursor=False):
         """Return observation rows matching parameters.
 
-        Args:
+        :param dataset: Dataset to return rows for.
+        :param query: Optional query to restrict matching rows to.
+        :param select: Optional select to limit returned values.
+        :param limit: Limit on the number of returned rows.
+        :param order_by: Order parameter for rows.
 
-        - dataset: Dataset to return rows for.
-        - query: Optional query to restrict matching rows to.
-        - select: Optional select to limit returned values.
-        - limit: Limit on the number of returned rows.
-        - order_by: Order parameter for rows.
+        :raises: `JSONError` if the query could not be parsed.
 
-        Returns:
-            A list of dictionaries matching the passed in *query* and other
-            parameters.
-
-        Raises:
-            JSONError: An error is the query could not be parsed.
+        :returns: A list of dictionaries matching the passed in `query` and
+            other parameters.
         """
         try:
             query = (query and json.loads(
@@ -71,19 +64,16 @@ class Observation(AbstractModel):
             as_cursor=as_cursor)
 
     def save(self, dframe, dataset):
-        """Save data in *dframe* with the *dataset*.
+        """Save data in `dframe` with the `dataset`.
 
-        Encode *dframe* for MongoDB, and add fields to identify it with the
-        passed in *dataset*. All column names in *dframe* are converted to
+        Encode `dframe` for MongoDB, and add fields to identify it with the
+        passed in `dataset`. All column names in `dframe` are converted to
         slugs using the dataset's schema.  The dataset is update to store the
         size of the stored data. A background task to cache a summary of the
         dataset is launched.
 
-        Args:
-
-        - dframe: The DataFrame (or BambooFrame) to store.
-        - dataset: The dataset to store the dframe in.
-
+        :param dframe: The DataFrame (or BambooFrame) to store.
+        :param dataset: The dataset to store the dframe in.
         """
         # build schema for the dataset after having read it from file.
         if not dataset.schema:

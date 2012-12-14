@@ -22,20 +22,17 @@ class Calculator(object):
         self.parser = Parser(dataset)
 
     def validate(self, formula, group_str):
-        """Validate *formula* and *group_str* for calculator's dataset.
+        """Validate `formula` and `group_str` for calculator's dataset.
 
         Validate the formula and group string by attempting to get a row from
         the dframe for the dataset and then running parser validation on this
         row. Additionally, ensure that the groups in the group string are
         columns in the dataset.
 
-        Args:
+        :param formula: The formula to validate.
+        :param group_str: A string of a group or comma separated groups.
 
-        - formula: The formula to validate.
-        - group_str: A string of a group or comma separated groups.
-
-        Returns:
-            The aggregation (or None) for the formula.
+        :returns: The aggregation (or None) for the formula.
         """
         dframe = self.dataset.dframe(limit=1)
         row = dframe.irow(0) if len(dframe) else {}
@@ -52,27 +49,26 @@ class Calculator(object):
         return aggregation
 
     def calculate_column(self, formula, name, group_str=None):
-        """Calculate a new column based on *formula* store as *name*.
+        """Calculate a new column based on `formula` store as `name`.
 
-        The new column is joined to *dframe* and stored in *self.dataset*.
-        The *group_str* is only applicable to aggregations and groups for
+        The new column is joined to `dframe` and stored in `self.dataset`.
+        The `group_str` is only applicable to aggregations and groups for
         aggregations.
 
-        This can result in race-conditions when:
+        .. note::
 
-        - deleting ``controllers.Datasets.DELETE``
-        - updating ``controllers.Datasets.POST([dataset_id])``
+            This can result in race-conditions when:
 
-        Therefore, perform these actions asychronously.
+            - deleting ``controllers.Datasets.DELETE``
+            - updating ``controllers.Datasets.POST([dataset_id])``
 
-        Args:
+            Therefore, perform these actions asychronously.
 
-        - formula: The formula parsed by *self.parser* and applied to
-          *self.dframe*.
-        - name: The name of the new column or aggregate column.
-        - group_str: A string or columns to group on for aggregate
-          calculations.
-
+        :param formula: The formula parsed by `self.parser` and applied to
+            `self.dframe`.
+        :param name: The name of the new column or aggregate column.
+        :param group_str: A string or columns to group on for aggregate
+            calculations.
         """
         self._ensure_dframe()
 
@@ -91,16 +87,13 @@ class Calculator(object):
             merged_calculator.propagate_column(self.dataset)
 
     def propagate_column(self, parent_dataset):
-        """Propagate columns in *parent_dataset* to this dataset.
+        """Propagate columns in `parent_dataset` to this dataset.
 
         This is used when there has been a new calculation added to
         a dataset and that new column needs to be propagated to all
         child (merged) datasets.
 
-        Args:
-
-        - parent_dataset: The dataset to propagate to *self.dataset*.
-
+        :param parent_dataset: The dataset to propagate to `self.dataset`.
         """
         # delete the rows in this dataset from the parent
         self.dataset.remove_parent_observations(parent_dataset.dataset_id)
@@ -126,7 +119,7 @@ class Calculator(object):
 
     @task
     def calculate_updates(self, new_data, parent_dataset_id=None):
-        """Update dataset with *new_data*.
+        """Update dataset with `new_data`.
 
         This can result in race-conditions when:
 
@@ -135,12 +128,9 @@ class Calculator(object):
 
         Therefore, perform these actions asychronously.
 
-        Args:
-
-        - new_data: Data to update this dataset with.
-        - parent_dataset_id: If passed add ID as parent ID to column, default
-          is None.
-
+        :param new_data: Data to update this dataset with.
+        :param parent_dataset_id: If passed add ID as parent ID to column,
+            default is None.
         """
         self._ensure_dframe()
         self._ensure_ready()
@@ -181,8 +171,8 @@ class Calculator(object):
         and deny the update if the update would produce an invalid
         join as a result.
 
-        Raises:
-            NonUniqueJoinError: If update is illegal given joins of dataset.
+        :raises: `NonUniqueJoinError` if update is illegal given joins of
+            dataset.
         """
         if any([direction == 'left' for direction, _, on, __ in
                 self.dataset.joined_datasets]):
@@ -212,7 +202,7 @@ class Calculator(object):
         return aggregation, new_columns
 
     def _ensure_dframe(self):
-        """Ensure *dframe* for the calculator's dataset is defined."""
+        """Ensure `dframe` for the calculator's dataset is defined."""
         if not self.dframe:
             self.dframe = self.dataset.dframe()
 
@@ -334,7 +324,7 @@ class Calculator(object):
 
     def _update_aggregate_dataset(self, formula, new_dframe, name, group,
                                   agg_dataset):
-        """Update the aggregated dataset built for *self* with *calculation*.
+        """Update the aggregated dataset built for `self` with `calculation`.
 
         Proceed with the following steps:
 
@@ -344,6 +334,12 @@ class Calculator(object):
             - recur on all merged datasets descending from the aggregated
               dataset
 
+        :param formula: The formula to execute.
+        :param new_dframe: The DataFrame to aggregate on.
+        :param name: The name of the aggregation.
+        :param group: A column or columns to group on.
+        :type group: String, list of strings, or None.
+        :param agg_dataset: The DataSet to store the aggregation in.
         """
         aggregation, new_columns = self.make_columns(
             formula, name, new_dframe)

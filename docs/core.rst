@@ -1,20 +1,21 @@
 Core
 ======
 
-Aggregator
-----------
-.. autoclass:: bamboo.core.aggregator.Aggregator
-    :members:
-
 Aggregation
 -----------
 .. automodule:: bamboo.core.aggregations
+    :members:
+
+Aggregator
+----------
+.. autoclass:: bamboo.core.aggregator.Aggregator
     :members:
 
 Calculator
 ----------
 .. autoclass:: bamboo.core.calculator.Calculator
     :members:
+    :private-members:
 
 Frame
 -----

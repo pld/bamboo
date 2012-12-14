@@ -1,10 +1,8 @@
-"""
-This Script is to ensure the three collections of bamboo being indexed.
-"""
 from pymongo import Connection, ASCENDING
 
 
 def ensure_indexing():
+    """Ensure that bamboo models are indexed."""
     connection = Connection('localhost', 27017)
     db = connection.bamboo_dev
     calculations = db.calculations

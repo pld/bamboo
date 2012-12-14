@@ -25,16 +25,12 @@ def import_dataset(dataset, dframe=None, filepath_or_buffer=None,
 def create_dataset_from_url(url, allow_local_file=False):
     """Load a URL, read from a CSV, create a dataset and return the unique ID.
 
-    Args:
+    :param url: URL to load file from.
+    :param allow_local_file: Allow URL to refer to a local file.
 
-    - url: URL to load file from.
-    - allow_local_file: Allow URL to refer to a local file.
+    :raises: `IOError` for an unreadable file or a bad URL.
 
-    Raises:
-        IOError: For an unreadable file or a bad URL.
-
-    Returns:
-        The created dataset.
+    :returns: The created dataset.
     """
     if not allow_local_file and isinstance(url, basestring)\
             and url[0:4] == 'file':
@@ -50,15 +46,15 @@ def create_dataset_from_url(url, allow_local_file=False):
 def create_dataset_from_csv(csv_file):
     """Create a dataset from a CSV file.
 
-    Args:
+    .. note::
 
-    - csv_file: The CSV File to create a dataset from.
+        Write to a named tempfile in order  to get a handle for pandas'
+        `read_csv` function.
 
-    Returns:
-        The created dataset.
+    :param csv_file: The CSV File to create a dataset from.
+
+    :returns: The created dataset.
     """
-    # need to write out to a named tempfile in order
-    # to get a handle for pandas *read_csv* function
     tmpfile = tempfile.NamedTemporaryFile(delete=False)
     tmpfile.write(csv_file.file.read())
 
@@ -77,12 +73,9 @@ def create_dataset_from_csv(csv_file):
 def create_dataset_from_schema(schema):
     """Create a dataset from a SDF schema file (JSON).
 
-    Args:
+    :param schema: The SDF (JSON) file to create a dataset from.
 
-    - schema: The SDF (JSON) file to create a dataset from.
-
-    Returns:
-        The created dataset.
+    :returns: The created dataset.
     """
     try:
         schema = json.loads(schema.file.read())

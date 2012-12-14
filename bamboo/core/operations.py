@@ -30,9 +30,7 @@ class EvalTerm(object):
 
 
 class EvalConstant(EvalTerm):
-    """
-    Class to evaluate a parsed constant or variable
-    """
+    """Class to evaluate a parsed constant or variable."""
 
     def eval(self, row, context):
         try:
@@ -91,29 +89,25 @@ class EvalBinaryArithOp(EvalTerm):
 
 
 class EvalMultOp(EvalBinaryArithOp):
-    """
-    Class to distinguish precedence of multiplication/division expressions
+    """Class to distinguish precedence of multiplication/division expressions.
     """
     pass
 
 
 class EvalPlusOp(EvalBinaryArithOp):
-    """
-    Class to distinguish precedence of addition/subtraction expressions
+    """Class to distinguish precedence of addition/subtraction expressions.
     """
     pass
 
 
 class EvalExpOp(EvalBinaryArithOp):
-    """
-    Class to distinguish precedence of exponentiation expressions
+    """Class to distinguish precedence of exponentiation expressions.
     """
     pass
 
 
 class EvalComparisonOp(EvalTerm):
-    """
-    Class to evaluate comparison expressions
+    """Class to evaluate comparison expressions.
     """
 
     opMap = {
@@ -141,9 +135,7 @@ class EvalComparisonOp(EvalTerm):
 
 
 class EvalDate(EvalTerm):
-    """
-    Class to evaluate not expressions
-    """
+    """Class to evaluate not expressions."""
 
     def __init__(self, tokens):
         self.value = tokens[0][1]
@@ -154,9 +146,7 @@ class EvalDate(EvalTerm):
 
 
 class EvalNotOp(EvalTerm):
-    """
-    Class to evaluate not expressions
-    """
+    """Class to evaluate not expressions."""
 
     def __init__(self, tokens):
         self.value = tokens[0][1]
@@ -166,9 +156,7 @@ class EvalNotOp(EvalTerm):
 
 
 class EvalBinaryBooleanOp(EvalTerm):
-    """
-    Class for evaluating binary boolean operations
-    """
+    """Class for evaluating binary boolean operations."""
 
     operations = {
         'and': lambda p, q: p and q,
@@ -186,23 +174,17 @@ class EvalBinaryBooleanOp(EvalTerm):
 
 
 class EvalAndOp(EvalBinaryBooleanOp):
-    """
-    Class to distinguish precedence of and expressions
-    """
+    """Class to distinguish precedence of and expressions."""
     pass
 
 
 class EvalOrOp(EvalBinaryBooleanOp):
-    """
-    Class to distinguish precedence of or expressions
-    """
+    """Class to distinguish precedence of or expressions."""
     pass
 
 
 class EvalInOp(EvalTerm):
-    """
-    Class to eval in expressions.
-    """
+    """Class to eval in expressions."""
 
     def eval(self, row, context):
         val_to_test = str(self.value[0].eval(row, context))
@@ -216,9 +198,7 @@ class EvalInOp(EvalTerm):
 
 
 class EvalCaseOp(EvalTerm):
-    """
-    Class to eval case statements.
-    """
+    """Class to eval case statements."""
 
     def eval(self, row, context):
         # skip 'case' literal
@@ -231,9 +211,7 @@ class EvalCaseOp(EvalTerm):
 
 
 class EvalMapOp(EvalTerm):
-    """
-    Class to eval map statements.
-    """
+    """Class to eval map statements."""
 
     def eval(self, row, context):
         if self.tokens[0] == 'default' or self.tokens[0].eval(row, context):

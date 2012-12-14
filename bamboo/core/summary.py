@@ -17,13 +17,10 @@ class ColumnTypeError(Exception):
 def summarize_series(dtype, data):
     """Call summary function dependent on dtype type.
 
-    Args:
+    :param dtype: The dtype of the column to be summarized.
+    :param data: The data to be summarized.
 
-    - dtype: The dtype of the column to be summarized.
-    - data: The data to be summarized.
-
-    Returns:
-        The appropriate summarization for the type of *dtype*.
+    :returns: The appropriate summarization for the type of `dtype`.
     """
     return {
         np.object_: data.value_counts(),
@@ -36,15 +33,13 @@ def summarize_series(dtype, data):
 def summarizable(dframe, col, groups, dataset):
     """Check if column should be summarized.
 
-    Args:
+    :param dframe: DataFrame to check unique values in.
+    :param col: Column to check for factor and number of uniques.
+    :param groups: List of groups if summarizing with group, can be empty.
+    :param dataset: Dataset to pull schema from.
 
-    - dframe: DataFrame to check unique values in.
-    - col: Column to check for factor and number of uniques.
-    - groups: List of groups if summarizing with group, can be empty.
-    - dataset: Dataset to pull schema from.
-
-    Returns:
-        True if column, with parameters should be summarized, otherwise False.
+    :returns: True if column, with parameters should be summarized, otherwise
+        False.
     """
     if dataset.is_factor(col):
         cardinality = dframe[col].nunique() if len(groups) else\

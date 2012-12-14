@@ -198,7 +198,7 @@ class Parser(object):
     def parse_formula(self, input_str):
         """Parse formula and return evaluation function.
 
-        Parse *input_str* into an aggregation name and functions.
+        Parse `input_str` into an aggregation name and functions.
         There will be multiple functions is the aggregation takes multiple
         arguments, e.g. ratio which takes a numerator and denominator formula.
 
@@ -247,16 +247,11 @@ class Parser(object):
         - cases
             - ``case food_type in ["morning_food"]: 1, default: 3``
 
-        Args:
+        :param dataset: The dataset to base context on, default is None.
+        :param input_str: The string to parse.
 
-        - dataset: The dataset to base context on, default is None.
-
-        Args:
-            input_str: The string to parse.
-
-        Returns:
-            A tuple with the name of the aggregation in the formula, if any
-            and a list of functions built from the input string.
+        :returns: A tuple with the name of the aggregation in the formula, if
+            any and a list of functions built from the input string.
         """
 
         # reset dependent columns before parsing
@@ -281,15 +276,12 @@ class Parser(object):
     def validate_formula(self, formula, row):
         """Validate the *formula* on an example *row* of data.
 
-        Rebuild the BNF then parse the *formula* given the sample *row*.
+        Rebuild the BNF then parse the `formula` given the sample `row`.
 
-        Args:
+        :param formula: The formula to validate.
+        :param row: A sample row to check the formula against.
 
-        - formula: The formula to validate.
-        - row: A sample row to check the formula against.
-
-        Returns:
-            The aggregation for the formula.
+        :returns: The aggregation for the formula.
         """
         # remove saved aggregation
         self.aggregation = None
