@@ -81,6 +81,10 @@ def schema_from_data_and_dtypes(dataset, dframe):
                     name].nunique()
             except AttributeError as e:
                 pass
+            except TypeError as e:
+                # E.g. dates with and without offset can not be compared and
+                # raise a type error.
+                pass
             schema[encoded_names[name]] = column_schema
 
     return schema
