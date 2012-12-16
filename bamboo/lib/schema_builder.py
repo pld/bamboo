@@ -1,17 +1,17 @@
 from datetime import datetime
 import numpy as np
+import re
 
 from bamboo.core.frame import BAMBOO_RESERVED_KEYS
+from bamboo.core.parser import Parser
+from bamboo.lib.datetools import SIMPLETYPE, DATETIME
 from bamboo.lib.mongo import MONGO_RESERVED_KEY_STRS
-from bamboo.lib.utils import slugify_columns
 
 
 OLAP_TYPE = 'olap_type'
-SIMPLETYPE = 'simpletype'
 
 # simpletypes
 BOOLEAN = 'boolean'
-DATETIME = 'datetime'
 INTEGER = 'integer'
 FLOAT = 'float'
 STRING = 'string'
@@ -38,6 +38,8 @@ DTYPE_TO_SIMPLETYPE_MAP = {
     datetime: DATETIME,
 }
 
+RE_ENCODED_COLUMN = re.compile(r'\W')
+
 
 def schema_from_data_and_dtypes(dataset, dframe):
     """Build schema from the DataFrame and the dataset.
@@ -63,7 +65,7 @@ def schema_from_data_and_dtypes(dataset, dframe):
                     names_to_labels[name] = schema_for_name[
                         dataset.LABEL]
 
-    encoded_names = dict(zip(column_names, slugify_columns(column_names)))
+    encoded_names = dict(zip(column_names, _slugify_columns(column_names)))
 
     schema = {}
 
@@ -88,6 +90,29 @@ def schema_from_data_and_dtypes(dataset, dframe):
             schema[encoded_names[name]] = column_schema
 
     return schema
+
+
+def _slugify_columns(column_names):
+    """Convert list of strings into unique slugs.
+
+    Convert non-alphanumeric characters in column names into underscores and
+    ensure that all column names are unique.
+
+    :param column_names: A list of strings.
+
+    :returns: A list of slugified names with a one-to-one mapping to
+        `column_names`.
+    """
+
+    encoded_names = []
+
+    for column_name in column_names:
+        new_col_name = RE_ENCODED_COLUMN.sub('_', column_name).lower()
+        while new_col_name in encoded_names + Parser.reserved_words:
+            new_col_name += '_'
+        encoded_names.append(new_col_name)
+
+    return encoded_names
 
 
 def _olap_type_for_data_and_dtype(column, dtype):

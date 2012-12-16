@@ -6,8 +6,11 @@ from dateutil.parser import parse as date_parse
 import numpy as np
 from pandas import Series
 
-from bamboo.lib.schema_builder import DATETIME, SIMPLETYPE
 from bamboo.lib.utils import is_float_nan
+
+# TODO move to schema_builder class
+DATETIME = 'datetime'
+SIMPLETYPE = 'simpletype'
 
 
 def recognize_dates(dframe):
@@ -42,7 +45,7 @@ def recognize_dates_from_schema(schema, dframe):
 
     for column, column_schema in schema.items():
         if column in dframe_columns and\
-                column_schema[SIMPLETYPE] == DATETIME:
+                col_is_date_simpletype(column_schema):
             _convert_column_to_date(new_dframe, column)
 
     return new_dframe
@@ -85,7 +88,7 @@ def parse_timestamp_query(query, schema):
         datetime_columns = [
             column for (column, schema) in
             schema.items() if
-            schema[SIMPLETYPE] == DATETIME and column in query.keys()]
+            col_is_date_simpletype(schema) and column in query.keys()]
         for date_column in datetime_columns:
             query[date_column] = {
                 key: datetime.fromtimestamp(int(value)) for (key, value) in

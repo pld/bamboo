@@ -237,14 +237,14 @@ class TestCalculations(TestBase):
             error_text='Required')
 
     def test_create_reserved_name(self):
-        response = json.loads(self._post_formula(None, 'sum'))
+        name = 'sum'
+        response = json.loads(self._post_formula(None, name))
         self.assertTrue(isinstance(response, dict))
         self.assertTrue(self.controller.SUCCESS in response)
         self.assertTrue(self.dataset_id in response[self.controller.SUCCESS])
         dataset = Dataset.find_one(self.dataset_id)
-        print dataset.build_labels_to_slugs()
-        response = json.loads(self._post_formula('sum + amount', 'sum'))
+        slug = dataset.build_labels_to_slugs()[name]
+        response = json.loads(self._post_formula('%s + amount' % slug))
         self.assertTrue(isinstance(response, dict))
-        print response
         self.assertTrue(self.controller.SUCCESS in response)
         self.assertTrue(self.dataset_id in response[self.controller.SUCCESS])
