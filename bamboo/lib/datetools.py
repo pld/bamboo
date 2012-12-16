@@ -16,12 +16,9 @@ def recognize_dates(dframe):
     Check if object columns in a dataframe can be parsed as dates.
     If yes, rewrite column with values parsed as dates.
 
-    Args:
+    :param dframe: The DataFrame to convert columns in.
 
-    - dframe: The DataFrame to convert columns in.
-
-    Returns:
-        A DataFrame with column values convert to datetime types.
+    :returns: A DataFrame with column values convert to datetime types.
     """
     new_dframe = copy.deepcopy(dframe)
 
@@ -35,13 +32,10 @@ def recognize_dates(dframe):
 def recognize_dates_from_schema(schema, dframe):
     """Convert columes to datetime if column in *schema* is of type datetime.
 
-    Args:
+    :param schema: Schema to define columns of type datetime.
+    :param dframe: The DataFrame to convert columns in.
 
-    - schema: Schema to define columns of type datetime.
-    - dframe: The DataFrame to convert columns in.
-
-    Returns:
-        A DataFrame with column values convert to datetime types.
+    :returns: A DataFrame with column values convert to datetime types.
     """
     new_dframe = copy.deepcopy(dframe)
     dframe_columns = dframe.columns.tolist()

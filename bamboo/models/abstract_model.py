@@ -37,12 +37,9 @@ class AbstractModel(object):
     def set_collection(cls, collection_name):
         """Return a MongoDB collection for the passed name.
 
-        Args:
+        :param collection_name: The name of collection to return.
 
-        - collection_name: The name of collection to return.
-
-        Returns:
-            A MongoDB collection from the current database.
+        :returns: A MongoDB collection from the current database.
         """
         return Database.db()[collection_name]
 
@@ -65,20 +62,19 @@ class AbstractModel(object):
              limit=0, order_by=None, as_cursor=False):
         """An interface to MongoDB's find functionality.
 
-        Args:
+        :param query: A query to pass to MongoDB.
+        :param select: An optional select statement to pass to MongoDB.
+        :param as_dict: If true, return dicts and not model instances.
+        :param limit: Limit on the number of rows returned.
+        :param order_by: Sort resulting rows according to a column value and
+            sign indicating ascending or descending.
 
-        - query: A query to pass to MongoDB.
-        - select: An optional select statement to pass to MongoDB.
-        - as_dict: If true, return dicts and not model instances.
-        - limit: Limit on the number of rows returned.
-        - order_by: Sort resulting rows according to a column value and sign
-          indicating ascending or descending. For example:
+        Examples of `order_by`:
 
           - ``order_by='mycolumn'``
           - ``order_by='-mycolumn'``
 
-        Returns:
-            A list of dicts or model instances for each row returned.
+        :returns: A list of dicts or model instances for each row returned.
         """
         if order_by:
             if order_by[0] in ('-', '+'):
@@ -99,20 +95,18 @@ class AbstractModel(object):
 
     @classmethod
     def find_one(cls, query, select=None):
-        """Return the first row matching *query* and *select* from MongoDB.
+        """Return the first row matching `query` and `select` from MongoDB.
 
-        Args:
+        :param query: A query to pass to MongoDB.
+        :param select: An optional select to pass to MongoDB.
 
-        - query: A query to pass to MongoDB.
-        - select: An optional select to pass to MongoDB.
-
-        Returns:
-            A model instance of the row returned for this query and select.
+        :returns: A model instance of the row returned for this query and
+            select.
         """
         return cls(cls.collection.find_one(query, select))
 
     def __init__(self, record=None):
-        """Instantiate with data in *record*."""
+        """Instantiate with data in `record`."""
         self.record = record
 
     def __nonzero__(self):
@@ -130,39 +124,31 @@ class AbstractModel(object):
     def delete(self, query):
         """Delete rows matching query.
 
-        Args:
-
-        - query: The query for rows to delete.
-
+        :param query: The query for rows to delete.
         """
         self.collection.remove(query, safe=True)
 
     def save(self, record):
-        """Save *record* in this model's collection.
+        """Save `record` in this model's collection.
 
         Save the record in the model instance's collection and set the internal
         record of this instance to the passed in record.
 
-        Args:
+        :param record: The dict to save in the model's collection.
 
-        - record: The dict to save in the model's collection.
-
-        Returns:
-            The record passed in.
+        :returns: The record passed in.
         """
         self.collection.insert(record, safe=True)
         self.record = record
         return record
 
     def update(self, record):
-        """Update the current instance with *record*.
+        """Update the current instance with `record`.
 
-        Update the current model instance based on its *_id*, set it to the
-        passed in *record*.
+        Update the current model instance based on its `_id`, set it to the
+        passed in `record`.
 
-        Args:
-        - record: The record to replace the instance's data with.
-
+        :param record: The record to replace the instance's data with.
         """
         record = dict_for_mongo(record)
         id_dict = {'_id': self.record['_id']}
@@ -173,10 +159,7 @@ class AbstractModel(object):
     def batch_save(self, dframe):
         """Save records in batches to avoid document size maximum setting.
 
-        Args:
-
-        - dframe: A DataFrame to save in the current model.
-
+        :param dframe: A DataFrame to save in the current model.
         """
         def command(records):
             self.collection.insert(records, safe=True)

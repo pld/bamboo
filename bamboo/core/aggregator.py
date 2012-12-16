@@ -8,9 +8,9 @@ from bamboo.lib.utils import split_groups
 class Aggregator(object):
     """Performa aggregations on datasets.
 
-    Apply the *aggregation* to group columns in *group_str* and the *columns*
-    of the *dframe*. Store the resulting *dframe* as a linked dataset for
-    *dataset*. If a linked dataset with the same groups already exists update
+    Apply the `aggregation` to group columns in `group_str` and the `columns`
+    of the `dframe`. Store the resulting `dframe` as a linked dataset for
+    `dataset`. If a linked dataset with the same groups already exists update
     this dataset.  Otherwise create a new linked dataset.
     """
 
@@ -31,9 +31,7 @@ class Aggregator(object):
         store in this dataset, if not create a new aggregated dataset and store
         the aggregation in this new aggregated dataset.
 
-        Args:
-
-        - columns: The columns to aggregate.
+        :param columns: The columns to aggregate.
         """
         new_dframe = BambooFrame(
             self.aggregation.eval(columns)

@@ -16,7 +16,7 @@ def parse_int(value, default):
 
 
 def is_float_nan(num):
-    """Return True is *num* is a float and NaN."""
+    """Return True is `num` is a float and NaN."""
     return isinstance(num, float) and isnan(num)
 
 
@@ -26,12 +26,10 @@ def slugify_columns(column_names):
     Convert non-alphanumeric characters in column names into underscores and
     ensure that all column names are unique.
 
-    Args:
+    :param column_names: A list of strings.
 
-    - column_names: A list of strings.
-
-    Returns:
-        A list slugified names with a one-to-one mapping to *column_names*.
+    :returns: A list slugified names with a one-to-one mapping to
+        `column_names`.
     """
     encode_column_re = re.compile(r'\W')
 
@@ -52,14 +50,11 @@ def split_groups(group_str):
 
 
 def call_async(function, *args, **kwargs):
-    """Potentially asynchronously call *function* with the arguments.
+    """Potentially asynchronously call `function` with the arguments.
 
-    Args:
-
-    - function: The function to call.
-    - args: Arguments for the function.
-    - kwargs: Keyword arguments for the function.
-
+    :param function: The function to call.
+    :param args: Arguments for the function.
+    :param kwargs: Keyword arguments for the function.
     """
     if not os.getenv('BAMBOO_ASYNC_OFF') and ASYNCHRONOUS_TASKS:
         function.__getattribute__('apply_async')(args=args, kwargs=kwargs)
