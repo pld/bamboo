@@ -618,6 +618,13 @@ class TestDatasets(TestAbstractDatasets):
             group='name'))
         self.assertTrue('name' in result.keys())
 
+    def test_multiple_date_formats(self):
+        self._post_file('multiple_date_formats.csv')
+        dataset = Dataset.find_one(self.dataset_id)
+        print dataset.dframe()
+        self.assertEqual(dataset.num_rows, 2)
+        self.assertEqual(len(dataset.schema.keys()), 4)
+
     def test_boolean_column(self):
         self._post_file('water_points.csv')
         summaries = json.loads(self.controller.summary(self.dataset_id,
