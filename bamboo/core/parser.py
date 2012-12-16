@@ -7,7 +7,7 @@ from pyparsing import alphanums, nums, oneOf, opAssoc, operatorPrecedence,\
 from bamboo.core.aggregations import AGGREGATIONS
 from bamboo.core.operations import EvalAndOp, EvalCaseOp, EvalComparisonOp,\
     EvalConstant, EvalExpOp, EvalDate, EvalInOp, EvalMapOp, EvalMultOp,\
-    EvalNotOp, EvalOrOp, EvalPlusOp, EvalSignOp, EvalString
+    EvalNotOp, EvalOrOp, EvalPercentile, EvalPlusOp, EvalSignOp, EvalString
 
 
 class ParseError(Exception):
@@ -23,6 +23,7 @@ class ParserContext(object):
 
     def __init__(self, dataset=None):
         if dataset:
+            self.dframe = dataset.dframe()
             self.schema = dataset.schema
 
 
@@ -47,10 +48,11 @@ class Parser(object):
     aggregation_names = AGGREGATIONS.keys()
     bnf = None
     column_functions = None
-    function_names = ['date', 'years']
+    function_names = ['date', 'percentile', 'years']
     operator_names = ['and', 'or', 'not', 'in']
     parsed_expr = None
     special_names = ['default']
+
     reserved_words = aggregation_names + function_names + operator_names +\
         special_names
 
@@ -94,7 +96,8 @@ class Parser(object):
         conj        neg [andop neg]*
         disj        conj [orop conj]*
         case        'case' disj: atom[, disj: atom]*[, 'default': atom]
-        agg         agg ( case[, case]* )
+        trans       trans ( case )
+        agg         agg ( trans[, trans]* )
         =========   ==========
 
         """
@@ -115,14 +118,11 @@ class Parser(object):
 
         # functions
         date_func = CaselessLiteral('date')
+        percentile_func = CaselessLiteral('percentile')
 
         # aggregation functions
-        aggregations = [
-            CaselessLiteral(aggregation) for
-            aggregation in self.aggregation_names
-        ]
-
-        aggregations = reduce(lambda x, y: x | y, aggregations)
+        aggregations = self._build_caseless_or_expression(
+            self.aggregation_names)
 
         # literal syntactic
         open_bracket = Literal('[').suppress()
@@ -186,11 +186,15 @@ class Parser(object):
             (case_op, 1, opAssoc.RIGHT, EvalCaseOp),
         ]) | prop_expr
 
+        trans_expr = operatorPrecedence(case_expr, [
+            (percentile_func, 1, opAssoc.RIGHT, EvalPercentile),
+        ])
+
         agg_expr = ((
                     aggregations + open_paren +
-                    Optional(case_expr + ZeroOrMore(comma + case_expr)))
+                    Optional(trans_expr + ZeroOrMore(comma + trans_expr)))
                     .setParseAction(self.store_aggregation) + close_paren)\
-            | case_expr
+            | trans_expr
 
         # top level bnf
         self.bnf = agg_expr
@@ -246,6 +250,8 @@ class Parser(object):
             - ``date("09-04-2012") - submit_date > 21078000``,
         - cases
             - ``case food_type in ["morning_food"]: 1, default: 3``
+        - transformations: row-wise column based aggregations
+            - ``percentile(amount)``
 
         :param dataset: The dataset to base context on, default is None.
         :param input_str: The string to parse.
@@ -301,6 +307,13 @@ class Parser(object):
             raise ParseError('Missing column reference: %s' % err)
 
         return aggregation
+
+    def _build_caseless_or_expression(self, strings):
+        literals = [
+            CaselessLiteral(aggregation) for
+            aggregation in self.aggregation_names
+        ]
+        return reduce(lambda or_expr, literal: or_expr | literal, literals)
 
     def __getstate__(self):
         """Get state for pickle."""

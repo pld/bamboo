@@ -3,6 +3,7 @@ from __future__ import division
 import operator
 
 import numpy as np
+from scipy.stats import percentileofscore
 
 from bamboo.lib.datetools import col_is_date_simpletype,\
     parse_date_to_unix_time, parse_str_to_unix_time
@@ -37,7 +38,7 @@ class EvalConstant(EvalTerm):
             return np.float64(self.value)
         except ValueError:
             # it may be a variable
-            field = row.get(self.value)
+            field = self.field(row)
             if field:
                 # it is a variable, save as dependency
                 context.dependent_columns.add(self.value)
@@ -45,6 +46,9 @@ class EvalConstant(EvalTerm):
             # test is date and parse as date
             return parse_date_to_unix_time(field) if context.schema and\
                 col_is_date_simpletype(context.schema[self.value]) else field
+
+    def field(self, row):
+        return row.get(self.value)
 
 
 class EvalString(EvalTerm):
@@ -134,17 +138,6 @@ class EvalComparisonOp(EvalTerm):
         return False
 
 
-class EvalDate(EvalTerm):
-    """Class to evaluate not expressions."""
-
-    def __init__(self, tokens):
-        self.value = tokens[0][1]
-
-    def eval(self, row, context):
-        # parse date from string
-        return parse_str_to_unix_time(self.value.eval(row, context))
-
-
 class EvalNotOp(EvalTerm):
     """Class to evaluate not expressions."""
 
@@ -218,3 +211,28 @@ class EvalMapOp(EvalTerm):
             return self.tokens[1].eval(row, context)
 
         return False
+
+
+class EvalFunction(object):
+    """Class to eval functions."""
+
+    def __init__(self, tokens):
+        self.value = tokens[0][1]
+
+
+class EvalDate(EvalFunction):
+    """Class to evaluate date expressions."""
+
+    def eval(self, row, context):
+        # parse date from string
+        return parse_str_to_unix_time(self.value.eval(row, context))
+
+
+class EvalPercentile(EvalFunction):
+    """Class to evaluate percentile expressions."""
+
+    def eval(self, row, context):
+        # parse date from string
+        column = context.dframe[self.value.value]
+        field = self.value.field(row)
+        return percentileofscore(column, field)

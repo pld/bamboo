@@ -16,7 +16,7 @@ class TestDatasetsPostUpdate(TestAbstractDatasets):
         self._file_name_with_slashes = 'good_eats_with_slashes.csv'
 
     def test_dataset_id_update_bad_dataset_id(self):
-        result = json.loads(self.controller.update(dataset_id=111, 
+        result = json.loads(self.controller.update(dataset_id=111,
                                                    update=None))
         assert(Datasets.ERROR in result)
 

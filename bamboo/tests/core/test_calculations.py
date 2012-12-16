@@ -11,9 +11,11 @@ class TestCalculations(TestCalculator):
         self.calculations = [
             # constants
             '-9 + 5',
+
             # aliases
             'rating',
             'gps',
+
             # arithmetic
             'amount + gps_alt',
             'amount - gps_alt',
@@ -23,12 +25,15 @@ class TestCalculations(TestCalculator):
             'amount / gps_alt',
             'amount * gps_alt / 2.5',
             'amount + gps_alt * gps_precision',
+
             # precedence
             '(amount + gps_alt) * gps_precision',
+
             # comparison
             'amount == 2',
             '10 < amount',
             '10 < amount + gps_alt',
+
             # logical
             'not amount == 2',
             'not(amount == 2)',
@@ -42,11 +47,13 @@ class TestCalculations(TestCalculator):
             '(amount + gps_alt) ^ 2 + 100',
             '-amount',
             '-amount < gps_alt - 100',
+
             # membership
             'rating in ["delectible"]',
             'risk_factor in ["low_risk"]',
             'amount in ["9.0", "2.0", "20.0"]',
             '(risk_factor in ["low_risk"]) and (amount in ["9.0", "20.0"])',
+
             # dates
             'date("09-04-2012") - submit_date > 21078000',
 
@@ -54,6 +61,9 @@ class TestCalculations(TestCalculator):
             'case food_type in ["morning_food"]: 1, food_type in ["lunch"]: 2,'
             ' default: 3',
             'case food_type in ["morning_food"]: 1, food_type in ["lunch"]: 2',
+
+            # row-wise column-based aggregations
+            'percentile(amount)',
         ]
 
     def _test_calculation_results(self, name, formula):
