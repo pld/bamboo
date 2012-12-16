@@ -3,6 +3,7 @@ from __future__ import division
 import operator
 
 import numpy as np
+from scipy.stats import percentileofscore
 
 from bamboo.lib.datetools import col_is_date_simpletype,\
     parse_date_to_unix_time, parse_str_to_unix_time
@@ -37,7 +38,7 @@ class EvalConstant(EvalTerm):
             return np.float64(self.value)
         except ValueError:
             # it may be a variable
-            field = row.get(self.value)
+            field = self.field(row)
             if field:
                 # it is a variable, save as dependency
                 context.dependent_columns.add(self.value)
@@ -45,6 +46,9 @@ class EvalConstant(EvalTerm):
             # test is date and parse as date
             return parse_date_to_unix_time(field) if context.schema and\
                 col_is_date_simpletype(context.schema[self.value]) else field
+
+    def field(self, row):
+        return row.get(self.value)
 
 
 class EvalString(EvalTerm):
@@ -229,4 +233,6 @@ class EvalPercentile(EvalFunction):
 
     def eval(self, row, context):
         # parse date from string
-        return self.value.eval(row, context)
+        column = context.dframe[self.value.value]
+        field = self.value.field(row)
+        return percentileofscore(column, field)

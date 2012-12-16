@@ -23,6 +23,7 @@ class ParserContext(object):
 
     def __init__(self, dataset=None):
         if dataset:
+            self.dframe = dataset.dframe()
             self.schema = dataset.schema
 
 
