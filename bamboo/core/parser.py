@@ -300,8 +300,6 @@ class Parser(object):
                 'No schema for dataset, please add data or wait for it to '
                 'finish processing')
 
-        for function in functions:
-            function(row, self.context)
         try:
             for function in functions:
                 function(row, self.context)
