@@ -42,13 +42,10 @@ DTYPE_TO_SIMPLETYPE_MAP = {
 def schema_from_data_and_dtypes(dataset, dframe):
     """Build schema from the DataFrame and the dataset.
 
-    Args:
+    :param dataset: The dataset to store the schema in.
+    :param dframe: The DataFrame to build a schema for.
 
-    - dataset: The dataset to store the schema in.
-    - dframe: The DataFrame to build a schema for.
-
-    Returns:
-        A dictionary schema.
+    :returns: A dictionary schema.
     """
     dtypes = dframe.dtypes.to_dict()
 
@@ -83,6 +80,10 @@ def schema_from_data_and_dtypes(dataset, dframe):
                 column_schema[dataset.CARDINALITY] = dframe[
                     name].nunique()
             except AttributeError as e:
+                pass
+            except TypeError as e:
+                # E.g. dates with and without offset can not be compared and
+                # raise a type error.
                 pass
             schema[encoded_names[name]] = column_schema
 

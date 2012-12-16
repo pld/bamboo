@@ -5,6 +5,7 @@ AbstractController
 ------------------
 .. autoclass:: bamboo.controllers.abstract_controller.AbstractController
     :members:
+    :private-members:
 
 Calculations
 ------------
