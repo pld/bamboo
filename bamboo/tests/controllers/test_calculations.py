@@ -24,8 +24,12 @@ class TestCalculations(TestBase):
         self.formula = 'amount + gps_alt'
         self.name = 'test'
 
-    def _post_formula(self):
-        return self.controller.create(self.dataset_id, self.formula, self.name)
+    def _post_formula(self, formula=None, name=None):
+        if not formula:
+            formula = self.formula
+        if not name:
+            name = self.name
+        return self.controller.create(self.dataset_id, formula, name)
 
     def _test_error(self, response, error_text=None):
         response = json.loads(response)
@@ -231,3 +235,16 @@ class TestCalculations(TestBase):
         self._test_error(
             self.controller.create(self.dataset_id, data='[{"name": "test"}]'),
             error_text='Required')
+
+    def test_create_reserved_name(self):
+        name = 'sum'
+        response = json.loads(self._post_formula(None, name))
+        self.assertTrue(isinstance(response, dict))
+        self.assertTrue(self.controller.SUCCESS in response)
+        self.assertTrue(self.dataset_id in response[self.controller.SUCCESS])
+        dataset = Dataset.find_one(self.dataset_id)
+        slug = dataset.build_labels_to_slugs()[name]
+        response = json.loads(self._post_formula('%s + amount' % slug))
+        self.assertTrue(isinstance(response, dict))
+        self.assertTrue(self.controller.SUCCESS in response)
+        self.assertTrue(self.dataset_id in response[self.controller.SUCCESS])
