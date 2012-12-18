@@ -184,8 +184,9 @@ class Datasets(AbstractController):
 
         .. note::
 
-            The follow words are reserved and will lead to unexpected behavior
-            if used as column names:
+            The follow words are reserved and will be slugified by adding
+            underscores (or multiple underscores to ensure uniqueness) if used
+            as column names:
 
                 - all
                 - and
