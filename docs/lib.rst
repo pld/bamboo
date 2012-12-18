@@ -20,11 +20,13 @@ Mongo Utilities
 ---------------
 .. automodule:: bamboo.lib.mongo
     :members:
+    :private-members:
 
 Schema Builder
 --------------
 .. automodule:: bamboo.lib.schema_builder
     :members:
+    :private-members:
 
 Utilities
 ---------
