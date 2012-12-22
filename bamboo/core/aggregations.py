@@ -124,6 +124,32 @@ class ArgMaxAggregation(Aggregation):
         return DataFrame(column).join(groupby_max[self.groups])
 
 
+class NewestAggregation(MultiColumnAggregation):
+    """For the newest index column get the value column."""
+
+    formula_name = 'newest'
+
+    index_column = 0
+    value_column = 1
+
+    def agg(self):
+        idx = self.columns[self.index_column].argmax()
+        result = self.columns[self.value_column].ix[idx]
+
+        return self._value_to_dframe(result)
+
+    def group(self):
+        argmax_agg = ArgMaxAggregation(self.name, self.groups, self.dframe)
+        argmax_df = argmax_agg.eval(self.columns)
+        indices = argmax_df.pop(self.name)
+
+        newest_col = self.columns[self.value_column][indices]
+        newest_col.index = argmax_df.index
+
+        return argmax_df.join(newest_col)
+
+
+
 class MeanAggregation(MultiColumnAggregation):
     """Calculate the arithmetic mean.
 
@@ -247,29 +273,6 @@ class CountAggregation(Aggregation):
             result = len(self.dframe)
 
         return self._value_to_dframe(result)
-
-
-class FetchAggregation(MultiColumnAggregation):
-    """Fetch the column value at index."""
-
-    formula_name = 'fetch'
-
-    value_column = 0
-    index_column = 1
-
-    def agg(self):
-        dframe = DataFrame(index=self.column.index)
-
-        idx = self._get_index()
-        result = self.columns[self.value_column].ix[idx]
-        return self._value_to_dframe(result)
-
-    def group(self):
-        idx = self._get_index()
-        print self.columns
-
-    def _get_index(self):
-        return self.columns[self.index_column].ix[0]
 
 
 # dict of formula names to aggregation classes

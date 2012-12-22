@@ -24,7 +24,7 @@ class TestAggregations(TestCalculator):
         'count()': 19.0,
         'count(risk_factor in ["low_risk"])': 18.0,
         'argmax(submit_date)': 18.0,
-        'newest(submit_date, amount)': 1334793600.0,
+        'newest(submit_date, amount)': 28.0,
     }
 
     GROUP_TO_RESULTS = {
@@ -54,7 +54,7 @@ class TestAggregations(TestCalculator):
             'count(risk_factor in ["low_risk"])',
             'count()',
             'argmax(submit_date)',
-            #'fetch(submit_date, 18)',
+            'newest(submit_date, amount)',
         ]
         self.expected_length = defaultdict(int)
         self.groups_list = None
