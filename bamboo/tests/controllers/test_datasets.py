@@ -621,7 +621,6 @@ class TestDatasets(TestAbstractDatasets):
     def test_multiple_date_formats(self):
         self._post_file('multiple_date_formats.csv')
         dataset = Dataset.find_one(self.dataset_id)
-        print dataset.dframe()
         self.assertEqual(dataset.num_rows, 2)
         self.assertEqual(len(dataset.schema.keys()), 4)
 

@@ -6,7 +6,6 @@ from pandas import concat
 from bamboo.core.aggregator import Aggregator
 from bamboo.core.frame import BambooFrame, NonUniqueJoinError
 from bamboo.core.parser import ParseError, Parser
-from bamboo.lib.datetools import recognize_dates_from_schema
 from bamboo.lib.mongo import MONGO_RESERVED_KEYS
 from bamboo.lib.utils import call_async, split_groups
 
@@ -140,8 +139,8 @@ class Calculator(object):
 
         self._check_update_is_valid(new_dframe_raw)
 
-        new_dframe = recognize_dates_from_schema(self.dataset.schema,
-                                                 new_dframe_raw)
+        new_dframe = new_dframe_raw.recognize_dates_from_schema(
+            self.dataset.schema)
 
         new_dframe, aggregations = self._add_calcs_and_find_aggregations(
             new_dframe, labels_to_slugs)

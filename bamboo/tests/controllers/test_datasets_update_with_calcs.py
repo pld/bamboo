@@ -1,7 +1,6 @@
 import simplejson as json
 
 from bamboo.models.dataset import Dataset
-from bamboo.lib.datetools import recognize_dates
 from bamboo.tests.controllers.test_abstract_datasets_update import\
     TestAbstractDatasetsUpdate
 

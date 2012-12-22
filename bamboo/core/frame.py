@@ -1,5 +1,6 @@
 from pandas import DataFrame, Series
 
+from bamboo.lib.datetools import recognize_dates, recognize_dates_from_schema
 from bamboo.lib.jsontools import series_to_jsondict
 from bamboo.lib.mongo import dump_mongo_json, mongo_prefix_reserved_key,\
     MONGO_RESERVED_KEYS
@@ -38,6 +39,12 @@ class BambooFrame(DataFrame):
             prefixed_key = mongo_prefix_reserved_key(key)
             if prefixed_key in self.columns:
                 self.rename(columns={prefixed_key: key}, inplace=True)
+
+    def recognize_dates(self):
+        return recognize_dates(self)
+
+    def recognize_dates_from_schema(self, schema):
+        return recognize_dates_from_schema(self, schema)
 
     def remove_bamboo_reserved_keys(self, keep_parent_ids=False):
         """Remove reserved internal columns in this DataFrame.

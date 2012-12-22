@@ -32,11 +32,11 @@ def recognize_dates(dframe):
     return new_dframe
 
 
-def recognize_dates_from_schema(schema, dframe):
+def recognize_dates_from_schema(dframe, schema):
     """Convert columes to datetime if column in *schema* is of type datetime.
 
-    :param schema: Schema to define columns of type datetime.
     :param dframe: The DataFrame to convert columns in.
+    :param schema: Schema to define columns of type datetime.
 
     :returns: A DataFrame with column values convert to datetime types.
     """
