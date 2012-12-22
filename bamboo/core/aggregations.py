@@ -1,5 +1,7 @@
 from pandas import concat, DataFrame, Series
 
+from bamboo.lib.utils import parse_float
+
 
 class Aggregation(object):
     """Abstract class for all aggregations.
@@ -25,15 +27,19 @@ class Aggregation(object):
 
     def group(self):
         """For when aggregation is called with a group parameter."""
-        groupby = self.dframe[self.groups].join(
-            self.column).groupby(self.groups, as_index=False)
-
-        return groupby.agg(self.formula_name)
+        return self._groupby().agg(self.formula_name)
 
     def agg(self):
         """For when aggregation is called without a group parameter."""
         result = float(self.column.__getattribute__(self.formula_name)())
-        return DataFrame({self.name: Series([result])})
+        return self._value_to_dframe(result)
+
+    def _value_to_dframe(self, value):
+        return DataFrame({self.name: Series([value])})
+
+    def _groupby(self):
+        return self.dframe[self.groups].join(
+            self.column).groupby(self.groups, as_index=False)
 
 
 class MultiColumnAggregation(Aggregation):
@@ -95,10 +101,62 @@ class MaxAggregation(Aggregation):
     formula_name = 'max'
 
 
+class ArgMaxAggregation(Aggregation):
+    """Return the index for the maximum of a column.
+
+    Written as ``argmax(FORMULA)``. Where `FORMULA` is a valid formula.
+    """
+
+    formula_name = 'argmax'
+
+    def group(self):
+        """For when aggregation is called with a group parameter."""
+        indices = self.column.apply(lambda value: parse_float(value, value)
+                                    ).reset_index().set_index(self.name)
+
+        def max_index_for_row(row):
+            return indices.get_value(row[self.name], 'index').max()
+
+        groupby_max = self._groupby().max()
+        column = groupby_max.apply(max_index_for_row, axis=1)
+        column.name = self.name
+
+        return DataFrame(column).join(groupby_max[self.groups])
+
+
+class NewestAggregation(MultiColumnAggregation):
+    """For the newest index column get the value column."""
+
+    formula_name = 'newest'
+
+    index_column = 0
+    value_column = 1
+
+    def agg(self):
+        idx = self.columns[self.index_column].argmax()
+        result = self.columns[self.value_column].ix[idx]
+
+        return self._value_to_dframe(result)
+
+    def group(self):
+        argmax_agg = ArgMaxAggregation(self.name, self.groups, self.dframe)
+        argmax_df = argmax_agg.eval(self.columns)
+        indices = argmax_df.pop(self.name)
+
+        newest_col = self.columns[self.value_column][indices]
+        newest_col.index = argmax_df.index
+
+        return argmax_df.join(newest_col)
+
+
+
 class MeanAggregation(MultiColumnAggregation):
     """Calculate the arithmetic mean.
 
     Written as ``mean(FORMULA)``. Where `FORMULA` is a valid formula.
+
+    Because mean is irreducible this inherits from `MultiColumnAggregation` to
+    use its reduce generic implementation.
     """
 
     formula_name = 'mean'
@@ -214,7 +272,7 @@ class CountAggregation(Aggregation):
         else:
             result = len(self.dframe)
 
-        return DataFrame({self.name: Series([result])})
+        return self._value_to_dframe(result)
 
 
 # dict of formula names to aggregation classes
