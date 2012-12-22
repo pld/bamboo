@@ -2,7 +2,9 @@ from base64 import b64encode
 from datetime import datetime
 import pickle
 from time import mktime, sleep
+from urllib2 import URLError
 
+from mock import patch
 import simplejson as json
 
 from bamboo.controllers.abstract_controller import AbstractController
@@ -15,7 +17,7 @@ from bamboo.lib.utils import GROUP_DELIMITER
 from bamboo.models.dataset import Dataset
 from bamboo.tests.controllers.test_abstract_datasets import\
     TestAbstractDatasets
-from bamboo.tests.decorators import requires_async, requires_internet
+from bamboo.tests.decorators import requires_async
 from bamboo.tests.mock import MockUploadedFile
 
 
@@ -26,6 +28,7 @@ class TestDatasets(TestAbstractDatasets):
         self._file_path = 'tests/fixtures/%s' % self._file_name
         self._file_uri = 'file://%s' % self._file_path
         self.url = 'http://formhub.org/mberg/forms/good_eats/data.csv'
+        self.dframe = self.test_data['good_eats.csv']
         self.cardinalities = pickle.load(
             open('tests/fixtures/good_eats_cardinalities.p', 'rb'))
         self.simpletypes = pickle.load(
@@ -96,26 +99,30 @@ class TestDatasets(TestAbstractDatasets):
         self.assertTrue(isinstance(result, dict))
         self.assertTrue(Datasets.ERROR in result)
 
-    @requires_internet
     def test_create_from_url(self):
-        result = json.loads(self.controller.create(url=self.url))
+        with patch('pandas.read_csv', return_value=self.dframe) as mock:
+            result = json.loads(self.controller.create(url=self.url))
         self.assertTrue(isinstance(result, dict))
         self.assertTrue(Dataset.ID in result)
 
+        results = json.loads(self.controller.show(result[Dataset.ID]))
+        self.assertEqual(len(results), self.NUM_ROWS)
+
         self._test_summary_built(result)
 
-    @requires_internet
     @requires_async
-    def test_create_from_not_csv_url(self):
+    @patch('pandas.read_csv', return_value=None)
+    def test_create_from_not_csv_url(self, read_csv):
         result = json.loads(self.controller.create(
             url='http://74.125.228.110/'))
         self.assertTrue(isinstance(result, dict))
         self.assertTrue(Dataset.ID in result)
+
         results = json.loads(self.controller.show(result[Dataset.ID]))
         self.assertEqual(len(results), 0)
 
-    @requires_internet
-    def test_create_from_bad_url(self):
+    @patch('pandas.read_csv', return_value=None, side_effect=URLError(''))
+    def test_create_from_bad_url(self, read_csv):
         result = json.loads(self.controller.create(
             url='http://dsfskfjdks.com'))
         self.assertTrue(isinstance(result, dict))

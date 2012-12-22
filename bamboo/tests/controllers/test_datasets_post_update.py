@@ -6,7 +6,7 @@ from bamboo.controllers.datasets import Datasets
 from bamboo.models.dataset import Dataset
 from bamboo.tests.controllers.test_abstract_datasets import\
     TestAbstractDatasets
-from bamboo.tests.decorators import requires_async, requires_internet
+from bamboo.tests.decorators import requires_async
 
 
 class TestDatasetsPostUpdate(TestAbstractDatasets):

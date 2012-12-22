@@ -1,3 +1,4 @@
+mock==1.0.1
 nose==1.2.1
 nose-cov==1.5
 nose-progressive==1.3

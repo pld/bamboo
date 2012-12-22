@@ -3,7 +3,7 @@ import os
 import tempfile
 
 from celery.task import task
-from pandas import read_csv
+import pandas as pd
 
 from bamboo.core.frame import BambooFrame
 from bamboo.lib.utils import call_async
@@ -15,7 +15,7 @@ def import_dataset(dataset, dframe=None, filepath_or_buffer=None,
                    delete=False):
     """For reading a URL and saving the corresponding dataset."""
     if filepath_or_buffer:
-        dframe = BambooFrame(read_csv(filepath_or_buffer)).recognize_dates()
+        dframe = BambooFrame(pd.read_csv(filepath_or_buffer)).recognize_dates()
     if delete:
         os.unlink(filepath_or_buffer)
 

@@ -149,7 +149,6 @@ class NewestAggregation(MultiColumnAggregation):
         return argmax_df.join(newest_col)
 
 
-
 class MeanAggregation(MultiColumnAggregation):
     """Calculate the arithmetic mean.
 
