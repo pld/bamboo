@@ -263,6 +263,7 @@ class FetchAggregation(MultiColumnAggregation):
         return self._value_to_dframe(result)
 
     def group(self):
+        idx = self._get_index()
         print self.columns
 
     def _get_index(self):

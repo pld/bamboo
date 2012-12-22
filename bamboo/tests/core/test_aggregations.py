@@ -24,7 +24,7 @@ class TestAggregations(TestCalculator):
         'count()': 19.0,
         'count(risk_factor in ["low_risk"])': 18.0,
         'argmax(submit_date)': 18.0,
-        'fetch(submit_date, 18)': 1334793600.0,
+        'newest(submit_date, amount)': 1334793600.0,
     }
 
     GROUP_TO_RESULTS = {
