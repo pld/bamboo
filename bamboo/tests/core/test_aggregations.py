@@ -23,6 +23,8 @@ class TestAggregations(TestCalculator):
         'ratio(risk_factor in ["low_risk"], 1)': 18.0 / 19,
         'count()': 19.0,
         'count(risk_factor in ["low_risk"])': 18.0,
+        'argmax(submit_date)': 18.0,
+        'fetch(submit_date, 18)': 1334793600.0,
     }
 
     GROUP_TO_RESULTS = {
@@ -51,6 +53,8 @@ class TestAggregations(TestCalculator):
             'ratio(risk_factor in ["low_risk"], 1)',
             'count(risk_factor in ["low_risk"])',
             'count()',
+            'argmax(submit_date)',
+            'fetch(submit_date, 18)',
         ]
         self.expected_length = defaultdict(int)
         self.groups_list = None

@@ -33,7 +33,10 @@ class Aggregation(object):
     def agg(self):
         """For when aggregation is called without a group parameter."""
         result = float(self.column.__getattribute__(self.formula_name)())
-        return DataFrame({self.name: Series([result])})
+        return self._value_to_dframe(result)
+
+    def _value_to_dframe(self, value):
+        return DataFrame({self.name: Series([value])})
 
 
 class MultiColumnAggregation(Aggregation):
@@ -95,10 +98,37 @@ class MaxAggregation(Aggregation):
     formula_name = 'max'
 
 
+class ArgMaxAggregation(Aggregation):
+    """Return the index for the maximum of a column.
+
+    Written as ``argmax(FORMULA)``. Where `FORMULA` is a valid formula.
+    """
+
+    formula_name = 'argmax'
+
+    def group(self):
+        """For when aggregation is called with a group parameter."""
+        groupby = self.dframe[self.groups].join(
+            self.column).groupby(self.groups, as_index=False)
+
+        name_to_argmax = [
+            dict([
+                (self.groups[idx], group_name) for idx, group_name in
+                enumerate(name if isinstance(name, tuple) else [name])
+            ] + [(self.name, group[self.name].argmax())]
+            ) for name, group in groupby
+        ]
+
+        return DataFrame(name_to_argmax)
+
+
 class MeanAggregation(MultiColumnAggregation):
     """Calculate the arithmetic mean.
 
     Written as ``mean(FORMULA)``. Where `FORMULA` is a valid formula.
+
+    Because mean is irreducible this inherits from `MultiColumnAggregation` to
+    use its reduce generic implementation.
     """
 
     formula_name = 'mean'
@@ -214,7 +244,29 @@ class CountAggregation(Aggregation):
         else:
             result = len(self.dframe)
 
-        return DataFrame({self.name: Series([result])})
+        return self._value_to_dframe(result)
+
+
+class FetchAggregation(MultiColumnAggregation):
+    """Fetch the column value at index."""
+
+    formula_name = 'fetch'
+
+    value_column = 0
+    index_column = 1
+
+    def agg(self):
+        dframe = DataFrame(index=self.column.index)
+
+        idx = self._get_index()
+        result = self.columns[self.value_column].ix[idx]
+        return self._value_to_dframe(result)
+
+    def group(self):
+        print self.columns
+
+    def _get_index(self):
+        return self.columns[self.index_column].ix[0]
 
 
 # dict of formula names to aggregation classes
