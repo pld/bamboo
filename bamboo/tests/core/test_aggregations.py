@@ -54,7 +54,7 @@ class TestAggregations(TestCalculator):
             'count(risk_factor in ["low_risk"])',
             'count()',
             'argmax(submit_date)',
-            'fetch(submit_date, 18)',
+            #'fetch(submit_date, 18)',
         ]
         self.expected_length = defaultdict(int)
         self.groups_list = None

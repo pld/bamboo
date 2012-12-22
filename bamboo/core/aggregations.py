@@ -1,5 +1,7 @@
 from pandas import concat, DataFrame, Series
 
+from bamboo.lib.utils import parse_float
+
 
 class Aggregation(object):
     """Abstract class for all aggregations.
@@ -25,10 +27,7 @@ class Aggregation(object):
 
     def group(self):
         """For when aggregation is called with a group parameter."""
-        groupby = self.dframe[self.groups].join(
-            self.column).groupby(self.groups, as_index=False)
-
-        return groupby.agg(self.formula_name)
+        return self._groupby().agg(self.formula_name)
 
     def agg(self):
         """For when aggregation is called without a group parameter."""
@@ -37,6 +36,10 @@ class Aggregation(object):
 
     def _value_to_dframe(self, value):
         return DataFrame({self.name: Series([value])})
+
+    def _groupby(self):
+        return self.dframe[self.groups].join(
+            self.column).groupby(self.groups, as_index=False)
 
 
 class MultiColumnAggregation(Aggregation):
@@ -108,18 +111,17 @@ class ArgMaxAggregation(Aggregation):
 
     def group(self):
         """For when aggregation is called with a group parameter."""
-        groupby = self.dframe[self.groups].join(
-            self.column).groupby(self.groups, as_index=False)
+        indices = self.column.apply(lambda value: parse_float(value, value)
+                                    ).reset_index().set_index(self.name)
 
-        name_to_argmax = [
-            dict([
-                (self.groups[idx], group_name) for idx, group_name in
-                enumerate(name if isinstance(name, tuple) else [name])
-            ] + [(self.name, group[self.name].argmax())]
-            ) for name, group in groupby
-        ]
+        def max_index_for_row(row):
+            return indices.get_value(row[self.name], 'index').max()
 
-        return DataFrame(name_to_argmax)
+        groupby_max = self._groupby().max()
+        column = groupby_max.apply(max_index_for_row, axis=1)
+        column.name = self.name
+
+        return DataFrame(column).join(groupby_max[self.groups])
 
 
 class MeanAggregation(MultiColumnAggregation):
