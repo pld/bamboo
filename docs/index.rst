@@ -44,7 +44,7 @@ Installation
 
 .. code-block:: bash
 
-    pip install bamboo
+    pip install bamboo-data
 
 Usage
 ^^^^^
