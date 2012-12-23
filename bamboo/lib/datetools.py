@@ -8,10 +8,6 @@ from pandas import Series
 
 from bamboo.lib.utils import is_float_nan
 
-# TODO move to schema_builder class
-DATETIME = 'datetime'
-SIMPLETYPE = 'simpletype'
-
 
 def recognize_dates(dframe):
     """Convert data columns to datetimes.
@@ -45,7 +41,7 @@ def recognize_dates_from_schema(dframe, schema):
 
     for column, column_schema in schema.items():
         if column in dframe_columns and\
-                col_is_date_simpletype(column_schema):
+                schema.is_date_simpletype(column):
             _convert_column_to_date(new_dframe, column)
 
     return new_dframe
@@ -78,17 +74,13 @@ def parse_date_to_unix_time(date):
     return timegm(date.utctimetuple())
 
 
-def col_is_date_simpletype(column_schema):
-    return column_schema[SIMPLETYPE] == DATETIME
-
-
 def parse_timestamp_query(query, schema):
     """Interpret date column queries as JSON."""
     if query != {}:
         datetime_columns = [
-            column for (column, schema) in
+            column for (column, col_schema) in
             schema.items() if
-            col_is_date_simpletype(schema) and column in query.keys()]
+            schema.is_date_simpletype(column) and column in query.keys()]
         for date_column in datetime_columns:
             query[date_column] = {
                 key: datetime.fromtimestamp(int(value)) for (key, value) in

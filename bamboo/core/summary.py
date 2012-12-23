@@ -1,7 +1,6 @@
 import numpy as np
 
 from bamboo.lib.jsontools import series_to_jsondict
-from bamboo.lib.schema_builder import DIMENSION, OLAP_TYPE
 from bamboo.lib.mongo import dict_from_mongo, dict_for_mongo
 
 
@@ -72,10 +71,7 @@ def summarize(dataset, dframe, groups, group_str, no_cache):
     """Raises a ColumnTypeError if grouping on a non-dimensional column."""
     # do not allow group by numeric types
     for group in groups:
-        group_type = dataset.schema.get(group)
-        _type = dframe.dtypes.get(group)
-        if group != dataset.ALL and (
-                group_type is None or group_type[OLAP_TYPE] != DIMENSION):
+        if group != dataset.ALL and not dataset.schema.is_dimension(group):
             raise ColumnTypeError("group: '%s' is not a dimension." % group)
 
     # check cached stats for group and update as necessary

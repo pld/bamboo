@@ -14,8 +14,7 @@ from bamboo.core.frame import BambooFrame, BAMBOO_RESERVED_KEY_PREFIX,\
 from bamboo.core.summary import summarize
 from bamboo.lib.exceptions import ArgumentError
 from bamboo.lib.mongo import reserve_encoded
-from bamboo.lib.schema_builder import DIMENSION, OLAP_TYPE,\
-    schema_from_data_and_dtypes
+from bamboo.lib.schema_builder import Schema, schema_from_data_and_dtypes
 from bamboo.lib.utils import call_async, split_groups
 from bamboo.models.abstract_model import AbstractModel
 from bamboo.models.calculation import Calculation
@@ -72,7 +71,8 @@ class Dataset(AbstractModel):
 
     @property
     def schema(self):
-        return self.record.get(self.SCHEMA)
+        schema_dict = self.record.get(self.SCHEMA)
+        return Schema(schema_dict) if schema_dict else None
 
     @property
     def stats(self):
@@ -115,7 +115,7 @@ class Dataset(AbstractModel):
         return [self.find_one(_id) for _id in ids]
 
     def is_factor(self, col):
-        return self.schema[col][OLAP_TYPE] == DIMENSION
+        return self.schema.is_dimension(col)
 
     def cardinality(self, col):
         if self.is_factor(col):
