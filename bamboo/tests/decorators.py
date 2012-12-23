@@ -1,18 +1,16 @@
 from functools import wraps
-import os
 import time
-import urllib2
 
-from bamboo.config.settings import RUN_PROFILER
+from bamboo.config.settings import RUN_PROFILER, set_async
 
 
 def requires_async(func):
     @wraps(func)
     def wrapper(*args, **kwargs):
-        del os.environ['BAMBOO_ASYNC_OFF']
+        set_async(True)
         self = args[0]
         result = func(*args, **kwargs)
-        os.environ['BAMBOO_ASYNC_OFF'] = 'True'
+        set_async(False)
         return result
     return wrapper
 

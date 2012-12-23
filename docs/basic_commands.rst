@@ -16,7 +16,7 @@ Storing data in *bamboo*
 ------------------------
 
 Upload data from a URL to *bamboo*
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 ``curl -X POST -d "url=http://formhub.org/mberg/forms/good_eats/data.csv" http://bamboo.io/datasets``
 
@@ -112,6 +112,18 @@ This returns the dataset as JSON.
         },
         ...
     ]
+
+Alternatively, return the dataset as a CSV,
+
+``curl http://bamboo.io/datasets/8a3d74711475d8a51c84484fe73f24bd151242ea.csv``
+
+**returns:**
+
+.. code-block:: none
+
+    rating,_percentage_complete,_xform_id_string,gps_alt,food_type
+    delectible,n/a,good_eats,low_risk,39.5,lunch
+    ...
 
 By ID with select
 ^^^^^^^^^^^^^^^^^
