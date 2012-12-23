@@ -32,8 +32,8 @@ class TestParser(TestBase):
     def test_parse_formula_bad_formula(self):
         bad_formulas = [
             '=BAD +++ FOR',
-            #'2 +>+ 1',
-            #'1 ** 2',
+            '2 +>+ 1',
+            '1 ** 2',
         ]
 
         for bad_formula in bad_formulas:
