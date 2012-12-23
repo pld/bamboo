@@ -72,8 +72,11 @@ class Dataset(AbstractModel):
 
     @property
     def schema(self):
-        schema_dict = self.record.get(self.SCHEMA)
-        return None if schema_dict is None else Schema(schema_dict)
+        if self.record:
+            schema_dict = self.record.get(self.SCHEMA)
+            if schema_dict is not None:
+                return Schema(schema_dict)
+        return None
 
     @property
     def stats(self):
