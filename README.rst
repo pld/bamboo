@@ -36,14 +36,14 @@ Using as a Python Libary
 Installation
 ^^^^^^^^^^^^
 
-::
+.. code-block:: sh
 
-    pip install bamboo-data
+    $ pip install bamboo-data
 
 Usage
 ^^^^^
 
-::
+.. code-block:: python
 
     import bamboo as bm
     from bamboo.lib.io import create_dataset_from_url
