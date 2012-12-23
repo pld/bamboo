@@ -175,7 +175,7 @@ class Datasets(AbstractController):
 
         return self.dump_or_error(result, error)
 
-    def create(self, url=None, csv_file=None, schema=None, perish=None):
+    def create(self, url=None, csv_file=None, schema=None, perish=0):
         """Create a dataset by URL, CSV or schema file.
 
         If `url` is provided, create a dataset by downloading a CSV from that
