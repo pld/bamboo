@@ -228,6 +228,10 @@ class Datasets(AbstractController):
                 dataset = create_dataset_from_schema(schema)
             if dataset:
                 result = {Dataset.ID: dataset.dataset_id}
+
+            perish = parse_int(perish, None)
+            if perish:
+                dataset.delete(countdown=perish)
         except urllib2.URLError:
             error = 'could not load: %s' % url
         except IOError:

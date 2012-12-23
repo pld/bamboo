@@ -76,7 +76,7 @@ class Dataset(AbstractModel):
             schema_dict = self.record.get(self.SCHEMA)
             if schema_dict is not None:
                 return Schema(schema_dict)
-        return None
+        return {}
 
     @property
     def stats(self):
@@ -120,6 +120,7 @@ class Dataset(AbstractModel):
 
     def is_factor(self, col):
         return self.schema.is_dimension(col)
+        countdown = kwargs.pop('countdown', 0)
 
     def cardinality(self, col):
         if self.is_factor(col):
@@ -220,9 +221,9 @@ class Dataset(AbstractModel):
 
         return super(self.__class__, self).save(record)
 
-    def delete(self):
+    def delete(self, countdown=0):
         """Delete this dataset."""
-        call_async(delete_task, self)
+        call_async(delete_task, self, countdown=countdown)
 
     @class_task
     def summarize(self, query=None, select=None,

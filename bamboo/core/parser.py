@@ -264,7 +264,8 @@ class Parser(object):
         self.context.dependent_columns = set()
 
         try:
-            self.parsed_expr = self.bnf.parseString(input_str, parseAll=True)[0]
+            self.parsed_expr = self.bnf.parseString(
+                input_str, parseAll=True)[0]
         except ParseException, err:
             raise ParseError('Parse Failure for string "%s": %s' % (input_str,
                              err))

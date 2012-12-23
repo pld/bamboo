@@ -646,13 +646,21 @@ class TestDatasets(TestAbstractDatasets):
 
     @requires_async
     def test_perishable_dataset(self):
-        result = self._upload_mocked_file(perish=5)
+        perish_after = 2
+        result = self._upload_mocked_file(perish=perish_after)
         self.assertTrue(isinstance(result, dict))
         self.assertTrue(Dataset.ID in result)
+        dataset_id = result[Dataset.ID]
 
         while True:
-            # TODO test that 5 seconds later it is gone
-            results = json.loads(self.controller.show(self.dataset_id))
+            results = json.loads(self.controller.show(dataset_id))
             if len(results):
+                self.assertTrue(len(results), self.NUM_ROWS)
                 break
             sleep(self.SLEEP_DELAY)
+
+        # test that later it is deleted
+        sleep(perish_after)
+        result = json.loads(self.controller.show(dataset_id))
+        self.assertTrue(isinstance(result, dict))
+        self.assertTrue(Datasets.ERROR in result)

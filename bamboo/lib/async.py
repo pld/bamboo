@@ -22,7 +22,10 @@ def call_async(function, *args, **kwargs):
     :param args: Arguments for the function.
     :param kwargs: Keyword arguments for the function.
     """
+    countdown = kwargs.pop('countdown', 0)
+
     if is_async():
-        function.__getattribute__('apply_async')(args=args, kwargs=kwargs)
+        function.__getattribute__('apply_async')(
+            countdown=countdown, args=args, kwargs=kwargs)
     else:  # pragma: no cover
         function(*args, **kwargs)
