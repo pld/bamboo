@@ -1,7 +1,7 @@
 from math import isnan
 import os
 
-from bamboo.config.settings import is_async
+from bamboo.lib.async import is_async
 
 # delimiter when passing multiple groups as a string
 GROUP_DELIMITER = ','

@@ -1,7 +1,8 @@
 from functools import wraps
 import time
 
-from bamboo.config.settings import RUN_PROFILER, set_async
+from bamboo.config.settings import RUN_PROFILER
+from bamboo.lib.async import set_async
 
 
 def requires_async(func):
