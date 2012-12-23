@@ -11,7 +11,7 @@ from bamboo.config.settings import TEST_DATABASE_NAME
 class TestBase(unittest.TestCase):
 
     FIXTURE_PATH = 'tests/fixtures/'
-    SLEEP_DELAY = 0.1
+    SLEEP_DELAY = 0.2
     TEST_DATASETS = [
         'good_eats.csv',
         'good_eats_large.csv',
