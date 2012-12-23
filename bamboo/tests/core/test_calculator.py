@@ -13,7 +13,7 @@ class TestCalculator(TestBase):
         self.dataset.save(
             self.test_dataset_ids['good_eats_with_calculations.csv'])
         dframe = recognize_dates(
-            self.test_data['good_eats_with_calculations.csv'])
+            self.get_data('good_eats_with_calculations.csv'))
         self.dataset.save_observations(dframe)
         self.group = None
         self.parser = Parser(self.dataset)

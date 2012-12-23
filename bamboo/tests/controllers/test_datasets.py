@@ -27,7 +27,7 @@ class TestDatasets(TestAbstractDatasets):
         self._file_path = 'tests/fixtures/%s' % self._file_name
         self._file_uri = 'file://%s' % self._file_path
         self.url = 'http://formhub.org/mberg/forms/good_eats/data.csv'
-        self.dframe = self.test_data['good_eats.csv']
+        self.dframe = self.get_data('good_eats.csv')
         self.cardinalities = pickle.load(
             open('tests/fixtures/good_eats_cardinalities.p', 'rb'))
         self.simpletypes = pickle.load(
@@ -39,7 +39,7 @@ class TestDatasets(TestAbstractDatasets):
         # minus the column that we are grouping on
         self.assertEqual(len(result_keys), self.NUM_COLS - len(group))
         columns = [col for col in
-                   self.test_data[self._file_name].columns.tolist()
+                   self.get_data(self._file_name).columns.tolist()
                    if not col in MONGO_RESERVED_KEYS + group]
         dataset = Dataset.find_one(self.dataset_id)
         labels_to_slugs = dataset.build_labels_to_slugs()

@@ -21,7 +21,7 @@ class TestCalculation(TestBase):
         return self.calculation.save(self.dataset, formula, self.name)
 
     def _save_observations(self):
-        self.dataset.save_observations(self.test_data['good_eats.csv'])
+        self.dataset.save_observations(self.get_data('good_eats.csv'))
 
     def _save_observations_and_calculation(self, formula=None):
         self._save_observations()

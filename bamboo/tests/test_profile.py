@@ -38,7 +38,7 @@ class TestProfile(TestBase):
         return df
 
     def _grow_test_data(self, dataset_name, width_exp, length_factor):
-        df = self.test_data[dataset_name]
+        df = self.get_data(dataset_name)
         df = self._expand_width(df, width_exp)
         return concat([df] * length_factor)
 
