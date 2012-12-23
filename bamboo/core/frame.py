@@ -1,3 +1,5 @@
+from cStringIO import StringIO
+
 from pandas import DataFrame, Series
 
 from bamboo.lib.datetools import recognize_dates, recognize_dates_from_schema
@@ -78,6 +80,11 @@ class BambooFrame(DataFrame):
         """Convert DataFrame to a list of dicts, then dump to JSON."""
         jsondict = self.to_jsondict()
         return dump_mongo_json(jsondict)
+
+    def to_csv_as_string(self):
+        buffer = StringIO()
+        self.to_csv(buffer, encoding='utf-8')
+        return buffer.getvalue()
 
     def _column_intersect(self, _list):
         """Return the intersection of `_list` and this DataFrame's columns."""

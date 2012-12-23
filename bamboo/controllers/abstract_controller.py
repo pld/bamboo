@@ -18,6 +18,9 @@ class AbstractController(object):
 
     exposed = True
 
+    CSV = 'csv'
+    JSON = 'json'
+
     ERROR = 'error'
     SUCCESS = 'success'
 
@@ -64,10 +67,10 @@ class AbstractController(object):
         cherrypy.response.status = success_status_code if obj else 400
         if obj is None:
             obj = {self.ERROR: error_message}
-        json = dump_mongo_json(obj)
+        result = obj if isinstance(obj, str) else dump_mongo_json(obj)
         self._add_cors_headers()
 
-        return '%s(%s)' % (callback, json) if callback else json
+        return '%s(%s)' % (callback, result) if callback else result
 
     def _safe_get_and_call(self, dataset_id, action, callback=None,
                            exceptions=(), success_status_code=200,

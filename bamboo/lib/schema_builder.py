@@ -4,21 +4,22 @@ import re
 
 from bamboo.core.frame import BAMBOO_RESERVED_KEYS
 from bamboo.core.parser import Parser
-from bamboo.lib.datetools import SIMPLETYPE, DATETIME
 from bamboo.lib.mongo import MONGO_RESERVED_KEY_STRS
 
 
 OLAP_TYPE = 'olap_type'
-
-# simpletypes
-BOOLEAN = 'boolean'
-INTEGER = 'integer'
-FLOAT = 'float'
-STRING = 'string'
+SIMPLETYPE = 'simpletype'
 
 # olap_types
 DIMENSION = 'dimension'
 MEASURE = 'measure'
+
+# simpletypes
+BOOLEAN = 'boolean'
+DATETIME = 'datetime'
+INTEGER = 'integer'
+FLOAT = 'float'
+STRING = 'string'
 
 # map from numpy objects to olap_types
 DTYPE_TO_OLAP_TYPE_MAP = {
@@ -39,6 +40,16 @@ DTYPE_TO_SIMPLETYPE_MAP = {
 }
 
 RE_ENCODED_COLUMN = re.compile(r'\W')
+
+
+class Schema(dict):
+    def is_date_simpletype(self, column_schema):
+        column_schema = self[column_schema]
+        return column_schema[SIMPLETYPE] == DATETIME
+
+    def is_dimension(self, col):
+        col_schema = self.get(col)
+        return col_schema and col_schema[OLAP_TYPE] == DIMENSION
 
 
 def schema_from_data_and_dtypes(dataset, dframe):
@@ -67,7 +78,7 @@ def schema_from_data_and_dtypes(dataset, dframe):
 
     encoded_names = dict(zip(column_names, _slugify_columns(column_names)))
 
-    schema = {}
+    schema = Schema()
 
     for (name, dtype) in dtypes.items():
         if name not in BAMBOO_RESERVED_KEYS:

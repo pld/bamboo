@@ -10,9 +10,8 @@ import simplejson as json
 from bamboo.controllers.abstract_controller import AbstractController
 from bamboo.controllers.datasets import Datasets
 from bamboo.core.summary import SUMMARY
-from bamboo.lib.datetools import DATETIME
 from bamboo.lib.mongo import ILLEGAL_VALUES, MONGO_RESERVED_KEYS
-from bamboo.lib.schema_builder import SIMPLETYPE
+from bamboo.lib.schema_builder import DATETIME, SIMPLETYPE
 from bamboo.lib.utils import GROUP_DELIMITER
 from bamboo.models.dataset import Dataset
 from bamboo.tests.controllers.test_abstract_datasets import\
@@ -139,6 +138,13 @@ class TestDatasets(TestAbstractDatasets):
         self.assertTrue(isinstance(results, list))
         self.assertTrue(isinstance(results[0], dict))
         self.assertEqual(len(results), self.NUM_ROWS)
+
+    def test_show_csv(self):
+        self._post_file()
+        results = self.controller.show(self.dataset_id, format='csv')
+        self.assertTrue(isinstance(results, str))
+        # one for header, one for empty final line
+        self.assertEqual(len(results.split('\n')), self.NUM_ROWS + 2)
 
     @requires_async
     def test_show_async(self):
