@@ -67,7 +67,7 @@ Usage
 Installation
 ------------
 
-::
+.. code-block:: sh
 
     $ ./scripts/install.sh
 
@@ -79,7 +79,7 @@ Running the server in the foreground
 
 start mongodb on localhost and standard port
 
-::
+.. code-block:: sh
 
     $ python ./scripts/run_server.py
 
@@ -94,13 +94,13 @@ start mongodb on localhost and standard port
 
 start the daemon using:
 
-::
+.. code-block:: sh
 
     $ /var/www/bamboo/current/scripts/bamboo.sh start
 
 stop the daemon using:
 
-::
+.. code-block:: sh
 
     $ /var/www/bamboo/current/scripts/bamboo.sh stop
 
@@ -112,7 +112,7 @@ On the remote server
 
 running the example basic commands
 
-::
+.. code-block:: sh
 
     $ ./scripts/commands.sh
 
@@ -138,7 +138,7 @@ using `pybamboo <https://github.com/modilabs/pybamboo>`_
 
 posting a dataset
 
-::
+.. code-block:: sh
 
     $ curl -X POST -d "url=http://formhub.org/mberg/forms/good_eats/data.csv" http://bamboo.io/datasets
 
@@ -149,13 +149,13 @@ start the bamboo server as above, then
 
 run the example basic commands
 
-::
+.. code-block:: sh
 
     $ ./scripts/commands.sh -l
 
 make requests to your local server
 
-::
+.. code-block:: sh
 
     $ curl -X POST -d "url=http://formhub.org/mberg/forms/good_eats/data.csv" http://localhost:8080/datasets
 
@@ -164,20 +164,20 @@ Testing
 
 install nose testing requirements
 
-::
+.. code-block:: sh
 
     $ pip install -r requirements-test.pip
 
 run tests
 
-::
+.. code-block:: sh
 
     $ cd bamboo
     $ ../scripts/test.sh
 
 or run the profiler
 
-::
+.. code-block:: sh
 
     $ cd bamboo
     $ ../scripts/test.sh -p
@@ -199,7 +199,7 @@ on Arch Linux: ``# pacman -S graphviz``
 
 on Debian based: ``# apt-get install graphviz``
 
-::
+.. code-block:: sh
 
     $ pip install -r requirements-docs.pip
     $ cd docs
@@ -215,14 +215,14 @@ To work on the code:
 3. add the code for your new feature
 4. ensure it is pep8
 
-::
+.. code-block:: sh
 
     $ pip install pep8
     $ pep8 bamboo
 
 5. ensure all existing tests and your new tests are passing
 
-::
+.. code-block:: sh
 
     $ cd bamboo
     $ ../scripts/test.sh
