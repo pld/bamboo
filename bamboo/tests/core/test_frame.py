@@ -4,7 +4,7 @@ from pandas import Series
 
 from bamboo.core.frame import BAMBOO_RESERVED_KEYS, BambooFrame,\
     PARENT_DATASET_ID
-from bamboo.lib.datetools import DATETIME, SIMPLETYPE
+from bamboo.lib.schema_builder import DATETIME, SIMPLETYPE, Schema
 from bamboo.lib.mongo import MONGO_RESERVED_KEYS
 from bamboo.tests.test_base import TestBase
 
@@ -42,11 +42,11 @@ class TestFrame(TestBase):
             self.assertTrue(isinstance(field, datetime))
 
     def test_recognize_dates_from_schema(self):
-        schema = {
+        schema = Schema({
             'submit_date': {
                 SIMPLETYPE: DATETIME
             }
-        }
+        })
         bframe_with_dates = self.bframe.recognize_dates_from_schema(schema)
         for field in bframe_with_dates['submit_date']:
             self.assertTrue(isinstance(field, datetime))
