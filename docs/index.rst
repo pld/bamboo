@@ -52,6 +52,7 @@ Usage
 .. code-block:: python
 
     import bamboo as bm
+    from bamboo.lib.io import create_dataset_from_url
 
     bf = bm.BambooFrame([{'date': '2012-12-21'}])
     bff = bf.recognize_dates()
@@ -63,7 +64,7 @@ Usage
     bm.set_async(False)
 
     url = 'http://formhub.org/mberg/forms/good_eats/data.csv'
-    dataset = bm.create_dataset_from_url(url)
+    dataset = create_dataset_from_url(url)
     dataset.schema
 
     >>> {u'_gps_altitude': {u'cardinality': 14, u'label': u'_gps_altitude', ...
