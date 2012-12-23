@@ -5,7 +5,8 @@ import operator
 import numpy as np
 from scipy.stats import percentileofscore
 
-from bamboo.lib.datetools import parse_date_to_unix_time, parse_str_to_unix_time
+from bamboo.lib.datetools import parse_date_to_unix_time,\
+    parse_str_to_unix_time
 
 
 class EvalTerm(object):

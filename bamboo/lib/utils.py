@@ -1,7 +1,7 @@
 from math import isnan
 import os
 
-from bamboo.config.settings import ASYNCHRONOUS_TASKS
+from bamboo.config.settings import is_async
 
 # delimiter when passing multiple groups as a string
 GROUP_DELIMITER = ','
@@ -39,7 +39,7 @@ def call_async(function, *args, **kwargs):
     :param args: Arguments for the function.
     :param kwargs: Keyword arguments for the function.
     """
-    if not os.getenv('BAMBOO_ASYNC_OFF') and ASYNCHRONOUS_TASKS:
+    if is_async():
         function.__getattribute__('apply_async')(args=args, kwargs=kwargs)
     else:  # pragma: no cover
         function(*args, **kwargs)
