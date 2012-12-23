@@ -134,3 +134,23 @@ Note that the file can also contain a single dictionary, for example:
         "name": "in northern hemisphere",
         "formula": "gps_latitude > 0"
     }
+
+Create a "perishable" dataset
+-----------------------------
+
+Suppose you want to upload a dataset, perform some calculations, and use the
+results, but you do not want your data to be permanently stored.  To
+accommodate this use case dataset creation supports on optional ``perish``
+parameter.  The ``perish`` parameter is an integer which specifies the number
+of seconds after which to delete the dataset.  For example, to create a dataset
+that will be deleted after one day:
+
+``curl -X POST -d "url=http://formhub.org/mberg/forms/good_eats/data.csv&perish=86400" http://bamboo.io/datasets``
+
+**returns:**
+
+.. code-block:: javascript
+
+    {
+        "id": "8a3d74711475d8a51c84484fe73f24bd151242ea"
+    }
