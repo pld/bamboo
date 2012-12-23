@@ -175,7 +175,7 @@ class Datasets(AbstractController):
 
         return self.dump_or_error(result, error)
 
-    def create(self, url=None, csv_file=None, schema=None):
+    def create(self, url=None, csv_file=None, schema=None, perish=0):
         """Create a dataset by URL, CSV or schema file.
 
         If `url` is provided, create a dataset by downloading a CSV from that
@@ -228,6 +228,10 @@ class Datasets(AbstractController):
                 dataset = create_dataset_from_schema(schema)
             if dataset:
                 result = {Dataset.ID: dataset.dataset_id}
+
+            perish = parse_int(perish, None)
+            if perish:
+                dataset.delete(countdown=perish)
         except urllib2.URLError:
             error = 'could not load: %s' % url
         except IOError:

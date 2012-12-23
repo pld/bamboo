@@ -59,7 +59,7 @@ class TestDataset(TestBase):
         for dataset_name in self.TEST_DATASETS:
             dataset = Dataset()
             dataset.save(self.test_dataset_ids[dataset_name])
-            dataset.build_schema(self.test_data[dataset_name])
+            dataset.build_schema(self.get_data(dataset_name))
 
             # get dataset with new schema
             dataset = Dataset.find_one(self.test_dataset_ids[dataset_name])
@@ -68,7 +68,7 @@ class TestDataset(TestBase):
                     Dataset.CREATED_AT, Dataset.SCHEMA, Dataset.UPDATED_AT]:
                 self.assertTrue(key in dataset.record.keys())
 
-            df_columns = self.test_data[dataset_name].columns.tolist()
+            df_columns = self.get_data(dataset_name).columns.tolist()
             seen_columns = []
 
             for column_name, column_attributes in dataset.schema.items():
@@ -98,12 +98,12 @@ class TestDataset(TestBase):
         dataset = Dataset()
         dataset.save(self.test_dataset_ids['good_eats.csv'])
         dataset.save_observations(
-            recognize_dates(self.test_data['good_eats.csv']))
+            recognize_dates(self.get_data('good_eats.csv')))
         records = [x for x in Observation.find(dataset)]
         dframe = dataset.dframe()
 
         self.assertTrue(isinstance(dframe, DataFrame))
-        self.assertTrue(all(self.test_data['good_eats.csv'].reindex(
+        self.assertTrue(all(self.get_data('good_eats.csv').reindex(
                         columns=dframe.columns).eq(dframe)))
         columns = dframe.columns
         # ensure no reserved keys

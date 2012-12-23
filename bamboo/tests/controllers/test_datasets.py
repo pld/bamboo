@@ -27,7 +27,7 @@ class TestDatasets(TestAbstractDatasets):
         self._file_path = 'tests/fixtures/%s' % self._file_name
         self._file_uri = 'file://%s' % self._file_path
         self.url = 'http://formhub.org/mberg/forms/good_eats/data.csv'
-        self.dframe = self.test_data['good_eats.csv']
+        self.dframe = self.get_data('good_eats.csv')
         self.cardinalities = pickle.load(
             open('tests/fixtures/good_eats_cardinalities.p', 'rb'))
         self.simpletypes = pickle.load(
@@ -39,7 +39,7 @@ class TestDatasets(TestAbstractDatasets):
         # minus the column that we are grouping on
         self.assertEqual(len(result_keys), self.NUM_COLS - len(group))
         columns = [col for col in
-                   self.test_data[self._file_name].columns.tolist()
+                   self.get_data(self._file_name).columns.tolist()
                    if not col in MONGO_RESERVED_KEYS + group]
         dataset = Dataset.find_one(self.dataset_id)
         labels_to_slugs = dataset.build_labels_to_slugs()
@@ -62,11 +62,14 @@ class TestDatasets(TestAbstractDatasets):
         if query != '{}':
             self.assertEqual(len(results), num_results)
 
-    def test_create_from_file(self):
+    def _upload_mocked_file(self, **kwargs):
         _file = open(self._file_path, 'r')
         mock_uploaded_file = MockUploadedFile(_file)
-        result = json.loads(
-            self.controller.create(csv_file=mock_uploaded_file))
+        return json.loads(self.controller.create(
+            csv_file=mock_uploaded_file, **kwargs))
+
+    def test_create_from_file(self):
+        result = self._upload_mocked_file()
         self.assertTrue(isinstance(result, dict))
         self.assertTrue(Dataset.ID in result)
 
@@ -77,11 +80,8 @@ class TestDatasets(TestAbstractDatasets):
         """First data row has one cell blank, which is usually interpreted
         as nan, a float value."""
         _file_name = 'good_eats_nan_float.csv'
-        _file_path = self._file_path.replace(self._file_name, _file_name)
-        _file = open(_file_path, 'r')
-        mock_uploaded_file = MockUploadedFile(_file)
-        result = json.loads(
-            self.controller.create(csv_file=mock_uploaded_file))
+        self._file_path = self._file_path.replace(self._file_name, _file_name)
+        result = self._upload_mocked_file()
         self.assertTrue(isinstance(result, dict))
         self.assertTrue(Dataset.ID in result)
 
@@ -643,3 +643,24 @@ class TestDatasets(TestAbstractDatasets):
                                select=self.controller.SELECT_ALL_FOR_SUMMARY))
         for summary in summaries.values():
             self.assertFalse(summary is None)
+
+    @requires_async
+    def test_perishable_dataset(self):
+        perish_after = 2
+        result = self._upload_mocked_file(perish=perish_after)
+        self.assertTrue(isinstance(result, dict))
+        self.assertTrue(Dataset.ID in result)
+        dataset_id = result[Dataset.ID]
+
+        while True:
+            results = json.loads(self.controller.show(dataset_id))
+            if len(results):
+                self.assertTrue(len(results), self.NUM_ROWS)
+                break
+            sleep(self.SLEEP_DELAY)
+
+        # test that later it is deleted
+        sleep(perish_after)
+        result = json.loads(self.controller.show(dataset_id))
+        self.assertTrue(isinstance(result, dict))
+        self.assertTrue(Datasets.ERROR in result)

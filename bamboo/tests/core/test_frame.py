@@ -13,7 +13,7 @@ class TestFrame(TestBase):
 
     def setUp(self):
         TestBase.setUp(self)
-        self.dframe = self.test_data['good_eats.csv']
+        self.dframe = self.get_data('good_eats.csv')
         self.bframe = BambooFrame(self.dframe)
 
     def _add_bamboo_reserved_keys(self, value=1):

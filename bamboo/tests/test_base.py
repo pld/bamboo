@@ -31,6 +31,13 @@ class TestBase(unittest.TestCase):
     def tearDown(self):
         self._drop_database()
 
+    def get_data(self, dataset_name):
+        data = self.test_data.get(dataset_name)
+        if data is None:
+            data = self.test_data[dataset_name] = read_csv(
+                '%s%s' % (self._local_fixture_prefix(), dataset_name))
+        return data
+
     def _create_database(self):
         Database.db(TEST_DATABASE_NAME)
 
@@ -42,6 +49,4 @@ class TestBase(unittest.TestCase):
 
     def _load_test_data(self):
         for dataset_name in self.TEST_DATASETS:
-            self.test_data[dataset_name] = read_csv(
-                '%s%s' % (self._local_fixture_prefix(), dataset_name))
             self.test_dataset_ids[dataset_name] = uuid.uuid4().hex
