@@ -1,6 +1,11 @@
 Lib
 ======
 
+Async Tools
+-----------
+.. automodule:: bamboo.lib.async
+    :members:
+
 Date Tools
 ----------
 .. automodule:: bamboo.lib.datetools
