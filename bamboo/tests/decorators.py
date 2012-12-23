@@ -1,7 +1,5 @@
 from functools import wraps
-import os
 import time
-import urllib2
 
 from bamboo.config.settings import RUN_PROFILER, set_async
 

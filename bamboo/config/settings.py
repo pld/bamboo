@@ -2,6 +2,7 @@ import os
 import sys
 
 # database config
+ASYNC_FLAG = 'BAMBOO_ASYNC_OFF'
 DATABASE_NAME = 'bamboo_dev'
 TEST_DATABASE_NAME = DATABASE_NAME + '_test'
 DB_SAVE_BATCH_SIZE = 3000
@@ -11,18 +12,16 @@ DB_READ_BATCH_SIZE = 1000
 TESTING = 'test' in sys.argv[0].split('/')[-1]
 
 
-def set_async(on):
-    async_flag = 'BAMBOO_ASYNC_OFF'
-
-    if on:
-        if os.environ.get(async_flag):
-            del os.environ[async_flag]
-    else:
-        os.environ[async_flag] = '1'
-
-
 def is_async():
-    return not os.getenv('BAMBOO_ASYNC_OFF')
+    return not os.getenv(ASYNC_FLAG)
+
+
+def set_async(on):
+    if on:
+        if not is_async():
+            del os.environ[ASYNC_FLAG]
+    else:
+        os.environ[ASYNC_FLAG] = 'True'
 
 
 os.environ['CELERY_CONFIG_MODULE'] = 'bamboo.config.celeryconfig'
