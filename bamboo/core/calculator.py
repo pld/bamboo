@@ -7,7 +7,8 @@ from bamboo.core.aggregator import Aggregator
 from bamboo.core.frame import BambooFrame, NonUniqueJoinError
 from bamboo.core.parser import ParseError, Parser
 from bamboo.lib.mongo import MONGO_RESERVED_KEYS
-from bamboo.lib.utils import call_async, split_groups
+from bamboo.lib.async import call_async
+from bamboo.lib.utils import split_groups
 
 
 class Calculator(object):

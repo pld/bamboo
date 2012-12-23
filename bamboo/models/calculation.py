@@ -3,8 +3,8 @@ from celery.task import task
 from bamboo.core.calculator import Calculator
 from bamboo.core.frame import DATASET_ID
 from bamboo.core.parser import Parser
+from bamboo.lib.async import call_async
 from bamboo.lib.exceptions import ArgumentError
-from bamboo.lib.utils import call_async
 from bamboo.models.abstract_model import AbstractModel
 
 

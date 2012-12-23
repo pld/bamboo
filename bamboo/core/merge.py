@@ -5,7 +5,7 @@ from pandas import concat
 
 from bamboo.models.dataset import Dataset
 from bamboo.lib.io import import_dataset
-from bamboo.lib.utils import call_async
+from bamboo.lib.async import call_async
 
 
 class MergeError(Exception):
