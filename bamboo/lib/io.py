@@ -6,7 +6,7 @@ from celery.task import task
 import pandas as pd
 
 from bamboo.core.frame import BambooFrame
-from bamboo.lib.utils import call_async
+from bamboo.lib.async import call_async
 from bamboo.models.dataset import Dataset
 
 

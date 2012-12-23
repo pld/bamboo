@@ -12,10 +12,11 @@ from bamboo.core.calculator import Calculator
 from bamboo.core.frame import BambooFrame, BAMBOO_RESERVED_KEY_PREFIX,\
     DATASET_ID, DATASET_OBSERVATION_ID, PARENT_DATASET_ID
 from bamboo.core.summary import summarize
+from bamboo.lib.async import call_async
 from bamboo.lib.exceptions import ArgumentError
 from bamboo.lib.mongo import reserve_encoded
 from bamboo.lib.schema_builder import Schema, schema_from_data_and_dtypes
-from bamboo.lib.utils import call_async, split_groups
+from bamboo.lib.utils import split_groups
 from bamboo.models.abstract_model import AbstractModel
 from bamboo.models.calculation import Calculation
 from bamboo.models.observation import Observation
@@ -71,8 +72,11 @@ class Dataset(AbstractModel):
 
     @property
     def schema(self):
-        schema_dict = self.record.get(self.SCHEMA)
-        return Schema(schema_dict) if schema_dict else None
+        if self.record:
+            schema_dict = self.record.get(self.SCHEMA)
+            if schema_dict is not None:
+                return Schema(schema_dict)
+        return None
 
     @property
     def stats(self):

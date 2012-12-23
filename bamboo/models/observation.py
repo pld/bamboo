@@ -6,7 +6,7 @@ from pandas import Series
 from bamboo.core.frame import DATASET_OBSERVATION_ID
 from bamboo.lib.datetools import parse_timestamp_query
 from bamboo.lib.jsontools import JSONError
-from bamboo.lib.utils import call_async
+from bamboo.lib.async import call_async
 from bamboo.models.abstract_model import AbstractModel
 
 

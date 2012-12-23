@@ -1,5 +1,5 @@
 Welcome to the *bamboo* documentation!
-====================================
+======================================
 
 *bamboo* is an application that systematizes realtime data analysis. *bamboo*
 provides an interface for merging, aggregating and adding algebraic
@@ -36,14 +36,48 @@ Python
 
 `PyBamboo <https://github.com/modilabs/pybamboo>`_
 
+Python Library Usage
+--------------------
+
+Installation
+^^^^^^^^^^^^
+
+.. code-block:: bash
+
+    pip install bamboo
+
 Usage
------
+^^^^^
+
+.. code-block:: python
+
+    import bamboo as bm
+    from bamboo.lib.io import create_dataset_from_url
+
+    bf = bm.BambooFrame([{'date': '2012-12-21'}])
+    bff = bf.recognize_dates()
+    bff.to_json()
+
+    >>> '[{"date": {"$date": 1356048000000}}]'
+
+    # Turn asyncronous processing off
+    bm.set_async(False)
+
+    url = 'http://formhub.org/mberg/forms/good_eats/data.csv'
+    dataset = create_dataset_from_url(url)
+    dataset.schema
+
+    >>> {u'_gps_altitude': {u'cardinality': 14, u'label': u'_gps_altitude', ...
+
+REST API Usage
+--------------
 
 .. toctree::
    :maxdepth: 2
 
    basic_commands
    advanced_commands
+   aggregations
 
 Code Structure
 --------------
