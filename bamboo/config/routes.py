@@ -22,6 +22,8 @@ ROUTES = [
     ('datasets_create', 'POST',
         '/datasets', 'datasets', 'create'),
     ('datasets_show', 'GET',
+        '/datasets/:dataset_id.:format', 'datasets', 'show'),
+    ('datasets_show', 'GET',
         '/datasets/:dataset_id', 'datasets', 'show'),
     ('datasets_info', 'GET',
         '/datasets/:dataset_id/info', 'datasets', 'info'),

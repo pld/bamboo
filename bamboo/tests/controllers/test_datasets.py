@@ -140,6 +140,13 @@ class TestDatasets(TestAbstractDatasets):
         self.assertTrue(isinstance(results[0], dict))
         self.assertEqual(len(results), self.NUM_ROWS)
 
+    def test_show_csv(self):
+        self._post_file()
+        results = self.controller.show(self.dataset_id, format='csv')
+        self.assertTrue(isinstance(results, str))
+        # one for header, one for empty final line
+        self.assertEqual(len(results.split('\n')), self.NUM_ROWS + 2)
+
     @requires_async
     def test_show_async(self):
         self._post_file()
