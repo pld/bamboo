@@ -42,9 +42,9 @@ Python Library Usage
 Installation
 ^^^^^^^^^^^^
 
-.. code-block:: bash
+.. code-block:: sh
 
-    pip install bamboo-data
+    $ pip install bamboo-data
 
 Usage
 ^^^^^
