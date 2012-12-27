@@ -61,7 +61,7 @@ equivalent to:
 
 .. code-block:: sh
 
-    ratio(amount, gps_latitude)
+    ratio(amount, number_of_guests)
     ratio(risk_factor in ["low_risk"], risk_factor in ["low_risk", "medium_risk"])
     ratio(risk_factor in ["low_risk"], 1)
 
