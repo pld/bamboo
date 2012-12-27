@@ -52,7 +52,7 @@ class Calculations(AbstractController):
                group=None):
         """Add a calculation to a dataset with the given fomula, etc.
 
-        Create a new calculation for `dataset_id` named `name` that calulates
+        Create a new calculation for `dataset_id` named `name` that calculates
         the `formula`.  Variables in formula can only refer to columns in the
         dataset.
 
@@ -91,7 +91,7 @@ class Calculations(AbstractController):
                 raise ArgumentError('Required key %s not found in JSON' % e)
 
             return {
-                self.SUCCESS: 'created calulcation: %s for dataset: %s'
+                self.SUCCESS: 'created calculation: %s for dataset: %s'
                 % (name, dataset_id)}
 
         return self._safe_get_and_call(
