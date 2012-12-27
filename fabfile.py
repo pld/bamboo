@@ -14,8 +14,8 @@ DEPLOYMENTS = {
         'docs':         'docs',
         'branch':       'master',
         'key_filename': os.path.expanduser('~/.ssh/modilabs.pem'),
-        'init_script': 'bamboo_uwsgi.sh',
-        'celeryd':     'celeryd',
+        'init_script':  'bamboo_uwsgi.sh',
+        'celeryd':      'celeryd',
     }
 }
 
