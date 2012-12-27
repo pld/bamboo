@@ -77,6 +77,14 @@ REST API Usage
 
    basic_commands
    advanced_commands
+
+Formula Reference
+^^^^^^^^^^^^^^^^^
+
+.. toctree::
+   :maxdepth: 2
+
+   calculations
    aggregations
 
 Code Structure
