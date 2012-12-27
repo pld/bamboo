@@ -1,11 +1,15 @@
 Basic Commands
 ==============
 
-Note: on the command line some special characters may need to be escaped for
-the commands to function correctly.  E.g. ``&`` as ``\&``, ``?`` as ``\?``,
-``=`` as ``\=``.
+.. note::
 
-Note: [*SIC*] all spelling errors in the example dataset.
+    On the command line some special characters may need to be escaped for
+    the commands to function correctly.  E.g. ``&`` as ``\&``, ``?`` as ``\?``,
+    ``=`` as ``\=``.
+
+.. note::
+
+    [*SIC*] All spelling errors in the example dataset.
 
 Check the *bamboo* version
 --------------------------
@@ -497,8 +501,8 @@ The results of aggregations are stored in a dataset with one column for
 the unique groups and another for the result of the *formula*. This dataset is
 indexed by the group parameter and unique per dataset ID.
 
-Store calculation formula:
-^^^^^^^^^^^^^^^^^^^^^^^^^^
+Store calculation formula
+^^^^^^^^^^^^^^^^^^^^^^^^^
 
 ``curl -X POST -d "name=amount_less_than_10&formula=amount<10" http://bamboo.io/calculations/8a3d74711475d8a51c84484fe73f24bd151242ea``
 
@@ -507,13 +511,28 @@ Store calculation formula:
 .. code-block:: javascript
 
     {
-        "formula": "amount<10",
-        "group": null,
-        "name": "amount_less_than_10"
+        "success": "created calulcation: water_functioning_count for dataset: 8a3d74711475d8a51c84484fe73f24bd151242ea"
     }
 
-Retrieve newly calculated column:
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Retrieve a list of stored calculations
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+``curl http://bamboo.io/calculations/8a3d74711475d8a51c84484fe73f24bd151242ea``
+
+**returns:**
+
+.. code-block:: javascript
+
+    [
+        {
+            "formula": "amount<10",
+            "group": null,
+            "name": "amount_less_than_10"
+        }
+    ]
+
+Retrieve newly calculated column
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 ``curl -g http://bamboo.io/datasets/8a3d74711475d8a51c84484fe73f24bd151242ea?select='{"amount_less_than_10":1}'``
 
@@ -545,8 +564,8 @@ Retrieve newly calculated column:
         {"amount_less_than_10": true}
     ]
 
-Store aggregation formula:
-^^^^^^^^^^^^^^^^^^^^^^^^^^
+Store aggregation formula
+^^^^^^^^^^^^^^^^^^^^^^^^^
 
 ``curl -X POST -d "name=sum_of_amount&formula=sum(amount)" http://bamboo.io/calculations/8a3d74711475d8a51c84484fe73f24bd151242ea``
 
@@ -560,8 +579,8 @@ Store aggregation formula:
         "name": "sum_of_amount"
     }
 
-Store aggregation formula with group:
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Store aggregation formula with group
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 ``curl -X POST -d "name=sum_of_amount&formula=sum(amount)&group=food_type" http://bamboo.io/calculations/8a3d74711475d8a51c84484fe73f24bd151242ea``
 
@@ -575,8 +594,8 @@ Store aggregation formula with group:
          "name": "sum_of_amount"
     }
 
-Store aggregation formula with multi-group:
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Store aggregation formula with multi-group
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 ``curl -X POST -d "name=sum_of_amount&formula=sum(amount)&group=food_type,rating" http://bamboo.io/calculations/8a3d74711475d8a51c84484fe73f24bd151242ea``
 
@@ -590,10 +609,10 @@ Store aggregation formula with multi-group:
          "name": "sum_of_amount"
     }
 
-Retrieve lists of aggregated datasets:
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Retrieve lists of aggregated datasets
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-``curl -g http://bamboo.io/datasets/8a3d74711475d8a51c84484fe73f24bd151242ea/related``
+``curl -g http://bamboo.io/datasets/8a3d74711475d8a51c84484fe73f24bd151242ea/aggregations``
 
 Returns a map of groups (included an empty group) to dataset IDs for
 aggregation calculations.
@@ -608,8 +627,8 @@ aggregation calculations.
         "food_type,rating": "10cedc551e40418caa72495d771703b3"
     }
 
-Retrieve the linked datasets that groups on foodtype and rating:
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Retrieve the linked datasets that groups on foodtype and rating
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 ``curl -g http://bamboo.io/datasets/10cedc551e40418caa72495d771703b3``
 
