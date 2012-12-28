@@ -1,11 +1,15 @@
 Advanced Commands
 =================
 
-Note: on the command line some special characters may need to be escaped for
-the commands to function correctly.  E.g. ``&`` as ``\&``, ``?`` as ``\?``,
-``=`` as ``\=``.
+.. note::
 
-Note: [*SIC*] all spelling errors in the example dataset.
+    On the command line some special characters may need to be escaped for
+    the commands to function correctly.  E.g. ``&`` as ``\&``, ``?`` as ``\?``,
+    ``=`` as ``\=``.
+
+.. note::
+
+    [*SIC*] all spelling errors in the example dataset.
 
 Updating your data
 ------------------

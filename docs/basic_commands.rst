@@ -9,7 +9,7 @@ Basic Commands
 
 .. note::
 
-    [*SIC*] All spelling errors in the example dataset.
+    [*SIC*] all spelling errors in the example dataset.
 
 Check the *bamboo* version
 --------------------------
