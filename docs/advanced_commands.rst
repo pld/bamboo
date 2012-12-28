@@ -27,7 +27,9 @@ N/A values will be added when the dictionary does not supply a value for a
 given column.
 
 
-``curl -X PUT -H "Accept: application/json" -H "Content-type: application/json" -d 'update={"rating":"delectible","amount":2,"food_type":"streat_sweets"}' http://bamboo.io/datasets/8a3d74711475d8a51c84484fe73f24bd151242ea``
+.. code-block:: sh
+
+    curl -X PUT -d 'update={"rating":"delectible","amount":2,"food_type":"streat_sweets"}' http://bamboo.io/datasets/8a3d74711475d8a51c84484fe73f24bd151242ea
 
 **returns:**
 
@@ -44,7 +46,9 @@ command. This will return the ID of the new merged dataset.  The merge occurs
 in the background.  When the dataset status is set to "ready" you can be sure
 the data has been merged.
 
-``curl -X POST -d "datasets=[8123, 9123]" http://bamboo.io/datasets/merge``
+.. code-block:: sh
+
+    curl -X POST -d "datasets=[8123, 9123]" http://bamboo.io/datasets/merge
 
 **returns:**
 
@@ -80,7 +84,9 @@ For example supposing the 'food_type' column is in dataset with ID 8123 and
       hand side columns if the update matches an existing ``on`` column,
       otherwise if will have NaN for the other columns.
 
-``curl -X POST -d "dataset_id=8123&other_dataset_id=9123&on=food_type" http://bamboo.io/datasets/join``
+.. code-block:: sh
+
+    curl -X POST -d "dataset_id=8123&other_dataset_id=9123&on=food_type" http://bamboo.io/datasets/join
 
 **returns:**
 
@@ -102,7 +108,9 @@ Below is an example SDF schema file:
 Supposing this file is saved locally as ``/home/modilabs/good_eats.schema.json``,
 you can create a dataset from this scema using:
 
-``curl -X POST -F schema=@/home/modilabs/good_eats.schema.json http://bamboo.io/datasets``
+.. code-block:: sh
+
+    curl -X POST -F schema=@/home/modilabs/good_eats.schema.json http://bamboo.io/datasets
 
 **returns:**
 
@@ -126,7 +134,9 @@ Below is an example calculations JSON file:
 Supposing this file is saved locally as ``/home/modilabs/good_eats.calculations.json``,
 you can create a dataset from this scema using:
 
-``curl -X POST -F schema=@/home/modilabs/good_eats.calculations.json http://bamboo.io/calculations``
+.. code-block:: sh
+
+    curl -X POST -F schema=@/home/modilabs/good_eats.calculations.json http://bamboo.io/calculations
 
 **returns:**
 
@@ -155,7 +165,9 @@ parameter.  The ``perish`` parameter is an integer which specifies the number
 of seconds after which to delete the dataset.  For example, to create a dataset
 that will be deleted after one day:
 
-``curl -X POST -d "url=http://formhub.org/mberg/forms/good_eats/data.csv&perish=86400" http://bamboo.io/datasets``
+.. code-block:: sh
+
+    curl -X POST -d "url=http://formhub.org/mberg/forms/good_eats/data.csv&perish=86400" http://bamboo.io/datasets
 
 **returns:**
 
