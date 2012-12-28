@@ -21,17 +21,17 @@ class AbstractModel(object):
 
     __collection__ = None
 
-    STATE = 'status'
+    STATE = 'state'
     STATE_PENDING = 'pending'
     STATE_READY = 'ready'
 
     @property
-    def status(self):
+    def state(self):
         return self.record[self.STATE]
 
     @property
     def is_ready(self):
-        return self.status == self.STATE_READY
+        return self.state == self.STATE_READY
 
     @classmethod
     def set_collection(cls, collection_name):
