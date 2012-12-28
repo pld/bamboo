@@ -69,7 +69,7 @@ class AbstractController(object):
         """
         cherrypy.response.headers['Content-Type'] = 'application/json'
         cherrypy.response.status = success_status_code if obj else\
-            ERROR_STATUS_CODE
+            self.ERROR_STATUS_CODE
         if obj is None:
             obj = {self.ERROR: error_message}
         result = obj if isinstance(obj, str) else dump_mongo_json(obj)
