@@ -599,6 +599,21 @@ Retrieve newly calculated column
         {"amount_less_than_10": true}
     ]
 
+Delete a calculation
+^^^^^^^^^^^^^^^^^^^^
+
+.. code-block:: sh
+
+    curl -X DELETE http://bamboo.io/datasets/8a3d74711475d8a51c84484fe73f24bd151242ea?name=amount_less_than_10
+
+**returns:**
+
+.. code-block:: javascript
+
+    {
+        "success": "deleted dataset: 8a3d74711475d8a51c84484fe73f24bd151242ea"
+    }
+
 Store aggregation formula
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
