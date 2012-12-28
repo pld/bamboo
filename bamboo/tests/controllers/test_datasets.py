@@ -176,6 +176,7 @@ class TestDatasets(TestAbstractDatasets):
         self.assertEqual(results[Dataset.NUM_ROWS], self.NUM_ROWS)
         self.assertTrue(Dataset.NUM_COLUMNS in results.keys())
         self.assertEqual(results[Dataset.NUM_COLUMNS], self.NUM_COLS)
+        self.assertEqual(results[Dataset.STATE], Dataset.STATE_READY)
 
     def test_info_cardinality(self):
         self._post_file()
@@ -300,7 +301,7 @@ class TestDatasets(TestAbstractDatasets):
         results = self.controller.summary(
             self.dataset_id, select=self.controller.SELECT_ALL_FOR_SUMMARY)
         dataset = Dataset.find_one(self.dataset_id)
-        self.assertEqual(dataset.status, Dataset.STATE_PENDING)
+        self.assertEqual(dataset.state, Dataset.STATE_PENDING)
         results = self._test_summary_results(results)
         self.assertTrue(Datasets.ERROR in results.keys())
         self.assertTrue('not finished' in results[Datasets.ERROR])

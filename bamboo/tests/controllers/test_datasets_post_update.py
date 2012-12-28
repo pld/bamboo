@@ -24,7 +24,7 @@ class TestDatasetsPostUpdate(TestAbstractDatasets):
     def test_dataset_update_pending(self):
         self._post_file(self._file_name_with_slashes)
         dataset = Dataset.find_one(self.dataset_id)
-        self.assertEqual(dataset.status, Dataset.STATE_PENDING)
+        self.assertEqual(dataset.state, Dataset.STATE_PENDING)
         self._put_row_updates()
 
         while True:

@@ -92,7 +92,8 @@ given the id is ``8a3d74711475d8a51c84484fe73f24bd151242ea``
         "created_at": "2012-6-18 14:43:32",
         "updated_at": "2012-6-18 14:43:32",
         "num_rows": "500",
-        "num_columns": "30"
+        "num_columns": "30",
+        "state": "ready"
     }
 
 

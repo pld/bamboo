@@ -324,6 +324,7 @@ class Dataset(AbstractModel):
             self.UPDATED_AT: self.record.get(self.UPDATED_AT),
             self.NUM_COLUMNS: self.num_columns,
             self.NUM_ROWS: self.num_rows,
+            self.STATE: self.state,
         }
 
     def build_labels_to_slugs(self):
