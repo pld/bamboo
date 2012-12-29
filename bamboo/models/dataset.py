@@ -418,7 +418,7 @@ class Dataset(AbstractModel):
     def add_id_column_to_dframe(self, dframe):
         encoded_columns_map = self.schema.rename_map_for_dframe(dframe)
 
-        dframe = dframe.rename(columns=column_slugs)
+        dframe = dframe.rename(columns=encoded_columns_map)
 
         id_column = Series([self.dataset_observation_id] * len(dframe))
         id_column.name = DATASET_OBSERVATION_ID
