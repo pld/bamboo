@@ -416,15 +416,7 @@ class Dataset(AbstractModel):
         return self
 
     def add_id_column_to_dframe(self, dframe):
-        labels_to_slugs = self.schema.labels_to_slugs
-
-        # if column name is not in map assume it is already slugified
-        # (i.e. NOT a label)
-        column_slugs = {
-            column: labels_to_slugs[column] for column in
-            dframe.columns.tolist() if self.resluggable_column(column,
-                    labels_to_slugs, dframe)
-        }
+        encoded_columns_map = self.schema.rename_map_for_dframe(dframe)
 
         dframe = dframe.rename(columns=column_slugs)
 
@@ -432,11 +424,3 @@ class Dataset(AbstractModel):
         id_column.name = DATASET_OBSERVATION_ID
 
         return dframe.join(id_column)
-
-    def resluggable_column(self, column, labels_to_slugs, dframe):
-        return (
-            column in labels_to_slugs.keys() and (not column in labels_to_slugs.values()
-            or ((column in
-            labels_to_slugs.values()) and labels_to_slugs[column] != column and
-            labels_to_slugs[column] not in dframe.columns))
-        )

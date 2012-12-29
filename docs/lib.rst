@@ -27,6 +27,13 @@ Mongo Utilities
     :members:
     :private-members:
 
+
+Schema
+------
+.. autoclass:: bamboo.lib.schema_builder.Schema
+    :members:
+    :private-members:
+
 Schema Builder
 --------------
 .. automodule:: bamboo.lib.schema_builder

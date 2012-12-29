@@ -87,6 +87,41 @@ class Schema(dict):
 
         return new_schema
 
+    def rename_map_for_dframe(self, dframe):
+        """Return a map from dframe columns to slugs.
+
+        :param dframe: The DataFrame to produce the map for.
+        """
+        labels_to_slugs = self.labels_to_slugs
+
+        # if column name is not in map assume it is already slugified
+        # (i.e. NOT a label)
+        column_slugs = {
+            column: labels_to_slugs[column] for column in
+            dframe.columns.tolist() if self._resluggable_column(column,
+                    labels_to_slugs, dframe)
+        }
+
+    def _resluggable_column(self, column, labels_to_slugs, dframe):
+        """Test if column should be slugged.
+
+        A column should be slugged if:
+            1. The `column` is a key in `labels_to_slugs` and
+            2. The `column` is not a value in `labels_to_slugs` or
+                1. The `column` label is not equal to the `column` slug and
+                2. The slug is not in the `dframe`'s columns
+
+        :param column: The column to reslug.
+        :param labels_to_slugs: The labels to slugs map (only build once).
+        :param dframe: The DataFrame that column is in.
+        """
+        return (
+            column in labels_to_slugs.keys() and (not column in labels_to_slugs.values()
+            or (labels_to_slugs[column] != column and
+            labels_to_slugs[column] not in dframe.columns))
+        )
+
+
 def schema_from_dframe(dframe, schema=None):
     """Build schema from the DataFrame and a schema.
 
