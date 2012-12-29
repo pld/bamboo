@@ -7,6 +7,7 @@ from bamboo.core.parser import Parser
 from bamboo.lib.mongo import MONGO_RESERVED_KEY_STRS
 
 
+CARDINALITY = 'cardinality'
 OLAP_TYPE = 'olap_type'
 SIMPLETYPE = 'simpletype'
 
@@ -43,12 +44,21 @@ RE_ENCODED_COLUMN = re.compile(r'\W')
 
 
 class Schema(dict):
+    @classmethod
+    def safe_init(cls, arg):
+        """Make schema with potential arg of None."""
+        return cls() if arg is None else cls(arg)
+
+    def cardinality(self, column):
+        if self.is_dimension(column):
+            return self[column].get(CARDINALITY)
+
     def is_date_simpletype(self, column_schema):
         column_schema = self[column_schema]
         return column_schema[SIMPLETYPE] == DATETIME
 
-    def is_dimension(self, col):
-        col_schema = self.get(col)
+    def is_dimension(self, column):
+        col_schema = self.get(column)
         return col_schema and col_schema[OLAP_TYPE] == DIMENSION
 
 
@@ -90,7 +100,7 @@ def schema_from_data_and_dtypes(dataset, dframe):
                     dframe[name], dtype),
             }
             try:
-                column_schema[dataset.CARDINALITY] = dframe[
+                column_schema[CARDINALITY] = dframe[
                     name].nunique()
             except AttributeError as e:
                 pass

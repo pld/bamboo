@@ -40,7 +40,6 @@ class Dataset(AbstractModel):
     # metadata
     AGGREGATED_DATASETS = BAMBOO_RESERVED_KEY_PREFIX + 'linked_datasets'
     ATTRIBUTION = 'attribution'
-    CARDINALITY = 'cardinality'
     CREATED_AT = 'created_at'
     DESCRIPTION = 'description'
     ID = 'id'
@@ -72,11 +71,12 @@ class Dataset(AbstractModel):
 
     @property
     def schema(self):
+        schema_dict = {}
+
         if self.record:
             schema_dict = self.record.get(self.SCHEMA)
-            if schema_dict is not None:
-                return Schema(schema_dict)
-        return {}
+
+        return Schema.safe_init(schema_dict)
 
     @property
     def stats(self):
@@ -120,11 +120,9 @@ class Dataset(AbstractModel):
 
     def is_factor(self, col):
         return self.schema.is_dimension(col)
-        countdown = kwargs.pop('countdown', 0)
 
     def cardinality(self, col):
-        if self.is_factor(col):
-            return self.schema[col][self.CARDINALITY]
+        return self.schema.cardinality(col)
 
     def dframe(self, query=None, select=None, keep_parent_ids=False,
                limit=0, order_by=None, padded=False):
