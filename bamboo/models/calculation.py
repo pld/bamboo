@@ -140,8 +140,7 @@ class Calculation(AbstractModel):
                     'dataset' % self.group)
             dataset = dataset.aggregated_datasets[self.group]
 
-        labels_to_slugs = dataset.build_labels_to_slugs()
-        slug = labels_to_slugs.get(self.name)
+        slug = dataset.schema.labels_to_slugs.get(self.name)
 
         if slug is None:
             raise ArgumentError(

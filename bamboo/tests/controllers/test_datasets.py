@@ -37,7 +37,7 @@ class TestDatasets(TestAbstractDatasets):
                    self.get_data(self._file_name).columns.tolist()
                    if not col in MONGO_RESERVED_KEYS + group]
         dataset = Dataset.find_one(self.dataset_id)
-        labels_to_slugs = dataset.build_labels_to_slugs()
+        labels_to_slugs = dataset.schema.labels_to_slugs
         for col in columns:
             slug = labels_to_slugs[col]
             self.assertTrue(slug in result_keys,
@@ -679,9 +679,3 @@ class TestDatasets(TestAbstractDatasets):
         result = json.loads(self.controller.show(dataset_id))
         self.assertTrue(isinstance(result, dict))
         self.assertTrue(Datasets.ERROR in result)
-
-    def test_create_dataset_with_duplicate_column_names(self):
-        self._post_file('water_points.csv')
-        dframe = Dataset.find_one(self.dataset_id).dframe()
-
-        self.assertEqual(len(dframe.index), len(dframe.index.unique()))

@@ -48,6 +48,6 @@ class TestCalculator(TestBase):
 
             calculator.calculate_column(formula, name, self.group)
 
-            self.column_labels_to_slugs = self.dataset.build_labels_to_slugs()
+            self.column_labels_to_slugs = self.dataset.schema.labels_to_slugs
 
             self._test_calculation_results(name, formula)
