@@ -96,10 +96,10 @@ class Schema(dict):
 
         # if column name is not in map assume it is already slugified
         # (i.e. NOT a label)
-        column_slugs = {
+        return {
             column: labels_to_slugs[column] for column in
-            dframe.columns.tolist() if self._resluggable_column(column,
-                    labels_to_slugs, dframe)
+            dframe.columns.tolist() if self._resluggable_column(
+                column, labels_to_slugs, dframe)
         }
 
     def _resluggable_column(self, column, labels_to_slugs, dframe):
