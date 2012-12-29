@@ -49,8 +49,8 @@ class TestDatasetsFromSchema(TestAbstractDatasets):
         new_schema = dataset.schema
         self.assertEqual(set(old_schema.keys()), set(new_schema.keys()))
         for column in new_schema.keys():
-            if new_schema[column].get(Dataset.CARDINALITY):
-                self.assertEqual(new_schema[column][Dataset.CARDINALITY], 1)
+            if new_schema.cardinality(column):
+                self.assertEqual(new_schema.cardinality(column), 1)
 
     def test_create_one_from_schema_and_join(self):
         left_dataset_id = self.dataset_id

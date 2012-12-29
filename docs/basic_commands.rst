@@ -530,6 +530,23 @@ The results of aggregations are stored in a dataset with one column for
 the unique groups and another for the result of the *formula*. This dataset is
 indexed by the group parameter and unique per dataset ID.
 
+.. note::
+
+    When a two calculations with the same name are added the calculations are
+    not overwritten.
+
+    The second calculation will have a label equal to the same name as the
+    first calculation but it will have a unique slug. You can determine this
+    slug via a `dataset info call`__.
+
+__ `Retrieve information about a dataset`_
+
+.. note::
+
+    It is possible to have the same calculation label with different
+    formulas, but impossible to have the same calculation slug with
+    different formulas.
+
 Store calculation formula
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 

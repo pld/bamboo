@@ -97,12 +97,11 @@ class TestAggregations(TestCalculator):
             formula)
 
         # retrieve linked dataset
-        linked_dataset = self.dataset.aggregated_datasets[self.group]
-        self.assertFalse(linked_dataset is None)
-        linked_dframe = linked_dataset.dframe()
+        linked_dset = self.dataset.aggregated_datasets[self.group]
+        self.assertFalse(linked_dset is None)
+        linked_dframe = linked_dset.dframe()
 
-        column_labels_to_slugs = linked_dataset.build_labels_to_slugs()
-        name = column_labels_to_slugs[name]
+        name = linked_dset.schema.labels_to_slugs[name]
 
         self.assertTrue(name in linked_dframe.columns)
 
@@ -110,9 +109,9 @@ class TestAggregations(TestCalculator):
                          self.expected_length[self.group])
 
         # test that the schema is up to date
-        self.assertTrue(linked_dataset.SCHEMA in linked_dataset.record.keys())
-        self.assertTrue(isinstance(linked_dataset.schema, dict))
-        schema = linked_dataset.schema
+        self.assertTrue(linked_dset.SCHEMA in linked_dset.record.keys())
+        self.assertTrue(isinstance(linked_dset.schema, dict))
+        schema = linked_dset.schema
 
         # test slugified column names
         column_names = [name]

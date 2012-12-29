@@ -36,11 +36,16 @@ class BambooFrame(DataFrame):
     def decode_mongo_reserved_keys(self):
         """Decode MongoDB reserved keys in this DataFrame."""
         reserved_keys = self._column_intersect(MONGO_RESERVED_KEYS)
+        rename_dict = {}
+
         for key in reserved_keys:
             del self[key]
             prefixed_key = mongo_prefix_reserved_key(key)
             if prefixed_key in self.columns:
-                self.rename(columns={prefixed_key: key}, inplace=True)
+                rename_dict[prefixed_key] = key
+
+        if rename_dict:
+            self.rename(columns={prefixed_key: key}, inplace=True)
 
     def recognize_dates(self):
         return recognize_dates(self)

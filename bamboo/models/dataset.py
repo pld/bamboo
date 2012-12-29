@@ -14,8 +14,7 @@ from bamboo.core.frame import BambooFrame, BAMBOO_RESERVED_KEY_PREFIX,\
 from bamboo.core.summary import summarize
 from bamboo.lib.async import call_async
 from bamboo.lib.exceptions import ArgumentError
-from bamboo.lib.mongo import reserve_encoded
-from bamboo.lib.schema_builder import Schema, schema_from_data_and_dtypes
+from bamboo.lib.schema_builder import Schema
 from bamboo.lib.utils import split_groups
 from bamboo.models.abstract_model import AbstractModel
 from bamboo.models.calculation import Calculation
@@ -40,7 +39,6 @@ class Dataset(AbstractModel):
     # metadata
     AGGREGATED_DATASETS = BAMBOO_RESERVED_KEY_PREFIX + 'linked_datasets'
     ATTRIBUTION = 'attribution'
-    CARDINALITY = 'cardinality'
     CREATED_AT = 'created_at'
     DESCRIPTION = 'description'
     ID = 'id'
@@ -72,11 +70,12 @@ class Dataset(AbstractModel):
 
     @property
     def schema(self):
+        schema_dict = {}
+
         if self.record:
             schema_dict = self.record.get(self.SCHEMA)
-            if schema_dict is not None:
-                return Schema(schema_dict)
-        return {}
+
+        return Schema.safe_init(schema_dict)
 
     @property
     def stats(self):
@@ -120,11 +119,9 @@ class Dataset(AbstractModel):
 
     def is_factor(self, col):
         return self.schema.is_dimension(col)
-        countdown = kwargs.pop('countdown', 0)
 
     def cardinality(self, col):
-        if self.is_factor(col):
-            return self.schema[col][self.CARDINALITY]
+        return self.schema.cardinality(col)
 
     def dframe(self, query=None, select=None, keep_parent_ids=False,
                limit=0, order_by=None, padded=False):
@@ -293,14 +290,10 @@ class Dataset(AbstractModel):
 
         :param dframe: The DataFrame whose schema to merge with the current
             schema.
+        :param overwrite: If true replace schema, otherwise update.
         :param set_num_columns: If True also set the number of columns.
         """
-        current_schema = self.schema
-        new_schema = schema_from_data_and_dtypes(self, dframe)
-        if current_schema and not overwrite:
-            # merge new schema with existing schema
-            current_schema.update(new_schema)
-            new_schema = current_schema
+        new_schema = self.schema.rebuild(dframe, overwrite)
         self.set_schema(new_schema,
                         set_num_columns=(set_num_columns or overwrite))
 
@@ -326,12 +319,6 @@ class Dataset(AbstractModel):
             self.NUM_ROWS: self.num_rows,
             self.STATE: self.state,
         }
-
-    def build_labels_to_slugs(self):
-        """Build dict from column labels to slugs."""
-        return {
-            column_attrs[self.LABEL]: reserve_encoded(column_name) for
-            (column_name, column_attrs) in self.schema.items()}
 
     def observations(self, query=None, select=None, limit=0, order_by=None,
                      as_cursor=False):
@@ -410,6 +397,7 @@ class Dataset(AbstractModel):
         merged_dframe = merged_dframe.join_dataset(other, on)
         merged_dataset = self.__class__()
         merged_dataset.save()
+
         if self.num_rows and other.num_rows:
             merged_dataset.save_observations(merged_dframe)
         else:
@@ -428,13 +416,9 @@ class Dataset(AbstractModel):
         return self
 
     def add_id_column_to_dframe(self, dframe):
-        labels_to_slugs = self.build_labels_to_slugs()
+        encoded_columns_map = self.schema.rename_map_for_dframe(dframe)
 
-        # if column name is not in map assume it is already slugified
-        # (i.e. NOT a label)
-        dframe = dframe.rename(columns={
-            column: labels_to_slugs.get(column, column) for column in
-            dframe.columns.tolist()})
+        dframe = dframe.rename(columns=encoded_columns_map)
 
         id_column = Series([self.dataset_observation_id] * len(dframe))
         id_column.name = DATASET_OBSERVATION_ID

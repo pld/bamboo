@@ -4,11 +4,13 @@ import re
 
 from bamboo.core.frame import BAMBOO_RESERVED_KEYS
 from bamboo.core.parser import Parser
-from bamboo.lib.mongo import MONGO_RESERVED_KEY_STRS
+from bamboo.lib.mongo import MONGO_RESERVED_KEY_STRS, reserve_encoded
 
 
+CARDINALITY = 'cardinality'
 OLAP_TYPE = 'olap_type'
 SIMPLETYPE = 'simpletype'
+LABEL = 'label'
 
 # olap_types
 DIMENSION = 'dimension'
@@ -43,20 +45,88 @@ RE_ENCODED_COLUMN = re.compile(r'\W')
 
 
 class Schema(dict):
+    @classmethod
+    def safe_init(cls, arg):
+        """Make schema with potential arg of None."""
+        return cls() if arg is None else cls(arg)
+
+    @property
+    def labels_to_slugs(self):
+        """Build dict from column labels to slugs."""
+        return {
+            column_attrs[LABEL]: reserve_encoded(column_name) for
+            (column_name, column_attrs) in self.items()
+        }
+
+    def cardinality(self, column):
+        if self.is_dimension(column):
+            return self[column].get(CARDINALITY)
+
     def is_date_simpletype(self, column_schema):
         column_schema = self[column_schema]
         return column_schema[SIMPLETYPE] == DATETIME
 
-    def is_dimension(self, col):
-        col_schema = self.get(col)
+    def is_dimension(self, column):
+        col_schema = self.get(column)
         return col_schema and col_schema[OLAP_TYPE] == DIMENSION
 
+    def rebuild(self, dframe, overwrite=False):
+        """Rebuild a schema for a dframe.
 
-def schema_from_data_and_dtypes(dataset, dframe):
-    """Build schema from the DataFrame and the dataset.
+        :param dframe: The DataFrame whose schema to merge with the current
+            schema.
+        :param overwrite: If true replace schema, otherwise update.
+        """
+        current_schema = self
+        new_schema = schema_from_dframe(dframe, self)
 
-    :param dataset: The dataset to store the schema in.
+        if current_schema and not overwrite:
+            # merge new schema with existing schema
+            current_schema.update(new_schema)
+            new_schema = current_schema
+
+        return new_schema
+
+    def rename_map_for_dframe(self, dframe):
+        """Return a map from dframe columns to slugs.
+
+        :param dframe: The DataFrame to produce the map for.
+        """
+        labels_to_slugs = self.labels_to_slugs
+
+        # if column name is not in map assume it is already slugified
+        # (i.e. NOT a label)
+        return {
+            column: labels_to_slugs[column] for column in
+            dframe.columns.tolist() if self._resluggable_column(
+                column, labels_to_slugs, dframe)
+        }
+
+    def _resluggable_column(self, column, labels_to_slugs, dframe):
+        """Test if column should be slugged.
+
+        A column should be slugged if:
+            1. The `column` is a key in `labels_to_slugs` and
+            2. The `column` is not a value in `labels_to_slugs` or
+                1. The `column` label is not equal to the `column` slug and
+                2. The slug is not in the `dframe`'s columns
+
+        :param column: The column to reslug.
+        :param labels_to_slugs: The labels to slugs map (only build once).
+        :param dframe: The DataFrame that column is in.
+        """
+        return (
+            column in labels_to_slugs.keys() and (not column in labels_to_slugs.values()
+            or (labels_to_slugs[column] != column and
+            labels_to_slugs[column] not in dframe.columns))
+        )
+
+
+def schema_from_dframe(dframe, schema=None):
+    """Build schema from the DataFrame and a schema.
+
     :param dframe: The DataFrame to build a schema for.
+    :param schema: Existing schema, optional.
 
     :returns: A dictionary schema.
     """
@@ -70,11 +140,11 @@ def schema_from_data_and_dtypes(dataset, dframe):
     for name in dtypes.keys():
         if name not in reserved_keys:
             column_names.append(name)
-            if dataset.schema:
-                schema_for_name = dataset.schema.get(name)
+            if schema:
+                schema_for_name = schema.get(name)
                 if schema_for_name:
                     names_to_labels[name] = schema_for_name[
-                        dataset.LABEL]
+                        LABEL]
 
     encoded_names = dict(zip(column_names, _slugify_columns(column_names)))
 
@@ -83,14 +153,14 @@ def schema_from_data_and_dtypes(dataset, dframe):
     for (name, dtype) in dtypes.items():
         if name not in BAMBOO_RESERVED_KEYS:
             column_schema = {
-                dataset.LABEL: names_to_labels.get(name, name),
+                LABEL: names_to_labels.get(name, name),
                 OLAP_TYPE: _olap_type_for_data_and_dtype(
                     dframe[name], dtype),
                 SIMPLETYPE: _simpletype_for_data_and_dtype(
                     dframe[name], dtype),
             }
             try:
-                column_schema[dataset.CARDINALITY] = dframe[
+                column_schema[CARDINALITY] = dframe[
                     name].nunique()
             except AttributeError as e:
                 pass

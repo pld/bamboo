@@ -135,7 +135,7 @@ class Calculator(object):
         self._ensure_dframe()
         self._ensure_ready()
 
-        labels_to_slugs = self.dataset.build_labels_to_slugs()
+        labels_to_slugs = self.dataset.schema.labels_to_slugs
         new_dframe_raw = self._dframe_from_update(new_data, labels_to_slugs)
 
         self._check_update_is_valid(new_dframe_raw)
@@ -370,7 +370,7 @@ class Calculator(object):
         calculations = set([calc.name for calc in calculations])
 
         for group, dataset in self.dataset.aggregated_datasets.items():
-            labels_to_slugs = dataset.build_labels_to_slugs()
+            labels_to_slugs = dataset.schema.labels_to_slugs
 
             for calc in list(
                     set(labels_to_slugs.keys()).intersection(calculations)):
