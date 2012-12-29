@@ -132,15 +132,15 @@ file to the create calculations endpoint.
 
 Below is an example calculations JSON file:
 
-.. literalinclude:: ../bamboo/tests/fixtures/good_eats.calculations.json
+.. literalinclude:: ../bamboo/tests/fixtures/good_eats_group.calculations.json
    :language: javascript
 
 Supposing this file is saved locally as ``/home/modilabs/good_eats.calculations.json``,
-you can create a dataset from this scema using:
+you can create a dataset from this json file using:
 
 .. code-block:: sh
 
-    curl -X POST -F schema=@/home/modilabs/good_eats.calculations.json http://bamboo.io/calculations
+    curl -X POST -F json_file=@/home/modilabs/good_eats.calculations.json http://bamboo.io/calculations
 
 **returns:**
 

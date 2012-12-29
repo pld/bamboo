@@ -195,6 +195,21 @@ class Calculation(AbstractModel):
         return calculation.save(dataset, formula, name, group)
 
     @classmethod
+    def create_from_list_or_dict(cls, dataset, calculations):
+        if isinstance(calculations, dict):
+            calculations = [calculations]
+
+        if not len(calculations) or not isinstance(calculations, list):
+            raise ArgumentError(
+                'Improper format for JSON calculations.')
+        try:
+            for calc in calculations:
+                cls.create(dataset, calc[cls.FORMULA], calc[cls.NAME],
+                           calc.get(cls.GROUP))
+        except KeyError as e:
+            raise ArgumentError('Required key %s not found in JSON' % e)
+
+    @classmethod
     def find_one(cls, dataset_id, name, group=None):
         query = {
             DATASET_ID: dataset_id,

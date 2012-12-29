@@ -49,16 +49,19 @@ class TestCalculations(TestBase):
             error_text = 'Must provide'
         self.assertTrue(error_text in response[self.controller.ERROR])
 
-    def _test_create_from_json(self, data, non_agg_cols, group=None):
+    def _test_create_from_json(self, json_filename, non_agg_cols=1, group=None,
+                               ex_len=1):
+        json_filepath = 'tests/fixtures/%s' % json_filename
+        mock_uploaded_file = self._file_mock(json_filepath)
         dataset = Dataset.find_one(self.dataset_id)
         prev_columns = len(dataset.dframe().columns)
         response = json.loads(self.controller.create(
-            self.dataset_id, data=json.dumps(data), group=group))
+            self.dataset_id, json_file=mock_uploaded_file, group=group))
 
         self.assertTrue(isinstance(response, dict))
         self.assertTrue(self.controller.SUCCESS in response)
         self.assertTrue(self.dataset_id in response[self.controller.SUCCESS])
-        ex_len = len(data) if isinstance(data, list) else 1
+
         self.assertEqual(
             ex_len, len(json.loads(self.controller.show(self.dataset_id))))
         self.assertEqual(
@@ -265,24 +268,27 @@ class TestCalculations(TestBase):
 
     def test_create_multiple(self):
         self._post_file()
-        data = json.loads(
-            open('tests/fixtures/good_eats.calculations.json', 'r').read())
-        self._test_create_from_json(data, 2)
+        self._test_create_from_json(
+            'good_eats.calculations.json', non_agg_cols=2, ex_len=2)
+
+    def test_create_multiple_ignore_group(self):
+        self._post_file()
+        dataset = self._test_create_from_json(
+            'good_eats.calculations.json', non_agg_cols=2, ex_len=2,
+            group='risk_factor')
+
+        self.assertEqual(dataset.aggregated_datasets_dict, {})
 
     def test_create_json_single(self):
         self._post_file()
-        prev_columns = len(Dataset.find_one(self.dataset_id).dframe().columns)
-        self._test_create_from_json(
-            {'name': 'test', 'formula': 'gps_alt + amount'}, 1)
+        self._test_create_from_json('good_eats_single.calculations.json')
 
     def test_create_multiple_with_group(self):
         self._post_file()
-        prev_columns = len(Dataset.find_one(self.dataset_id).dframe().columns)
-        data = json.loads(
-            open('tests/fixtures/good_eats.calculations.json', 'r').read())
-        data.append({"name": "sum of amount", "formula": "sum(amount)"})
         group = 'risk_factor'
-        dataset = self._test_create_from_json(data, 2, group=group)
+        dataset = self._test_create_from_json(
+            'good_eats_group.calculations.json',
+            non_agg_cols=2, ex_len=3, group=group)
 
         self.assertTrue(group in dataset.aggregated_datasets_dict.keys())
 
@@ -296,11 +302,14 @@ class TestCalculations(TestBase):
 
     def test_create_with_bad_json(self):
         self._post_file()
+        json_filepath = 'tests/fixtures/good_eats_bad.calculations.json'
+        mock_uploaded_file = self._file_mock(json_filepath)
+
         self._test_error(
-            self.controller.create(self.dataset_id, data='{"name": "test"}'),
+            self.controller.create(self.dataset_id, json_file=json_filepath),
             error_text='Required')
         self._test_error(
-            self.controller.create(self.dataset_id, data='[{"name": "test"}]'),
+            self.controller.create(self.dataset_id, json_file=json_filepath),
             error_text='Required')
 
     def test_create_reserved_name(self):

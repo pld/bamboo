@@ -6,6 +6,7 @@ from pandas import read_csv
 
 from bamboo.config.db import Database
 from bamboo.config.settings import TEST_DATABASE_NAME
+from bamboo.tests.mock import MockUploadedFile
 
 
 class TestBase(unittest.TestCase):
@@ -51,3 +52,7 @@ class TestBase(unittest.TestCase):
     def _load_test_data(self):
         for dataset_name in self.TEST_DATASETS:
             self.test_dataset_ids[dataset_name] = uuid.uuid4().hex
+
+    def _file_mock(self, file_path):
+        _file = open(file_path, 'r')
+        return MockUploadedFile(_file)
