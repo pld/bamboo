@@ -11,7 +11,7 @@ from bamboo.controllers.abstract_controller import AbstractController
 from bamboo.controllers.datasets import Datasets
 from bamboo.core.summary import SUMMARY
 from bamboo.lib.mongo import ILLEGAL_VALUES, MONGO_RESERVED_KEYS
-from bamboo.lib.schema_builder import DATETIME, SIMPLETYPE
+from bamboo.lib.schema_builder import CARDINALITY, DATETIME, SIMPLETYPE
 from bamboo.lib.utils import GROUP_DELIMITER
 from bamboo.models.dataset import Dataset
 from bamboo.tests.controllers.test_abstract_datasets import\
@@ -27,11 +27,6 @@ class TestDatasets(TestAbstractDatasets):
         self._file_path = 'tests/fixtures/%s' % self._file_name
         self._file_uri = 'file://%s' % self._file_path
         self.url = 'http://formhub.org/mberg/forms/good_eats/data.csv'
-        self.dframe = self.get_data('good_eats.csv')
-        self.cardinalities = pickle.load(
-            open('tests/fixtures/good_eats_cardinalities.p', 'rb'))
-        self.simpletypes = pickle.load(
-            open('tests/fixtures/good_eats_simpletypes.p', 'rb'))
 
     def _test_summary_no_group(self, results, group=None):
         group = [group] if group else []
@@ -82,31 +77,37 @@ class TestDatasets(TestAbstractDatasets):
         _file_name = 'good_eats_nan_float.csv'
         self._file_path = self._file_path.replace(self._file_name, _file_name)
         result = self._upload_mocked_file()
+
         self.assertTrue(isinstance(result, dict))
         self.assertTrue(Dataset.ID in result)
 
         results = self._test_summary_built(result)
         self._test_summary_no_group(results)
         results = json.loads(self.controller.info(self.dataset_id))
+        simpletypes = pickle.load(
+            open('tests/fixtures/good_eats_simpletypes.p', 'rb'))
 
         for column_name, column_schema in results[Dataset.SCHEMA].items():
             self.assertEqual(
-                column_schema[SIMPLETYPE], self.simpletypes[column_name])
+                column_schema[SIMPLETYPE], simpletypes[column_name])
 
     def test_create_from_url_failure(self):
         result = json.loads(self.controller.create(url=self._file_uri))
+
         self.assertTrue(isinstance(result, dict))
         self.assertTrue(Datasets.ERROR in result)
 
     def test_create_from_url(self):
-        with patch('pandas.read_csv', return_value=self.dframe) as mock:
+        dframe = self.get_data('good_eats.csv')
+        with patch('pandas.read_csv', return_value=dframe) as mock:
             result = json.loads(self.controller.create(url=self.url))
+
         self.assertTrue(isinstance(result, dict))
         self.assertTrue(Dataset.ID in result)
 
         results = json.loads(self.controller.show(result[Dataset.ID]))
-        self.assertEqual(len(results), self.NUM_ROWS)
 
+        self.assertEqual(len(results), self.NUM_ROWS)
         self._test_summary_built(result)
 
     @requires_async
@@ -114,27 +115,32 @@ class TestDatasets(TestAbstractDatasets):
     def test_create_from_not_csv_url(self, read_csv):
         result = json.loads(self.controller.create(
             url='http://74.125.228.110/'))
+
         self.assertTrue(isinstance(result, dict))
         self.assertTrue(Dataset.ID in result)
 
         results = json.loads(self.controller.show(result[Dataset.ID]))
+
         self.assertEqual(len(results), 0)
 
     @patch('pandas.read_csv', return_value=None, side_effect=URLError(''))
     def test_create_from_bad_url(self, read_csv):
         result = json.loads(self.controller.create(
             url='http://dsfskfjdks.com'))
+
         self.assertTrue(isinstance(result, dict))
         self.assertTrue(Datasets.ERROR in result)
 
     def test_create_no_url_or_csv(self):
         result = json.loads(self.controller.create())
+
         self.assertTrue(isinstance(result, dict))
         self.assertTrue(Datasets.ERROR in result)
 
     def test_show(self):
         self._post_file()
         results = json.loads(self.controller.show(self.dataset_id))
+
         self.assertTrue(isinstance(results, list))
         self.assertTrue(isinstance(results[0], dict))
         self.assertEqual(len(results), self.NUM_ROWS)
@@ -142,6 +148,7 @@ class TestDatasets(TestAbstractDatasets):
     def test_show_csv(self):
         self._post_file()
         results = self.controller.show(self.dataset_id, format='csv')
+
         self.assertTrue(isinstance(results, str))
         # one for header, one for empty final line
         self.assertEqual(len(results.split('\n')), self.NUM_ROWS + 2)
@@ -154,6 +161,7 @@ class TestDatasets(TestAbstractDatasets):
             if len(results):
                 break
             sleep(self.SLEEP_DELAY)
+
         self.assertTrue(isinstance(results, list))
         self.assertTrue(isinstance(results[0], dict))
         self.assertEqual(len(results), self.NUM_ROWS)
@@ -163,6 +171,7 @@ class TestDatasets(TestAbstractDatasets):
         self._post_calculations(['amount < 4'])
         results = json.loads(self.controller.show(self.dataset_id,
                              select='{"amount___4": 1}'))
+
         self.assertTrue(isinstance(results, list))
         self.assertTrue(isinstance(results[0], dict))
         self.assertEqual(len(results), self.NUM_ROWS)
@@ -170,6 +179,7 @@ class TestDatasets(TestAbstractDatasets):
     def test_info(self):
         self._post_file()
         results = json.loads(self.controller.info(self.dataset_id))
+
         self.assertTrue(isinstance(results, dict))
         self.assertTrue(Dataset.SCHEMA in results.keys())
         self.assertTrue(Dataset.NUM_ROWS in results.keys())
@@ -184,10 +194,14 @@ class TestDatasets(TestAbstractDatasets):
         self.assertTrue(isinstance(results, dict))
         self.assertTrue(Dataset.SCHEMA in results.keys())
         schema = results[Dataset.SCHEMA]
+
+        cardinalities = pickle.load(
+            open('tests/fixtures/good_eats_cardinalities.p', 'rb'))
+
         for key, column in schema.items():
-            self.assertTrue(Dataset.CARDINALITY in column.keys())
+            self.assertTrue(CARDINALITY in column.keys())
             self.assertEqual(
-                column[Dataset.CARDINALITY], self.cardinalities[key])
+                column[CARDINALITY], cardinalities[key])
 
     def test_info_after_row_update(self):
         self._post_file()
@@ -665,3 +679,9 @@ class TestDatasets(TestAbstractDatasets):
         result = json.loads(self.controller.show(dataset_id))
         self.assertTrue(isinstance(result, dict))
         self.assertTrue(Datasets.ERROR in result)
+
+    def test_create_dataset_with_duplicate_column_names(self):
+        self._post_file('water_points.csv')
+        dframe = Dataset.find_one(self.dataset_id).dframe()
+
+        self.assertEqual(len(dframe.index), len(dframe.index.unique()))
