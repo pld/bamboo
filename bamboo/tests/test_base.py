@@ -18,6 +18,7 @@ class TestBase(unittest.TestCase):
         'good_eats_with_calculations.csv',
         'kenya_secondary_schools_2007.csv',
         'soil_samples.csv',
+        'water_points.csv',
     ]
 
     test_data = {}
