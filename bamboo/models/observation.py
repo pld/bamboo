@@ -1,12 +1,11 @@
 import simplejson as json
 
 from bson import json_util
-from pandas import Series
 
 from bamboo.core.frame import DATASET_OBSERVATION_ID
+from bamboo.lib.async import call_async
 from bamboo.lib.datetools import parse_timestamp_query
 from bamboo.lib.jsontools import JSONError
-from bamboo.lib.async import call_async
 from bamboo.models.abstract_model import AbstractModel
 
 
@@ -83,17 +82,8 @@ class Observation(AbstractModel):
         num_rows = 0
 
         if dframe is not None:
-            labels_to_slugs = dataset.build_labels_to_slugs()
-
-            # if column name is not in map assume it is already slugified
-            # (i.e. NOT a label)
-            dframe = dframe.rename(columns={
-                column: labels_to_slugs.get(column, column) for column in
-                dframe.columns.tolist()})
-
-            id_column = Series([dataset.dataset_observation_id] * len(dframe))
-            id_column.name = DATASET_OBSERVATION_ID
-            dframe = dframe.join(id_column)
+            if not DATASET_OBSERVATION_ID in dframe.columns:
+                dframe = dataset.add_id_column_to_dframe(dframe)
 
             self.batch_save(dframe)
             num_rows = len(dframe)

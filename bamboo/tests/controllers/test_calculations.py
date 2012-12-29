@@ -11,6 +11,8 @@ from bamboo.models.calculation import Calculation
 from bamboo.models.dataset import Dataset
 from bamboo.tests.decorators import requires_async
 from bamboo.tests.test_base import TestBase
+from bamboo.tests.controllers.test_abstract_datasets import\
+    TestAbstractDatasets
 
 
 class TestCalculations(TestBase):
@@ -65,6 +67,8 @@ class TestCalculations(TestBase):
         self.assertTrue(isinstance(response, dict))
         self.assertTrue(self.controller.SUCCESS in response)
         self.assertTrue(self.dataset_id in response[self.controller.SUCCESS])
+        dataset = Dataset.find_one(self.dataset_id)
+        self.assertEqual(TestAbstractDatasets.NUM_ROWS, len(dataset.dframe()))
 
     @requires_async
     def test_create_async_not_ready(self):
@@ -132,6 +136,8 @@ class TestCalculations(TestBase):
             sleep(self.SLEEP_DELAY)
         dataset = Dataset.find_one(self.dataset_id)
         self.assertTrue(self.name in dataset.schema.keys())
+        dataset = Dataset.find_one(self.dataset_id)
+        self.assertEqual(TestAbstractDatasets.NUM_ROWS, len(dataset.dframe()))
 
     def test_create_invalid_formula(self):
         result = json.loads(
