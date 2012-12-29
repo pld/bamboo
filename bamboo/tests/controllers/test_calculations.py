@@ -19,22 +19,30 @@ class TestCalculations(TestBase):
 
     def setUp(self):
         TestBase.setUp(self)
-        self.dataset_id = create_dataset_from_url(
-            '%s%s' % (self._local_fixture_prefix(), 'good_eats.csv'),
-            allow_local_file=True).dataset_id
         self.controller = Calculations()
+        self.dataset_id = None
         self.formula = 'amount + gps_alt'
         self.name = 'test'
+
+    def _post_file(self, filename='good_eats.csv'):
+        self.dataset_id = create_dataset_from_url(
+            '%s%s' % (self._local_fixture_prefix(), filename),
+            allow_local_file=True).dataset_id
 
     def _post_formula(self, formula=None, name=None):
         if not formula:
             formula = self.formula
         if not name:
             name = self.name
+
+        if not self.dataset_id:
+            self._post_file()
+
         return self.controller.create(self.dataset_id, formula, name)
 
     def _test_error(self, response, error_text=None):
         response = json.loads(response)
+
         self.assertTrue(isinstance(response, dict))
         self.assertTrue(self.controller.ERROR in response)
         if not error_text:
@@ -46,6 +54,7 @@ class TestCalculations(TestBase):
         prev_columns = len(dataset.dframe().columns)
         response = json.loads(self.controller.create(
             self.dataset_id, data=json.dumps(data), group=group))
+
         self.assertTrue(isinstance(response, dict))
         self.assertTrue(self.controller.SUCCESS in response)
         self.assertTrue(self.dataset_id in response[self.controller.SUCCESS])
@@ -55,19 +64,24 @@ class TestCalculations(TestBase):
         self.assertEqual(
             prev_columns + non_agg_cols,
             len(dataset.reload().dframe().columns))
+
         return dataset
 
     def test_show(self):
         self._post_formula()
         response = self.controller.show(self.dataset_id)
+
         self.assertTrue(isinstance(json.loads(response), list))
 
     def test_create(self):
         response = json.loads(self._post_formula())
+
         self.assertTrue(isinstance(response, dict))
         self.assertTrue(self.controller.SUCCESS in response)
         self.assertTrue(self.dataset_id in response[self.controller.SUCCESS])
+
         dataset = Dataset.find_one(self.dataset_id)
+
         self.assertEqual(TestAbstractDatasets.NUM_ROWS, len(dataset.dframe()))
 
     @requires_async
@@ -77,14 +91,17 @@ class TestCalculations(TestBase):
             allow_local_file=True).dataset_id
         response = json.loads(self._post_formula())
         dataset = Dataset.find_one(self.dataset_id)
+
         self.assertFalse(dataset.is_ready)
         self.assertTrue(isinstance(response, dict))
         self.assertFalse(DATASET_ID in response)
+
         while True:
             dataset = Dataset.find_one(self.dataset_id)
             if dataset.is_ready:
                 break
             sleep(self.SLEEP_DELAY)
+
         self.assertFalse(self.name in dataset.schema.keys())
 
     @requires_async
@@ -92,16 +109,21 @@ class TestCalculations(TestBase):
         self.dataset_id = create_dataset_from_url(
             '%s%s' % (self._local_fixture_prefix(), 'good_eats_huge.csv'),
             allow_local_file=True).dataset_id
+
         while True:
             dataset = Dataset.find_one(self.dataset_id)
             if dataset.is_ready:
                 break
             sleep(self.SLEEP_DELAY)
+
         response = json.loads(self._post_formula())
+
         self.assertTrue(isinstance(response, dict))
         self.assertTrue(self.controller.SUCCESS in response)
         self.assertTrue(self.dataset_id in response[self.controller.SUCCESS])
+
         response = json.loads(self.controller.show(self.dataset_id))[0]
+
         self.assertTrue(isinstance(response, dict))
         self.assertTrue(Calculation.STATE in response)
         self.assertEqual(response[Calculation.STATE],
@@ -112,65 +134,89 @@ class TestCalculations(TestBase):
             if response[Calculation.STATE] != Calculation.STATE_PENDING:
                 break
             sleep(self.SLEEP_DELAY)
+
         self.assertEqual(response[Calculation.STATE],
                          Calculation.STATE_READY)
+
         dataset = Dataset.find_one(self.dataset_id)
+
         self.assertTrue(self.name in dataset.schema.keys())
 
     @requires_async
     def test_create_async(self):
+        self._post_file()
+
         while True:
             dataset = Dataset.find_one(self.dataset_id)
             if dataset.is_ready:
                 break
             sleep(self.SLEEP_DELAY)
+
         response = json.loads(self._post_formula())
+
         self.assertTrue(isinstance(response, dict))
         self.assertTrue(self.controller.SUCCESS in response)
         self.assertTrue(self.dataset_id in response[self.controller.SUCCESS])
+
         while True:
             response = json.loads(self.controller.show(self.dataset_id))[0]
             dataset = Dataset.find_one(self.dataset_id)
             if response[Calculation.STATE] != Calculation.STATE_PENDING:
                 break
             sleep(self.SLEEP_DELAY)
+
         dataset = Dataset.find_one(self.dataset_id)
+
         self.assertTrue(self.name in dataset.schema.keys())
+
         dataset = Dataset.find_one(self.dataset_id)
+
         self.assertEqual(TestAbstractDatasets.NUM_ROWS, len(dataset.dframe()))
 
     def test_create_invalid_formula(self):
+        self._post_file()
         result = json.loads(
             self.controller.create(self.dataset_id, '=NON_EXIST', self.name))
+
         self.assertTrue(isinstance(result, dict))
         self.assertTrue(Datasets.ERROR in result.keys())
 
     def test_create_remove_summary(self):
+        self._post_file()
         Datasets().summary(
             self.dataset_id,
             select=Datasets.SELECT_ALL_FOR_SUMMARY)
         dataset = Dataset.find_one(self.dataset_id)
+
         self.assertTrue(isinstance(dataset.stats, dict))
         self.assertTrue(isinstance(dataset.stats[Dataset.ALL], dict))
+
         self._post_formula()
         # stats should have new column for calculation
         dataset = Dataset.find_one(self.dataset_id)
+
         self.assertTrue(self.name in dataset.stats.get(Dataset.ALL).keys())
 
     def test_delete_nonexistent_calculation(self):
+        self._post_file()
         result = json.loads(self.controller.delete(self.dataset_id, self.name))
+
         self.assertTrue(Calculations.ERROR in result)
 
     def test_delete(self):
         self._post_formula()
         result = json.loads(self.controller.delete(self.dataset_id, self.name))
+
         self.assertTrue(AbstractController.SUCCESS in result)
+
         dataset = Dataset.find_one(self.dataset_id)
-        self.assertTrue(self.name not in dataset.build_labels_to_slugs())
+
+        self.assertTrue(self.name not in dataset.schema.labels_to_slugs)
 
     def test_show_jsonp(self):
         self._post_formula()
         results = self.controller.show(self.dataset_id, callback='jsonp')
+
         self.assertEqual('jsonp(', results[0:6])
         self.assertEqual(')', results[-1])
 
@@ -178,10 +224,13 @@ class TestCalculations(TestBase):
         self.formula = 'sum(amount)'
         self.name = 'test'
         response = json.loads(self._post_formula())
+
         self.assertTrue(isinstance(response, dict))
         self.assertTrue(self.controller.SUCCESS in response)
         self.assertTrue(self.dataset_id in response[self.controller.SUCCESS])
+
         dataset = Dataset.find_one(self.dataset_id)
+
         self.assertTrue('' in dataset.aggregated_datasets_dict.keys())
 
     def test_delete_aggregation(self):
@@ -190,10 +239,13 @@ class TestCalculations(TestBase):
         response = json.loads(self._post_formula())
         result = json.loads(
             self.controller.delete(self.dataset_id, self.name, ''))
+
         self.assertTrue(AbstractController.SUCCESS in result)
+
         dataset = Dataset.find_one(self.dataset_id)
         agg_dataset = Dataset.find_one(dataset.aggregated_datasets_dict[''])
-        self.assertTrue(self.name not in agg_dataset.build_labels_to_slugs())
+
+        self.assertTrue(self.name not in agg_dataset.schema.labels_to_slugs)
 
     def test_error_on_delete_calculation_with_dependency(self):
         self._post_formula()
@@ -201,33 +253,41 @@ class TestCalculations(TestBase):
         self.formula = dep_name
         self.name = 'test1'
         response = json.loads(self._post_formula())
+
         self.assertTrue(isinstance(response, dict))
         self.assertTrue(self.controller.SUCCESS in response)
+
         result = json.loads(
             self.controller.delete(self.dataset_id, dep_name, ''))
+
         self.assertTrue(AbstractController.ERROR in result)
         self.assertTrue('depend' in result[AbstractController.ERROR])
 
     def test_create_multiple(self):
+        self._post_file()
         data = json.loads(
             open('tests/fixtures/good_eats.calculations.json', 'r').read())
         self._test_create_from_json(data, 2)
 
     def test_create_json_single(self):
+        self._post_file()
         prev_columns = len(Dataset.find_one(self.dataset_id).dframe().columns)
         self._test_create_from_json(
             {'name': 'test', 'formula': 'gps_alt + amount'}, 1)
 
     def test_create_multiple_with_group(self):
+        self._post_file()
         prev_columns = len(Dataset.find_one(self.dataset_id).dframe().columns)
         data = json.loads(
             open('tests/fixtures/good_eats.calculations.json', 'r').read())
         data.append({"name": "sum of amount", "formula": "sum(amount)"})
         group = 'risk_factor'
         dataset = self._test_create_from_json(data, 2, group=group)
+
         self.assertTrue(group in dataset.aggregated_datasets_dict.keys())
 
     def test_create_with_missing_args(self):
+        self._post_file()
         self._test_error(self.controller.create(self.dataset_id))
         self._test_error(
             self.controller.create(self.dataset_id, formula='gps_alt'))
@@ -235,6 +295,7 @@ class TestCalculations(TestBase):
             self.controller.create(self.dataset_id, name='test'))
 
     def test_create_with_bad_json(self):
+        self._post_file()
         self._test_error(
             self.controller.create(self.dataset_id, data='{"name": "test"}'),
             error_text='Required')
@@ -245,12 +306,46 @@ class TestCalculations(TestBase):
     def test_create_reserved_name(self):
         name = 'sum'
         response = json.loads(self._post_formula(None, name))
+
         self.assertTrue(isinstance(response, dict))
         self.assertTrue(self.controller.SUCCESS in response)
         self.assertTrue(self.dataset_id in response[self.controller.SUCCESS])
+
         dataset = Dataset.find_one(self.dataset_id)
-        slug = dataset.build_labels_to_slugs()[name]
+        slug = dataset.schema.labels_to_slugs[name]
         response = json.loads(self._post_formula('%s + amount' % slug))
+
         self.assertTrue(isinstance(response, dict))
         self.assertTrue(self.controller.SUCCESS in response)
         self.assertTrue(self.dataset_id in response[self.controller.SUCCESS])
+
+    def test_create_dataset_with_duplicate_column_names(self):
+        formula_names = [
+            'protected_waterpoint'  # an already slug column
+            'protected/waterpoint'  # a non-slug column
+            'region'                # an existing column
+            'sum'                   # a reserved key
+            'date'                  # a reserved key and an existing column
+        ]
+
+        for formula_name in formula_names:
+            self._post_file('water_points.csv')
+            dframe_before = Dataset.find_one(self.dataset_id).dframe()
+
+            response = json.loads(self.controller.create(
+                self.dataset_id,
+                'water_source_type in ["borehole"]',
+                formula_name))
+
+            self.assertTrue(isinstance(response, dict))
+            self.assertTrue(self.controller.SUCCESS in response)
+
+            dataset = Dataset.find_one(self.dataset_id)
+            dframe_after = dataset.dframe()
+            slug = dataset.schema.labels_to_slugs[formula_name]
+
+            self.assertEqual(len(dframe_before), len(dframe_after))
+            self.assertTrue(slug not in dframe_before.columns)
+            self.assertTrue(slug in dframe_after.columns)
+            self.assertEqual(
+                len(dframe_before.columns) + 1, len(dframe_after.columns))

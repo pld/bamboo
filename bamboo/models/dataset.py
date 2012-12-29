@@ -14,8 +14,7 @@ from bamboo.core.frame import BambooFrame, BAMBOO_RESERVED_KEY_PREFIX,\
 from bamboo.core.summary import summarize
 from bamboo.lib.async import call_async
 from bamboo.lib.exceptions import ArgumentError
-from bamboo.lib.mongo import reserve_encoded
-from bamboo.lib.schema_builder import Schema, schema_from_data_and_dtypes
+from bamboo.lib.schema_builder import Schema
 from bamboo.lib.utils import split_groups
 from bamboo.models.abstract_model import AbstractModel
 from bamboo.models.calculation import Calculation
@@ -291,14 +290,10 @@ class Dataset(AbstractModel):
 
         :param dframe: The DataFrame whose schema to merge with the current
             schema.
+        :param overwrite: If true replace schema, otherwise update.
         :param set_num_columns: If True also set the number of columns.
         """
-        current_schema = self.schema
-        new_schema = schema_from_data_and_dtypes(self, dframe)
-        if current_schema and not overwrite:
-            # merge new schema with existing schema
-            current_schema.update(new_schema)
-            new_schema = current_schema
+        new_schema = self.schema.rebuild(dframe, overwrite)
         self.set_schema(new_schema,
                         set_num_columns=(set_num_columns or overwrite))
 
@@ -324,12 +319,6 @@ class Dataset(AbstractModel):
             self.NUM_ROWS: self.num_rows,
             self.STATE: self.state,
         }
-
-    def build_labels_to_slugs(self):
-        """Build dict from column labels to slugs."""
-        return {
-            column_attrs[self.LABEL]: reserve_encoded(column_name) for
-            (column_name, column_attrs) in self.schema.items()}
 
     def observations(self, query=None, select=None, limit=0, order_by=None,
                      as_cursor=False):
@@ -408,6 +397,7 @@ class Dataset(AbstractModel):
         merged_dframe = merged_dframe.join_dataset(other, on)
         merged_dataset = self.__class__()
         merged_dataset.save()
+
         if self.num_rows and other.num_rows:
             merged_dataset.save_observations(merged_dframe)
         else:
@@ -426,15 +416,27 @@ class Dataset(AbstractModel):
         return self
 
     def add_id_column_to_dframe(self, dframe):
-        labels_to_slugs = self.build_labels_to_slugs()
+        labels_to_slugs = self.schema.labels_to_slugs
 
         # if column name is not in map assume it is already slugified
         # (i.e. NOT a label)
-        dframe = dframe.rename(columns={
-            column: labels_to_slugs.get(column, column) for column in
-            dframe.columns.tolist()})
+        column_slugs = {
+            column: labels_to_slugs[column] for column in
+            dframe.columns.tolist() if self.resluggable_column(column,
+                    labels_to_slugs, dframe)
+        }
+
+        dframe = dframe.rename(columns=column_slugs)
 
         id_column = Series([self.dataset_observation_id] * len(dframe))
         id_column.name = DATASET_OBSERVATION_ID
 
         return dframe.join(id_column)
+
+    def resluggable_column(self, column, labels_to_slugs, dframe):
+        return (
+            column in labels_to_slugs.keys() and (not column in labels_to_slugs.values()
+            or ((column in
+            labels_to_slugs.values()) and labels_to_slugs[column] != column and
+            labels_to_slugs[column] not in dframe.columns))
+        )
