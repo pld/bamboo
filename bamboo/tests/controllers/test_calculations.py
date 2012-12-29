@@ -45,8 +45,10 @@ class TestCalculations(TestBase):
 
         self.assertTrue(isinstance(response, dict))
         self.assertTrue(self.controller.ERROR in response)
+
         if not error_text:
             error_text = 'Must provide'
+
         self.assertTrue(error_text in response[self.controller.ERROR])
 
     def _test_create_from_json(self, json_filename, non_agg_cols=1, group=None,
@@ -309,10 +311,12 @@ class TestCalculations(TestBase):
             self.controller.create(self.dataset_id,
                 json_file=mock_uploaded_file),
             error_text='Required')
+
+        # Mock is now an empty file
         self._test_error(
             self.controller.create(self.dataset_id,
                 json_file=mock_uploaded_file),
-            error_text='Required')
+            error_text='No JSON')
 
     def test_create_reserved_name(self):
         name = 'sum'
