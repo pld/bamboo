@@ -599,6 +599,24 @@ Retrieve newly calculated column
         {"amount_less_than_10": true}
     ]
 
+Delete a calculation
+^^^^^^^^^^^^^^^^^^^^
+
+To delete a calculation pass the calculation name in a delete request to
+calculation/[dataset ID]
+
+.. code-block:: sh
+
+    curl -X DELETE http://bamboo.io/calculations/8a3d74711475d8a51c84484fe73f24bd151242ea?name=amount_less_than_10
+
+**returns:**
+
+.. code-block:: javascript
+
+    {
+        "success": "deleted dataset: 8a3d74711475d8a51c84484fe73f24bd151242ea"
+    }
+
 Store aggregation formula
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
