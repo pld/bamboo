@@ -147,7 +147,7 @@ you can create a dataset from this json file using:
 .. code-block:: javascript
 
     {
-        "id": "8a3d74711475d8a51c84484fe73f24bd151242ea"
+        "success": "created calculations from JSON for dataset: 8a3d74711475d8a51c84484fe73f24bd151242ea"
     }
 
 Note that the file can also contain a single dictionary, for example:
