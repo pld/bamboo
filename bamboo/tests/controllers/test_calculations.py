@@ -306,10 +306,12 @@ class TestCalculations(TestBase):
         mock_uploaded_file = self._file_mock(json_filepath)
 
         self._test_error(
-            self.controller.create(self.dataset_id, json_file=json_filepath),
+            self.controller.create(self.dataset_id,
+                json_file=mock_uploaded_file),
             error_text='Required')
         self._test_error(
-            self.controller.create(self.dataset_id, json_file=json_filepath),
+            self.controller.create(self.dataset_id,
+                json_file=mock_uploaded_file),
             error_text='Required')
 
     def test_create_reserved_name(self):
