@@ -5,7 +5,7 @@ from time import gmtime, strftime
 
 from celery.task import task
 from celery.contrib.methods import task as class_task
-from pandas import concat
+from pandas import concat, Series
 
 from bamboo.config.settings import DB_READ_BATCH_SIZE
 from bamboo.core.calculator import Calculator
@@ -381,6 +381,7 @@ class Dataset(AbstractModel):
         """
         self.build_schema(dframe, overwrite=overwrite,
                           set_num_columns=set_num_columns)
+        dframe = self.add_id_column_to_dframe(dframe)
         Observation.delete_all(self)
         return self.save_observations(dframe)
 
@@ -425,3 +426,17 @@ class Dataset(AbstractModel):
     def reload(self):
         self.record = Dataset.find_one(self.dataset_id).record
         return self
+
+    def add_id_column_to_dframe(self, dframe):
+        labels_to_slugs = self.build_labels_to_slugs()
+
+        # if column name is not in map assume it is already slugified
+        # (i.e. NOT a label)
+        dframe = dframe.rename(columns={
+            column: labels_to_slugs.get(column, column) for column in
+            dframe.columns.tolist()})
+
+        id_column = Series([self.dataset_observation_id] * len(dframe))
+        id_column.name = DATASET_OBSERVATION_ID
+
+        return dframe.join(id_column)
