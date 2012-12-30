@@ -24,11 +24,6 @@ class TestCalculations(TestBase):
         self.formula = 'amount + gps_alt'
         self.name = 'test'
 
-    def _post_file(self, filename='good_eats.csv'):
-        self.dataset_id = create_dataset_from_url(
-            '%s%s' % (self._local_fixture_prefix(), filename),
-            allow_local_file=True).dataset_id
-
     def _post_formula(self, formula=None, name=None):
         if not formula:
             formula = self.formula
@@ -36,7 +31,7 @@ class TestCalculations(TestBase):
             name = self.name
 
         if not self.dataset_id:
-            self._post_file()
+            self.dataset_id = self._post_file()
 
         return self.controller.create(self.dataset_id, formula, name)
 
@@ -149,7 +144,7 @@ class TestCalculations(TestBase):
 
     @requires_async
     def test_create_async(self):
-        self._post_file()
+        self.dataset_id = self._post_file()
 
         while True:
             dataset = Dataset.find_one(self.dataset_id)
@@ -179,19 +174,19 @@ class TestCalculations(TestBase):
         self.assertEqual(TestAbstractDatasets.NUM_ROWS, len(dataset.dframe()))
 
     def test_create_invalid_formula(self):
-        self._post_file()
+        dataset_id = self._post_file()
         result = json.loads(
-            self.controller.create(self.dataset_id, '=NON_EXIST', self.name))
+            self.controller.create(dataset_id, '=NON_EXIST', self.name))
 
         self.assertTrue(isinstance(result, dict))
         self.assertTrue(Datasets.ERROR in result.keys())
 
     def test_create_remove_summary(self):
-        self._post_file()
+        dataset_id = self._post_file()
         Datasets().summary(
             self.dataset_id,
             select=Datasets.SELECT_ALL_FOR_SUMMARY)
-        dataset = Dataset.find_one(self.dataset_id)
+        dataset = Dataset.find_one(dataset_id)
 
         self.assertTrue(isinstance(dataset.stats, dict))
         self.assertTrue(isinstance(dataset.stats[Dataset.ALL], dict))
@@ -203,8 +198,8 @@ class TestCalculations(TestBase):
         self.assertTrue(self.name in dataset.stats.get(Dataset.ALL).keys())
 
     def test_delete_nonexistent_calculation(self):
-        self._post_file()
-        result = json.loads(self.controller.delete(self.dataset_id, self.name))
+        dataset_id = self._post_file()
+        result = json.loads(self.controller.delete(dataset_id, self.name))
 
         self.assertTrue(Calculations.ERROR in result)
 
@@ -269,12 +264,12 @@ class TestCalculations(TestBase):
         self.assertTrue('depend' in result[AbstractController.ERROR])
 
     def test_create_multiple(self):
-        self._post_file()
+        self.dataset_id = self._post_file()
         self._test_create_from_json(
             'good_eats.calculations.json', non_agg_cols=2, ex_len=2)
 
     def test_create_multiple_ignore_group(self):
-        self._post_file()
+        self.dataset_id = self._post_file()
         dataset = self._test_create_from_json(
             'good_eats.calculations.json', non_agg_cols=2, ex_len=2,
             group='risk_factor')
@@ -282,11 +277,11 @@ class TestCalculations(TestBase):
         self.assertEqual(dataset.aggregated_datasets_dict, {})
 
     def test_create_json_single(self):
-        self._post_file()
+        self.dataset_id = self._post_file()
         self._test_create_from_json('good_eats_single.calculations.json')
 
     def test_create_multiple_with_group(self):
-        self._post_file()
+        self.dataset_id = self._post_file()
         group = 'risk_factor'
         dataset = self._test_create_from_json(
             'good_eats_group.calculations.json',
@@ -295,7 +290,7 @@ class TestCalculations(TestBase):
         self.assertTrue(group in dataset.aggregated_datasets_dict.keys())
 
     def test_create_with_missing_args(self):
-        self._post_file()
+        self.dataset_id = self._post_file()
         self._test_error(self.controller.create(self.dataset_id))
         self._test_error(
             self.controller.create(self.dataset_id, formula='gps_alt'))
@@ -303,8 +298,9 @@ class TestCalculations(TestBase):
             self.controller.create(self.dataset_id, name='test'))
 
     def test_create_with_bad_json(self):
-        self._post_file()
-        json_filepath = 'tests/fixtures/good_eats_bad.calculations.json'
+        self.dataset_id = self._post_file()
+        json_filepath = self._fixture_path_prefix(
+            'good_eats_bad.calculations.json')
         mock_uploaded_file = self._file_mock(json_filepath)
 
         self._test_error(
@@ -344,18 +340,18 @@ class TestCalculations(TestBase):
         ]
 
         for formula_name in formula_names:
-            self._post_file('water_points.csv')
-            dframe_before = Dataset.find_one(self.dataset_id).dframe()
+            dataset_id = self._post_file('water_points.csv')
+            dframe_before = Dataset.find_one(dataset_id).dframe()
 
             response = json.loads(self.controller.create(
-                self.dataset_id,
+                dataset_id,
                 'water_source_type in ["borehole"]',
                 formula_name))
 
             self.assertTrue(isinstance(response, dict))
             self.assertTrue(self.controller.SUCCESS in response)
 
-            dataset = Dataset.find_one(self.dataset_id)
+            dataset = Dataset.find_one(dataset_id)
             dframe_after = dataset.dframe()
             slug = dataset.schema.labels_to_slugs[formula_name]
 

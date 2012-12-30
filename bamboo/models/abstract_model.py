@@ -58,7 +58,7 @@ class AbstractModel(object):
         return cls.__collection__
 
     @classmethod
-    def find(cls, query, select=None, as_dict=False,
+    def find(cls, query, select=None, distinct=None, as_dict=False,
              limit=0, order_by=None, as_cursor=False):
         """An interface to MongoDB's find functionality.
 
@@ -83,14 +83,14 @@ class AbstractModel(object):
                 sort_dir, field = 1, order_by
             order_by = [(field, sort_dir)]
 
-        records = cls.collection.find(
+        cursor = cls.collection.find(
             query, select, sort=order_by, limit=limit)
 
         if as_cursor:
-            return records
+            return cursor
         else:
-            return [record for record in records] if as_dict else [
-                cls(record) for record in records
+            return [record for record in cursor] if as_dict else [
+                cls(record) for record in cursor
             ]
 
     @classmethod

@@ -16,13 +16,17 @@ class TestDatasetsFromSchema(TestAbstractDatasets):
     def _upload_from_schema(self, file_name):
         schema = open('tests/fixtures/%s' % file_name)
         mock_uploaded_file = MockUploadedFile(schema)
+
         return json.loads(self.controller.create(schema=mock_uploaded_file))
 
     def test_create_from_schema(self):
         results = json.loads(self.controller.show(self.dataset_id))
+
         self.assertTrue(isinstance(results, list))
         self.assertEqual(len(results), 0)
+
         results = json.loads(self.controller.info(self.dataset_id))
+
         self.assertTrue(isinstance(results, dict))
         self.assertTrue(Dataset.SCHEMA in results.keys())
         self.assertTrue(Dataset.NUM_ROWS in results.keys())
@@ -32,21 +36,29 @@ class TestDatasetsFromSchema(TestAbstractDatasets):
 
     def test_create_from_schema_and_update(self):
         results = json.loads(self.controller.show(self.dataset_id))
-        self.assertFalse(len(results))
-        dataset = Dataset.find_one(self.dataset_id)
-        self.assertEqual(dataset.num_rows, 0)
-        old_schema = dataset.schema
 
+        self.assertFalse(len(results))
+
+        dataset = Dataset.find_one(self.dataset_id)
+
+        self.assertEqual(dataset.num_rows, 0)
+
+        old_schema = dataset.schema
         self._put_row_updates()
         results = json.loads(self.controller.show(self.dataset_id))
 
         self.assertTrue(len(results))
+
         for result in results:
             self.assertTrue(isinstance(result, dict))
             self.assertTrue(len(result.keys()))
+
         dataset = Dataset.find_one(self.dataset_id)
+
         self.assertEqual(dataset.num_rows, 1)
+
         new_schema = dataset.schema
+
         self.assertEqual(set(old_schema.keys()), set(new_schema.keys()))
         for column in new_schema.keys():
             if new_schema.cardinality(column):
@@ -54,12 +66,12 @@ class TestDatasetsFromSchema(TestAbstractDatasets):
 
     def test_create_one_from_schema_and_join(self):
         left_dataset_id = self.dataset_id
-        self._post_file('good_eats_aux.csv')
+        right_dataset_id = self._post_file('good_eats_aux.csv')
 
         on = 'food_type'
         dataset_id_tuples = [
-            (left_dataset_id, self.dataset_id),
-            (self.dataset_id, left_dataset_id),
+            (left_dataset_id, right_dataset_id),
+            (right_dataset_id, left_dataset_id),
         ]
 
         for dataset_ids in dataset_id_tuples:

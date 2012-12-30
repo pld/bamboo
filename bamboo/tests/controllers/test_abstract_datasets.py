@@ -3,8 +3,9 @@ import simplejson as json
 from bamboo.controllers.calculations import Calculations
 from bamboo.controllers.datasets import Datasets
 from bamboo.core.frame import BambooFrame
-from bamboo.lib.io import create_dataset_from_url
+from bamboo.core.summary import SUMMARY
 from bamboo.lib.jsontools import series_to_jsondict
+from bamboo.lib.mongo import MONGO_RESERVED_KEYS
 from bamboo.models.dataset import Dataset
 from bamboo.tests.test_base import TestBase
 
@@ -45,15 +46,8 @@ class TestAbstractDatasets(TestBase):
         with open(self._update_check_file_path, 'r') as f:
             self._update_values = json.loads(f.read())
 
-    def _post_file(self, file_name=None):
-        if file_name is None:
-            file_name = self._file_name
-
-        self.dataset_id = create_dataset_from_url(
-            '%s%s' % (self._local_fixture_prefix(), file_name),
-            allow_local_file=True).dataset_id
-
-        self.schema = json.loads(
+    def _load_schema(self):
+        return json.loads(
             self.controller.info(self.dataset_id))[Dataset.SCHEMA]
 
     def _check_dframes_are_equal(self, dframe1, dframe2):
@@ -78,12 +72,13 @@ class TestAbstractDatasets(TestBase):
         return row
 
     def _post_calculations(self, formulae=[], group=None):
-        # must call after _post_file
+        schema = self._load_schema()
         controller = Calculations()
 
         for idx, formula in enumerate(formulae):
-            name = 'calc_%d' % idx if not self.schema or\
-                formula in self.schema.keys() else formula
+            name = 'calc_%d' % idx if not schema or\
+                formula in schema.keys() else formula
+
             controller.create(self.dataset_id, formula=formula, name=name,
                               group=group)
 
@@ -114,3 +109,26 @@ class TestAbstractDatasets(TestBase):
 
         # inspect linked dataset
         return json.loads(self.controller.show(linked_dataset_id))
+
+    def _test_summary_no_group(self, results, dataset_id=None, group=None):
+        if not dataset_id:
+            dataset_id = self.dataset_id
+
+        group = [group] if group else []
+        result_keys = results.keys()
+
+        # minus the column that we are grouping on
+        self.assertEqual(len(result_keys), self.NUM_COLS - len(group))
+
+        columns = [col for col in
+                   self.get_data(self._file_name).columns.tolist()
+                   if not col in MONGO_RESERVED_KEYS + group]
+
+        dataset = Dataset.find_one(dataset_id)
+        labels_to_slugs = dataset.schema.labels_to_slugs
+
+        for col in columns:
+            slug = labels_to_slugs[col]
+            self.assertTrue(slug in result_keys,
+                            'col (slug): %s in: %s' % (slug, result_keys))
+            self.assertTrue(SUMMARY in results[slug].keys())
