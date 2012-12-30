@@ -180,6 +180,24 @@ column.
         {"rating": "epic_eat"}
     ]
 
+By ID with distinct
+^^^^^^^^^^^^^^^^^^^
+
+.. code-block:: sh
+
+    curl -g http://bamboo.io/datasets/8a3d74711475d8a51c84484fe73f24bd151242ea?select='{"rating":1}&distinct=rating'
+
+This returns the dataset as JSON only including distinct results for the parameter
+passed as `distinct`.
+
+**returns:**
+
+.. code-block:: javascript
+
+    [
+        {"rating": "epic_eat"},
+        {"rating": "delectible"},
+    ]
 
 By ID and query
 ^^^^^^^^^^^^^^^

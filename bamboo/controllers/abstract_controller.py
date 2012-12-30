@@ -24,6 +24,7 @@ class AbstractController(object):
     ERROR = 'error'
     SUCCESS = 'success'
 
+    DEFAULT_ERROR_MESSAGE = 'id not found'
     DEFAULT_SUCCESS_STATUS_CODE = 200
     ERROR_STATUS_CODE = 400
 
@@ -80,7 +81,7 @@ class AbstractController(object):
     def _safe_get_and_call(self, dataset_id, action, callback=None,
                            exceptions=(),
                            success_status_code=DEFAULT_SUCCESS_STATUS_CODE,
-                           error = 'id not found', **kwargs):
+                           error=DEFAULT_ERROR_MESSAGE):
         """Find dataset and call action with it and kwargs.
 
         Finds the dataset by `dataset_id` then calls function `action` and
@@ -110,7 +111,7 @@ class AbstractController(object):
 
         try:
             if dataset.record:
-                result = action(dataset, **kwargs)
+                result = action(dataset)
         except exceptions as err:
             error = err.__str__()
 

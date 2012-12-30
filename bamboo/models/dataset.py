@@ -144,7 +144,7 @@ class Dataset(AbstractModel):
             `keep_parent_ids` is False.
         """
         observations = self.observations(
-            query=query, select=select, distinct=distinct, limit=limit, order_by=order_by,
+            query=query, select=select, limit=limit, order_by=order_by,
             as_cursor=True)
 
         batches = int(ceil(float(observations.count(with_limit_and_skip=True))
@@ -328,7 +328,7 @@ class Dataset(AbstractModel):
             self.STATE: self.state,
         }
 
-    def observations(self, query=None, select=None, distinct=None, limit=0, order_by=None,
+    def observations(self, query=None, select=None, limit=0, order_by=None,
                      as_cursor=False):
         """Return observations for this dataset.
 
@@ -338,7 +338,7 @@ class Dataset(AbstractModel):
             to this maximum.
         :param order_by: Order the returned observations.
         """
-        return Observation.find(self, query, select, distinct=distinct, limit=limit,
+        return Observation.find(self, query, select, limit=limit,
                                 order_by=order_by, as_cursor=as_cursor)
 
     def calculations(self):

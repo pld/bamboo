@@ -6,6 +6,7 @@ from pandas import read_csv
 
 from bamboo.config.db import Database
 from bamboo.config.settings import TEST_DATABASE_NAME
+from bamboo.lib.io import create_dataset_from_csv
 from bamboo.tests.mock import MockUploadedFile
 
 
@@ -46,8 +47,11 @@ class TestBase(unittest.TestCase):
     def _drop_database(self):
         Database.connection().drop_database(TEST_DATABASE_NAME)
 
-    def _local_fixture_prefix(self):
-        return 'file://localhost%s/tests/fixtures/' % os.getcwd()
+    def _local_fixture_prefix(self, filename=''):
+        return 'file://localhost%s/tests/fixtures/%s' % (os.getcwd(), filename)
+
+    def _fixture_path_prefix(self, filename=''):
+        return '/%s/tests/fixtures/%s' % (os.getcwd(), filename)
 
     def _load_test_data(self):
         for dataset_name in self.TEST_DATASETS:
@@ -56,3 +60,8 @@ class TestBase(unittest.TestCase):
     def _file_mock(self, file_path):
         _file = open(file_path, 'r')
         return MockUploadedFile(_file)
+
+    def _post_file(self, file_name='good_eats.csv'):
+        return create_dataset_from_csv(
+            self._file_mock(self._fixture_path_prefix(file_name))
+            ).dataset_id

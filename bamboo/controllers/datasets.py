@@ -89,16 +89,17 @@ class Datasets(AbstractController):
         :raises: `ArgumentError` if no select is supplied or dataset is not in
             ready state.
         """
-        limit = parse_int(limit, 0)
-
-        def _action(dataset, query=query, select=select, group=group,
-                    limit=limit, order_by=order_by):
+        def _action(dataset, select=select, limit=limit):
             if not dataset.is_ready:
                 raise ArgumentError('dataset is not finished importing')
             if select is None:
                 raise ArgumentError('no select')
+
+            limit = parse_int(limit, 0)
+
             if select == self.SELECT_ALL_FOR_SUMMARY:
                 select = None
+
             return dataset.summarize(dataset, query, select,
                                      group, limit=limit,
                                      order_by=order_by)
@@ -145,11 +146,11 @@ class Datasets(AbstractController):
         """
         limit = parse_int(limit, 0)
 
-        def _action(dataset, query=query, select=select, distinct=distinct,
-                    limit=limit, order_by=order_by, format=format):
+        def _action(dataset):
             dframe = dataset.dframe(
                 query=query, select=select, distinct=distinct,
                 limit=limit, order_by=order_by)
+
             return dframe.__getattribute__(
                 'to_csv_as_string' if format == self.CSV else 'to_jsondict')()
 
@@ -267,8 +268,9 @@ class Datasets(AbstractController):
         :returns: An error if any column is not in the dataset. Otherwise a
             success message.
         """
-        def _action(dataset, columns=columns):
+        def _action(dataset):
             dataset.drop_columns(columns)
+
             return {self.SUCCESS: 'in dataset %s dropped columns: %s' %
                     (dataset.dataset_id, columns)}
 
@@ -287,10 +289,12 @@ class Datasets(AbstractController):
 
         :returns: Success and merged dataset ID or error message.
         """
-        def _action(dataset, other_dataset_id=other_dataset_id, on=None):
+        def _action(dataset):
             other_dataset = Dataset.find_one(other_dataset_id)
+
             if other_dataset.record:
                 merged_dataset = dataset.join(other_dataset, on)
+
                 return {
                     self.SUCCESS: 'joined dataset %s to %s on %s' % (
                         other_dataset_id, dataset.dataset_id, on),
@@ -298,5 +302,4 @@ class Datasets(AbstractController):
                 }
 
         return self._safe_get_and_call(
-            dataset_id, _action, other_dataset_id=other_dataset_id, on=on,
-            exceptions=(KeyError, NonUniqueJoinError))
+            dataset_id, _action, exceptions=(KeyError, NonUniqueJoinError))

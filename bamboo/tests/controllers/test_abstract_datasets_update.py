@@ -28,10 +28,8 @@ class TestAbstractDatasetsUpdate(TestAbstractDatasets):
         TestAbstractDatasets.setUp(self)
 
     def _create_original_datasets(self):
-        self._post_file()
-        self.dataset1_id = self.dataset_id
-        self._post_file()
-        self.dataset2_id = self.dataset_id
+        self.dataset1_id = self._post_file()
+        self.dataset2_id = self._post_file()
 
     def _add_common_calculations(self):
         self.calculations = Calculations()

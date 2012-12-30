@@ -29,10 +29,8 @@ class TestDatasetsUpdateWithJoin(TestAbstractDatasetsUpdate):
         TestAbstractDatasetsUpdate.setUp(self)
 
         # create original datasets
-        self._post_file()
-        self.left_dataset_id = self.dataset_id
-        self._post_file('good_eats_aux.csv')
-        self.right_dataset_id = self.dataset_id
+        self.left_dataset_id = self._post_file()
+        self.right_dataset_id = self._post_file('good_eats_aux.csv')
 
         # create joined dataset
         self.on = 'food_type'
