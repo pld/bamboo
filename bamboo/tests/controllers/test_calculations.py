@@ -309,13 +309,13 @@ class TestCalculations(TestBase):
 
         self._test_error(
             self.controller.create(self.dataset_id,
-                json_file=mock_uploaded_file),
+                                   json_file=mock_uploaded_file),
             error_text='Required')
 
         # Mock is now an empty file
         self._test_error(
             self.controller.create(self.dataset_id,
-                json_file=mock_uploaded_file),
+                                   json_file=mock_uploaded_file),
             error_text='No JSON')
 
     def test_create_reserved_name(self):

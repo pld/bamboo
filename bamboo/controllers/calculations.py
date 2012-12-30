@@ -74,19 +74,22 @@ class Calculations(AbstractController):
             if json_file:
                 calculations = json.loads(json_file.file.read())
                 Calculation.create_from_list_or_dict(dataset, calculations)
-                success_message = 'created calculations from JSON for dataset: %s' dataset_id
+                success_message = ('created calculations from JSON for dataset'
+                                   ':%s' % dataset_id)
             elif formula is None or name is None:
-                raise ArgumentError(
-                    'Must provide both formula and name arguments, or json_file argument')
+                raise ArgumentError('Must provide both formula and name argume'
+                                    'nts, or json_file argument')
             else:
                 Calculation.create(dataset, formula, name, group)
-                success_message = 'created calculation: %s for dataset: %s' % (name, dataset_id)}
+                success_message = 'created calculation: %s for dataset: %s' % (
+                    name, dataset_id)
 
             return {self.SUCCESS: success_message}
 
         return self._safe_get_and_call(
-            dataset_id, _action, formula=formula, name=name, json_file=json_file,
-            group=group, exceptions=(ParseError,), success_status_code=201)
+            dataset_id, _action, formula=formula, name=name,
+            json_file=json_file, group=group, exceptions=(ParseError,),
+            success_status_code=201)
 
     def show(self, dataset_id, callback=False):
         """Retrieve the calculations for `dataset_id`.

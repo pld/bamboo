@@ -115,11 +115,11 @@ class Schema(dict):
         :param labels_to_slugs: The labels to slugs map (only build once).
         :param dframe: The DataFrame that column is in.
         """
-        return (
-            column in labels_to_slugs.keys() and (not column in labels_to_slugs.values()
-            or (labels_to_slugs[column] != column and
-            labels_to_slugs[column] not in dframe.columns))
-        )
+        return (column in labels_to_slugs.keys() and (
+                not column in labels_to_slugs.values() or (
+                    labels_to_slugs[column] != column and
+                    labels_to_slugs[column] not in dframe.columns
+                )))
 
 
 def schema_from_dframe(dframe, schema=None):
