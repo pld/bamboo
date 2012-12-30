@@ -30,25 +30,34 @@ class TestDatasets(TestAbstractDatasets):
     def _test_summary_no_group(self, results, group=None):
         group = [group] if group else []
         result_keys = results.keys()
+
         # minus the column that we are grouping on
         self.assertEqual(len(result_keys), self.NUM_COLS - len(group))
+
         columns = [col for col in
                    self.get_data(self._file_name).columns.tolist()
                    if not col in MONGO_RESERVED_KEYS + group]
+
         dataset = Dataset.find_one(self.dataset_id)
         labels_to_slugs = dataset.schema.labels_to_slugs
+
         for col in columns:
             slug = labels_to_slugs[col]
             self.assertTrue(slug in result_keys,
                             'col (slug): %s in: %s' % (slug, result_keys))
             self.assertTrue(SUMMARY in results[slug].keys())
 
-    def _test_get_with_query_or_select(self, query='{}', select=None,
-                                       num_results=None, result_keys=None):
+    def _test_get_with_query_or_select(
+            self, query='{}', select=None, distinct=None, num_results=None,
+            result_keys=None):
         self._post_file()
         results = json.loads(self.controller.show(self.dataset_id, query=query,
-                             select=select))
+                             select=select, distinct=distinct))
+
         self.assertTrue(isinstance(results, list))
+
+        if num_results:
+            self.assertEqual(len(results), num_results)
         if num_results > 3:
             self.assertTrue(isinstance(results[3], dict))
         if select:
@@ -58,6 +67,7 @@ class TestDatasets(TestAbstractDatasets):
 
     def _upload_mocked_file(self, **kwargs):
         mock_uploaded_file = self._file_mock(self._file_path)
+
         return json.loads(self.controller.create(
             csv_file=mock_uploaded_file, **kwargs))
 
@@ -293,6 +303,12 @@ class TestDatasets(TestAbstractDatasets):
 
     def test_show_with_select(self):
         self._test_get_with_query_or_select(select='{"rating": 1}',
+                                            num_results=self.NUM_ROWS,
+                                            result_keys=['rating'])
+
+    def test_show_with_distinct(self):
+        self._test_get_with_query_or_select(distinct='rating',
+                                            num_results=2,
                                             result_keys=['rating'])
 
     def test_show_with_select_and_query(self):

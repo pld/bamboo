@@ -121,7 +121,7 @@ class Datasets(AbstractController):
 
         return self._safe_get_and_call(dataset_id, _action, callback=callback)
 
-    def show(self, dataset_id, query=None, select=None,
+    def show(self, dataset_id, query=None, select=None, distinct=None,
              limit=0, order_by=None, format=None, callback=False):
         """ Return rows for `dataset_id`, matching the passed parameters.
 
@@ -132,6 +132,7 @@ class Datasets(AbstractController):
         :param dataset_id: The dataset ID of the dataset to return.
         :param select: This is a required argument, it can be 'all' or a
             MongoDB JSON query
+        :param distinct: A field to return distinct results for.
         :param query: If passed restrict results to rows matching this query.
         :param limit: If passed limit the rows to this number.
         :param order_by: If passed order the result using this column.
@@ -144,10 +145,10 @@ class Datasets(AbstractController):
         """
         limit = parse_int(limit, 0)
 
-        def _action(dataset, query=query, select=select,
+        def _action(dataset, query=query, select=select, distinct=distinct,
                     limit=limit, order_by=order_by, format=format):
             dframe = dataset.dframe(
-                query=query, select=select,
+                query=query, select=select, distinct=distinct,
                 limit=limit, order_by=order_by)
             return dframe.__getattribute__(
                 'to_csv_as_string' if format == self.CSV else 'to_jsondict')()

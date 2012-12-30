@@ -123,7 +123,7 @@ class Dataset(AbstractModel):
     def cardinality(self, col):
         return self.schema.cardinality(col)
 
-    def dframe(self, query=None, select=None, keep_parent_ids=False,
+    def dframe(self, query=None, select=None, distinct=None, keep_parent_ids=False,
                limit=0, order_by=None, padded=False):
         """Fetch the dframe for this dataset.
 
@@ -144,20 +144,28 @@ class Dataset(AbstractModel):
             `keep_parent_ids` is False.
         """
         observations = self.observations(
-            query=query, select=select, limit=limit, order_by=order_by,
+            query=query, select=select, distinct=distinct, limit=limit, order_by=order_by,
             as_cursor=True)
 
         batches = int(ceil(float(observations.count(with_limit_and_skip=True))
                       / DB_READ_BATCH_SIZE))
         dframes = []
 
+        if distinct:
+            observations = observations.distinct(distinct)
+
+
         for batch in xrange(0, batches):
             start = batch * DB_READ_BATCH_SIZE
             end = (batch + 1) * DB_READ_BATCH_SIZE
+
             if limit > 0 and end > limit:
                 end = limit
+
             dframes.append(BambooFrame([ob for ob in observations[start:end]]))
-            observations.rewind()
+
+            if not distinct:
+                observations.rewind()
 
         dframe = BambooFrame(concat(dframes) if len(dframes) else [])
         dframe.decode_mongo_reserved_keys()
@@ -320,7 +328,7 @@ class Dataset(AbstractModel):
             self.STATE: self.state,
         }
 
-    def observations(self, query=None, select=None, limit=0, order_by=None,
+    def observations(self, query=None, select=None, distinct=None, limit=0, order_by=None,
                      as_cursor=False):
         """Return observations for this dataset.
 
@@ -330,7 +338,7 @@ class Dataset(AbstractModel):
             to this maximum.
         :param order_by: Order the returned observations.
         """
-        return Observation.find(self, query, select, limit=limit,
+        return Observation.find(self, query, select, distinct=distinct, limit=limit,
                                 order_by=order_by, as_cursor=as_cursor)
 
     def calculations(self):
