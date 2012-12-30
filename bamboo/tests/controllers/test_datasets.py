@@ -285,9 +285,11 @@ class TestDatasets(TestAbstractDatasets):
                                             result_keys=['rating'])
 
     def test_show_with_distinct(self):
-        self._test_get_with_query_or_select(distinct='rating',
-                                            num_results=2,
-                                            result_keys=['rating'])
+        dataset_id = self._post_file()
+        results = json.loads(self.controller.show(dataset_id, query='{}',
+                             distinct='rating'))
+        self.assertTrue(isinstance(results, list))
+        self.assertEqual(['delectible', 'epic_eat'], results)
 
     def test_show_with_select_and_query(self):
         self._test_get_with_query_or_select('{"rating": "delectible"}',

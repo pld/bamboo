@@ -151,6 +151,9 @@ class Datasets(AbstractController):
                 query=query, select=select, distinct=distinct,
                 limit=limit, order_by=order_by)
 
+            if distinct:
+                return sorted(dframe[0].tolist())
+
             return dframe.__getattribute__(
                 'to_csv_as_string' if format == self.CSV else 'to_jsondict')()
 
