@@ -88,7 +88,7 @@ class BambooFrame(DataFrame):
 
     def to_csv_as_string(self):
         buffer = StringIO()
-        self.to_csv(buffer, encoding='utf-8')
+        self.to_csv(buffer, encoding='utf-8', index=False)
         return buffer.getvalue()
 
     def _column_intersect(self, _list):

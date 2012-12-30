@@ -148,6 +148,7 @@ class TestDatasets(TestAbstractDatasets):
         results = self.controller.show(self.dataset_id, format='csv')
 
         self.assertTrue(isinstance(results, str))
+        self.assertEqual(len(results.split('\n')[0].split(',')), self.NUM_COLS)
         # one for header, one for empty final line
         self.assertEqual(len(results.split('\n')), self.NUM_ROWS + 2)
 
