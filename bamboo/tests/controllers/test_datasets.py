@@ -17,7 +17,6 @@ from bamboo.models.dataset import Dataset
 from bamboo.tests.controllers.test_abstract_datasets import\
     TestAbstractDatasets
 from bamboo.tests.decorators import requires_async
-from bamboo.tests.mock import MockUploadedFile
 
 
 class TestDatasets(TestAbstractDatasets):
@@ -58,8 +57,7 @@ class TestDatasets(TestAbstractDatasets):
             self.assertEqual(len(results), num_results)
 
     def _upload_mocked_file(self, **kwargs):
-        _file = open(self._file_path, 'r')
-        mock_uploaded_file = MockUploadedFile(_file)
+        mock_uploaded_file = self._file_mock(self._file_path)
         return json.loads(self.controller.create(
             csv_file=mock_uploaded_file, **kwargs))
 

@@ -78,7 +78,8 @@ class AbstractController(object):
         return '%s(%s)' % (callback, result) if callback else result
 
     def _safe_get_and_call(self, dataset_id, action, callback=None,
-                           exceptions=(), success_status_code=DEFAULT_SUCCESS_STATUS_CODE,
+                           exceptions=(),
+                           success_status_code=DEFAULT_SUCCESS_STATUS_CODE,
                            error = 'id not found', **kwargs):
         """Find dataset and call action with it and kwargs.
 

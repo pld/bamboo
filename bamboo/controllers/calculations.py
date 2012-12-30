@@ -48,7 +48,7 @@ class Calculations(AbstractController):
             group=group,
             error = 'name and dataset_id combination not found')
 
-    def create(self, dataset_id, formula=None, name=None, data=None,
+    def create(self, dataset_id, formula=None, name=None, json_file=None,
                group=None):
         """Add a calculation to a dataset with the given fomula, etc.
 
@@ -69,34 +69,27 @@ class Calculations(AbstractController):
             string if the dataset could not be found, the formula could not be
             parsed, or the group was invalid.
         """
-        def _action(dataset, formula=formula, name=name, data=data,
+        def _action(dataset, formula=formula, name=name, json_file=None,
                     group=group):
-            if (formula is None or name is None) and data is None:
-                raise ArgumentError(
-                    'Must provide both formula and name, or data arguments')
-            if data is None:
-                calculations = [{'name':name, 'formula': formula}]
+            if json_file:
+                calculations = json.loads(json_file.file.read())
+                Calculation.create_from_list_or_dict(dataset, calculations)
+                success_message = ('created calculations from JSON for dataset'
+                                   ':%s' % dataset_id)
+            elif formula is None or name is None:
+                raise ArgumentError('Must provide both formula and name argume'
+                                    'nts, or json_file argument')
             else:
-                calculations = json.loads(data)
-            if isinstance(calculations, dict):
-                calculations = [calculations]
-            if not len(calculations) or not isinstance(calculations, list):
-                raise ArgumentError(
-                    'Improper format for JSON calculations.')
-            try:
-                for calc in calculations:
-                    Calculation.create(dataset, calc['formula'], calc['name'],
-                                       group)
-            except KeyError as e:
-                raise ArgumentError('Required key %s not found in JSON' % e)
+                Calculation.create(dataset, formula, name, group)
+                success_message = 'created calculation: %s for dataset: %s' % (
+                    name, dataset_id)
 
-            return {
-                self.SUCCESS: 'created calculation: %s for dataset: %s'
-                % (name, dataset_id)}
+            return {self.SUCCESS: success_message}
 
         return self._safe_get_and_call(
-            dataset_id, _action, formula=formula, name=name, data=data,
-            group=group, exceptions=(ParseError,), success_status_code=201)
+            dataset_id, _action, formula=formula, name=name,
+            json_file=json_file, group=group, exceptions=(ParseError,),
+            success_status_code=201)
 
     def show(self, dataset_id, callback=False):
         """Retrieve the calculations for `dataset_id`.

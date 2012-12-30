@@ -1,0 +1,14 @@
+[
+    {
+        "name": "sweet foods"
+    },
+    {
+        "name": "in northern hemisphere",
+        "formula": "gps_latitude > 0"
+    },
+    {
+        "name": "sum of amount",
+        "formula": "sum(amount)",
+        "group": "risk_factor"
+    }
+]
