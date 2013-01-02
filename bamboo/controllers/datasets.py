@@ -145,6 +145,7 @@ class Datasets(AbstractController):
             string of the rows matching the parameters.
         """
         limit = parse_int(limit, 0)
+        content_type = self.CSV if format == self.CSV else self.JSON
 
         def _action(dataset):
             dframe = dataset.dframe(
@@ -154,10 +155,13 @@ class Datasets(AbstractController):
             if distinct:
                 return sorted(dframe[0].tolist())
 
-            return dframe.__getattribute__(
-                'to_csv_as_string' if format == self.CSV else 'to_jsondict')()
+            if content_type == self.CSV:
+                return dframe.to_csv_as_string()
+            else:
+                return dframe.to_jsondict()
 
-        return self._safe_get_and_call(dataset_id, _action, callback=callback)
+        return self._safe_get_and_call(
+            dataset_id, _action, callback=callback, content_type=content_type)
 
     def merge(self, datasets=None):
         """Merge the datasets with the dataset_ids in `datasets`.
@@ -169,16 +173,13 @@ class Datasets(AbstractController):
             dataset IDs were passed.  Otherwise, the ID of the new merged
             dataset created by combining the datasets provided as an argument.
         """
-        result = None
-        error = 'merge failed'
 
-        try:
+        def _action(dataset):
             dataset = merge_dataset_ids(datasets)
-            result = {Dataset.ID: dataset.dataset_id}
-        except (ValueError, MergeError) as err:
-            error = err.__str__()
+            return {Dataset.ID: dataset.dataset_id}
 
-        return self.dump_or_error(result, error)
+        return self._safe_get_and_call(
+            None, _action, exceptions=(MergeError,), error = 'merge failed')
 
     def create(self, url=None, csv_file=None, schema=None, perish=0):
         """Create a dataset by URL, CSV or schema file.
@@ -212,7 +213,7 @@ class Datasets(AbstractController):
         :param csv_file: An uploaded CSV file to read from.
         :param schema: A SDF schema file (JSON)
 
-        :returns: An error message ff `url`, `csv_file`, or `scehma` are not
+        :returns: An error message if `url`, `csv_file`, or `scehma` are not
             provided. An error message if an improperly formatted value raises
             a ValueError, e.g. an improperly formatted CSV file. An error
             message if the URL could not be loaded. Otherwise returns a JSON
@@ -242,7 +243,8 @@ class Datasets(AbstractController):
         except IOError:
             error = 'could not get a filehandle for: %s' % csv_file
 
-        return self.dump_or_error(result, error, success_status_code=201)
+        self.set_response_params(obj, success_status_code=201)
+        return self.dump_or_error(result, error)
 
     def update(self, dataset_id, update):
         """Update the `dataset_id` with the new rows as JSON.

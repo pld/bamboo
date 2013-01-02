@@ -51,8 +51,7 @@ class AbstractController(object):
 
         return ''
 
-    def dump_or_error(self, obj, error_message, callback=False,
-                      success_status_code=DEFAULT_SUCCESS_STATUS_CODE):
+    def dump_or_error(self, obj, error_message, callback=False):
         """Dump JSON or return error message, potentially with callback.
 
         If `obj` is None `error_message` is returned and the HTTP status code
@@ -63,25 +62,37 @@ class AbstractController(object):
         :param obj: Data to dump as JSON using BSON encoder.
         :param error_message: Error message to return is object is None.
         :param callback: Callback string to wrap obj in for JSONP.
-        :param success_status_code: The HTTP status code to return, default is
-            DEFAULT_SUCCESS_STATUS_CODE.
 
         :returns: A JSON string wrapped with callback if callback is not False.
         """
-        cherrypy.response.headers['Content-Type'] = 'application/json'
-        cherrypy.response.status = success_status_code if obj else\
-            self.ERROR_STATUS_CODE
         if obj is None:
             obj = {self.ERROR: error_message}
+
         result = obj if isinstance(obj, str) else dump_mongo_json(obj)
         self._add_cors_headers()
 
         return '%s(%s)' % (callback, result) if callback else result
 
+    def set_response_params(self, obj,
+                            success_status_code=DEFAULT_SUCCESS_STATUS_CODE,
+                            content_type=JSON):
+        """Set response parameters.
+
+        :param obj: The object to set the response for.
+        :param content_type: The content type.
+        :param success_status_code: The HTTP status code to return, default is
+            DEFAULT_SUCCESS_STATUS_CODE.
+        """
+        cherrypy.response.headers['Content-Type'] = 'application/%s' % (
+            content_type)
+        cherrypy.response.status = success_status_code if obj else\
+            self.ERROR_STATUS_CODE
+
     def _safe_get_and_call(self, dataset_id, action, callback=None,
                            exceptions=(),
                            success_status_code=DEFAULT_SUCCESS_STATUS_CODE,
-                           error=DEFAULT_ERROR_MESSAGE):
+                           error=DEFAULT_ERROR_MESSAGE,
+                           content_type=JSON):
         """Find dataset and call action with it and kwargs.
 
         Finds the dataset by `dataset_id` then calls function `action` and
@@ -106,13 +117,14 @@ class AbstractController(object):
         """
         exceptions += (ArgumentError, JSONError, ValueError)
 
-        dataset = Dataset.find_one(dataset_id)
+        dataset = Dataset.find_one(dataset_id) if dataset_id else None
         result = None
 
         try:
-            if dataset.record:
+            if dataset is None or dataset.record:
                 result = action(dataset)
         except exceptions as err:
             error = err.__str__()
 
-        return self.dump_or_error(result, error, callback, success_status_code)
+        self.set_response_params(result, success_status_code, content_type)
+        return self.dump_or_error(result, error, callback)
