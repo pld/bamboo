@@ -223,12 +223,6 @@ class TestDatasets(TestAbstractDatasets):
             self.assertEqual(
                 column[CARDINALITY], cardinalities[key])
 
-    def test_info_after_row_update(self):
-        dataset_id = self._post_file()
-        self._put_row_updates(dataset_id)
-        results = json.loads(self.controller.info(dataset_id))
-        self.assertEqual(results[Dataset.NUM_ROWS], self.NUM_ROWS + 1)
-
     def test_info_after_adding_calculations(self):
         self.dataset_id = self._post_file()
         self._post_calculations(formulae=self.default_formulae)
