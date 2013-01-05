@@ -8,7 +8,7 @@ def parse_int(value, default):
     return _parse_type(int, value, default)
 
 
-def parse_float(value, default):
+def parse_float(value, default=None):
     return _parse_type(float, value, default)
 
 
@@ -16,7 +16,7 @@ def _parse_type(_type, value, default):
     try:
         return _type(value)
     except ValueError:
-        return default
+        return value if default is None else default
 
 
 def is_float_nan(num):

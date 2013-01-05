@@ -13,13 +13,30 @@ from bamboo.models.dataset import Dataset
 @task
 def import_dataset(dataset, dframe=None, filepath_or_buffer=None,
                    delete=False):
-    """For reading a URL and saving the corresponding dataset."""
-    if filepath_or_buffer:
-        dframe = BambooFrame(pd.read_csv(filepath_or_buffer)).recognize_dates()
-    if delete:
-        os.unlink(filepath_or_buffer)
+    """For reading a URL and saving the corresponding dataset.
 
-    dataset.save_observations(dframe)
+    Import the `dframe` into the `dataset` if passed.  If a
+    `filepath_or_buffer` is passed load as a dframe.  All exceptions are caught
+    and on exception the dataset is marked as failed and set for
+    deletion after 24 hours.
+
+    :param dataset: The dataset to import into.
+    :param dframe: The DataFrame to import, default None.
+    :param filepath_or_buffer: Link to file to import, default None.
+    :param delete: Delete filepath_or_buffer after import, default False.
+    """
+    try:
+        if filepath_or_buffer:
+            dframe = BambooFrame(
+                pd.read_csv(filepath_or_buffer)).recognize_dates()
+
+        dataset.save_observations(dframe)
+    except Exception as e:
+        dataset.failed()
+        dataset.delete(countdown=86400)
+    finally:
+        if delete and filepath_or_buffer:
+            os.unlink(filepath_or_buffer)
 
 
 def create_dataset_from_url(url, allow_local_file=False):
