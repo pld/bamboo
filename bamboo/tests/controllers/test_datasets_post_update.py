@@ -15,6 +15,15 @@ class TestDatasetsPostUpdate(TestAbstractDatasets):
         TestAbstractDatasets.setUp(self)
         self._file_name_with_slashes = 'good_eats_with_slashes.csv'
 
+    def _check_schema(self, results):
+        schema = self._load_schema()
+
+        for result in results:
+            for column in schema.keys():
+                self.assertTrue(
+                    column in result.keys(),
+                    "column %s not in %s" % (column, result.keys()))
+
     def test_dataset_id_update_bad_dataset_id(self):
         result = json.loads(self.controller.update(dataset_id=111,
                                                    update=None))
@@ -50,14 +59,7 @@ class TestDatasetsPostUpdate(TestAbstractDatasets):
         num_rows_after_update = len(results)
 
         self.assertEqual(num_rows_after_update, self.NUM_ROWS + 1)
-
-        schema = self._load_schema()
-
-        for result in results:
-            for column in schema.keys():
-                self.assertTrue(
-                    column in result.keys(),
-                    "column %s not in %s" % (column, result.keys()))
+        self._check_schema(results)
 
         # ensure new row is in results
         self.assertTrue(self._update_values in results)
@@ -70,14 +72,7 @@ class TestDatasetsPostUpdate(TestAbstractDatasets):
         num_rows_after_update = len(results)
 
         self.assertEqual(num_rows_after_update, self.NUM_ROWS + 1)
-
-        schema = self._load_schema()
-
-        for result in results:
-            for column in schema.keys():
-                self.assertTrue(
-                    column in result.keys(),
-                    "column %s not in %s" % (column, result.keys()))
+        self._check_schema(results)
 
         # ensure new row is in results
         self.assertTrue(self._update_values in results)
