@@ -1,5 +1,6 @@
 from datetime import datetime
 import pickle
+from tempfile import NamedTemporaryFile
 from time import mktime, sleep
 from urllib2 import URLError
 
@@ -47,6 +48,17 @@ class TestDatasets(TestAbstractDatasets):
 
         return json.loads(self.controller.create(
             csv_file=mock_uploaded_file, **kwargs))
+
+    def _wait_for_dataset_state(self, dataset_id):
+        while True:
+            dataset = Dataset.find_one(dataset_id)
+
+            if dataset.state != Dataset.STATE_PENDING:
+                break
+
+            sleep(self.SLEEP_DELAY)
+
+        return dataset
 
     def test_create_from_file(self):
         result = self._upload_mocked_file()
@@ -108,13 +120,34 @@ class TestDatasets(TestAbstractDatasets):
 
         self.assertEqual(len(results), 0)
 
+    @requires_async
     @patch('pandas.read_csv', return_value=None, side_effect=URLError(''))
     def test_create_from_bad_url(self, read_csv):
         result = json.loads(self.controller.create(
             url='http://dsfskfjdks.com'))
 
         self.assertTrue(isinstance(result, dict))
-        self.assertTrue(Datasets.ERROR in result)
+        self.assertTrue(Dataset.ID in result)
+
+        dataset_id = result[Dataset.ID]
+        dataset = self._wait_for_dataset_state(dataset_id)
+
+        self.assertEqual(Dataset.STATE_FAILED, dataset.state)
+
+    @requires_async
+    def test_create_from_bad_csv(self):
+        tmp_file = NamedTemporaryFile(delete=False)
+        mock = self._file_mock(tmp_file.name)
+        result = json.loads(self.controller.create(
+            csv_file=mock))
+
+        self.assertTrue(isinstance(result, dict))
+        self.assertTrue(Dataset.ID in result)
+
+        dataset_id = result[Dataset.ID]
+        dataset = self._wait_for_dataset_state(dataset_id)
+
+        self.assertEqual(Dataset.STATE_FAILED, dataset.state)
 
     def test_create_no_url_or_csv(self):
         result = json.loads(self.controller.create())

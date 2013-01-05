@@ -22,6 +22,7 @@ class AbstractModel(object):
     __collection__ = None
 
     STATE = 'state'
+    STATE_FAILED = 'failed'
     STATE_PENDING = 'pending'
     STATE_READY = 'ready'
 
@@ -42,6 +43,10 @@ class AbstractModel(object):
         :returns: A MongoDB collection from the current database.
         """
         return Database.db()[collection_name]
+
+    def failed(self):
+        """Perist the state of the current instance to STATE_FAILED"""
+        self.update({self.STATE: self.STATE_FAILED})
 
     def ready(self):
         """Perist the state of the current instance to STATE_READY"""

@@ -212,6 +212,7 @@ class Datasets(AbstractController):
             file.
         :param csv_file: An uploaded CSV file to read from.
         :param schema: A SDF schema file (JSON)
+        :param perish: Number of seconds after which to dlete the dataset.
 
         :returns: An error message if `url`, `csv_file`, or `scehma` are not
             provided. An error message if an improperly formatted value raises
