@@ -184,7 +184,7 @@ class TestCalculations(TestBase):
     def test_create_remove_summary(self):
         dataset_id = self._post_file()
         Datasets().summary(
-            self.dataset_id,
+            dataset_id,
             select=Datasets.SELECT_ALL_FOR_SUMMARY)
         dataset = Dataset.find_one(dataset_id)
 
@@ -360,3 +360,16 @@ class TestCalculations(TestBase):
             self.assertTrue(slug in dframe_after.columns)
             self.assertEqual(
                 len(dframe_before.columns) + 1, len(dframe_after.columns))
+
+    def test_newest(self):
+        expected_dataset = {
+            u'wp_functional': {0: u'no', 1: u'yes', 2: u'no', 3: u'yes'},
+            u'id': {0: 1, 1: 2, 2: 3, 3: 4}}
+        dataset_id = self._post_file('newest_test.csv')
+        self.controller.create(dataset_id,
+                               'newest(submit_date,functional)',
+                               'wp_functional', group='id')
+        dataset = Dataset.find_one(dataset_id)
+        agg_ds = dataset.aggregated_datasets['id']
+
+        self.assertEqual(expected_dataset, agg_ds.dframe().to_dict())
