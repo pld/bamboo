@@ -49,17 +49,6 @@ class TestDatasets(TestAbstractDatasets):
         return json.loads(self.controller.create(
             csv_file=mock_uploaded_file, **kwargs))
 
-    def _wait_for_dataset_state(self, dataset_id):
-        while True:
-            dataset = Dataset.find_one(dataset_id)
-
-            if dataset.state != Dataset.STATE_PENDING:
-                break
-
-            sleep(self.SLEEP_DELAY)
-
-        return dataset
-
     def test_create_from_file(self):
         result = self._upload_mocked_file()
         self.assertTrue(isinstance(result, dict))

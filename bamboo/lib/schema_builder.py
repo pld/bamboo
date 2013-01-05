@@ -24,7 +24,7 @@ FLOAT = 'float'
 STRING = 'string'
 
 # map from numpy objects to olap_types
-DTYPE_TO_OLAP_TYPE_MAP = {
+DTYPE_TO_OLAP_TYPE = {
     np.object_: DIMENSION,
     np.bool_: DIMENSION,
     np.float64: MEASURE,
@@ -33,12 +33,16 @@ DTYPE_TO_OLAP_TYPE_MAP = {
 }
 
 # map from numpy objects to simpletypes
-DTYPE_TO_SIMPLETYPE_MAP = {
+DTYPE_TO_SIMPLETYPE = {
     np.bool_:   BOOLEAN,
     np.float64: FLOAT,
     np.int64:   INTEGER,
     np.object_: STRING,
     datetime: DATETIME,
+}
+SIMPLETYPE_TO_DTYPE = {
+    FLOAT: np.float64,
+    INTEGER: np.int64,
 }
 
 RE_ENCODED_COLUMN = re.compile(r'\W')
@@ -101,6 +105,14 @@ class Schema(dict):
             dframe.columns.tolist() if self._resluggable_column(
                 column, labels_to_slugs, dframe)
         }
+
+    def convert_type(self, slug, value):
+        column_schema = self.get(slug)
+        if column_schema:
+            type_func = SIMPLETYPE_TO_DTYPE.get(column_schema[SIMPLETYPE])
+            if type_func:
+                value = type_func(value)
+        return value
 
     def _resluggable_column(self, column, labels_to_slugs, dframe):
         """Test if column should be slugged.
@@ -198,12 +210,12 @@ def _slugify_columns(column_names):
 
 def _olap_type_for_data_and_dtype(column, dtype):
     return _type_for_data_and_dtypes(
-        DTYPE_TO_OLAP_TYPE_MAP, column, dtype.type)
+        DTYPE_TO_OLAP_TYPE, column, dtype.type)
 
 
 def _simpletype_for_data_and_dtype(column, dtype):
     return _type_for_data_and_dtypes(
-        DTYPE_TO_SIMPLETYPE_MAP, column, dtype.type)
+        DTYPE_TO_SIMPLETYPE, column, dtype.type)
 
 
 def _type_for_data_and_dtypes(type_map, column, dtype_type):

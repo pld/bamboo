@@ -118,7 +118,8 @@ class Calculator(object):
             merged_calculator.propagate_column(self.dataset)
 
     @task
-    def calculate_updates(self, new_data, parent_dataset_id=None):
+    def calculate_updates(self, new_data, new_dframe_raw=None,
+                          parent_dataset_id=None):
         """Update dataset with `new_data`.
 
         This can result in race-conditions when:
@@ -129,6 +130,7 @@ class Calculator(object):
         Therefore, perform these actions asychronously.
 
         :param new_data: Data to update this dataset with.
+        :param new_dframe_raw: DataFrame to update this dataset with.
         :param parent_dataset_id: If passed add ID as parent ID to column,
             default is None.
         """
@@ -136,7 +138,9 @@ class Calculator(object):
         self._ensure_ready()
 
         labels_to_slugs = self.dataset.schema.labels_to_slugs
-        new_dframe_raw = self._dframe_from_update(new_data, labels_to_slugs)
+
+        if new_dframe_raw is None:
+            new_dframe_raw = self.dframe_from_update(new_data, labels_to_slugs)
 
         self._check_update_is_valid(new_dframe_raw)
 
@@ -203,7 +207,7 @@ class Calculator(object):
 
     def _ensure_dframe(self):
         """Ensure `dframe` for the calculator's dataset is defined."""
-        if not self.dframe:
+        if self.dframe is None:
             self.dframe = self.dataset.dframe()
 
     def _ensure_ready(self):
@@ -253,7 +257,7 @@ class Calculator(object):
         for merged_dataset in self.dataset.merged_datasets:
             merged_calculator = Calculator(merged_dataset)
             call_async(merged_calculator.calculate_updates, merged_calculator,
-                       slugified_data, self.dataset.dataset_id)
+                       slugified_data, parent_dataset_id=self.dataset.dataset_id)
 
     def _update_joined_datasets(self, new_dframe_raw):
         # update any joined datasets
@@ -280,17 +284,20 @@ class Calculator(object):
                 joined_calculator = Calculator(joined_dataset)
                 call_async(joined_calculator.calculate_updates,
                            joined_calculator, merged_dframe.to_jsondict(),
-                           self.dataset.dataset_id)
+                           parent_dataset_id=self.dataset.dataset_id)
 
-    def _dframe_from_update(self, new_data, labels_to_slugs):
+    def dframe_from_update(self, new_data, labels_to_slugs):
         """Make a single-row dataframe for the additional data to add."""
+        self._ensure_dframe()
+
         if not isinstance(new_data, list):
             new_data = [new_data]
 
         filtered_data = []
         columns = self.dframe.columns
+        dframe_empty = not len(columns)
 
-        if not len(columns):
+        if dframe_empty:
             columns = self.dataset.schema.keys()
 
         for row in new_data:
@@ -306,9 +313,11 @@ class Calculator(object):
                     slug = labels_to_slugs.get(
                         col, col if col in labels_to_slugs.values() else None)
 
+                    # if slug is valid of there is an empty dframe
                     if (slug or col in labels_to_slugs.keys()) and (
-                            not len(columns) or slug in columns):
-                        filtered_row[slug] = val
+                            dframe_empty or slug in columns):
+                        filtered_row[slug] = self.dataset.schema.convert_type(
+                            slug, val)
 
             filtered_data.append(filtered_row)
 
@@ -359,7 +368,7 @@ class Calculator(object):
             # calculate updates on the child
             merged_calculator = Calculator(merged_dataset)
             call_async(merged_calculator.calculate_updates, merged_calculator,
-                       new_data, agg_dataset.dataset_id)
+                       new_data, parant_dataset_id=agg_dataset.dataset_id)
 
     def _create_calculations_to_groups_and_datasets(self, calculations):
         """Create list of groups and calculations."""
