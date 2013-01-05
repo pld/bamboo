@@ -140,7 +140,7 @@ you can create a dataset from this json file using:
 
 .. code-block:: sh
 
-    curl -X POST -F json_file=@/home/modilabs/good_eats.calculations.json http://bamboo.io/calculations
+    curl -X POST -F json_file=@/home/modilabs/good_eats.calculations.json http://bamboo.io/calculations/8a3d74711475d8a51c84484fe73f24bd151242ea
 
 **returns:**
 
