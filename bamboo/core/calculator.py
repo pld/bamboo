@@ -368,7 +368,7 @@ class Calculator(object):
             # calculate updates on the child
             merged_calculator = Calculator(merged_dataset)
             call_async(merged_calculator.calculate_updates, merged_calculator,
-                       new_data, parant_dataset_id=agg_dataset.dataset_id)
+                       new_data, parent_dataset_id=agg_dataset.dataset_id)
 
     def _create_calculations_to_groups_and_datasets(self, calculations):
         """Create list of groups and calculations."""
