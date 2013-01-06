@@ -3,6 +3,7 @@ from time import mktime, sleep
 import simplejson as json
 
 from bamboo.controllers.datasets import Datasets
+from bamboo.lib.schema_builder import CARDINALITY
 from bamboo.models.dataset import Dataset
 from bamboo.tests.controllers.test_abstract_datasets import\
     TestAbstractDatasets
@@ -114,3 +115,56 @@ class TestDatasetsPostUpdate(TestAbstractDatasets):
         self._put_row_updates(dataset_id)
         results = json.loads(self.controller.info(dataset_id))
         self.assertEqual(results[Dataset.NUM_ROWS], self.NUM_ROWS + 1)
+
+    def test_update_diff_schema(self):
+        dataset_id = self._post_file()
+        dataset = Dataset.find_one(dataset_id)
+
+        column = 'amount'
+        update = json.dumps({column: '2'})
+
+        expected_col_schema = dataset.schema[column]
+
+        result = json.loads(self.controller.update(dataset_id=dataset_id,
+                                                   update=update))
+        dataset = Dataset.find_one(dataset_id)
+
+        self.assertEqual(dataset.num_rows, self.NUM_ROWS + 1)
+        self.assertEqual(expected_col_schema, dataset.schema[column])
+
+    def test_update_diff_schema_unconvertable(self):
+        dataset_id = self._post_file()
+        dataset = Dataset.find_one(dataset_id)
+
+        column = 'amount'
+        update = json.dumps({column: 'a'})
+
+        expected_col_schema = dataset.schema[column]
+
+        result = json.loads(self.controller.update(dataset_id=dataset_id,
+                                                   update=update))
+        dataset = Dataset.find_one(dataset_id)
+
+        # the update is rejected
+        self.assertTrue(Datasets.ERROR in result)
+        self.assertEqual(dataset.num_rows, self.NUM_ROWS)
+        self.assertEqual(expected_col_schema, dataset.schema[column])
+
+    @requires_async
+    def test_update_diff_schema_unconvertable_async(self):
+        dataset_id = self._post_file()
+        dataset = self._wait_for_dataset_state(dataset_id)
+
+        column = 'amount'
+        update = json.dumps({column: 'a'})
+
+        expected_col_schema = dataset.schema[column]
+
+        result = json.loads(self.controller.update(dataset_id=dataset_id,
+                                                   update=update))
+        dataset = Dataset.find_one(dataset_id)
+
+        # the update is rejected
+        self.assertTrue(Datasets.ERROR in result)
+        self.assertEqual(dataset.num_rows, self.NUM_ROWS)
+        self.assertEqual(expected_col_schema, dataset.schema[column])

@@ -1,3 +1,5 @@
+from time import sleep
+
 import simplejson as json
 
 from bamboo.controllers.calculations import Calculations
@@ -132,3 +134,14 @@ class TestAbstractDatasets(TestBase):
             self.assertTrue(slug in result_keys,
                             'col (slug): %s in: %s' % (slug, result_keys))
             self.assertTrue(SUMMARY in results[slug].keys())
+
+    def _wait_for_dataset_state(self, dataset_id):
+        while True:
+            dataset = Dataset.find_one(dataset_id)
+
+            if dataset.state != Dataset.STATE_PENDING:
+                break
+
+            sleep(self.SLEEP_DELAY)
+
+        return dataset

@@ -357,9 +357,15 @@ class Dataset(AbstractModel):
 
     def add_observations(self, json_data):
         """Update `dataset` with new `data`."""
+        new_data = json.loads(json_data)
         calculator = Calculator(self)
-        call_async(calculator.calculate_updates, calculator,
-                   json.loads(json_data))
+
+        new_dframe_raw = calculator.dframe_from_update(
+            new_data, self.schema.labels_to_slugs)
+        calculator._check_update_is_valid(new_dframe_raw)
+
+        call_async(calculator.calculate_updates, calculator, new_data,
+                   new_dframe_raw=new_dframe_raw)
 
     def save_observations(self, dframe):
         """Save rows in `dframe` for this dataset."""
