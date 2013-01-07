@@ -373,3 +373,36 @@ class TestCalculations(TestBase):
         agg_ds = dataset.aggregated_datasets['id']
 
         self.assertEqual(expected_dataset, agg_ds.dframe().to_dict())
+
+    def test_update_after_agg(self):
+        dataset_id = self._post_file('wp_data.csv')
+        results = json.loads(self.controller.create(dataset_id,
+                               'newest(submit_date,wp_id)', 'wp_newest'))
+        dataset = Dataset.find_one(dataset_id)
+        previous_num_rows = dataset.num_rows
+
+        self.assertTrue(self.controller.SUCCESS in results.keys())
+        self.assertFalse(dataset.aggregated_datasets.get('') is None)
+
+        dataset_controller = Datasets()
+        update = json.dumps({
+            'submit_date': '2013-01-05',
+            'wp_id': 'D',
+            'functional': 'no',
+        })
+        result = json.loads(dataset_controller.update(dataset_id=dataset_id,
+                                                      update=update))
+        update = json.dumps({
+            'wp_id': 'E',
+            'functional': 'no',
+        })
+        result = json.loads(dataset_controller.update(dataset_id=dataset_id,
+                                                      update=update))
+        dataset = Dataset.find_one(dataset_id)
+        current_num_rows = dataset.num_rows
+
+
+        self.assertEqual(
+            dataset.aggregated_datasets[''].dframe().get_value(0, 'wp_newest'),
+            'D')
+        self.assertEqual(current_num_rows, previous_num_rows + 2)

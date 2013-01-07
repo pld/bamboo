@@ -5,7 +5,7 @@ import operator
 import numpy as np
 from scipy.stats import percentileofscore
 
-from bamboo.lib.datetools import parse_date_to_unix_time,\
+from bamboo.lib.datetools import safe_parse_date_to_unix_time,\
     parse_str_to_unix_time
 
 
@@ -44,9 +44,15 @@ class EvalConstant(EvalTerm):
                 context.dependent_columns.add(self.value)
 
             # test is date and parse as date
+            return self._parse_field(field, context)
+
+    def _parse_field(self, field, context):
             schema = context.schema
-            return parse_date_to_unix_time(field) if schema and\
-                schema.is_date_simpletype(self.value) else field
+
+            if schema and schema.is_date_simpletype(self.value):
+                field = safe_parse_date_to_unix_time(field)
+
+            return field
 
     def field(self, row):
         return row.get(self.value)

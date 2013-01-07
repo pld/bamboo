@@ -135,7 +135,7 @@ class ArgMaxAggregation(Aggregation):
         return DataFrame(column).join(groupby_max[self.groups])
 
 
-class NewestAggregation(MultiColumnAggregation):
+class NewestAggregation(Aggregation):
     """For the newest index column get the value column."""
 
     formula_name = 'newest'
@@ -144,8 +144,11 @@ class NewestAggregation(MultiColumnAggregation):
     value_column = 1
 
     def agg(self):
-        idx = self.columns[self.index_column].argmax()
-        result = self.columns[self.value_column].get_value(idx)
+        self.columns[self.index_column].name = 'index'
+        idframe = DataFrame(self.columns[self.value_column]).join(
+            self.columns[self.index_column]).dropna().reset_index()
+        idx = idframe['index'].argmax()
+        result = idframe[self.name].get_value(idx)
 
         return self._value_to_dframe(result)
 
