@@ -65,6 +65,9 @@ class AbstractController(object):
 
         :returns: A JSON string wrapped with callback if callback is not False.
         """
+        cherrypy.response.status = success_status_code if obj is not None else\
+            self.ERROR_STATUS_CODE
+
         if obj is None:
             obj = {self.ERROR: error_message}
 
