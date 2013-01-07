@@ -88,6 +88,7 @@ class MultiColumnAggregation(Aggregation):
         return dframe.join(column)
 
     def _agg_dframe(self, dframe):
+        print dframe.columns
         return dframe[self._name_for_idx(0)].apply(float) /\
             dframe[self._name_for_idx(1)]
 
