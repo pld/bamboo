@@ -85,7 +85,7 @@ class AbstractController(object):
         """
         cherrypy.response.headers['Content-Type'] = 'application/%s' % (
             content_type)
-        cherrypy.response.status = success_status_code if obj else\
+        cherrypy.response.status = success_status_code if obj is None else\
             self.ERROR_STATUS_CODE
 
     def _safe_get_and_call(self, dataset_id, action, callback=None,
