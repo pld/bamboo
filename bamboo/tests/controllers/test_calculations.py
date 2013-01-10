@@ -35,6 +35,15 @@ class TestCalculations(TestBase):
 
         return self.controller.create(self.dataset_id, formula, name)
 
+    def _wait_for_calculation_ready(self, dataset_id, name):
+        while True:
+            calculation = Calculation.find_one(dataset_id, name)
+
+            if calculation.is_ready:
+                break
+
+            sleep(self.SLEEP_DELAY)
+
     def _test_error(self, response, error_text=None):
         response = json.loads(response)
 
@@ -96,11 +105,7 @@ class TestCalculations(TestBase):
         self.assertTrue(isinstance(response, dict))
         self.assertFalse(DATASET_ID in response)
 
-        while True:
-            dataset = Dataset.find_one(self.dataset_id)
-            if dataset.is_ready:
-                break
-            sleep(self.SLEEP_DELAY)
+        self._wait_for_dataset_state(self.dataset_id)
 
         self.assertFalse(self.name in dataset.schema.keys())
 
@@ -110,11 +115,7 @@ class TestCalculations(TestBase):
             '%s%s' % (self._local_fixture_prefix(), 'good_eats_huge.csv'),
             allow_local_file=True).dataset_id
 
-        while True:
-            dataset = Dataset.find_one(self.dataset_id)
-            if dataset.is_ready:
-                break
-            sleep(self.SLEEP_DELAY)
+        self._wait_for_dataset_state(self.dataset_id)
 
         response = json.loads(self._post_formula())
 
@@ -128,15 +129,8 @@ class TestCalculations(TestBase):
         self.assertTrue(Calculation.STATE in response)
         self.assertEqual(response[Calculation.STATE],
                          Calculation.STATE_PENDING)
-        while True:
-            response = json.loads(self.controller.show(self.dataset_id))[0]
-            dataset = Dataset.find_one(self.dataset_id)
-            if response[Calculation.STATE] != Calculation.STATE_PENDING:
-                break
-            sleep(self.SLEEP_DELAY)
 
-        self.assertEqual(response[Calculation.STATE],
-                         Calculation.STATE_READY)
+        self._wait_for_calculation_ready(self.dataset_id, self.name)
 
         dataset = Dataset.find_one(self.dataset_id)
 
@@ -146,11 +140,7 @@ class TestCalculations(TestBase):
     def test_create_async(self):
         self.dataset_id = self._post_file()
 
-        while True:
-            dataset = Dataset.find_one(self.dataset_id)
-            if dataset.is_ready:
-                break
-            sleep(self.SLEEP_DELAY)
+        self._wait_for_dataset_state(self.dataset_id)
 
         response = json.loads(self._post_formula())
 
@@ -158,12 +148,7 @@ class TestCalculations(TestBase):
         self.assertTrue(self.controller.SUCCESS in response)
         self.assertTrue(self.dataset_id in response[self.controller.SUCCESS])
 
-        while True:
-            response = json.loads(self.controller.show(self.dataset_id))[0]
-            dataset = Dataset.find_one(self.dataset_id)
-            if response[Calculation.STATE] != Calculation.STATE_PENDING:
-                break
-            sleep(self.SLEEP_DELAY)
+        self._wait_for_calculation_ready(self.dataset_id, self.name)
 
         dataset = Dataset.find_one(self.dataset_id)
 
@@ -378,6 +363,7 @@ class TestCalculations(TestBase):
         dataset_id = self._post_file('wp_data.csv')
         results = json.loads(self.controller.create(dataset_id,
                                'newest(submit_date,wp_id)', 'wp_newest'))
+
         dataset = Dataset.find_one(dataset_id)
         previous_num_rows = dataset.num_rows
 
@@ -401,8 +387,59 @@ class TestCalculations(TestBase):
         dataset = Dataset.find_one(dataset_id)
         current_num_rows = dataset.num_rows
 
-
         self.assertEqual(
             dataset.aggregated_datasets[''].dframe().get_value(0, 'wp_newest'),
             'D')
+        self.assertEqual(current_num_rows, previous_num_rows + 2)
+
+    @requires_async
+    def test_update_after_agg_group(self):
+        dataset_id = self._post_file('wp_data.csv')
+        group = 'wp_id'
+        self._wait_for_dataset_state(dataset_id)
+
+        results = json.loads(self.controller.create(dataset_id,
+                               'newest(submit_date,functional)', 'wp_functional',
+                               group=group))
+        results = json.loads(self.controller.create(dataset_id,
+                               'max(submit_date)', 'latest_submit_date',
+                               group=group))
+
+        dataset = Dataset.find_one(dataset_id)
+        previous_num_rows = dataset.num_rows
+
+        self.assertTrue(self.controller.SUCCESS in results.keys())
+#        self.assertFalse(dataset.aggregated_datasets.get(group) is None)
+
+        dataset_controller = Datasets()
+        dataset = Dataset.find_one(dataset_id)
+        update = json.dumps({
+            'submit_date': '2013-01-05',
+            'wp_id': 'D',
+            'functional': 'yes',
+        })
+        result = json.loads(dataset_controller.update(dataset_id=dataset_id,
+                                                      update=update))
+        update = json.dumps({
+            'submit_date': '2013-01-08',
+            'wp_id': 'A',
+            'functional': 'no',
+        })
+        result = json.loads(dataset_controller.update(dataset_id=dataset_id,
+                                                      update=update))
+
+        while True:
+            dataset = Dataset.find_one(dataset_id)
+            if dataset.aggregated_datasets.get(group):
+                break
+
+        # TODO programmatic way to know how long to pause
+        sleep(4)
+
+        dataset = Dataset.find_one(dataset_id)
+        current_num_rows = dataset.num_rows
+
+        self.assertEqual(
+            dataset.aggregated_datasets[group].dframe().get_value(0, 'wp_id'),
+            'A')
         self.assertEqual(current_num_rows, previous_num_rows + 2)
