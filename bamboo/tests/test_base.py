@@ -73,7 +73,7 @@ class TestBase(unittest.TestCase):
         while True:
             dataset = Dataset.find_one(dataset_id)
 
-            if dataset.is_ready:
+            if dataset.state != Dataset.STATE_PENDING:
                 break
 
             sleep(self.SLEEP_DELAY)
