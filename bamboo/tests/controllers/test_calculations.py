@@ -132,8 +132,6 @@ class TestCalculations(TestBase):
 
         self._wait_for_calculation_ready(self.dataset_id, self.name)
 
-        self.assertTrue(calculation.is_ready)
-
         dataset = Dataset.find_one(self.dataset_id)
 
         self.assertTrue(self.name in dataset.schema.keys())
