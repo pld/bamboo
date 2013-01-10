@@ -308,8 +308,10 @@ class Dataset(AbstractModel):
     def set_schema(self, schema, set_num_columns=True):
         """Set the schema from an existing one."""
         update_dict = {self.SCHEMA: schema}
+
         if set_num_columns:
             update_dict.update({self.NUM_COLUMNS: len(schema.keys())})
+
         self.update(update_dict)
 
     def info(self):
@@ -384,6 +386,7 @@ class Dataset(AbstractModel):
                           set_num_columns=set_num_columns)
         dframe = self.add_id_column_to_dframe(dframe)
         Observation.delete_all(self)
+
         return self.save_observations(dframe)
 
     def drop_columns(self, columns):

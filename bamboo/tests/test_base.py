@@ -1,4 +1,5 @@
 import os
+from time import sleep
 import unittest
 import uuid
 
@@ -7,6 +8,8 @@ from pandas import read_csv
 from bamboo.config.db import Database
 from bamboo.config.settings import TEST_DATABASE_NAME
 from bamboo.lib.io import create_dataset_from_csv
+from bamboo.models.calculation import Calculation
+from bamboo.models.dataset import Dataset
 from bamboo.tests.mock import MockUploadedFile
 
 
@@ -65,3 +68,14 @@ class TestBase(unittest.TestCase):
         return create_dataset_from_csv(
             self._file_mock(self._fixture_path_prefix(file_name))
             ).dataset_id
+
+    def _wait_for_dataset_state(self, dataset_id):
+        while True:
+            dataset = Dataset.find_one(dataset_id)
+
+            if dataset.is_ready:
+                break
+
+            sleep(self.SLEEP_DELAY)
+
+        return dataset
