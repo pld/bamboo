@@ -449,4 +449,4 @@ class Dataset(AbstractModel):
         agg_datasets_dict = self.aggregated_datasets_dict
         agg_datasets_dict[group] = agg_dataset.dataset_id
         self.update({
-            self.AGGREGATED_DATASETS: aggregated_datasets_dict})
+            self.AGGREGATED_DATASETS: agg_datasets_dict})
