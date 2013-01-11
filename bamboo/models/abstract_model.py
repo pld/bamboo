@@ -126,6 +126,11 @@ class AbstractModel(object):
         }
         return remove_mongo_reserved_keys(_dict)
 
+    def create(self):
+        model = self.__class__()
+        model.save()
+        return model
+
     def delete(self, query):
         """Delete rows matching query.
 

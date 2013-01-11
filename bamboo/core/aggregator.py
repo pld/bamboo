@@ -41,15 +41,8 @@ class Aggregator(object):
         agg_dataset = aggregated_datasets.get(self.group_str, None)
 
         if agg_dataset is None:
-            agg_dataset = self.dataset.__class__()
-            agg_dataset.save()
-            agg_dataset.save_observations(new_dframe)
-
-            # store a link to the new dataset
-            aggregated_datasets_dict = self.dataset.aggregated_datasets_dict
-            aggregated_datasets_dict[self.group_str] = agg_dataset.dataset_id
-            self.dataset.update({
-                self.dataset.AGGREGATED_DATASETS: aggregated_datasets_dict})
+            agg_dataset = self.dataset.new_agg_dataset(
+                new_dframe, self.group_str)
         else:
             agg_dframe = agg_dataset.dframe()
 

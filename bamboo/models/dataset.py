@@ -412,8 +412,7 @@ class Dataset(AbstractModel):
             merged_dframe = self.place_holder_dframe()
 
         merged_dframe = merged_dframe.join_dataset(other, on)
-        merged_dataset = self.__class__()
-        merged_dataset.save()
+        merged_dataset = self.create()
 
         if self.num_rows and other.num_rows:
             merged_dataset.save_observations(merged_dframe)
@@ -441,3 +440,13 @@ class Dataset(AbstractModel):
         id_column.name = DATASET_OBSERVATION_ID
 
         return dframe.join(id_column)
+
+    def new_agg_dataset(self, dframe, group):
+        agg_dataset = self.create()
+        agg_dataset.save_observations(dframe)
+
+        # store a link to the new dataset
+        agg_datasets_dict = self.aggregated_datasets_dict
+        agg_datasets_dict[group] = agg_dataset.dataset_id
+        self.update({
+            self.AGGREGATED_DATASETS: aggregated_datasets_dict})
