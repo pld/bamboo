@@ -166,11 +166,10 @@ class AbstractModel(object):
         """
         record = dict_for_mongo(record)
         id_dict = {'_id': self.record['_id']}
-        result = self.collection.update(id_dict, {'$set': record}, safe=True)
+        self.collection.update(id_dict, {'$set': record}, safe=True)
 
-        new_record = super(self.__class__, self.__class__).find_one(id_dict).record
-
-        self.record.update(record)
+        # Set record to the latest record from the database
+        self.record = self.__class__.collection.find_one(id_dict)
 
     def batch_save(self, dframe):
         """Save records in batches to avoid document size maximum setting.
