@@ -157,26 +157,9 @@ class Dataset(AbstractModel):
             query=query, select=select, limit=limit, order_by=order_by,
             as_cursor=True)
 
-        batches = int(ceil(float(observations.count(with_limit_and_skip=True))
-                      / DB_READ_BATCH_SIZE))
-        dframes = []
+        dframe = self._batch_read_dframe_from_cursor(
+            observations, distinct, limit)
 
-        if distinct:
-            observations = observations.distinct(distinct)
-
-        for batch in xrange(0, batches):
-            start = batch * DB_READ_BATCH_SIZE
-            end = (batch + 1) * DB_READ_BATCH_SIZE
-
-            if limit > 0 and end > limit:
-                end = limit
-
-            dframes.append(BambooFrame([ob for ob in observations[start:end]]))
-
-            if not distinct:
-                observations.rewind()
-
-        dframe = BambooFrame(concat(dframes) if len(dframes) else [])
         dframe.decode_mongo_reserved_keys()
         dframe.remove_bamboo_reserved_keys(keep_parent_ids)
 
@@ -189,6 +172,39 @@ class Dataset(AbstractModel):
                 dframe = self.place_holder_dframe()
 
         return dframe
+
+    def _batch_read_dframe_from_cursor(self, observations, distinct, limit):
+        if distinct:
+            observations = observations.distinct(distinct)
+
+        dframes = []
+        batch = 0
+
+        while True:
+            start = batch * DB_READ_BATCH_SIZE
+            end = (batch + 1) * DB_READ_BATCH_SIZE
+
+            if limit > 0 and end > limit:
+                end = limit
+
+            # if there is a limit and we are done
+            if start >= end:
+                break
+
+            current_observations = [ob for ob in observations[start:end]]
+
+            # if the batches exhausted the data
+            if not len(current_observations):
+                break
+
+            dframes.append(BambooFrame(current_observations))
+
+            if not distinct:
+                observations.rewind()
+
+            batch += 1
+
+        return BambooFrame(concat(dframes) if len(dframes) else [])
 
     def add_joined_dataset(self, new_data):
         """Add the ID of `new_dataset` to the list of joined datasets."""
