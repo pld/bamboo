@@ -9,7 +9,7 @@ scipy==0.10.1
 # for celery
 kombu==2.4.7
 celery==3.0.11
-pymongo==2.3
+pymongo==2.4.1
 pytz==2012d
 
 cherrypy==3.2.2
