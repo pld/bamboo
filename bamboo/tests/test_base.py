@@ -66,8 +66,7 @@ class TestBase(unittest.TestCase):
 
     def _post_file(self, file_name='good_eats.csv'):
         return create_dataset_from_csv(
-            self._file_mock(self._fixture_path_prefix(file_name))
-            ).dataset_id
+            self._file_mock(self._fixture_path_prefix(file_name))).dataset_id
 
     def _wait_for_dataset_state(self, dataset_id):
         while True:

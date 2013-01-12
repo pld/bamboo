@@ -216,11 +216,11 @@ class Calculation(AbstractModel):
     @classmethod
     def find(cls, dataset):
         return super(cls, cls).find({DATASET_ID: dataset.dataset_id},
-                order_by='name')
+                                    order_by='name')
 
     def restart_if_has_pending(self, dataset):
-        unfinished_calcs = [calc for calc in dataset.calculations()
-                if not calc.is_ready]
+        unfinished_calcs = [
+            calc for calc in dataset.calculations() if not calc.is_ready]
 
         if len(unfinished_calcs) and self.name != unfinished_calcs[0].name:
             raise calculate_task.retry(countdown=5)
@@ -235,4 +235,3 @@ class Calculation(AbstractModel):
             if calc:
                 self.add_dependency(calc.name)
                 calc.add_dependent_calculation(self.name)
-

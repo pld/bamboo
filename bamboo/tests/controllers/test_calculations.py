@@ -362,7 +362,7 @@ class TestCalculations(TestBase):
     def test_update_after_agg(self):
         dataset_id = self._post_file('wp_data.csv')
         results = json.loads(self.controller.create(dataset_id,
-                               'newest(submit_date,wp_id)', 'wp_newest'))
+                             'newest(submit_date,wp_id)', 'wp_newest'))
 
         dataset = Dataset.find_one(dataset_id)
         previous_num_rows = dataset.num_rows
@@ -399,11 +399,11 @@ class TestCalculations(TestBase):
         self._wait_for_dataset_state(dataset_id)
 
         results = json.loads(self.controller.create(dataset_id,
-                               'newest(submit_date,functional)', 'wp_functional',
-                               group=group))
+                             'newest(submit_date,functional)', 'wp_functional',
+                             group=group))
         results = json.loads(self.controller.create(dataset_id,
-                               'max(submit_date)', 'latest_submit_date',
-                               group=group))
+                             'max(submit_date)', 'latest_submit_date',
+                             group=group))
 
         dataset = Dataset.find_one(dataset_id)
         previous_num_rows = dataset.num_rows

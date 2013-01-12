@@ -227,8 +227,7 @@ class Calculator(object):
         calculations = self.dataset.calculations()
 
         for calculation in calculations:
-            _, function =\
-                self.parser.parse_formula(calculation.formula)
+            _, function = self.parser.parse_formula(calculation.formula)
             new_column = new_dframe.apply(function[0], axis=1,
                                           args=(self.parser.context, ))
             potential_name = calculation.name
@@ -262,8 +261,10 @@ class Calculator(object):
         # update the merged datasets with new_dframe
         for merged_dataset in self.dataset.merged_datasets:
             merged_calculator = Calculator(merged_dataset)
-            call_async(merged_calculator.calculate_updates, merged_calculator,
-                       slugified_data, parent_dataset_id=self.dataset.dataset_id)
+            call_async(merged_calculator.calculate_updates,
+                       merged_calculator,
+                       slugified_data,
+                       parent_dataset_id=self.dataset.dataset_id)
 
     def _update_joined_datasets(self, new_dframe_raw):
         # update any joined datasets
@@ -356,6 +357,7 @@ class Calculator(object):
         :type group: String, list of strings, or None.
         :param agg_dataset: The DataSet to store the aggregation in.
         """
+        # parse aggregation and build column arguments
         aggregation, new_columns = self.make_columns(
             formula, name, new_dframe)
 

@@ -128,8 +128,13 @@ class Dataset(AbstractModel):
     def cardinality(self, col):
         return self.schema.cardinality(col)
 
-    def dframe(self, query=None, select=None, distinct=None, keep_parent_ids=False,
-               limit=0, order_by=None, padded=False):
+    def aggregated_dataset(self, group):
+        _id = self.aggregated_datasets_dict.get(group)
+
+        return self.find_one(_id) if _id else None
+
+    def dframe(self, query=None, select=None, distinct=None,
+               keep_parent_ids=False, limit=0, order_by=None, padded=False):
         """Fetch the dframe for this dataset.
 
         :param select: An optional select to limit the fields in the dframe.
@@ -158,7 +163,6 @@ class Dataset(AbstractModel):
 
         if distinct:
             observations = observations.distinct(distinct)
-
 
         for batch in xrange(0, batches):
             start = batch * DB_READ_BATCH_SIZE
@@ -382,7 +386,7 @@ class Dataset(AbstractModel):
     def add_pending_update(self, update_id):
         self.collection.update(
             {'_id': self.record['_id']},
-            {'$push': {self.PENDING_UPDATES: update_id }})
+            {'$push': {self.PENDING_UPDATES: update_id}})
 
     def save_observations(self, dframe):
         """Save rows in `dframe` for this dataset."""
@@ -472,9 +476,10 @@ class Dataset(AbstractModel):
         self.reload()
         pending_updates = self.pending_updates
 
-        return pending_updates[0] != update_id and len(set(pending_updates) - set([update_id]))
+        return pending_updates[0] != update_id and len(
+            set(pending_updates) - set([update_id]))
 
     def update_complete(self, update_id):
         self.collection.update(
             {'_id': self.record['_id']},
-            {'$pull': {self.PENDING_UPDATES: update_id }})
+            {'$pull': {self.PENDING_UPDATES: update_id}})
