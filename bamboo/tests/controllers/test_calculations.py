@@ -333,9 +333,19 @@ class TestCalculations(TestBase):
             dataset_id = self._post_file('water_points.csv')
             dframe_before = Dataset.find_one(dataset_id).dframe()
 
+            # a calculation
             response = json.loads(self.controller.create(
                 dataset_id,
                 'water_source_type in ["borehole"]',
+                formula_name))
+
+            self.assertTrue(isinstance(response, dict))
+            self.assertTrue(self.controller.SUCCESS in response)
+
+            # a aggregation
+            response = json.loads(self.controller.create(
+                dataset_id,
+                'newest(date_, water_functioning)',
                 formula_name))
 
             self.assertTrue(isinstance(response, dict))
@@ -356,7 +366,8 @@ class TestCalculations(TestBase):
                 'date': '2013-01-05',
                 'water_source_type': 'borehole',
             }
-            self._post_update(dataset_id, update)
+            result = self._post_update(dataset_id, update)
+            print result
 
     def test_newest(self):
         expected_dataset = {
