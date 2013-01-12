@@ -33,30 +33,17 @@ class Aggregator(object):
 
         :param columns: The columns to aggregate.
         """
-        new_dframe = BambooFrame(
-            self.aggregation.eval(columns)
-        ).add_parent_column(self.dataset.dataset_id)
+        new_dframe = BambooFrame(self.aggregation.eval(columns))
+        new_dframe = new_dframe.add_parent_column(self.dataset.dataset_id)
 
-        aggregated_datasets = self.dataset.aggregated_datasets
-        agg_dataset = aggregated_datasets.get(self.group_str, None)
+        agg_dataset = self.dataset.aggregated_dataset(self.group_str)
 
         if agg_dataset is None:
             agg_dataset = self.dataset.new_agg_dataset(
                 new_dframe, self.group_str)
         else:
             agg_dframe = agg_dataset.dframe()
-
-            if self.groups:
-                # set indexes on new dataframes to merge correctly
-                new_dframe = new_dframe.set_index(self.groups)
-                agg_dframe = agg_dframe.set_index(self.groups)
-
-            # attach new column to aggregation data frame and remove index
-            new_dframe = agg_dframe.join(new_dframe)
-
-            if self.groups:
-                new_dframe = new_dframe.reset_index()
-
+            new_dframe = self._merge_dframes([agg_dframe, new_dframe])
             agg_dataset.replace_observations(new_dframe)
 
         self.new_dframe = new_dframe
@@ -73,22 +60,43 @@ class Aggregator(object):
         child_dataset.remove_parent_observations(parent_dataset_id)
 
         if not self.groups and 'reduce' in dir(self.aggregation):
+            # if it is not grouped and a reduce is defined
             dframe = BambooFrame(
                 self.aggregation.reduce(dframe, columns))
         else:
-            # TODO isn't the below already done in the calling func?
-            _, columns = calculator.make_columns(
-                formula, self.name, self.dframe)
-            new_dframe = self.aggregation.eval(columns)
-
-            if self.groups:
-                del dframe[self.name]
-                dframe = new_dframe[self.groups + [self.name]].join(dframe.set_index(self.groups),
-                        on=self.groups)
-            else:
-                dframe[self.name] = new_dframe[self.name]
+            dframe = self._dframe_from_calculator(calculator, formula, dframe)
 
         new_agg_dframe = concat([child_dataset.dframe(), dframe])
 
         return child_dataset.replace_observations(
             new_agg_dframe.add_parent_column(parent_dataset_id))
+
+    def _dframe_from_calculator(self, calculator, formula, dframe):
+        """Create a new aggregation and update return updated dframe."""
+        # build column arguments from original dframe
+        _, columns = calculator.make_columns(
+            formula, self.name, self.dframe)
+        new_dframe = self.aggregation.eval(columns)
+
+        if self.groups:
+            # update dframe column, joining on group
+            del dframe[self.name]
+            dframe = new_dframe[self.groups + [self.name]].join(
+                dframe.set_index(self.groups), on=self.groups)
+        else:
+            dframe[self.name] = new_dframe[self.name]
+
+        return dframe
+
+    def _merge_dframes(self, dframes):
+        if self.groups:
+            # set indexes on new dataframes to merge correctly
+            dframes = [dframe.set_index(self.groups) for dframe in dframes]
+
+        # attach new column to aggregation data frame and remove index
+        new_dframe = dframes[0].join(dframes[1:])
+
+        if self.groups:
+            new_dframe = new_dframe.reset_index()
+
+        return new_dframe
