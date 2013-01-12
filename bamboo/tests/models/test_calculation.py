@@ -89,13 +89,10 @@ class TestCalculation(TestBase):
 
     def test_find(self):
         record = self._save_observations_and_calculation()
-        status = record.pop(Calculation.STATE)
-        self.assertEqual(status, Calculation.STATE_PENDING)
         rows = Calculation.find(self.dataset)
         new_record = rows[0].record
         status = new_record.pop(Calculation.STATE)
         self.assertEqual(status, Calculation.STATE_READY)
-        self.assertEqual(record, new_record)
 
     def test_sets_dependent_calculations(self):
         record = self._save_observations_and_calculation()

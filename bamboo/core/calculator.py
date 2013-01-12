@@ -18,7 +18,7 @@ class Calculator(object):
     dframe = None
 
     def __init__(self, dataset):
-        self.dataset = dataset
+        self.dataset = dataset.reload()
         self.parser = Parser(dataset)
 
     def validate(self, formula, group_str):
@@ -75,7 +75,7 @@ class Calculator(object):
         aggregation, new_columns = self.make_columns(formula, name)
 
         if aggregation:
-            agg = Aggregator(self.dataset, self.dframe,
+            agg = Aggregator(self.dataset, self.dataset.dframe(),
                              group_str, aggregation, name)
             agg.save(new_columns)
         else:
@@ -85,6 +85,9 @@ class Calculator(object):
         for merged_dataset in self.dataset.merged_datasets:
             merged_calculator = Calculator(merged_dataset)
             merged_calculator.propagate_column(self.dataset)
+
+    def dependent_columns(self):
+        return self.parser.context.dependent_columns
 
     def propagate_column(self, parent_dataset):
         """Propagate columns in `parent_dataset` to this dataset.
@@ -119,7 +122,7 @@ class Calculator(object):
 
     @task
     def calculate_updates(self, new_data, new_dframe_raw=None,
-                          parent_dataset_id=None):
+                          parent_dataset_id=None, update_id=None):
         """Update dataset with `new_data`.
 
         This can result in race-conditions when:
@@ -135,7 +138,7 @@ class Calculator(object):
             default is None.
         """
         self._ensure_dframe()
-        self._ensure_ready()
+        self._ensure_ready(update_id)
 
         labels_to_slugs = self.dataset.schema.labels_to_slugs
 
@@ -168,6 +171,8 @@ class Calculator(object):
         self._update_merged_datasets(new_data, labels_to_slugs)
         self._update_joined_datasets(new_dframe_raw)
 
+        self.dataset.update_complete(update_id)
+
     def _check_update_is_valid(self, new_dframe_raw):
         """Check if the update is valid.
 
@@ -191,7 +196,7 @@ class Calculator(object):
     def make_columns(self, formula, name, dframe=None):
         """Parse formula into function and variables."""
         if dframe is None:
-            dframe = self.dframe
+            dframe = self.dataset.dframe()
 
         aggregation, functions = self.parser.parse_formula(formula)
 
@@ -210,19 +215,19 @@ class Calculator(object):
         if self.dframe is None:
             self.dframe = self.dataset.dframe()
 
-    def _ensure_ready(self):
+    def _ensure_ready(self, update_id):
         # dataset must not be pending
-        if not self.dataset.is_ready:
+        if not self.dataset.is_ready or (
+                update_id and self.dataset.has_pending_updates(update_id)):
             self.dataset.reload()
-            raise self.calculate_updates.retry(countdown=1)
+            raise self.calculate_updates.retry(countdown=5)
 
     def _add_calcs_and_find_aggregations(self, new_dframe, labels_to_slugs):
         aggregations = []
         calculations = self.dataset.calculations()
 
         for calculation in calculations:
-            _, function =\
-                self.parser.parse_formula(calculation.formula)
+            _, function = self.parser.parse_formula(calculation.formula)
             new_column = new_dframe.apply(function[0], axis=1,
                                           args=(self.parser.context, ))
             potential_name = calculation.name
@@ -256,8 +261,10 @@ class Calculator(object):
         # update the merged datasets with new_dframe
         for merged_dataset in self.dataset.merged_datasets:
             merged_calculator = Calculator(merged_dataset)
-            call_async(merged_calculator.calculate_updates, merged_calculator,
-                       slugified_data, parent_dataset_id=self.dataset.dataset_id)
+            call_async(merged_calculator.calculate_updates,
+                       merged_calculator,
+                       slugified_data,
+                       parent_dataset_id=self.dataset.dataset_id)
 
     def _update_joined_datasets(self, new_dframe_raw):
         # update any joined datasets
@@ -324,8 +331,8 @@ class Calculator(object):
         return BambooFrame(filtered_data)
 
     def _update_aggregate_datasets(self, calculations, new_dframe):
-        if not self.calcs_to_data:
-            self._create_calculations_to_groups_and_datasets(calculations)
+        #if not self.calcs_to_data:
+        self._create_calculations_to_groups_and_datasets(calculations)
 
         for formula, slug, group, dataset in self.calcs_to_data:
             self._update_aggregate_dataset(formula, new_dframe, slug, group,
@@ -350,6 +357,7 @@ class Calculator(object):
         :type group: String, list of strings, or None.
         :param agg_dataset: The DataSet to store the aggregation in.
         """
+        # parse aggregation and build column arguments
         aggregation, new_columns = self.make_columns(
             formula, name, new_dframe)
 

@@ -48,6 +48,7 @@ class Dataset(AbstractModel):
     NUM_COLUMNS = 'num_columns'
     NUM_ROWS = 'num_rows'
     MERGED_DATASETS = 'merged_datasets'
+    PENDING_UPDATES = 'pending_updates'
     SCHEMA = 'schema'
     UPDATED_AT = 'updated_at'
 
@@ -114,6 +115,10 @@ class Dataset(AbstractModel):
     def merged_datasets(self):
         return self._linked_datasets(self.merged_dataset_ids)
 
+    @property
+    def pending_updates(self):
+        return self.record[self.PENDING_UPDATES]
+
     def _linked_datasets(self, ids):
         return [self.find_one(_id) for _id in ids]
 
@@ -123,8 +128,13 @@ class Dataset(AbstractModel):
     def cardinality(self, col):
         return self.schema.cardinality(col)
 
-    def dframe(self, query=None, select=None, distinct=None, keep_parent_ids=False,
-               limit=0, order_by=None, padded=False):
+    def aggregated_dataset(self, group):
+        _id = self.aggregated_datasets_dict.get(group)
+
+        return self.find_one(_id) if _id else None
+
+    def dframe(self, query=None, select=None, distinct=None,
+               keep_parent_ids=False, limit=0, order_by=None, padded=False):
         """Fetch the dframe for this dataset.
 
         :param select: An optional select to limit the fields in the dframe.
@@ -153,7 +163,6 @@ class Dataset(AbstractModel):
 
         if distinct:
             observations = observations.distinct(distinct)
-
 
         for batch in xrange(0, batches):
             start = batch * DB_READ_BATCH_SIZE
@@ -222,6 +231,7 @@ class Dataset(AbstractModel):
             self.AGGREGATED_DATASETS: {},
             self.CREATED_AT: strftime("%Y-%m-%d %H:%M:%S", gmtime()),
             self.STATE: self.STATE_PENDING,
+            self.PENDING_UPDATES: [],
         }
 
         return super(self.__class__, self).save(record)
@@ -359,6 +369,10 @@ class Dataset(AbstractModel):
 
     def add_observations(self, json_data):
         """Update `dataset` with new `data`."""
+        record = self.record
+        update_id = uuid.uuid4().hex
+        self.add_pending_update(update_id)
+
         new_data = json.loads(json_data)
         calculator = Calculator(self)
 
@@ -367,7 +381,12 @@ class Dataset(AbstractModel):
         calculator._check_update_is_valid(new_dframe_raw)
 
         call_async(calculator.calculate_updates, calculator, new_data,
-                   new_dframe_raw=new_dframe_raw)
+                   new_dframe_raw=new_dframe_raw, update_id=update_id)
+
+    def add_pending_update(self, update_id):
+        self.collection.update(
+            {'_id': self.record['_id']},
+            {'$push': {self.PENDING_UPDATES: update_id}})
 
     def save_observations(self, dframe):
         """Save rows in `dframe` for this dataset."""
@@ -412,8 +431,7 @@ class Dataset(AbstractModel):
             merged_dframe = self.place_holder_dframe()
 
         merged_dframe = merged_dframe.join_dataset(other, on)
-        merged_dataset = self.__class__()
-        merged_dataset.save()
+        merged_dataset = self.create()
 
         if self.num_rows and other.num_rows:
             merged_dataset.save_observations(merged_dframe)
@@ -429,7 +447,9 @@ class Dataset(AbstractModel):
         return merged_dataset
 
     def reload(self):
-        self.record = Dataset.find_one(self.dataset_id).record
+        dataset = Dataset.find_one(self.dataset_id)
+        self.record = dataset.record
+
         return self
 
     def add_id_column_to_dframe(self, dframe):
@@ -441,3 +461,25 @@ class Dataset(AbstractModel):
         id_column.name = DATASET_OBSERVATION_ID
 
         return dframe.join(id_column)
+
+    def new_agg_dataset(self, dframe, group):
+        agg_dataset = self.create()
+        agg_dataset.save_observations(dframe)
+
+        # store a link to the new dataset
+        agg_datasets_dict = self.aggregated_datasets_dict
+        agg_datasets_dict[group] = agg_dataset.dataset_id
+        self.update({
+            self.AGGREGATED_DATASETS: agg_datasets_dict})
+
+    def has_pending_updates(self, update_id):
+        self.reload()
+        pending_updates = self.pending_updates
+
+        return pending_updates[0] != update_id and len(
+            set(pending_updates) - set([update_id]))
+
+    def update_complete(self, update_id):
+        self.collection.update(
+            {'_id': self.record['_id']},
+            {'$pull': {self.PENDING_UPDATES: update_id}})

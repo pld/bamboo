@@ -1,9 +1,8 @@
-from time import mktime, sleep
+from time import sleep
 
 import simplejson as json
 
 from bamboo.controllers.datasets import Datasets
-from bamboo.lib.schema_builder import CARDINALITY
 from bamboo.models.dataset import Dataset
 from bamboo.tests.controllers.test_abstract_datasets import\
     TestAbstractDatasets

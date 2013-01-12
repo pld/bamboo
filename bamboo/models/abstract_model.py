@@ -45,11 +45,15 @@ class AbstractModel(object):
         return Database.db()[collection_name]
 
     def failed(self):
-        """Perist the state of the current instance to STATE_FAILED"""
+        """Perist the state of the current instance to `STATE_FAILED`"""
         self.update({self.STATE: self.STATE_FAILED})
 
+    def pending(self):
+        """Perist the state of the current instance to `STATE_PENDING`"""
+        self.update({self.STATE: self.STATE_PENDING})
+
     def ready(self):
-        """Perist the state of the current instance to STATE_READY"""
+        """Perist the state of the current instance to `STATE_READY`"""
         self.update({self.STATE: self.STATE_READY})
 
     @classproperty
@@ -126,6 +130,11 @@ class AbstractModel(object):
         }
         return remove_mongo_reserved_keys(_dict)
 
+    def create(self):
+        model = self.__class__()
+        model.save()
+        return model
+
     def delete(self, query):
         """Delete rows matching query.
 
@@ -157,14 +166,10 @@ class AbstractModel(object):
         """
         record = dict_for_mongo(record)
         id_dict = {'_id': self.record['_id']}
-        result = self.collection.update(id_dict, {'$set': record}, safe=True)
+        self.collection.update(id_dict, {'$set': record}, safe=True)
 
-        new_record = super(self.__class__, self.__class__).find_one(id_dict).record
-
-        if new_record:
-            self.record = new_record
-        else:
-            self.record.update(record)
+        # Set record to the latest record from the database
+        self.record = self.__class__.collection.find_one(id_dict)
 
     def batch_save(self, dframe):
         """Save records in batches to avoid document size maximum setting.
