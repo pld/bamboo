@@ -45,11 +45,15 @@ class AbstractModel(object):
         return Database.db()[collection_name]
 
     def failed(self):
-        """Perist the state of the current instance to STATE_FAILED"""
+        """Perist the state of the current instance to `STATE_FAILED`"""
         self.update({self.STATE: self.STATE_FAILED})
 
+    def pending(self):
+        """Perist the state of the current instance to `STATE_PENDING`"""
+        self.update({self.STATE: self.STATE_PENDING})
+
     def ready(self):
-        """Perist the state of the current instance to STATE_READY"""
+        """Perist the state of the current instance to `STATE_READY`"""
         self.update({self.STATE: self.STATE_READY})
 
     @classproperty
@@ -166,10 +170,7 @@ class AbstractModel(object):
 
         new_record = super(self.__class__, self.__class__).find_one(id_dict).record
 
-        if new_record:
-            self.record = new_record
-        else:
-            self.record.update(record)
+        self.record.update(record)
 
     def batch_save(self, dframe):
         """Save records in batches to avoid document size maximum setting.

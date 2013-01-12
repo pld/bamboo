@@ -408,6 +408,19 @@ class TestCalculations(TestBase):
         dataset = Dataset.find_one(dataset_id)
         previous_num_rows = dataset.num_rows
 
+        while True:
+            dataset = Dataset.find_one(dataset_id)
+
+            if dataset.aggregated_datasets.get(group) and all(
+                    [c.is_ready for c in dataset.calculations()]):
+                break
+            sleep(1)
+
+        agg_dframe = dataset.aggregated_datasets[group].dframe()
+        self.assertEqual(
+            set(['wp_id', 'wp_functional', 'latest_submit_date']),
+            set(agg_dframe.columns.tolist()))
+
         self.assertTrue(self.controller.SUCCESS in results.keys())
 #        self.assertFalse(dataset.aggregated_datasets.get(group) is None)
 
@@ -428,18 +441,20 @@ class TestCalculations(TestBase):
         result = json.loads(dataset_controller.update(dataset_id=dataset_id,
                                                       update=update))
 
+        # TODO programmatic way to know how long to pause
         while True:
             dataset = Dataset.find_one(dataset_id)
-            if dataset.aggregated_datasets.get(group):
+            current_num_rows = dataset.num_rows
+
+            if not len(dataset.pending_updates):
                 break
 
-        # TODO programmatic way to know how long to pause
-        sleep(4)
+            sleep(1)
 
         dataset = Dataset.find_one(dataset_id)
-        current_num_rows = dataset.num_rows
+        agg_dframe = dataset.aggregated_datasets[group].dframe()
 
-        self.assertEqual(
-            dataset.aggregated_datasets[group].dframe().get_value(0, 'wp_id'),
-            'A')
+        self.assertEqual(agg_dframe.get_value(0, 'wp_id'), 'A')
         self.assertEqual(current_num_rows, previous_num_rows + 2)
+        self.assertEqual(set(agg_dframe[group]),
+                         set(['A', 'B', 'C', 'D', 'n/a']))

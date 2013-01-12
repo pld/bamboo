@@ -76,10 +76,17 @@ class Aggregator(object):
             dframe = BambooFrame(
                 self.aggregation.reduce(dframe, columns))
         else:
+            # TODO isn't the below already done in the calling func?
             _, columns = calculator.make_columns(
                 formula, self.name, self.dframe)
             new_dframe = self.aggregation.eval(columns)
-            dframe[self.name] = new_dframe[self.name]
+
+            if self.groups:
+                del dframe[self.name]
+                dframe = new_dframe[self.groups + [self.name]].join(dframe.set_index(self.groups),
+                        on=self.groups)
+            else:
+                dframe[self.name] = new_dframe[self.name]
 
         new_agg_dframe = concat([child_dataset.dframe(), dframe])
 

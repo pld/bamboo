@@ -32,28 +32,20 @@ def delete_task(calculation, dataset, slug):
     })
 
 
-@task
+@task(max_retries=10)
 def calculate_task(calculation, dataset):
     """Background task to run a calculation.
 
     :param calculation: Calculation to run.
     :param dataset: Dataset to run calculation on.
     """
+    # block until other calculations for this dataset are finished
+    calculation.restart_if_has_pending(dataset)
     dataset.clear_summary_stats()
 
     calculator = Calculator(dataset)
     calculator.calculate_column(calculation.formula, calculation.name,
                                 calculation.group)
-
-    dataset_calcs = dataset.calculations()
-    dataset_calc_names = [calc.name for calc in dataset_calcs]
-    names_to_calcs = {calc.name: calc for calc in dataset_calcs}
-
-    for column_name in calculator.parser.context.dependent_columns:
-        calc = names_to_calcs.get(column_name)
-        if calc:
-            calculation.add_dependency(calc.name)
-            calc.add_dependent_calculation(calculation.name)
 
     calculation.ready()
 
@@ -223,4 +215,12 @@ class Calculation(AbstractModel):
 
     @classmethod
     def find(cls, dataset):
-        return super(cls, cls).find({DATASET_ID: dataset.dataset_id})
+        return super(cls, cls).find({DATASET_ID: dataset.dataset_id},
+                order_by='name')
+
+    def restart_if_has_pending(self, dataset):
+        unfinished_calcs = [calc for calc in dataset.calculations()
+                if not calc.is_ready]
+
+        if len(unfinished_calcs) and self.name != unfinished_calcs[0].name:
+            raise calculate_task.retry(countdown=5)
