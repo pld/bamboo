@@ -19,7 +19,7 @@ class Aggregator(object):
         self.dframe = dframe
         # MongoDB does not allow None as a key
         self.group_str = group_str if group_str else ''
-        self.groups = split_groups(self.group_str) if group_str else None
+        self.groups = split_groups(self.group_str) if group_str else []
         self.name = name
         self.aggregation = AGGREGATIONS.get(_type)(
             self.name, self.groups, self.dframe)
@@ -78,13 +78,9 @@ class Aggregator(object):
             formula, self.name, self.dframe)
         new_dframe = self.aggregation.eval(columns)
 
-        if self.groups:
-            # update dframe column, joining on group
-            del dframe[self.name]
-            dframe = new_dframe[self.groups + [self.name]].join(
-                dframe.set_index(self.groups), on=self.groups)
-        else:
-            dframe[self.name] = new_dframe[self.name]
+        del dframe[self.name]
+        dframe = self._merge_dframes(
+            [new_dframe[self.groups + [self.name]], dframe])
 
         return dframe
 
