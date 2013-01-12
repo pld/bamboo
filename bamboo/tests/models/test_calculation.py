@@ -42,6 +42,17 @@ class TestCalculation(TestBase):
         self.assertTrue(isinstance(record, dict))
         self.assertTrue(Calculation.FORMULA in record.keys())
 
+    def test_save_set_aggregation(self):
+        record = self._save_observations_and_calculation('max(amount)')
+        calculation = Calculation.find(self.dataset)[0]
+        self.assertEqual('max', calculation.aggregation)
+
+    def test_save_set_aggregation_id(self):
+        record = self._save_observations_and_calculation('max(amount)')
+        agg_id = self.dataset.aggregated_datasets_dict['']
+        calculation = Calculation.find(self.dataset)[0]
+        self.assertEqual(agg_id, calculation.aggregation_id)
+
     def test_save_improper_formula(self):
         assert_raises(ParseError, self._save_observations_and_calculation,
                       'NON_EXISTENT_COLUMN')
