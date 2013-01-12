@@ -200,12 +200,23 @@ def _slugify_columns(column_names):
     encoded_names = []
 
     for column_name in column_names:
-        new_col_name = RE_ENCODED_COLUMN.sub('_', column_name).lower()
-        while new_col_name in encoded_names + Parser.reserved_words:
-            new_col_name += '_'
-        encoded_names.append(new_col_name)
+        slug = RE_ENCODED_COLUMN.sub('_', column_name).lower()
+        slug = make_unique(slug, encoded_names + Parser.reserved_words)
+        encoded_names.append(slug)
 
     return encoded_names
+
+
+def make_unique(name, reserved_names):
+    """Return a slug ensuring name is not in `reserved_names`.
+
+    :param name: The name to make unique.
+    :param reserved_names: A list of names the column must not be included in.
+    """
+    while name in reserved_names:
+        name += '_'
+
+    return name
 
 
 def _olap_type_for_data_and_dtype(column, dtype):

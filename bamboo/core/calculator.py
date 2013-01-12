@@ -6,8 +6,8 @@ from pandas import concat
 from bamboo.core.aggregator import Aggregator
 from bamboo.core.frame import BambooFrame, NonUniqueJoinError
 from bamboo.core.parser import ParseError, Parser
-from bamboo.lib.mongo import MONGO_RESERVED_KEYS
 from bamboo.lib.async import call_async
+from bamboo.lib.mongo import MONGO_RESERVED_KEYS
 from bamboo.lib.utils import split_groups
 
 
@@ -227,21 +227,21 @@ class Calculator(object):
         calculations = self.dataset.calculations()
 
         for calculation in calculations:
-            _, function = self.parser.parse_formula(calculation.formula)
-            new_column = new_dframe.apply(function[0], axis=1,
-                                          args=(self.parser.context, ))
-            potential_name = calculation.name
-
-            if potential_name not in self.dframe.columns:
-                if potential_name not in labels_to_slugs:
-                    # it is an aggregate calculation, update after
-                    aggregations.append(calculation)
-                    continue
-                else:
-                    new_column.name = labels_to_slugs[potential_name]
+            if calculation.aggregation is not None:
+                aggregations.append(calculation)
             else:
-                new_column.name = potential_name
-            new_dframe = new_dframe.join(new_column)
+                _, function = self.parser.parse_formula(calculation.formula)
+                new_column = new_dframe.apply(function[0], axis=1,
+                                              args=(self.parser.context, ))
+                potential_name = calculation.name
+
+                if potential_name not in self.dframe.columns:
+                    if potential_name in labels_to_slugs:
+                        new_column.name = labels_to_slugs[potential_name]
+                else:
+                    new_column.name = potential_name
+
+                new_dframe = new_dframe.join(new_column)
 
         return new_dframe, aggregations
 

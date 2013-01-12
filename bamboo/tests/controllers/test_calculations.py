@@ -322,11 +322,11 @@ class TestCalculations(TestBase):
 
     def test_create_dataset_with_duplicate_column_names(self):
         formula_names = [
-            'protected_waterpoint'  # an already slug column
-            'protected/waterpoint'  # a non-slug column
-            'region'                # an existing column
-            'sum'                   # a reserved key
-            'date'                  # a reserved key and an existing column
+            'water_not_functioning_none',  # an already slugged column
+            'water_not_functioning/none',  # a non-slug column
+            'region',                # an existing column
+            'sum',                   # a reserved key
+            'date',                  # a reserved key and an existing column
         ]
 
         for formula_name in formula_names:
@@ -342,7 +342,10 @@ class TestCalculations(TestBase):
             self.assertTrue(isinstance(response, dict))
             self.assertTrue(self.controller.SUCCESS in response)
 
-            # a aggregation
+            dataset = Dataset.find_one(dataset_id)
+            name = dataset.calculations()[-1].name
+
+            # an aggregation
             response = json.loads(self.controller.create(
                 dataset_id,
                 'newest(date_, water_functioning)',
@@ -351,9 +354,8 @@ class TestCalculations(TestBase):
             self.assertTrue(isinstance(response, dict))
             self.assertTrue(self.controller.SUCCESS in response)
 
-            dataset = Dataset.find_one(dataset_id)
             dframe_after = dataset.dframe()
-            slug = dataset.schema.labels_to_slugs[formula_name]
+            slug = dataset.schema.labels_to_slugs[name]
 
             self.assertEqual(len(dframe_before), len(dframe_after))
             self.assertTrue(slug not in dframe_before.columns)
@@ -367,7 +369,9 @@ class TestCalculations(TestBase):
                 'water_source_type': 'borehole',
             }
             result = self._post_update(dataset_id, update)
-            print result
+            dataset = Dataset.find_one(dataset_id)
+            dframe_after_update = dataset.dframe()
+            self.assertEqual(len(dframe_after) + 1, len(dframe_after_update))
 
     def test_newest(self):
         expected_dataset = {
