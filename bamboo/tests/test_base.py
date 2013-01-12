@@ -8,7 +8,6 @@ from pandas import read_csv
 from bamboo.config.db import Database
 from bamboo.config.settings import TEST_DATABASE_NAME
 from bamboo.lib.io import create_dataset_from_csv
-from bamboo.models.calculation import Calculation
 from bamboo.models.dataset import Dataset
 from bamboo.tests.mock import MockUploadedFile
 
