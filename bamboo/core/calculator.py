@@ -86,18 +86,8 @@ class Calculator(object):
             merged_calculator = Calculator(merged_dataset)
             merged_calculator.propagate_column(self.dataset)
 
-        self.add_calculation_dependencies()
-
-    def add_calculation_dependencies(self):
-        """Store calculation dependencies."""
-        calculations = self.dataset.calculations()
-        names_to_calcs = {calc.name: calc for calc in calculations}
-
-        for column_name in self.parser.context.dependent_columns:
-            calc = names_to_calcs.get(column_name)
-            if calc:
-                calculation.add_dependency(calc.name)
-                calc.add_dependent_calculation(calculation.name)
+    def dependent_columns(self):
+        return self.parser.context.dependent_columns
 
     def propagate_column(self, parent_dataset):
         """Propagate columns in `parent_dataset` to this dataset.

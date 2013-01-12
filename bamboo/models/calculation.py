@@ -46,7 +46,7 @@ def calculate_task(calculation, dataset):
     calculator = Calculator(dataset)
     calculator.calculate_column(calculation.formula, calculation.name,
                                 calculation.group)
-
+    calculation.add_dependencies(dataset, calculator.dependent_columns())
     calculation.ready()
 
 
@@ -224,3 +224,15 @@ class Calculation(AbstractModel):
 
         if len(unfinished_calcs) and self.name != unfinished_calcs[0].name:
             raise calculate_task.retry(countdown=5)
+
+    def add_dependencies(self, dataset, dependent_columns):
+        """Store calculation dependencies."""
+        calculations = dataset.calculations()
+        names_to_calcs = {calc.name: calc for calc in calculations}
+
+        for column_name in dependent_columns:
+            calc = names_to_calcs.get(column_name)
+            if calc:
+                self.add_dependency(calc.name)
+                calc.add_dependent_calculation(self.name)
+
