@@ -91,10 +91,10 @@ class TestCalculation(TestBase):
     def test_save_non_existent_group(self):
         self._save_observations()
         assert_raises(ParseError, Calculation().save, self.dataset,
-                      self.formula, self.name, group='NON_EXISTENT_GROUP')
+                      self.formula, self.name, group_str='NON_EXISTENT_GROUP')
         try:
             Calculation().save(self.dataset, self.formula, self.name,
-                               group='NON_EXISTENT_GROUP')
+                               group_str='NON_EXISTENT_GROUP')
         except ParseError as e:
             self.assertTrue('Group' in e.__str__())
 

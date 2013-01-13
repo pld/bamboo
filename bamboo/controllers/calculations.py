@@ -40,7 +40,7 @@ class Calculations(AbstractController):
             if calculation:
                 calculation.delete(dataset)
                 return {
-                    self.SUCCESS: 'deleted calculation: %s for dataset: %s' % (
+                    self.SUCCESS: 'deleted calculation: \'%s\' for dataset: %s' % (
                         name, dataset.dataset_id)}
 
         return self._safe_get_and_call(

@@ -54,6 +54,23 @@ filesystem
         "id": "8a3d74711475d8a51c84484fe73f24bd151242ea"
     }
 
+Deleting a dataset
+^^^^^^^^^^^^^^^^^^
+
+To delete a dataset pass the dataset ID to a delete request.
+
+.. code-block:: sh
+
+    curl -X DELETE http://bamboo.io/datasets/8a3d74711475d8a51c84484fe73f24bd151242ea
+
+**returns:**
+
+.. code-block:: javascript
+
+    {
+        "success": "deleted dataset: 8a3d74711475d8a51c84484fe73f24bd151242ea"
+    }
+
 Retrieve information about a dataset
 ------------------------------------
 
@@ -649,7 +666,7 @@ calculation/[dataset ID]
 .. code-block:: javascript
 
     {
-        "success": "deleted dataset: 8a3d74711475d8a51c84484fe73f24bd151242ea"
+        "success": "deleted calculation: 'amount_less_than_10' for dataset: 8a3d74711475d8a51c84484fe73f24bd151242ea"
     }
 
 Store aggregation formula

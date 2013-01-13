@@ -2,11 +2,10 @@ from pandas import concat
 
 from bamboo.core.aggregations import AGGREGATIONS
 from bamboo.core.frame import BambooFrame
-from bamboo.lib.utils import split_groups
 
 
 class Aggregator(object):
-    """Performa aggregations on datasets.
+    """Perform a aggregations on datasets.
 
     Apply the `aggregation` to group columns in `group_str` and the `columns`
     of the `dframe`. Store the resulting `dframe` as a linked dataset for
@@ -14,15 +13,21 @@ class Aggregator(object):
     this dataset.  Otherwise create a new linked dataset.
     """
 
-    def __init__(self, dataset, dframe, group_str, _type, name):
+    def __init__(self, dataset, dframe, groups, _type, name):
+        """Create an Aggregator.
+
+        :param dataset: The dataset to aggregate.
+        :param dframe: The DataFrame to aggregate.
+        :param groups: A list of columns to group on.
+        :param _type: The aggreagtion to perform.
+        :param name: The name of the aggregation.
+        """
         self.dataset = dataset
         self.dframe = dframe
-        # MongoDB does not allow None as a key
-        self.group_str = group_str if group_str else ''
-        self.groups = split_groups(self.group_str) if group_str else []
+        self.groups = groups
         self.name = name
-        self.aggregation = AGGREGATIONS.get(_type)(
-            self.name, self.groups, self.dframe)
+        aggregation = AGGREGATIONS.get(_type)
+        self.aggregation = aggregation(self.name, self.groups, self.dframe)
 
     def save(self, columns):
         """Save this aggregation applied to the passed in columns.
@@ -31,16 +36,16 @@ class Aggregator(object):
         store in this dataset, if not create a new aggregated dataset and store
         the aggregation in this new aggregated dataset.
 
-        :param columns: The columns to aggregate.
+        :param columns: The column aggregate.
         """
         new_dframe = BambooFrame(self.aggregation.eval(columns))
         new_dframe = new_dframe.add_parent_column(self.dataset.dataset_id)
 
-        agg_dataset = self.dataset.aggregated_dataset(self.group_str)
+        agg_dataset = self.dataset.aggregated_dataset(self.groups)
 
         if agg_dataset is None:
             agg_dataset = self.dataset.new_agg_dataset(
-                new_dframe, self.group_str)
+                new_dframe, self.groups)
         else:
             agg_dframe = agg_dataset.dframe()
             new_dframe = self._merge_dframes([agg_dframe, new_dframe])
