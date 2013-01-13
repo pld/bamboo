@@ -116,7 +116,7 @@ class Calculator(object):
             merged_calculator = Calculator(merged_dataset)
             merged_calculator.propagate_column(self.dataset)
 
-    @task(defauly_retry_delay=5)
+    @task(default_retry_delay=5)
     def calculate_updates(self, new_data, new_dframe_raw=None,
                           parent_dataset_id=None, update_id=None):
         """Update dataset with `new_data`.
