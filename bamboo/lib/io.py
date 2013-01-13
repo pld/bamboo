@@ -1,3 +1,4 @@
+from functools import partial
 import simplejson as json
 import os
 import tempfile
@@ -11,8 +12,7 @@ from bamboo.models.dataset import Dataset
 
 
 @task
-def import_dataset(dataset, dframe=None, filepath_or_buffer=None,
-                   delete=False):
+def import_dataset(dataset, dframe=None, file_reader=None):
     """For reading a URL and saving the corresponding dataset.
 
     Import the `dframe` into the `dataset` if passed.  If a
@@ -26,17 +26,22 @@ def import_dataset(dataset, dframe=None, filepath_or_buffer=None,
     :param delete: Delete filepath_or_buffer after import, default False.
     """
     try:
-        if filepath_or_buffer:
-            dframe = BambooFrame(
-                pd.read_csv(filepath_or_buffer)).recognize_dates()
+        if file_reader:
+            dframe = file_reader()
 
         dataset.save_observations(dframe)
     except Exception as e:
         dataset.failed()
         dataset.delete(countdown=86400)
+
+
+def _file_reader(name, delete=False):
+    try:
+        return BambooFrame(
+            pd.read_csv(name)).recognize_dates()
     finally:
-        if delete and filepath_or_buffer:
-            os.unlink(filepath_or_buffer)
+        if delete:
+            os.unlink(name)
 
 
 def create_dataset_from_url(url, allow_local_file=False):
@@ -55,7 +60,7 @@ def create_dataset_from_url(url, allow_local_file=False):
 
     dataset = Dataset()
     dataset.save()
-    call_async(import_dataset, dataset, filepath_or_buffer=url)
+    call_async(import_dataset, dataset, file_reader=partial(_file_reader, url))
 
     return dataset
 
@@ -81,8 +86,23 @@ def create_dataset_from_csv(csv_file):
     dataset = Dataset()
     dataset.save()
 
-    call_async(import_dataset, dataset, filepath_or_buffer=tmpfile.name,
-               delete=True)
+    call_async(import_dataset, dataset,
+               file_reader=partial(_file_reader, tmpfile.name, delete=True))
+
+    return dataset
+
+
+def create_dataset_from_json(json_file):
+    content = json_file.file.read()
+
+    dataset = Dataset()
+    dataset.save()
+
+    def file_reader(content):
+        return pd.DataFrame(json.loads(content))
+
+    call_async(import_dataset, dataset,
+               file_reader=partial(file_reader, content))
 
     return dataset
 

@@ -36,8 +36,8 @@ Upload data from a URL to *bamboo*
         "id": "8a3d74711475d8a51c84484fe73f24bd151242ea"
     }
 
-Upload data from a file to *bamboo*
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Upload data from a CSV file to *bamboo*
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 given the file ``/home/modilabs/good_eats.csv`` exists locally on your
 filesystem
@@ -45,6 +45,24 @@ filesystem
 .. code-block:: sh
 
     curl -X POST -F csv_file=@/home/modilabs/good_eats.csv http://bamboo.io/datasets
+
+**returns:**
+
+.. code-block:: javascript
+
+    {
+        "id": "8a3d74711475d8a51c84484fe73f24bd151242ea"
+    }
+
+Upload data from a JSON file to *bamboo*
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+given the file ``/home/modilabs/good_eats.json`` exists locally on your
+filesystem
+
+.. code-block:: sh
+
+    curl -X POST -F json_file=@/home/modilabs/good_eats.json http://bamboo.io/datasets
 
 **returns:**
 

@@ -6,7 +6,7 @@ from bamboo.core.merge import merge_dataset_ids, MergeError
 from bamboo.core.summary import ColumnTypeError
 from bamboo.lib.exceptions import ArgumentError
 from bamboo.lib.io import create_dataset_from_url, create_dataset_from_csv,\
-    create_dataset_from_schema
+    create_dataset_from_json, create_dataset_from_schema
 from bamboo.lib.utils import parse_int
 from bamboo.models.dataset import Dataset
 
@@ -181,7 +181,8 @@ class Datasets(AbstractController):
         return self._safe_get_and_call(
             None, _action, exceptions=(MergeError,), error = 'merge failed')
 
-    def create(self, url=None, csv_file=None, schema=None, perish=0):
+    def create(self, url=None, csv_file=None, json_file=None, schema=None,
+               perish=0):
         """Create a dataset by URL, CSV or schema file.
 
         If `url` is provided, create a dataset by downloading a CSV from that
@@ -211,6 +212,7 @@ class Datasets(AbstractController):
         :param url: A URL to load a CSV file from. The URL must point to a CSV
             file.
         :param csv_file: An uploaded CSV file to read from.
+        :param json_file: An uploaded JSON file to read from.
         :param schema: A SDF schema file (JSON)
         :param perish: Number of seconds after which to dlete the dataset.
 
@@ -231,6 +233,8 @@ class Datasets(AbstractController):
                 dataset = create_dataset_from_url(url)
             elif csv_file:
                 dataset = create_dataset_from_csv(csv_file)
+            elif json_file:
+                dataset = create_dataset_from_json(json_file)
             elif schema:
                 dataset = create_dataset_from_schema(schema)
             if dataset:
