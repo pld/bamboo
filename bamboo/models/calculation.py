@@ -1,4 +1,6 @@
-from celery.task import task
+import traceback
+
+from celery.task import Task, task
 
 from bamboo.core.calculator import Calculator
 from bamboo.core.frame import DATASET_ID
@@ -33,9 +35,18 @@ def delete_task(calculation, dataset, slug):
     })
 
 
-@task(max_retries=10)
+class CalculateTask(Task):
+    def after_return(self, status, retval, task_id, args, kwargs, einfo=None):
+        if status == 'FAILURE':
+            calculation = args[0]
+            calculation.failed(traceback.format_exc())
+
+
+@task(base=CalculateTask, default_retry_delay=5, max_retries=10)
 def calculate_task(calculation, dataset):
     """Background task to run a calculation.
+
+    Set calculation to failed and raise if an exception occurs.
 
     :param calculation: Calculation to run.
     :param dataset: Dataset to run calculation on.
@@ -253,7 +264,7 @@ class Calculation(AbstractModel):
             calc for calc in dataset.calculations() if not calc.is_ready]
 
         if len(unfinished_calcs) and self.name != unfinished_calcs[0].name:
-            raise calculate_task.retry(countdown=5)
+            raise calculate_task.retry()
 
     def add_dependencies(self, dataset, dependent_columns):
         """Store calculation dependencies."""

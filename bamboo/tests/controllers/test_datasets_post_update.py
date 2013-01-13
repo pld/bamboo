@@ -39,11 +39,11 @@ class TestDatasetsPostUpdate(TestAbstractDatasets):
         self._put_row_updates(dataset_id)
 
         while True:
-            results = json.loads(self.controller.show(dataset_id))
+            dataset.reload()
 
-            # wait for the update to finish, or loop forever...
-            if len(results) > 19:
+            if not len(dataset.pending_updates):
                 break
+
             sleep(self.SLEEP_DELAY)
 
         results = json.loads(self.controller.show(dataset_id))

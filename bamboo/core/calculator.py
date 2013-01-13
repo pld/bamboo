@@ -116,7 +116,7 @@ class Calculator(object):
             merged_calculator = Calculator(merged_dataset)
             merged_calculator.propagate_column(self.dataset)
 
-    @task
+    @task(default_retry_delay=5)
     def calculate_updates(self, new_data, new_dframe_raw=None,
                           parent_dataset_id=None, update_id=None):
         """Update dataset with `new_data`.
@@ -216,7 +216,7 @@ class Calculator(object):
         if not self.dataset.is_ready or (
                 update_id and self.dataset.has_pending_updates(update_id)):
             self.dataset.reload()
-            raise self.calculate_updates.retry(countdown=5)
+            raise self.calculate_updates.retry()
 
     def _add_calcs_and_find_aggregations(self, new_dframe, labels_to_slugs):
         aggregations = []

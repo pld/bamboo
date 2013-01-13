@@ -476,3 +476,48 @@ class TestCalculations(TestBase):
         self.assertEqual(current_num_rows, previous_num_rows + 2)
         self.assertEqual(set(agg_dframe[group]),
                          set(['A', 'B', 'C', 'D', 'n/a']))
+
+    @requires_async
+    def test_fail_in_background(self):
+        dataset_id = self._post_file('wp_data.csv')
+        group = 'wp_id'
+        self._wait_for_dataset_state(dataset_id)
+
+        results = json.loads(self.controller.create(dataset_id,
+                             'newest(submit_date,functional)', 'wp_functional',
+                             group=group))
+        results = json.loads(self.controller.create(dataset_id,
+                             'max(submit_date)', 'latest_submit_date',
+                             group=group))
+
+        # Update the name to cause has pending to be true and infinite retries.
+        # It will fail after 10 retries.
+        calc = Calculation.find_one(dataset_id, 'latest_submit_date', group)
+        calc.update({calc.NAME: 'another_name'})
+
+        update = {
+            'wp_id': 'D',
+            'functional': 'yes',
+        }
+        self._post_update(dataset_id, update)
+        update = {
+            'submit_date': '2013-01-08',
+            'wp_id': 'A',
+            'functional': 'no',
+        }
+        self._post_update(dataset_id, update)
+
+        while True:
+            dataset = Dataset.find_one(dataset_id)
+            current_num_rows = dataset.num_rows
+            calcs_not_pending = [
+                c.state != c.STATE_PENDING for c in dataset.calculations()]
+
+            if not len(dataset.pending_updates) and all(calcs_not_pending):
+                break
+
+            sleep(1)
+
+        for c in dataset.calculations():
+            self.assertEqual(c.STATE_FAILED, c.state)
+            self.assertTrue('Traceback' in c.error_message)
