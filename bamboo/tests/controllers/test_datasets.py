@@ -10,7 +10,6 @@ import simplejson as json
 from bamboo.controllers.abstract_controller import AbstractController
 from bamboo.controllers.datasets import Datasets
 from bamboo.lib.schema_builder import CARDINALITY, DATETIME, SIMPLETYPE
-from bamboo.lib.utils import GROUP_DELIMITER
 from bamboo.models.dataset import Dataset
 from bamboo.tests.controllers.test_abstract_datasets import\
     TestAbstractDatasets
@@ -351,7 +350,9 @@ class TestDatasets(TestAbstractDatasets):
         group = 'food_type,rating'
         self._post_calculations(self.default_formulae + ['sum(amount)'], group)
         results = self._test_aggregations([group])
-        row_keys = (group.split(GROUP_DELIMITER) +
+        # only so we can split
+        dataset = Dataset()
+        row_keys = (dataset.split_groups(group) +
                     ['sum_amount_']).sort()
 
         for row in results:

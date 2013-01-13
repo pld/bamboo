@@ -3,7 +3,6 @@ import pickle
 
 import numpy as np
 
-from bamboo.lib.utils import GROUP_DELIMITER
 from bamboo.tests.core.test_calculator import TestCalculator
 
 
@@ -84,7 +83,7 @@ class TestAggregations(TestCalculator):
 
     def _test_calculation_results(self, name, formula):
         if self.group:
-            self.groups_list = self.group.split(GROUP_DELIMITER)
+            self.groups_list = self.dataset.split_groups(self.group)
         else:
             self.group = ''
 

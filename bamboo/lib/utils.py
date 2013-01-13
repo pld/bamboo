@@ -1,9 +1,6 @@
 from math import isnan
 from sys import maxint
 
-# delimiter when passing multiple groups as a string
-GROUP_DELIMITER = ','
-
 
 def minint():
     return -maxint - 1
@@ -27,8 +24,3 @@ def _parse_type(_type, value, default):
 def is_float_nan(num):
     """Return True is `num` is a float and NaN."""
     return isinstance(num, float) and isnan(num)
-
-
-def split_groups(group_str):
-    """Split a string based on the group delimiter"""
-    return group_str.split(GROUP_DELIMITER)

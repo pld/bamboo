@@ -21,6 +21,9 @@ class AbstractModel(object):
 
     __collection__ = None
 
+    # delimiter when passing multiple groups as a string
+    GROUP_DELIMITER = ','
+
     STATE = 'state'
     STATE_FAILED = 'failed'
     STATE_PENDING = 'pending'
@@ -180,6 +183,14 @@ class AbstractModel(object):
             self.collection.insert(records, safe=True)
 
         self._batch_command(command, dframe)
+
+
+    def split_groups(self, group_str):
+        """Split a string based on the group delimiter"""
+        return group_str.split(self.GROUP_DELIMITER) if group_str else []
+
+    def join_groups(self, groups):
+        return self.GROUP_DELIMITER.join(groups)
 
     def _batch_command(self, command, dframe):
         batches = int(ceil(float(len(dframe)) / DB_SAVE_BATCH_SIZE))

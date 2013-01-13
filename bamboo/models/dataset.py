@@ -15,7 +15,6 @@ from bamboo.core.summary import summarize
 from bamboo.lib.async import call_async
 from bamboo.lib.exceptions import ArgumentError
 from bamboo.lib.schema_builder import Schema
-from bamboo.lib.utils import split_groups
 from bamboo.models.abstract_model import AbstractModel
 from bamboo.models.calculation import Calculation
 from bamboo.models.observation import Observation
@@ -132,8 +131,8 @@ class Dataset(AbstractModel):
     def cardinality(self, col):
         return self.schema.cardinality(col)
 
-    def aggregated_dataset(self, group):
-        _id = self.aggregated_datasets_dict.get(group)
+    def aggregated_dataset(self, groups):
+        _id = self.aggregated_datasets_dict.get(self.join_groups(groups))
 
         return self.find_one(_id) if _id else None
 
@@ -283,7 +282,7 @@ class Dataset(AbstractModel):
             group_str = self.ALL
 
         # split group in case of multigroups
-        groups = split_groups(group_str)
+        groups = self.split_groups(group_str)
 
         # if select append groups to select
         if select:
@@ -482,13 +481,14 @@ class Dataset(AbstractModel):
 
         return dframe.join(id_column)
 
-    def new_agg_dataset(self, dframe, group):
+    def new_agg_dataset(self, dframe, groups):
         agg_dataset = self.create()
         agg_dataset.save_observations(dframe)
+        group_str = self.join_groups(groups)
 
         # store a link to the new dataset
         agg_datasets_dict = self.aggregated_datasets_dict
-        agg_datasets_dict[group] = agg_dataset.dataset_id
+        agg_datasets_dict[group_str] = agg_dataset.dataset_id
         self.update({
             self.AGGREGATED_DATASETS: agg_datasets_dict})
 

@@ -8,21 +8,19 @@ from bamboo.core.frame import BambooFrame, NonUniqueJoinError
 from bamboo.core.parser import ParseError, Parser
 from bamboo.lib.async import call_async
 from bamboo.lib.mongo import MONGO_RESERVED_KEYS
-from bamboo.lib.utils import split_groups
 
 
 class Calculator(object):
     """Perform and store calculations and recalculations on update."""
 
-    calcs_to_data = None
     dframe = None
 
     def __init__(self, dataset):
         self.dataset = dataset.reload()
         self.parser = Parser(dataset)
 
-    def validate(self, formula, group_str):
-        """Validate `formula` and `group_str` for calculator's dataset.
+    def validate(self, formula, groups):
+        """Validate `formula` and `groups` for calculator's dataset.
 
         Validate the formula and group string by attempting to get a row from
         the dframe for the dataset and then running parser validation on this
@@ -30,7 +28,7 @@ class Calculator(object):
         columns in the dataset.
 
         :param formula: The formula to validate.
-        :param group_str: A string of a group or comma separated groups.
+        :param groups: A list of columns to group by.
 
         :returns: The aggregation (or None) for the formula.
         """
@@ -39,16 +37,14 @@ class Calculator(object):
 
         aggregation = self.parser.validate_formula(formula, row)
 
-        if group_str:
-            groups = split_groups(group_str)
-            for group in groups:
-                if not group in dframe.columns:
-                    raise ParseError(
-                        'Group %s not in dataset columns.' % group)
+        for group in groups:
+            if not group in dframe.columns:
+                raise ParseError(
+                    'Group %s not in dataset columns.' % group)
 
         return aggregation
 
-    def calculate_column(self, formula, name, group_str=None):
+    def calculate_column(self, formula, name, groups=None):
         """Calculate a new column based on `formula` store as `name`.
 
         The new column is joined to `dframe` and stored in `self.dataset`.
@@ -67,7 +63,7 @@ class Calculator(object):
         :param formula: The formula parsed by `self.parser` and applied to
             `self.dframe`.
         :param name: The name of the new column or aggregate column.
-        :param group_str: A string or columns to group on for aggregate
+        :param groups: A list of columns to group on for aggregate
             calculations.
         """
         self._ensure_dframe()
@@ -76,7 +72,7 @@ class Calculator(object):
 
         if aggregation:
             agg = Aggregator(self.dataset, self.dataset.dframe(),
-                             group_str, aggregation, name)
+                             groups, aggregation, name)
             agg.save(new_columns)
         else:
             self.dataset.replace_observations(self.dframe.join(new_columns[0]))
@@ -248,6 +244,7 @@ class Calculator(object):
     def _update_merged_datasets(self, new_data, labels_to_slugs):
         # store slugs as labels for child datasets
         slugified_data = []
+
         if not isinstance(new_data, list):
             new_data = [new_data]
 
@@ -256,6 +253,7 @@ class Calculator(object):
                 if labels_to_slugs.get(key) and key not in MONGO_RESERVED_KEYS:
                     del row[key]
                     row[labels_to_slugs[key]] = value
+
             slugified_data.append(row)
 
         # update the merged datasets with new_dframe
@@ -331,14 +329,15 @@ class Calculator(object):
         return BambooFrame(filtered_data)
 
     def _update_aggregate_datasets(self, calculations, new_dframe):
-        #if not self.calcs_to_data:
-        self._create_calculations_to_groups_and_datasets(calculations)
+        calcs_to_data = self._create_calculations_to_groups_and_datasets(
+            calculations)
 
-        for formula, slug, group, dataset in self.calcs_to_data:
-            self._update_aggregate_dataset(formula, new_dframe, slug, group,
+        for formula, slug, group_str, dataset in calcs_to_data:
+            groups = self.dataset.split_groups(group_str)
+            self._update_aggregate_dataset(formula, new_dframe, slug, groups,
                                            dataset)
 
-    def _update_aggregate_dataset(self, formula, new_dframe, name, group,
+    def _update_aggregate_dataset(self, formula, new_dframe, name, groups,
                                   agg_dataset):
         """Update the aggregated dataset built for `self` with `calculation`.
 
@@ -353,7 +352,7 @@ class Calculator(object):
         :param formula: The formula to execute.
         :param new_dframe: The DataFrame to aggregate on.
         :param name: The name of the aggregation.
-        :param group: A column or columns to group on.
+        :param groups: A column or columns to group on.
         :type group: String, list of strings, or None.
         :param agg_dataset: The DataSet to store the aggregation in.
         """
@@ -362,7 +361,7 @@ class Calculator(object):
             formula, name, new_dframe)
 
         agg = Aggregator(self.dataset, self.dframe,
-                         group, aggregation, name)
+                         groups, aggregation, name)
         new_agg_dframe = agg.update(agg_dataset, self, formula, new_columns)
 
         # jsondict from new dframe
@@ -380,7 +379,8 @@ class Calculator(object):
 
     def _create_calculations_to_groups_and_datasets(self, calculations):
         """Create list of groups and calculations."""
-        self.calcs_to_data = defaultdict(list)
+        calcs_to_data = defaultdict(list)
+
         names_to_formulas = {
             calc.name: calc.formula for calc in calculations
         }
@@ -388,15 +388,19 @@ class Calculator(object):
 
         for group, dataset in self.dataset.aggregated_datasets.items():
             labels_to_slugs = dataset.schema.labels_to_slugs
+            calculations_for_dataset = list(set(
+                labels_to_slugs.keys()).intersection(calculations))
 
-            for calc in list(
-                    set(labels_to_slugs.keys()).intersection(calculations)):
-                self.calcs_to_data[calc].append(
-                    (names_to_formulas[calc],
-                     labels_to_slugs[calc], group, dataset))
+            for calc in calculations_for_dataset:
+                calcs_to_data[calc].append((
+                    names_to_formulas[calc],
+                    labels_to_slugs[calc],
+                    group,
+                    dataset
+                ))
 
-        self.calcs_to_data = [
-            item for sublist in self.calcs_to_data.values() for item in sublist
+        return [
+            item for sublist in calcs_to_data.values() for item in sublist
         ]
 
     def __getstate__(self):
