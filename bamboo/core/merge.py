@@ -40,7 +40,7 @@ def merge_dataset_ids(dataset_ids):
     return new_dataset
 
 
-@task
+@task(default_retry_delay=2)
 def _merge_datasets_task(new_dataset, datasets):
     """Merge datasets specified by dataset_ids.
 
@@ -50,7 +50,7 @@ def _merge_datasets_task(new_dataset, datasets):
     # check that all datasets are in a 'ready' state
     if any([not dataset.is_ready for dataset in datasets]):
         [dataset.reload() for dataset in datasets]
-        raise _merge_datasets_task.retry(countdown=1)
+        raise _merge_datasets_task.retry()
 
     new_dframe = _merge_datasets(datasets)
 

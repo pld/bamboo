@@ -24,6 +24,8 @@ class AbstractModel(object):
     # delimiter when passing multiple groups as a string
     GROUP_DELIMITER = ','
 
+    ERROR_MESSAGE = 'error_message'
+
     STATE = 'state'
     STATE_FAILED = 'failed'
     STATE_PENDING = 'pending'
@@ -32,6 +34,10 @@ class AbstractModel(object):
     @property
     def state(self):
         return self.record[self.STATE]
+
+    @property
+    def error_message(self):
+        return self.record.get(self.ERROR_MESSAGE)
 
     @property
     def is_ready(self):
@@ -47,9 +53,17 @@ class AbstractModel(object):
         """
         return Database.db()[collection_name]
 
-    def failed(self):
-        """Perist the state of the current instance to `STATE_FAILED`"""
-        self.update({self.STATE: self.STATE_FAILED})
+    def failed(self, message=None):
+        """Perist the state of the current instance to `STATE_FAILED`.
+
+        :params message: A string store as the error message, default None.
+        """
+        doc = {self.STATE: self.STATE_FAILED}
+
+        if message:
+            doc.update({self.ERROR_MESSAGE: message})
+
+        self.update(doc)
 
     def pending(self):
         """Perist the state of the current instance to `STATE_PENDING`"""
