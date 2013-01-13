@@ -48,7 +48,7 @@ class TestDatasets(TestAbstractDatasets):
         return json.loads(self.controller.create(
             csv_file=mock_uploaded_file, **kwargs))
 
-    def test_create_from_file(self):
+    def test_create_from_csv(self):
         result = self._upload_mocked_file()
         self.assertTrue(isinstance(result, dict))
         self.assertTrue(Dataset.ID in result)
@@ -136,6 +136,17 @@ class TestDatasets(TestAbstractDatasets):
         dataset = self._wait_for_dataset_state(dataset_id)
 
         self.assertEqual(Dataset.STATE_FAILED, dataset.state)
+
+    def test_create_from_json(self):
+        mock = self._file_mock(self._fixture_path_prefix('good_eats.json'))
+        result = json.loads(self.controller.create(
+            json_file=mock))
+
+        self.assertTrue(isinstance(result, dict))
+        self.assertTrue(Dataset.ID in result)
+
+        results = self._test_summary_built(result)
+        self._test_summary_no_group(results)
 
     def test_create_no_url_or_csv(self):
         result = json.loads(self.controller.create())

@@ -39,9 +39,9 @@ class Calculations(AbstractController):
             calculation = Calculation.find_one(dataset.dataset_id, name, group)
             if calculation:
                 calculation.delete(dataset)
-                return {
-                    self.SUCCESS: 'deleted calculation: \'%s\' for dataset: %s' % (
-                        name, dataset.dataset_id)}
+                message = 'deleted calculation: \'%s\' for dataset: %s' % (
+                    name, dataset.dataset_id)
+                return {self.SUCCESS: message}
 
         return self._safe_get_and_call(
             dataset_id, _action, exceptions=(DependencyError,),

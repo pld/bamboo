@@ -178,10 +178,10 @@ class Calculation(AbstractModel):
     def save(self, dataset, formula, name, group_str=None):
         """Parse, save, and calculate a formula.
 
-        Validate `formula` and `group_str` for the given `dataset`. If the formula
-        and group are valid for the dataset, then save a new calculation for
-        them under `name`. Finally, create a background task to compute the
-        calculation.
+        Validate `formula` and `group_str` for the given `dataset`. If the
+        formula and group are valid for the dataset, then save a new
+        calculation for them under `name`. Finally, create a background task
+        to compute the calculation.
 
         Calculations are initially saved in a **pending** state, after the
         calculation has finished processing it will be in a **ready** state.

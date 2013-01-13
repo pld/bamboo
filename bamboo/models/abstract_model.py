@@ -198,7 +198,6 @@ class AbstractModel(object):
 
         self._batch_command(command, dframe)
 
-
     def split_groups(self, group_str):
         """Split a string based on the group delimiter"""
         return group_str.split(self.GROUP_DELIMITER) if group_str else []
