@@ -1,10 +1,7 @@
 # celery requires python-dateutil>=1.5,<2.0
 python-dateutil==1.5
 
-# for pandas
-numpy==1.6.2
 pandas==0.10.0
-scipy==0.10.1
 
 # for celery
 kombu==2.5.4
