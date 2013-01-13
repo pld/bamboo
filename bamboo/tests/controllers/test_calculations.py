@@ -20,6 +20,7 @@ class TestCalculations(TestBase):
     def setUp(self):
         TestBase.setUp(self)
         self.controller = Calculations()
+        self.dataset_controller = Datasets()
         self.dataset_id = None
         self.formula = 'amount + gps_alt'
         self.name = 'test'
@@ -34,6 +35,10 @@ class TestCalculations(TestBase):
             self.dataset_id = self._post_file()
 
         return self.controller.create(self.dataset_id, formula, name)
+
+    def _post_update(self, dataset_id, update):
+        return json.loads(self.dataset_controller.update(
+            dataset_id=dataset_id, update=json.dumps(update)))
 
     def _wait_for_calculation_ready(self, dataset_id, name):
         while True:
@@ -317,17 +322,18 @@ class TestCalculations(TestBase):
 
     def test_create_dataset_with_duplicate_column_names(self):
         formula_names = [
-            'protected_waterpoint'  # an already slug column
-            'protected/waterpoint'  # a non-slug column
-            'region'                # an existing column
-            'sum'                   # a reserved key
-            'date'                  # a reserved key and an existing column
+            'water_not_functioning_none',  # an already slugged column
+            'water_not_functioning/none',  # a non-slug column
+            'region',                # an existing column
+            'sum',                   # a reserved key
+            'date',                  # a reserved key and an existing column
         ]
 
         for formula_name in formula_names:
             dataset_id = self._post_file('water_points.csv')
             dframe_before = Dataset.find_one(dataset_id).dframe()
 
+            # a calculation
             response = json.loads(self.controller.create(
                 dataset_id,
                 'water_source_type in ["borehole"]',
@@ -337,14 +343,35 @@ class TestCalculations(TestBase):
             self.assertTrue(self.controller.SUCCESS in response)
 
             dataset = Dataset.find_one(dataset_id)
+            name = dataset.calculations()[-1].name
+
+            # an aggregation
+            response = json.loads(self.controller.create(
+                dataset_id,
+                'newest(date_, water_functioning)',
+                formula_name))
+
+            self.assertTrue(isinstance(response, dict))
+            self.assertTrue(self.controller.SUCCESS in response)
+
             dframe_after = dataset.dframe()
-            slug = dataset.schema.labels_to_slugs[formula_name]
+            slug = dataset.schema.labels_to_slugs[name]
 
             self.assertEqual(len(dframe_before), len(dframe_after))
             self.assertTrue(slug not in dframe_before.columns)
             self.assertTrue(slug in dframe_after.columns)
             self.assertEqual(
                 len(dframe_before.columns) + 1, len(dframe_after.columns))
+
+            # check OK on update
+            update = {
+                'date': '2013-01-05',
+                'water_source_type': 'borehole',
+            }
+            result = self._post_update(dataset_id, update)
+            dataset = Dataset.find_one(dataset_id)
+            dframe_after_update = dataset.dframe()
+            self.assertEqual(len(dframe_after) + 1, len(dframe_after_update))
 
     def test_newest(self):
         expected_dataset = {
@@ -370,20 +397,18 @@ class TestCalculations(TestBase):
         self.assertTrue(self.controller.SUCCESS in results.keys())
         self.assertFalse(dataset.aggregated_datasets.get('') is None)
 
-        dataset_controller = Datasets()
-        update = json.dumps({
+        update = {
             'submit_date': '2013-01-05',
             'wp_id': 'D',
             'functional': 'no',
-        })
-        result = json.loads(dataset_controller.update(dataset_id=dataset_id,
-                                                      update=update))
-        update = json.dumps({
+        }
+        self._post_update(dataset_id, update)
+        update = {
             'wp_id': 'E',
             'functional': 'no',
-        })
-        result = json.loads(dataset_controller.update(dataset_id=dataset_id,
-                                                      update=update))
+        }
+        self._post_update(dataset_id, update)
+
         dataset = Dataset.find_one(dataset_id)
         current_num_rows = dataset.num_rows
 
@@ -422,26 +447,20 @@ class TestCalculations(TestBase):
             set(agg_dframe.columns.tolist()))
 
         self.assertTrue(self.controller.SUCCESS in results.keys())
-#        self.assertFalse(dataset.aggregated_datasets.get(group) is None)
 
-        dataset_controller = Datasets()
-        dataset = Dataset.find_one(dataset_id)
-        update = json.dumps({
+        update = {
             'submit_date': '2013-01-05',
             'wp_id': 'D',
             'functional': 'yes',
-        })
-        result = json.loads(dataset_controller.update(dataset_id=dataset_id,
-                                                      update=update))
-        update = json.dumps({
+        }
+        self._post_update(dataset_id, update)
+        update = {
             'submit_date': '2013-01-08',
             'wp_id': 'A',
             'functional': 'no',
-        })
-        result = json.loads(dataset_controller.update(dataset_id=dataset_id,
-                                                      update=update))
+        }
+        self._post_update(dataset_id, update)
 
-        # TODO programmatic way to know how long to pause
         while True:
             dataset = Dataset.find_one(dataset_id)
             current_num_rows = dataset.num_rows

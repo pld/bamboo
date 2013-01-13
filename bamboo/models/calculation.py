@@ -4,6 +4,7 @@ from bamboo.core.calculator import Calculator
 from bamboo.core.frame import DATASET_ID
 from bamboo.lib.async import call_async
 from bamboo.lib.exceptions import ArgumentError
+from bamboo.lib.schema_builder import make_unique
 from bamboo.models.abstract_model import AbstractModel
 
 
@@ -54,11 +55,16 @@ class Calculation(AbstractModel):
 
     __collectionname__ = 'calculations'
 
+    AGGREGATION = 'aggregation'
     DEPENDENCIES = 'dependencies'
     DEPENDENT_CALCULATIONS = 'dependent_calculations'
     FORMULA = 'formula'
     GROUP = 'group'
     NAME = 'name'
+
+    @property
+    def aggregation(self):
+        return self.record[self.AGGREGATION]
 
     @property
     def dataset_id(self):
@@ -164,12 +170,17 @@ class Calculation(AbstractModel):
         # ensure that the formula is parsable
         aggregation = calculator.validate(formula, group)
 
-        # set group if aggregation and group unset
-        if aggregation and not group:
-            group = ''
+        if aggregation:
+            # set group if aggregation and group unset
+            if not group:
+                group = ''
+        else:
+            # ensure the name is unique
+            name = make_unique(name, dataset.labels + dataset.schema.keys())
 
         record = {
             DATASET_ID: dataset.dataset_id,
+            self.AGGREGATION: aggregation,
             self.FORMULA: formula,
             self.GROUP: group,
             self.NAME: name,

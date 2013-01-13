@@ -79,6 +79,10 @@ class Dataset(AbstractModel):
         return Schema.safe_init(schema_dict)
 
     @property
+    def labels(self):
+        return [column[self.LABEL] for column in self.schema.values()]
+
+    @property
     def stats(self):
         return self.record.get(self.STATS, {})
 
