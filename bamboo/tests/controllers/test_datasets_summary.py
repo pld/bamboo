@@ -3,7 +3,6 @@ from base64 import b64encode
 import simplejson as json
 
 from bamboo.lib.mongo import ILLEGAL_VALUES
-from bamboo.lib.utils import GROUP_DELIMITER
 from bamboo.controllers.datasets import Datasets
 from bamboo.core.summary import SUMMARY
 from bamboo.models.dataset import Dataset
@@ -158,9 +157,11 @@ class TestDatasetsSummary(TestAbstractDatasets):
 
         self.assertFalse(Datasets.ERROR in results.keys())
         self.assertTrue(group_columns in results.keys())
+        # for split
+        dataset = Dataset()
         self.assertEqual(
-            len(results[group_columns].keys()[0].split(GROUP_DELIMITER)),
-            len(group_columns.split(GROUP_DELIMITER)))
+            len(dataset.split_groups(results[group_columns].keys()[0])),
+            len(dataset.split_groups(group_columns)))
 
     def test_summary_multigroup_noncat_group(self):
         dataset_id = self._post_file()
