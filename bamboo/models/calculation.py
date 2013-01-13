@@ -48,6 +48,12 @@ def calculate_task(calculation, dataset):
     calculator.calculate_column(calculation.formula, calculation.name,
                                 calculation.group)
     calculation.add_dependencies(dataset, calculator.dependent_columns())
+
+    if calculation.aggregation is not None:
+        dataset.reload()
+        aggregated_id = dataset.aggregated_datasets_dict[calculation.group]
+        calculation.set_aggregation_id(aggregated_id)
+
     calculation.ready()
 
 
@@ -56,6 +62,7 @@ class Calculation(AbstractModel):
     __collectionname__ = 'calculations'
 
     AGGREGATION = 'aggregation'
+    AGGREGATION_ID = 'aggregation_id'
     DEPENDENCIES = 'dependencies'
     DEPENDENT_CALCULATIONS = 'dependent_calculations'
     FORMULA = 'formula'
@@ -65,6 +72,10 @@ class Calculation(AbstractModel):
     @property
     def aggregation(self):
         return self.record[self.AGGREGATION]
+
+    @property
+    def aggregation_id(self):
+        return self.record.get(self.AGGREGATION_ID)
 
     @property
     def dataset_id(self):
@@ -112,6 +123,9 @@ class Calculation(AbstractModel):
         for name in self.dependencies:
             calculation = self.find_one(self.dataset_id, name)
             calculation.remove_dependent_calculation(self.name)
+
+    def set_aggregation_id(self, _id):
+        self.update({self.AGGREGATION_ID: _id})
 
     def delete(self, dataset):
         """Delete this calculation.
