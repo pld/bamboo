@@ -1,7 +1,12 @@
 from math import isnan
+from sys import maxint
 
 # delimiter when passing multiple groups as a string
 GROUP_DELIMITER = ','
+
+
+def minint():
+    return -maxint - 1
 
 
 def parse_int(value, default):

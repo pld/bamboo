@@ -449,7 +449,6 @@ class TestCalculations(TestBase):
         self.assertTrue(self.controller.SUCCESS in results.keys())
 
         update = {
-            'submit_date': '2013-01-05',
             'wp_id': 'D',
             'functional': 'yes',
         }

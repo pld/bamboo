@@ -1,6 +1,8 @@
+from math import isnan
+
 from pandas import concat, DataFrame, Series
 
-from bamboo.lib.utils import parse_float
+from bamboo.lib.utils import minint, parse_float
 
 
 class Aggregation(object):
@@ -121,6 +123,10 @@ class ArgMaxAggregation(Aggregation):
             value = row[self.name]
 
             xsection = indices.xs(groups, level=self.groups)
+
+            if isnan(value):
+                return minint()
+
             max_index = xsection.get_value(value, 'index')
 
             if isinstance(max_index, Series):
