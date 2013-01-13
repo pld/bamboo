@@ -2,7 +2,7 @@ from distutils.core import setup
 
 setup(
     name='bamboo-data',
-    version='0.5.2.3',
+    version='0.5.3',
     author='Modi Research Group',
     author_email='info@modilabs.org',
     packages=['bamboo',
