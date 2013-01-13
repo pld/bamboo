@@ -49,7 +49,7 @@ def calculate_task(calculation, dataset):
                                 calculation.group)
     calculation.add_dependencies(dataset, calculator.dependent_columns())
 
-    if calculation.group is not None:
+    if calculation.aggregation is not None:
         dataset.reload()
         aggregated_id = dataset.aggregated_datasets_dict[calculation.group]
         calculation.set_aggregation_id(aggregated_id)
