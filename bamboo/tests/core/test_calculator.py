@@ -46,7 +46,8 @@ class TestCalculator(TestBase):
 
             calculator = Calculator(self.dataset)
 
-            calculator.calculate_column(formula, name, self.group)
+            groups = self.dataset.split_groups(self.group)
+            calculator.calculate_column(formula, name, groups)
 
             self.column_labels_to_slugs = self.dataset.schema.labels_to_slugs
 
