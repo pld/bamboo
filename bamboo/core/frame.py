@@ -1,5 +1,8 @@
+from cStringIO import StringIO
+
 from pandas import DataFrame, Series
 
+from bamboo.lib.datetools import recognize_dates, recognize_dates_from_schema
 from bamboo.lib.jsontools import series_to_jsondict
 from bamboo.lib.mongo import dump_mongo_json, mongo_prefix_reserved_key,\
     MONGO_RESERVED_KEYS
@@ -22,7 +25,7 @@ class NonUniqueJoinError(Exception):
 
 
 class BambooFrame(DataFrame):
-    """Add Bamboo related functionality to DataFrame class."""
+    """Add bamboo related functionality to DataFrame class."""
 
     def add_parent_column(self, parent_dataset_id):
         """Add parent ID column to this DataFrame."""
@@ -33,33 +36,43 @@ class BambooFrame(DataFrame):
     def decode_mongo_reserved_keys(self):
         """Decode MongoDB reserved keys in this DataFrame."""
         reserved_keys = self._column_intersect(MONGO_RESERVED_KEYS)
+        rename_dict = {}
+
         for key in reserved_keys:
             del self[key]
             prefixed_key = mongo_prefix_reserved_key(key)
             if prefixed_key in self.columns:
-                self.rename(columns={prefixed_key: key}, inplace=True)
+                rename_dict[prefixed_key] = key
+
+        if rename_dict:
+            self.rename(columns={prefixed_key: key}, inplace=True)
+
+    def recognize_dates(self):
+        return recognize_dates(self)
+
+    def recognize_dates_from_schema(self, schema):
+        return recognize_dates_from_schema(self, schema)
 
     def remove_bamboo_reserved_keys(self, keep_parent_ids=False):
         """Remove reserved internal columns in this DataFrame.
 
-        Args:
-            keep_parent_ids: Keep parent column if True, default False.
+        :param keep_parent_ids: Keep parent column if True, default False.
         """
         reserved_keys = self._column_intersect(BAMBOO_RESERVED_KEYS)
+
         if keep_parent_ids and PARENT_DATASET_ID in reserved_keys:
             reserved_keys.remove(PARENT_DATASET_ID)
+
         for column in reserved_keys:
             del self[column]
 
     def only_rows_for_parent_id(self, parent_id):
-        """DataFrame with only rows for *parent_id*.
+        """DataFrame with only rows for `parent_id`.
 
-        Args:
-            parent_id: The ID to restrict rows to.
+        :param parent_id: The ID to restrict rows to.
 
-        Returns:
-            A DataFrame including only rows with a parent ID equal to that
-            passed in.
+        :returns: A DataFrame including only rows with a parent ID equal to
+            that passed in.
         """
         return self[self[PARENT_DATASET_ID] == parent_id].drop(
             PARENT_DATASET_ID, 1)
@@ -73,21 +86,29 @@ class BambooFrame(DataFrame):
         jsondict = self.to_jsondict()
         return dump_mongo_json(jsondict)
 
+    def to_csv_as_string(self):
+        buffer = StringIO()
+        self.to_csv(buffer, encoding='utf-8', index=False)
+        return buffer.getvalue()
+
     def _column_intersect(self, _list):
-        """Return the intersection of *_list* and this DataFrame's columns."""
+        """Return the intersection of `_list` and this DataFrame's columns."""
         return list(set(_list).intersection(set(self.columns.tolist())))
 
     def join_dataset(self, other, on):
-        """Left join an *other* dataset."""
-        right_dframe = other.dframe()
+        """Left join an `other` dataset."""
+        right_dframe = other.dframe(padded=True)
 
         if on not in self.columns:
             raise KeyError('no item named %s in left hand side dataset' % on)
+
         if on not in right_dframe.columns:
             raise KeyError('no item named %s in right hand side dataset' % on)
 
         right_dframe = right_dframe.set_index(on)
+
         if len(right_dframe.index) != len(right_dframe.index.unique()):
             raise NonUniqueJoinError('The join column (%s) of the right hand s'
                                      'ide dataset is not unique' % on)
+
         return self.__class__(self.join(right_dframe, on=on))

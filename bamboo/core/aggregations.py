@@ -1,14 +1,16 @@
+from math import isnan
+
 from pandas import concat, DataFrame, Series
+
+from bamboo.lib.utils import minint, parse_float
 
 
 class Aggregation(object):
     """Abstract class for all aggregations.
 
-    Attributes:
-
-    - column: Column to aggregate.
-    - columns: List of columns to aggregate.
-    - formula_name: The string to refer to this aggregation.
+    :param column: Column to aggregate.
+    :param columns: List of columns to aggregate.
+    :param formula_name: The string to refer to this aggregation.
     """
 
     column = None
@@ -27,14 +29,19 @@ class Aggregation(object):
 
     def group(self):
         """For when aggregation is called with a group parameter."""
-        groupby = self.dframe[self.groups].join(
-            self.column).groupby(self.groups, as_index=False)
-        return groupby.agg(self.formula_name)
+        return self._groupby().agg(self.formula_name)
 
     def agg(self):
         """For when aggregation is called without a group parameter."""
         result = float(self.column.__getattribute__(self.formula_name)())
-        return DataFrame({self.name: Series([result])})
+        return self._value_to_dframe(result)
+
+    def _value_to_dframe(self, value):
+        return DataFrame({self.name: Series([value])})
+
+    def _groupby(self):
+        return self.dframe[self.groups].join(
+            self.column).groupby(self.groups, as_index=False)
 
 
 class MultiColumnAggregation(Aggregation):
@@ -47,13 +54,20 @@ class MultiColumnAggregation(Aggregation):
         return self._add_calculated_column(groupby.sum())
 
     def reduce(self, dframe, columns):
-        """Reduce the columns and store in *dframe*."""
+        """Reduce the columns and store in `dframe`.
+
+        :param dframe: The DataFrame to reduce.
+        :param columns: Columns in the DataFrame to reduce on.
+        """
         self.columns = columns
         self.column = columns[0]
         new_dframe = self.agg()
+
         for column in new_dframe.columns:
             dframe[column] += new_dframe[column]
+
         dframe[self.name] = self._agg_dframe(dframe)
+
         return dframe
 
     def _name_for_idx(self, idx):
@@ -65,6 +79,7 @@ class MultiColumnAggregation(Aggregation):
     def _build_dframe(self, dframe, columns):
         for idx, column in enumerate(columns):
             column.name = self._name_for_idx(idx)
+
         return concat([dframe] + [DataFrame(col) for col in columns], axis=1)
 
     def _add_calculated_column(self, dframe):
@@ -82,16 +97,85 @@ class MultiColumnAggregation(Aggregation):
 class MaxAggregation(Aggregation):
     """Calculate the maximum.
 
-    Written as ``max(FORMULA)``. Where *FORMULA* is a valid formula.
+    Written as ``max(FORMULA)``. Where `FORMULA` is a valid formula.
     """
 
     formula_name = 'max'
 
 
+class ArgMaxAggregation(Aggregation):
+    """Return the index for the maximum of a column.
+
+    Written as ``argmax(FORMULA)``. Where `FORMULA` is a valid formula.
+    """
+
+    formula_name = 'argmax'
+
+    def group(self):
+        """For when aggregation is called with a group parameter."""
+        self.column = self.column.apply(lambda value: parse_float(value))
+        group_dframe = self.dframe[self.groups].join(self.column)
+        indices = group_dframe.reset_index().set_index(
+            self.groups + [self.name])
+
+        def max_index_for_row(row):
+            groups = row[self.groups]
+            value = row[self.name]
+
+            xsection = indices.xs(groups, level=self.groups)
+
+            if isnan(value):
+                return minint()
+
+            max_index = xsection.get_value(value, 'index')
+
+            if isinstance(max_index, Series):
+                max_index = max_index.max()
+
+            return max_index
+
+        groupby_max = self._groupby().max().reset_index()
+        column = groupby_max.apply(max_index_for_row, axis=1).apply(int)
+        column.name = self.name
+
+        return DataFrame(column).join(groupby_max[self.groups])
+
+
+class NewestAggregation(Aggregation):
+    """For the newest index column get the value column."""
+
+    formula_name = 'newest'
+
+    index_column = 0
+    value_column = 1
+
+    def agg(self):
+        self.columns[self.index_column].name = 'index'
+        idframe = DataFrame(self.columns[self.value_column]).join(
+            self.columns[self.index_column]).dropna().reset_index()
+        idx = idframe['index'].argmax()
+        result = idframe[self.name].get_value(idx)
+
+        return self._value_to_dframe(result)
+
+    def group(self):
+        argmax_agg = ArgMaxAggregation(self.name, self.groups, self.dframe)
+        argmax_df = argmax_agg.eval(self.columns)
+        indices = argmax_df.pop(self.name)
+
+        newest_col = self.columns[self.value_column][indices]
+        newest_col.index = argmax_df.index
+
+        return argmax_df.join(newest_col)
+
+
 class MeanAggregation(MultiColumnAggregation):
     """Calculate the arithmetic mean.
 
-    Written as ``mean(FORMULA)``. Where *FORMULA* is a valid formula.
+    Written as ``mean(FORMULA)``. Where `FORMULA` is a valid formula.
+
+    Because mean is irreducible this inherits from `MultiColumnAggregation` to
+    use its reduce generic implementation.
     """
 
     formula_name = 'mean'
@@ -105,16 +189,17 @@ class MeanAggregation(MultiColumnAggregation):
 
         columns = [
             Series([col]) for col in [self.column.sum(), len(self.column)]]
-        dframe = self._build_dframe(dframe, columns)
 
+        dframe = self._build_dframe(dframe, columns)
         dframe = DataFrame([dframe.sum().to_dict()])
+
         return self._add_calculated_column(dframe)
 
 
 class MedianAggregation(Aggregation):
     """Calculate the median. Written as ``median(FORMULA)``.
 
-    Where *FORMULA* is a valid formula.
+    Where `FORMULA` is a valid formula.
     """
 
     formula_name = 'median'
@@ -123,7 +208,7 @@ class MedianAggregation(Aggregation):
 class MinAggregation(Aggregation):
     """Calculate the minimum.
 
-    Written as ``min(FORMULA)``. Where *FORMULA* is a valid formula.
+    Written as ``min(FORMULA)``. Where `FORMULA` is a valid formula.
     """
 
     formula_name = 'min'
@@ -132,7 +217,7 @@ class MinAggregation(Aggregation):
 class SumAggregation(Aggregation):
     """Calculate the sum.
 
-    Written as ``sum(FORMULA)``. Where *FORMULA* is a valid formula.
+    Written as ``sum(FORMULA)``. Where `FORMULA` is a valid formula.
     """
 
     formula_name = 'sum'
@@ -141,6 +226,7 @@ class SumAggregation(Aggregation):
         self.columns = columns
         self.column = columns[0]
         dframe[self.name] += self.agg()[self.name]
+
         return dframe
 
 
@@ -149,7 +235,7 @@ class RatioAggregation(MultiColumnAggregation):
 
     Columns with N/A for either the numerator or denominator are ignored.  This
     will store associated numerator and denominator columns.  Written as
-    ``ratio(NUMERATOR, DENOMINATOR)``. Where *NUMERATOR* and *DENOMINATOR* are
+    ``ratio(NUMERATOR, DENOMINATOR)``. Where `NUMERATOR` and `DENOMINATOR` are
     both valid formulas.
     """
 
@@ -177,7 +263,7 @@ class CountAggregation(Aggregation):
     function, in which case is simply returns the number of rows
     in the dataset.
     Written as
-    ``count(CRITERIA)``. Where *CRITERIA* is an optional boolean expression
+    ``count(CRITERIA)``. Where `CRITERIA` is an optional boolean expression
     that signifies which rows are to be counted.
     """
 
@@ -195,6 +281,7 @@ class CountAggregation(Aggregation):
             result = self.dframe[self.groups]
             result = result.groupby(self.groups).apply(lambda x: len(x)).\
                 reset_index().rename(columns={0: self.name})
+
         return result
 
     def agg(self):
@@ -203,11 +290,13 @@ class CountAggregation(Aggregation):
             result = float(self.column.__getattribute__(self.formula_name)())
         else:
             result = len(self.dframe)
-        return DataFrame({self.name: Series([result])})
+
+        return self._value_to_dframe(result)
 
 
 # dict of formula names to aggregation classes
-AGGREGATIONS = dict([
-    (cls.formula_name, cls) for cls in
+AGGREGATIONS = {
+    cls.formula_name: cls for cls in
     Aggregation.__subclasses__() + MultiColumnAggregation.__subclasses__()
-    if cls.formula_name])
+    if cls.formula_name
+}

@@ -1,39 +1,58 @@
+from functools import partial
 import simplejson as json
 import os
 import tempfile
 
 from celery.task import task
-from pandas import read_csv
+import pandas as pd
 
-from bamboo.lib.datetools import recognize_dates
-from bamboo.lib.utils import call_async
+from bamboo.core.frame import BambooFrame
+from bamboo.lib.async import call_async
 from bamboo.models.dataset import Dataset
 
 
 @task
-def import_dataset(dataset, dframe=None, filepath_or_buffer=None,
-                   delete=False):
-    """For reading a URL and saving the corresponding dataset."""
-    if filepath_or_buffer:
-        dframe = recognize_dates(read_csv(filepath_or_buffer))
-    if delete:
-        os.unlink(filepath_or_buffer)
-    dataset.save_observations(dframe)
+def import_dataset(dataset, dframe=None, file_reader=None):
+    """For reading a URL and saving the corresponding dataset.
+
+    Import the `dframe` into the `dataset` if passed.  If a
+    `filepath_or_buffer` is passed load as a dframe.  All exceptions are caught
+    and on exception the dataset is marked as failed and set for
+    deletion after 24 hours.
+
+    :param dataset: The dataset to import into.
+    :param dframe: The DataFrame to import, default None.
+    :param filepath_or_buffer: Link to file to import, default None.
+    :param delete: Delete filepath_or_buffer after import, default False.
+    """
+    try:
+        if file_reader:
+            dframe = file_reader()
+
+        dataset.save_observations(dframe)
+    except Exception as e:
+        dataset.failed()
+        dataset.delete(countdown=86400)
+
+
+def _file_reader(name, delete=False):
+    try:
+        return BambooFrame(
+            pd.read_csv(name)).recognize_dates()
+    finally:
+        if delete:
+            os.unlink(name)
 
 
 def create_dataset_from_url(url, allow_local_file=False):
     """Load a URL, read from a CSV, create a dataset and return the unique ID.
 
-    Args:
+    :param url: URL to load file from.
+    :param allow_local_file: Allow URL to refer to a local file.
 
-    - url: URL to load file from.
-    - allow_local_file: Allow URL to refer to a local file.
+    :raises: `IOError` for an unreadable file or a bad URL.
 
-    Raises:
-        IOError: For an unreadable file or a bad URL.
-
-    Returns:
-        The created dataset.
+    :returns: The created dataset.
     """
     if not allow_local_file and isinstance(url, basestring)\
             and url[0:4] == 'file':
@@ -41,7 +60,7 @@ def create_dataset_from_url(url, allow_local_file=False):
 
     dataset = Dataset()
     dataset.save()
-    call_async(import_dataset, dataset, filepath_or_buffer=url)
+    call_async(import_dataset, dataset, file_reader=partial(_file_reader, url))
 
     return dataset
 
@@ -49,15 +68,15 @@ def create_dataset_from_url(url, allow_local_file=False):
 def create_dataset_from_csv(csv_file):
     """Create a dataset from a CSV file.
 
-    Args:
+    .. note::
 
-    - csv_file: The CSV File to create a dataset from.
+        Write to a named tempfile in order  to get a handle for pandas'
+        `read_csv` function.
 
-    Returns:
-        The created dataset.
+    :param csv_file: The CSV File to create a dataset from.
+
+    :returns: The created dataset.
     """
-    # need to write out to a named tempfile in order
-    # to get a handle for pandas *read_csv* function
     tmpfile = tempfile.NamedTemporaryFile(delete=False)
     tmpfile.write(csv_file.file.read())
 
@@ -67,8 +86,23 @@ def create_dataset_from_csv(csv_file):
     dataset = Dataset()
     dataset.save()
 
-    call_async(import_dataset, dataset, filepath_or_buffer=tmpfile.name,
-               delete=True)
+    call_async(import_dataset, dataset,
+               file_reader=partial(_file_reader, tmpfile.name, delete=True))
+
+    return dataset
+
+
+def create_dataset_from_json(json_file):
+    content = json_file.file.read()
+
+    dataset = Dataset()
+    dataset.save()
+
+    def file_reader(content):
+        return pd.DataFrame(json.loads(content))
+
+    call_async(import_dataset, dataset,
+               file_reader=partial(file_reader, content))
 
     return dataset
 
@@ -76,12 +110,9 @@ def create_dataset_from_csv(csv_file):
 def create_dataset_from_schema(schema):
     """Create a dataset from a SDF schema file (JSON).
 
-    Args:
+    :param schema: The SDF (JSON) file to create a dataset from.
 
-    - schema: The SDF (JSON) file to create a dataset from.
-
-    Returns:
-        The created dataset.
+    :returns: The created dataset.
     """
     try:
         schema = json.loads(schema.file.read())

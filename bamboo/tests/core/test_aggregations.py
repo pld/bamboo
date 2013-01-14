@@ -3,8 +3,6 @@ import pickle
 
 import numpy as np
 
-from bamboo.lib.utils import GROUP_DELIMITER
-from bamboo.models.dataset import Dataset
 from bamboo.tests.core.test_calculator import TestCalculator
 
 
@@ -24,6 +22,8 @@ class TestAggregations(TestCalculator):
         'ratio(risk_factor in ["low_risk"], 1)': 18.0 / 19,
         'count()': 19.0,
         'count(risk_factor in ["low_risk"])': 18.0,
+        'argmax(submit_date)': 18.0,
+        'newest(submit_date, amount)': 28.0,
     }
 
     GROUP_TO_RESULTS = {
@@ -52,6 +52,8 @@ class TestAggregations(TestCalculator):
             'ratio(risk_factor in ["low_risk"], 1)',
             'count(risk_factor in ["low_risk"])',
             'count()',
+            'argmax(submit_date)',
+            'newest(submit_date, amount)',
         ]
         self.expected_length = defaultdict(int)
         self.groups_list = None
@@ -81,7 +83,7 @@ class TestAggregations(TestCalculator):
 
     def _test_calculation_results(self, name, formula):
         if self.group:
-            self.groups_list = self.group.split(GROUP_DELIMITER)
+            self.groups_list = self.dataset.split_groups(self.group)
         else:
             self.group = ''
 
@@ -94,12 +96,11 @@ class TestAggregations(TestCalculator):
             formula)
 
         # retrieve linked dataset
-        linked_dataset = self.dataset.aggregated_datasets[self.group]
-        self.assertFalse(linked_dataset is None)
-        linked_dframe = linked_dataset.dframe()
+        linked_dset = self.dataset.aggregated_datasets[self.group]
+        self.assertFalse(linked_dset is None)
+        linked_dframe = linked_dset.dframe()
 
-        column_labels_to_slugs = linked_dataset.build_labels_to_slugs()
-        name = column_labels_to_slugs[name]
+        name = linked_dset.schema.labels_to_slugs[name]
 
         self.assertTrue(name in linked_dframe.columns)
 
@@ -107,9 +108,9 @@ class TestAggregations(TestCalculator):
                          self.expected_length[self.group])
 
         # test that the schema is up to date
-        self.assertTrue(linked_dataset.SCHEMA in linked_dataset.record.keys())
-        self.assertTrue(isinstance(linked_dataset.schema, dict))
-        schema = linked_dataset.schema
+        self.assertTrue(linked_dset.SCHEMA in linked_dset.record.keys())
+        self.assertTrue(isinstance(linked_dset.schema, dict))
+        schema = linked_dset.schema
 
         # test slugified column names
         column_names = [name]

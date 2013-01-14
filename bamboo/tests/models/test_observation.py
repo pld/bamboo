@@ -1,5 +1,3 @@
-from pymongo.cursor import Cursor
-
 from bamboo.lib.datetools import recognize_dates
 from bamboo.lib.jsontools import JSONError
 from bamboo.models.dataset import Dataset
@@ -15,7 +13,7 @@ class TestObservation(TestBase):
         self.dataset.save(self.test_dataset_ids['good_eats.csv'])
 
     def _save_records(self):
-        Observation().save(self.test_data['good_eats.csv'],
+        Observation().save(self.get_data('good_eats.csv'),
                            self.dataset)
         records = Observation.find(self.dataset)
         self.assertTrue(isinstance(records, list))
@@ -25,14 +23,14 @@ class TestObservation(TestBase):
 
     def _save_observations(self):
         return Observation().save(
-            recognize_dates(self.test_data['good_eats.csv']), self.dataset)
+            recognize_dates(self.get_data('good_eats.csv')), self.dataset)
 
     def test_save(self):
         records = self._save_records()
         self.assertEqual(len(records), 19)
 
     def test_save_over_bulk(self):
-        Observation().save(self.test_data['good_eats_large.csv'],
+        Observation().save(self.get_data('good_eats_large.csv'),
                            self.dataset)
         records = Observation.find(self.dataset)
         self.assertEqual(len(records), 1001)

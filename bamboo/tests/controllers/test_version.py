@@ -1,7 +1,5 @@
 import json
 
-from cherrypy import HTTPRedirect
-
 from bamboo.controllers.version import Version
 from bamboo.tests.test_base import TestBase
 

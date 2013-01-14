@@ -20,12 +20,13 @@ def get_json_value(value):
         value = int(value)
     elif isinstance(value, np.bool_):
         value = bool(value)
+
     return value
 
 
 def series_to_jsondict(series):
     """Convert a Series to a dictionary encodable as JSON."""
-    return series if series is None else dict([
-        (unicode(key), get_json_value(value))
+    return series if series is None else {
+        unicode(key): get_json_value(value)
         for key, value in series.iteritems()
-    ])
+    }

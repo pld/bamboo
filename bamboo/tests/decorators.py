@@ -1,18 +1,17 @@
 from functools import wraps
-import os
 import time
-import urllib2
 
 from bamboo.config.settings import RUN_PROFILER
+from bamboo.lib.async import set_async
 
 
 def requires_async(func):
     @wraps(func)
     def wrapper(*args, **kwargs):
-        del os.environ['BAMBOO_ASYNC_OFF']
+        set_async(True)
         self = args[0]
         result = func(*args, **kwargs)
-        os.environ['BAMBOO_ASYNC_OFF'] = 'True'
+        set_async(False)
         return result
     return wrapper
 
@@ -41,26 +40,3 @@ def print_time(func):
         print "SECONDS:", seconds, func.__name__, kwargs
         return result
     return wrapper
-
-
-def requires_internet(func, url='http://74.125.113.99'):
-    @wraps(func)
-    def wrapper(*args, **kwargs):
-        if not _internet_on(url):
-            raise AssertionError('This test requires an internet connection to'
-                                 'run/pass.')
-        return func(*args, **kwargs)
-    return wrapper
-
-
-def _check_url(url, timeout=1):
-    try:
-        response = urllib2.urlopen(url, timeout=timeout)
-        return True
-    except urllib2.URLError as e:
-        pass
-    return False
-
-
-def _internet_on(url):
-    return _check_url(url)

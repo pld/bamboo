@@ -22,6 +22,8 @@ ROUTES = [
     ('datasets_create', 'POST',
         '/datasets', 'datasets', 'create'),
     ('datasets_show', 'GET',
+        '/datasets/:dataset_id.:format', 'datasets', 'show'),
+    ('datasets_show', 'GET',
         '/datasets/:dataset_id', 'datasets', 'show'),
     ('datasets_info', 'GET',
         '/datasets/:dataset_id/info', 'datasets', 'info'),
@@ -77,8 +79,9 @@ def connect_routes(dispatcher):
         'conditions': lambda v: dict(method=v),
         'controller': lambda v: controllers[v],
     }
-    kwarg_map = lambda d: dict([
-        (k, route_case.get(k, lambda v: v)(v)) for k, v in d.iteritems()])
+    kwarg_map = lambda d: {
+        k: route_case.get(k, lambda v: v)(v) for k, v in d.iteritems()
+    }
 
     routes = [kwarg_map(dictify(route)) for route in ROUTES]
 

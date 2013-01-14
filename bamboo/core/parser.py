@@ -7,7 +7,7 @@ from pyparsing import alphanums, nums, oneOf, opAssoc, operatorPrecedence,\
 from bamboo.core.aggregations import AGGREGATIONS
 from bamboo.core.operations import EvalAndOp, EvalCaseOp, EvalComparisonOp,\
     EvalConstant, EvalExpOp, EvalDate, EvalInOp, EvalMapOp, EvalMultOp,\
-    EvalNotOp, EvalOrOp, EvalPlusOp, EvalSignOp, EvalString
+    EvalNotOp, EvalOrOp, EvalPercentile, EvalPlusOp, EvalSignOp, EvalString
 
 
 class ParseError(Exception):
@@ -23,6 +23,7 @@ class ParserContext(object):
 
     def __init__(self, dataset=None):
         if dataset:
+            self.dframe = dataset.dframe()
             self.schema = dataset.schema
 
 
@@ -47,10 +48,11 @@ class Parser(object):
     aggregation_names = AGGREGATIONS.keys()
     bnf = None
     column_functions = None
-    function_names = ['date', 'years']
+    function_names = ['date', 'percentile', 'years']
     operator_names = ['and', 'or', 'not', 'in']
     parsed_expr = None
     special_names = ['default']
+
     reserved_words = aggregation_names + function_names + operator_names +\
         special_names
 
@@ -94,7 +96,8 @@ class Parser(object):
         conj        neg [andop neg]*
         disj        conj [orop conj]*
         case        'case' disj: atom[, disj: atom]*[, 'default': atom]
-        agg         agg ( case[, case]* )
+        trans       trans ( case )
+        agg         agg ( trans[, trans]* )
         =========   ==========
 
         """
@@ -115,14 +118,11 @@ class Parser(object):
 
         # functions
         date_func = CaselessLiteral('date')
+        percentile_func = CaselessLiteral('percentile')
 
         # aggregation functions
-        aggregations = [
-            CaselessLiteral(aggregation) for
-            aggregation in self.aggregation_names
-        ]
-
-        aggregations = reduce(lambda x, y: x | y, aggregations)
+        aggregations = self._build_caseless_or_expression(
+            self.aggregation_names)
 
         # literal syntactic
         open_bracket = Literal('[').suppress()
@@ -186,11 +186,15 @@ class Parser(object):
             (case_op, 1, opAssoc.RIGHT, EvalCaseOp),
         ]) | prop_expr
 
+        trans_expr = operatorPrecedence(case_expr, [
+            (percentile_func, 1, opAssoc.RIGHT, EvalPercentile),
+        ])
+
         agg_expr = ((
                     aggregations + open_paren +
-                    Optional(case_expr + ZeroOrMore(comma + case_expr)))
+                    Optional(trans_expr + ZeroOrMore(comma + trans_expr)))
                     .setParseAction(self.store_aggregation) + close_paren)\
-            | case_expr
+            | trans_expr
 
         # top level bnf
         self.bnf = agg_expr
@@ -198,7 +202,7 @@ class Parser(object):
     def parse_formula(self, input_str):
         """Parse formula and return evaluation function.
 
-        Parse *input_str* into an aggregation name and functions.
+        Parse `input_str` into an aggregation name and functions.
         There will be multiple functions is the aggregation takes multiple
         arguments, e.g. ratio which takes a numerator and denominator formula.
 
@@ -246,24 +250,22 @@ class Parser(object):
             - ``date("09-04-2012") - submit_date > 21078000``,
         - cases
             - ``case food_type in ["morning_food"]: 1, default: 3``
+        - transformations: row-wise column based aggregations
+            - ``percentile(amount)``
 
-        Args:
+        :param dataset: The dataset to base context on, default is None.
+        :param input_str: The string to parse.
 
-        - dataset: The dataset to base context on, default is None.
-
-        Args:
-            input_str: The string to parse.
-
-        Returns:
-            A tuple with the name of the aggregation in the formula, if any
-            and a list of functions built from the input string.
+        :returns: A tuple with the name of the aggregation in the formula, if
+            any and a list of functions built from the input string.
         """
 
         # reset dependent columns before parsing
         self.context.dependent_columns = set()
 
         try:
-            self.parsed_expr = self.bnf.parseString(input_str)[0]
+            self.parsed_expr = self.bnf.parseString(
+                input_str, parseAll=True)[0]
         except ParseException, err:
             raise ParseError('Parse Failure for string "%s": %s' % (input_str,
                              err))
@@ -275,20 +277,18 @@ class Parser(object):
                 functions.append(partial(column_function.eval))
         else:
             functions.append(partial(self.parsed_expr.eval))
+
         return self.aggregation, functions
 
     def validate_formula(self, formula, row):
         """Validate the *formula* on an example *row* of data.
 
-        Rebuild the BNF then parse the *formula* given the sample *row*.
+        Rebuild the BNF then parse the `formula` given the sample `row`.
 
-        Args:
+        :param formula: The formula to validate.
+        :param row: A sample row to check the formula against.
 
-        - formula: The formula to validate.
-        - row: A sample row to check the formula against.
-
-        Returns:
-            The aggregation for the formula.
+        :returns: The aggregation for the formula.
         """
         # remove saved aggregation
         self.aggregation = None
@@ -308,6 +308,13 @@ class Parser(object):
             raise ParseError('Missing column reference: %s' % err)
 
         return aggregation
+
+    def _build_caseless_or_expression(self, strings):
+        literals = [
+            CaselessLiteral(aggregation) for
+            aggregation in self.aggregation_names
+        ]
+        return reduce(lambda or_expr, literal: or_expr | literal, literals)
 
     def __getstate__(self):
         """Get state for pickle."""

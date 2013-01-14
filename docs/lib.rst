@@ -1,6 +1,11 @@
 Lib
 ======
 
+Async Tools
+-----------
+.. automodule:: bamboo.lib.async
+    :members:
+
 Date Tools
 ----------
 .. automodule:: bamboo.lib.datetools
@@ -20,11 +25,20 @@ Mongo Utilities
 ---------------
 .. automodule:: bamboo.lib.mongo
     :members:
+    :private-members:
+
+
+Schema
+------
+.. autoclass:: bamboo.lib.schema_builder.Schema
+    :members:
+    :private-members:
 
 Schema Builder
 --------------
 .. automodule:: bamboo.lib.schema_builder
     :members:
+    :private-members:
 
 Utilities
 ---------

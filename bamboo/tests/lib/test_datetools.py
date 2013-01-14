@@ -6,7 +6,7 @@ class TestDatetools(TestBase):
 
     def setUp(self):
         TestBase.setUp(self)
-        self.dframe = self.test_data['soil_samples.csv']
+        self.dframe = self.get_data('soil_samples.csv')
 
     def test_recognize_dates(self):
         with_dates = recognize_dates(self.dframe)

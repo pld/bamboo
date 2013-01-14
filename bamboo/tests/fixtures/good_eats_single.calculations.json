@@ -1,0 +1,6 @@
+[
+    {
+        "name": "sweet foods",
+        "formula": "food_type in [\"deserts\", \"streat_sweets\"]"
+    }
+]

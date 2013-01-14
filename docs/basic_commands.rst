@@ -1,24 +1,32 @@
 Basic Commands
 ==============
 
-Note: on the command line some special characters may need to be escaped for
-the commands to function correctly.  E.g. ``&`` as ``\&``, ``?`` as ``\?``,
-``=`` as ``\=``.
+.. note::
 
-Note: [*SIC*] all spelling errors in the example dataset.
+    On the command line some special characters may need to be escaped for
+    the commands to function correctly.  E.g. ``&`` as ``\&``, ``?`` as ``\?``,
+    ``=`` as ``\=``.
 
-Check the Bamboo version
+.. note::
+
+    [*SIC*] all spelling errors in the example dataset.
+
+Check the *bamboo* version
+--------------------------
+
+.. code-block:: sh
+
+    curl http://bamboo.io/version
+
+Storing data in *bamboo*
 ------------------------
 
-``curl http://bamboo.io/version``
+Upload data from a URL to *bamboo*
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Storing data in Bamboo
-----------------------
+.. code-block:: sh
 
-Upload data from a URL to Bamboo
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-``curl -X POST -d "url=http://formhub.org/mberg/forms/good_eats/data.csv" http://bamboo.io/datasets``
+    curl -X POST -d "url=http://formhub.org/mberg/forms/good_eats/data.csv" http://bamboo.io/datasets
 
 **returns:**
 
@@ -28,13 +36,15 @@ Upload data from a URL to Bamboo
         "id": "8a3d74711475d8a51c84484fe73f24bd151242ea"
     }
 
-Upload data from a file to Bamboo
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Upload data from a CSV file to *bamboo*
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 given the file ``/home/modilabs/good_eats.csv`` exists locally on your
 filesystem
 
-``curl -X POST -F csv_file=@/home/modilabs/good_eats.csv http://bamboo.io/datasets``
+.. code-block:: sh
+
+    curl -X POST -F csv_file=@/home/modilabs/good_eats.csv http://bamboo.io/datasets
 
 **returns:**
 
@@ -42,6 +52,41 @@ filesystem
 
     {
         "id": "8a3d74711475d8a51c84484fe73f24bd151242ea"
+    }
+
+Upload data from a JSON file to *bamboo*
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+given the file ``/home/modilabs/good_eats.json`` exists locally on your
+filesystem
+
+.. code-block:: sh
+
+    curl -X POST -F json_file=@/home/modilabs/good_eats.json http://bamboo.io/datasets
+
+**returns:**
+
+.. code-block:: javascript
+
+    {
+        "id": "8a3d74711475d8a51c84484fe73f24bd151242ea"
+    }
+
+Deleting a dataset
+^^^^^^^^^^^^^^^^^^
+
+To delete a dataset pass the dataset ID to a delete request.
+
+.. code-block:: sh
+
+    curl -X DELETE http://bamboo.io/datasets/8a3d74711475d8a51c84484fe73f24bd151242ea
+
+**returns:**
+
+.. code-block:: javascript
+
+    {
+        "success": "deleted dataset: 8a3d74711475d8a51c84484fe73f24bd151242ea"
     }
 
 Retrieve information about a dataset
@@ -49,7 +94,9 @@ Retrieve information about a dataset
 
 given the id is ``8a3d74711475d8a51c84484fe73f24bd151242ea``
 
-``curl http://bamboo.io/datasets/8a3d74711475d8a51c84484fe73f24bd151242ea/info``
+.. code-block:: sh
+
+    curl http://bamboo.io/datasets/8a3d74711475d8a51c84484fe73f24bd151242ea/info
 
 **returns:**
 
@@ -80,7 +127,8 @@ given the id is ``8a3d74711475d8a51c84484fe73f24bd151242ea``
         "created_at": "2012-6-18 14:43:32",
         "updated_at": "2012-6-18 14:43:32",
         "num_rows": "500",
-        "num_columns": "30"
+        "num_columns": "30",
+        "state": "ready"
     }
 
 
@@ -92,7 +140,9 @@ given the id is ``8a3d74711475d8a51c84484fe73f24bd151242ea``
 By ID
 ^^^^^
 
-``curl http://bamboo.io/datasets/8a3d74711475d8a51c84484fe73f24bd151242ea``
+.. code-block:: sh
+
+    curl http://bamboo.io/datasets/8a3d74711475d8a51c84484fe73f24bd151242ea
 
 This returns the dataset as JSON.
 
@@ -113,10 +163,26 @@ This returns the dataset as JSON.
         ...
     ]
 
+Alternatively, return the dataset as a CSV,
+
+.. code-block:: sh
+
+    curl http://bamboo.io/datasets/8a3d74711475d8a51c84484fe73f24bd151242ea.csv
+
+**returns:**
+
+.. code-block:: none
+
+    rating,_percentage_complete,_xform_id_string,gps_alt,food_type
+    delectible,n/a,good_eats,low_risk,39.5,lunch
+    ...
+
 By ID with select
 ^^^^^^^^^^^^^^^^^
 
-``curl -g http://bamboo.io/datasets/8a3d74711475d8a51c84484fe73f24bd151242ea?select='{"rating":1}'``
+.. code-block:: sh
+
+    curl -g http://bamboo.io/datasets/8a3d74711475d8a51c84484fe73f24bd151242ea?select='{"rating":1}'
 
 This returns the dataset as JSON given the select, i.e. only the rating
 column.
@@ -149,13 +215,33 @@ column.
         {"rating": "epic_eat"}
     ]
 
+By ID with distinct
+^^^^^^^^^^^^^^^^^^^
+
+.. code-block:: sh
+
+    curl -g http://bamboo.io/datasets/8a3d74711475d8a51c84484fe73f24bd151242ea?select='{"rating":1}&distinct=rating'
+
+This returns the distinct keys for the results of the passed query as a JSON
+array.
+
+**returns:**
+
+.. code-block:: javascript
+
+    [
+        "delectible",
+        "epic_eat"
+    ]
 
 By ID and query
 ^^^^^^^^^^^^^^^
 
-query must be valid MongoDB extended JSON
+The query must be valid MongoDB extended JSON
 
-``curl -g http://bamboo.io/datasets/8a3d74711475d8a51c84484fe73f24bd151242ea?query='{"food_type":"lunch"}'``
+.. code-block:: sh
+
+    curl -g http://bamboo.io/datasets/8a3d74711475d8a51c84484fe73f24bd151242ea?query='{"food_type":"lunch"}'
 
 This returns the dataset as JSON given the query, i.e. only rows with a
 food_type of "lunch".
@@ -192,7 +278,9 @@ Query with dates
 To query with dates use the MongoDB query format and specify dates as Unix
 epochs.
 
-``curl -g http://bamboo.io/datasets/8a3d74711475d8a51c84484fe73f24bd151242ea?query='{"submit_date": {"$lt": 1320000000}'``
+.. code-block:: sh
+
+    curl -g http://bamboo.io/datasets/8a3d74711475d8a51c84484fe73f24bd151242ea?query='{"submit_date": {"$lt": 1320000000}'
 
 Returns the rows with a time stamp less than 1320000000, which is October 30th
 2011.
@@ -203,7 +291,9 @@ Retrieve summary statistics for dataset
 By ID
 ^^^^^
 
-``curl http://bamboo.io/datasets/8a3d74711475d8a51c84484fe73f24bd151242ea/summary?select=all``
+.. code-block:: sh
+
+    curl http://bamboo.io/datasets/8a3d74711475d8a51c84484fe73f24bd151242ea/summary?select=all
 
 This returns a summary of the dataset.  Columns of type float and integer are
 show as summary statistics.  Columns of type string and boolean are shown as
@@ -241,7 +331,9 @@ select query.
 With a query
 ^^^^^^^^^^^^^
 
-``curl -g http://bamboo.io/datasets/8a3d74711475d8a51c84484fe73f24bd151242ea/summary?query='{"food_type": "lunch"}'&select=all``
+.. code-block:: sh
+
+    curl -g http://bamboo.io/datasets/8a3d74711475d8a51c84484fe73f24bd151242ea/summary?query='{"food_type": "lunch"}'&select=all
 
 Return the summary restricting to data that matches the Mongo query passed as
 *query*.
@@ -285,7 +377,9 @@ Return the summary restricting to data that matches the Mongo query passed as
 With a grouping
 ^^^^^^^^^^^^^^^
 
-``curl http://bamboo.io/datasets/8a3d74711475d8a51c84484fe73f24bd151242ea/summary?select=all&group=food_type``
+.. code-block:: sh
+
+    curl http://bamboo.io/datasets/8a3d74711475d8a51c84484fe73f24bd151242ea/summary?select=all&group=food_type
 
 Return the summary grouping on the value passed as *group*.
 
@@ -362,7 +456,9 @@ Return the summary grouping on the value passed as *group*.
 With a grouping and a select
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-``curl -g http://bamboo.io/datasets/8a3d74711475d8a51c84484fe73f24bd151242ea/summary?select='{"rating":1}'&group=food_type``
+.. code-block:: sh
+
+    curl -g http://bamboo.io/datasets/8a3d74711475d8a51c84484fe73f24bd151242ea/summary?select='{"rating":1}'&group=food_type
 
 Return the summary grouping on the value passed as *group* and only showing the
 columns specified by the *select*.
@@ -394,7 +490,9 @@ columns specified by the *select*.
 With a multi-grouping
 ^^^^^^^^^^^^^^^^^^^^^
 
-``curl http://bamboo.io/datasets/8a3d74711475d8a51c84484fe73f24bd151242ea/summary?select=all&group=food_type,rating``
+.. code-block:: sh
+
+    curl http://bamboo.io/datasets/8a3d74711475d8a51c84484fe73f24bd151242ea/summary?select=all&group=food_type,rating
 
 **returns:**
 
@@ -485,25 +583,63 @@ The results of aggregations are stored in a dataset with one column for
 the unique groups and another for the result of the *formula*. This dataset is
 indexed by the group parameter and unique per dataset ID.
 
-Store calculation formula:
-^^^^^^^^^^^^^^^^^^^^^^^^^^
+.. note::
 
-``curl -X POST -d "name=amount_less_than_10&formula=amount<10" http://bamboo.io/calculations/8a3d74711475d8a51c84484fe73f24bd151242ea``
+    When a two calculations with the same name are added the calculations are
+    not overwritten.
+
+    The second calculation will have a label equal to the same name as the
+    first calculation but it will have a unique slug. You can determine this
+    slug via a `dataset info call`__.
+
+__ `Retrieve information about a dataset`_
+
+.. note::
+
+    It is possible to have the same calculation label with different
+    formulas, but impossible to have the same calculation slug with
+    different formulas.
+
+Store calculation formula
+^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. code-block:: sh
+
+    curl -X POST -d "name=amount_less_than_10&formula=amount<10" http://bamboo.io/calculations/8a3d74711475d8a51c84484fe73f24bd151242ea
 
 **returns:**
 
 .. code-block:: javascript
 
     {
-        "formula": "amount<10",
-        "group": null,
-        "name": "amount_less_than_10"
+        "success": "created calulcation: water_functioning_count for dataset: 8a3d74711475d8a51c84484fe73f24bd151242ea"
     }
 
-Retrieve newly calculated column:
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Retrieve a list of stored calculations
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-``curl -g http://bamboo.io/datasets/8a3d74711475d8a51c84484fe73f24bd151242ea?select='{"amount_less_than_10":1}'``
+.. code-block:: sh
+
+    curl http://bamboo.io/calculations/8a3d74711475d8a51c84484fe73f24bd151242ea
+
+**returns:**
+
+.. code-block:: javascript
+
+    [
+        {
+            "formula": "amount<10",
+            "group": null,
+            "name": "amount_less_than_10"
+        }
+    ]
+
+Retrieve newly calculated column
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. code-block:: sh
+
+    curl -g http://bamboo.io/datasets/8a3d74711475d8a51c84484fe73f24bd151242ea?select='{"amount_less_than_10":1}'
 
 **returns:**
 
@@ -533,10 +669,30 @@ Retrieve newly calculated column:
         {"amount_less_than_10": true}
     ]
 
-Store aggregation formula:
-^^^^^^^^^^^^^^^^^^^^^^^^^^
+Delete a calculation
+^^^^^^^^^^^^^^^^^^^^
 
-``curl -X POST -d "name=sum_of_amount&formula=sum(amount)" http://bamboo.io/calculations/8a3d74711475d8a51c84484fe73f24bd151242ea``
+To delete a calculation pass the calculation name in a delete request to
+calculation/[dataset ID]
+
+.. code-block:: sh
+
+    curl -X DELETE http://bamboo.io/calculations/8a3d74711475d8a51c84484fe73f24bd151242ea?name=amount_less_than_10
+
+**returns:**
+
+.. code-block:: javascript
+
+    {
+        "success": "deleted calculation: 'amount_less_than_10' for dataset: 8a3d74711475d8a51c84484fe73f24bd151242ea"
+    }
+
+Store aggregation formula
+^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. code-block:: sh
+
+    curl -X POST -d "name=sum_of_amount&formula=sum(amount)" http://bamboo.io/calculations/8a3d74711475d8a51c84484fe73f24bd151242ea
 
 **returns:**
 
@@ -548,10 +704,12 @@ Store aggregation formula:
         "name": "sum_of_amount"
     }
 
-Store aggregation formula with group:
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Store aggregation formula with group
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-``curl -X POST -d "name=sum_of_amount&formula=sum(amount)&group=food_type" http://bamboo.io/calculations/8a3d74711475d8a51c84484fe73f24bd151242ea``
+.. code-block:: sh
+
+    curl -X POST -d "name=sum_of_amount&formula=sum(amount)&group=food_type" http://bamboo.io/calculations/8a3d74711475d8a51c84484fe73f24bd151242ea
 
 **returns:**
 
@@ -563,10 +721,12 @@ Store aggregation formula with group:
          "name": "sum_of_amount"
     }
 
-Store aggregation formula with multi-group:
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Store aggregation formula with multi-group
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-``curl -X POST -d "name=sum_of_amount&formula=sum(amount)&group=food_type,rating" http://bamboo.io/calculations/8a3d74711475d8a51c84484fe73f24bd151242ea``
+.. code-block:: sh
+
+    curl -X POST -d "name=sum_of_amount&formula=sum(amount)&group=food_type,rating" http://bamboo.io/calculations/8a3d74711475d8a51c84484fe73f24bd151242ea
 
 **returns:**
 
@@ -578,10 +738,12 @@ Store aggregation formula with multi-group:
          "name": "sum_of_amount"
     }
 
-Retrieve lists of aggregated datasets:
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Retrieve lists of aggregated datasets
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-``curl -g http://bamboo.io/datasets/8a3d74711475d8a51c84484fe73f24bd151242ea/related``
+.. code-block:: sh
+
+    curl -g http://bamboo.io/datasets/8a3d74711475d8a51c84484fe73f24bd151242ea/aggregations
 
 Returns a map of groups (included an empty group) to dataset IDs for
 aggregation calculations.
@@ -596,10 +758,12 @@ aggregation calculations.
         "food_type,rating": "10cedc551e40418caa72495d771703b3"
     }
 
-Retrieve the linked datasets that groups on foodtype and rating:
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Retrieve the linked datasets that groups on foodtype and rating
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-``curl -g http://bamboo.io/datasets/10cedc551e40418caa72495d771703b3``
+.. code-block:: sh
+
+    curl -g http://bamboo.io/datasets/10cedc551e40418caa72495d771703b3
 
 Linked dataset are the same as any other dataset.
 

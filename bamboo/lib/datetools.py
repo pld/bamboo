@@ -6,7 +6,6 @@ from dateutil.parser import parse as date_parse
 import numpy as np
 from pandas import Series
 
-from bamboo.lib.schema_builder import DATETIME, SIMPLETYPE
 from bamboo.lib.utils import is_float_nan
 
 
@@ -16,37 +15,35 @@ def recognize_dates(dframe):
     Check if object columns in a dataframe can be parsed as dates.
     If yes, rewrite column with values parsed as dates.
 
-    Args:
+    :param dframe: The DataFrame to convert columns in.
 
-    - dframe: The DataFrame to convert columns in.
-
-    Returns:
-        A DataFrame with column values convert to datetime types.
+    :returns: A DataFrame with column values convert to datetime types.
     """
     new_dframe = copy.deepcopy(dframe)
+
     for idx, dtype in enumerate(dframe.dtypes):
         if dtype.type == np.object_:
             _convert_column_to_date(new_dframe, dframe.columns[idx])
+
     return new_dframe
 
 
-def recognize_dates_from_schema(schema, dframe):
+def recognize_dates_from_schema(dframe, schema):
     """Convert columes to datetime if column in *schema* is of type datetime.
 
-    Args:
+    :param dframe: The DataFrame to convert columns in.
+    :param schema: Schema to define columns of type datetime.
 
-    - schema: Schema to define columns of type datetime.
-    - dframe: The DataFrame to convert columns in.
-
-    Returns:
-        A DataFrame with column values convert to datetime types.
+    :returns: A DataFrame with column values convert to datetime types.
     """
     new_dframe = copy.deepcopy(dframe)
     dframe_columns = dframe.columns.tolist()
+
     for column, column_schema in schema.items():
         if column in dframe_columns and\
-                column_schema[SIMPLETYPE] == DATETIME:
+                schema.is_date_simpletype(column):
             _convert_column_to_date(new_dframe, column)
+
     return new_dframe
 
 
@@ -77,20 +74,24 @@ def parse_date_to_unix_time(date):
     return timegm(date.utctimetuple())
 
 
-def col_is_date_simpletype(column_schema):
-    return column_schema[SIMPLETYPE] == DATETIME
+def safe_parse_date_to_unix_time(date):
+    if isinstance(date, datetime):
+        date = parse_date_to_unix_time(date)
+
+    return date
 
 
 def parse_timestamp_query(query, schema):
     """Interpret date column queries as JSON."""
     if query != {}:
         datetime_columns = [
-            column for (column, schema) in
+            column for (column, col_schema) in
             schema.items() if
-            schema[SIMPLETYPE] == DATETIME and column in query.keys()]
+            schema.is_date_simpletype(column) and column in query.keys()]
         for date_column in datetime_columns:
-            query[date_column] = dict([(
-                key,
-                datetime.fromtimestamp(int(value))) for (key, value) in
-                query[date_column].items()])
+            query[date_column] = {
+                key: datetime.fromtimestamp(int(value)) for (key, value) in
+                query[date_column].items()
+            }
+
     return query

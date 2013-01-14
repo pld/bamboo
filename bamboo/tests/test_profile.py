@@ -30,15 +30,15 @@ class TestProfile(TestBase):
     def _expand_width(self, df, exponent):
         for i in xrange(0, exponent):
             other = df.rename(
-                columns=dict([(col, '%s-%s' % (col, idx)) for (idx, col) in
-                             enumerate(df.columns)]))
+                columns={col: '%s-%s' % (col, idx) for (idx, col) in
+                         enumerate(df.columns)})
             df = df.join(other)
-            df.rename(columns=dict([(col, str(idx)) for (idx, col) in
-                      enumerate(df.columns)]), inplace=True)
+            df.rename(columns={col: str(idx) for (idx, col) in
+                      enumerate(df.columns)}, inplace=True)
         return df
 
     def _grow_test_data(self, dataset_name, width_exp, length_factor):
-        df = self.test_data[dataset_name]
+        df = self.get_data(dataset_name)
         df = self._expand_width(df, width_exp)
         return concat([df] * length_factor)
 

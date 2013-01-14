@@ -2,27 +2,32 @@ from pandas import concat
 
 from bamboo.core.aggregations import AGGREGATIONS
 from bamboo.core.frame import BambooFrame
-from bamboo.lib.utils import split_groups
 
 
 class Aggregator(object):
-    """Performa aggregations on datasets.
+    """Perform a aggregations on datasets.
 
-    Apply the *aggregation* to group columns in *group_str* and the *columns*
-    of the *dframe*. Store the resulting *dframe* as a linked dataset for
-    *dataset*. If a linked dataset with the same groups already exists update
+    Apply the `aggregation` to group columns in `group_str` and the `columns`
+    of the `dframe`. Store the resulting `dframe` as a linked dataset for
+    `dataset`. If a linked dataset with the same groups already exists update
     this dataset.  Otherwise create a new linked dataset.
     """
 
-    def __init__(self, dataset, dframe, group_str, _type, name):
+    def __init__(self, dataset, dframe, groups, _type, name):
+        """Create an Aggregator.
+
+        :param dataset: The dataset to aggregate.
+        :param dframe: The DataFrame to aggregate.
+        :param groups: A list of columns to group on.
+        :param _type: The aggreagtion to perform.
+        :param name: The name of the aggregation.
+        """
         self.dataset = dataset
         self.dframe = dframe
-        # MongoDB does not allow None as a key
-        self.group_str = group_str if group_str else ''
-        self.groups = split_groups(self.group_str) if group_str else None
+        self.groups = groups
         self.name = name
-        self.aggregation = AGGREGATIONS.get(_type)(
-            self.name, self.groups, self.dframe)
+        aggregation = AGGREGATIONS.get(_type)
+        self.aggregation = aggregation(self.name, self.groups, self.dframe)
 
     def save(self, columns):
         """Save this aggregation applied to the passed in columns.
@@ -31,42 +36,21 @@ class Aggregator(object):
         store in this dataset, if not create a new aggregated dataset and store
         the aggregation in this new aggregated dataset.
 
-        Args:
-
-        - columns: The columns to aggregate.
+        :param columns: The column aggregate.
         """
-        new_dframe = BambooFrame(
-            self.aggregation.eval(columns)
-        ).add_parent_column(self.dataset.dataset_id)
+        new_dframe = BambooFrame(self.aggregation.eval(columns))
+        new_dframe = new_dframe.add_parent_column(self.dataset.dataset_id)
 
-        aggregated_datasets = self.dataset.aggregated_datasets
-        agg_dataset = aggregated_datasets.get(self.group_str, None)
+        agg_dataset = self.dataset.aggregated_dataset(self.groups)
 
         if agg_dataset is None:
-            agg_dataset = self.dataset.__class__()
-            agg_dataset.save()
-            agg_dataset.save_observations(new_dframe)
-
-            # store a link to the new dataset
-            aggregated_datasets_dict = self.dataset.aggregated_datasets_dict
-            aggregated_datasets_dict[self.group_str] = agg_dataset.dataset_id
-            self.dataset.update({
-                self.dataset.AGGREGATED_DATASETS: aggregated_datasets_dict})
+            agg_dataset = self.dataset.new_agg_dataset(
+                new_dframe, self.groups)
         else:
             agg_dframe = agg_dataset.dframe()
-
-            if self.groups:
-                # set indexes on new dataframes to merge correctly
-                new_dframe = new_dframe.set_index(self.groups)
-                agg_dframe = agg_dframe.set_index(self.groups)
-
-            # attach new column to aggregation data frame and remove index
-            new_dframe = agg_dframe.join(new_dframe)
-
-            if self.groups:
-                new_dframe = new_dframe.reset_index()
-
+            new_dframe = self._merge_dframes([agg_dframe, new_dframe])
             agg_dataset.replace_observations(new_dframe)
+
         self.new_dframe = new_dframe
 
     def update(self, child_dataset, calculator, formula, columns):
@@ -81,14 +65,39 @@ class Aggregator(object):
         child_dataset.remove_parent_observations(parent_dataset_id)
 
         if not self.groups and 'reduce' in dir(self.aggregation):
+            # if it is not grouped and a reduce is defined
             dframe = BambooFrame(
                 self.aggregation.reduce(dframe, columns))
         else:
-            _, columns = calculator.make_columns(
-                formula, self.name, self.dframe)
-            new_dframe = self.aggregation.eval(columns)
-            dframe[self.name] = new_dframe[self.name]
+            dframe = self._dframe_from_calculator(calculator, formula, dframe)
 
         new_agg_dframe = concat([child_dataset.dframe(), dframe])
+
         return child_dataset.replace_observations(
             new_agg_dframe.add_parent_column(parent_dataset_id))
+
+    def _dframe_from_calculator(self, calculator, formula, dframe):
+        """Create a new aggregation and update return updated dframe."""
+        # build column arguments from original dframe
+        _, columns = calculator.make_columns(
+            formula, self.name, self.dframe)
+        new_dframe = self.aggregation.eval(columns)
+
+        del dframe[self.name]
+        dframe = self._merge_dframes(
+            [new_dframe[self.groups + [self.name]], dframe])
+
+        return dframe
+
+    def _merge_dframes(self, dframes):
+        if self.groups:
+            # set indexes on new dataframes to merge correctly
+            dframes = [dframe.set_index(self.groups) for dframe in dframes]
+
+        # attach new column to aggregation data frame and remove index
+        new_dframe = dframes[0].join(dframes[1:])
+
+        if self.groups:
+            new_dframe = new_dframe.reset_index()
+
+        return new_dframe

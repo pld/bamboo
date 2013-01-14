@@ -1,59 +1,26 @@
 from math import isnan
-import os
-import re
+from sys import maxint
 
-from bamboo.config.settings import ASYNCHRONOUS_TASKS
 
-# delimiter when passing multiple groups as a string
-GROUP_DELIMITER = ','
+def minint():
+    return -maxint - 1
+
+
+def parse_int(value, default):
+    return _parse_type(int, value, default)
+
+
+def parse_float(value, default=None):
+    return _parse_type(float, value, default)
+
+
+def _parse_type(_type, value, default):
+    try:
+        return _type(value)
+    except ValueError:
+        return value if default is None else default
 
 
 def is_float_nan(num):
-    """Return True is *num* is a float and NaN."""
+    """Return True is `num` is a float and NaN."""
     return isinstance(num, float) and isnan(num)
-
-
-def slugify_columns(column_names):
-    """Convert list of strings into unique slugs.
-
-    Convert non-alphanumeric characters in column names into underscores and
-    ensure that all column names are unique.
-
-    Args:
-
-    - column_names: A list of strings.
-
-    Returns:
-        A list slugified names with a one-to-one mapping to *column_names*.
-    """
-    encode_column_re = re.compile(r'\W')
-
-    encoded_names = []
-
-    for column_name in column_names:
-        new_col_name = encode_column_re.sub('_', column_name).lower()
-        while new_col_name in encoded_names:
-            new_col_name += '_'
-        encoded_names.append(new_col_name)
-    return encoded_names
-
-
-def split_groups(group_str):
-    """Split a string based on the group delimiter"""
-    return group_str.split(GROUP_DELIMITER)
-
-
-def call_async(function, *args, **kwargs):
-    """Potentially asynchronously call *function* with the arguments.
-
-    Args:
-
-    - function: The function to call.
-    - args: Arguments for the function.
-    - kwargs: Keyword arguments for the function.
-
-    """
-    if not os.getenv('BAMBOO_ASYNC_OFF') and ASYNCHRONOUS_TASKS:
-        function.__getattribute__('apply_async')(args=args, kwargs=kwargs)
-    else:  # pragma: no cover
-        function(*args, **kwargs)

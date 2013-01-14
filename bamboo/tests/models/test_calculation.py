@@ -1,5 +1,4 @@
 from nose.tools import assert_raises
-from pymongo.cursor import Cursor
 
 from bamboo.core.parser import ParseError
 from bamboo.models.calculation import Calculation, DependencyError
@@ -22,7 +21,7 @@ class TestCalculation(TestBase):
         return self.calculation.save(self.dataset, formula, self.name)
 
     def _save_observations(self):
-        self.dataset.save_observations(self.test_data['good_eats.csv'])
+        self.dataset.save_observations(self.get_data('good_eats.csv'))
 
     def _save_observations_and_calculation(self, formula=None):
         self._save_observations()
@@ -42,6 +41,17 @@ class TestCalculation(TestBase):
         record = self._save_observations_and_calculation()
         self.assertTrue(isinstance(record, dict))
         self.assertTrue(Calculation.FORMULA in record.keys())
+
+    def test_save_set_aggregation(self):
+        record = self._save_observations_and_calculation('max(amount)')
+        calculation = Calculation.find(self.dataset)[0]
+        self.assertEqual('max', calculation.aggregation)
+
+    def test_save_set_aggregation_id(self):
+        record = self._save_observations_and_calculation('max(amount)')
+        agg_id = self.dataset.aggregated_datasets_dict['']
+        calculation = Calculation.find(self.dataset)[0]
+        self.assertEqual(agg_id, calculation.aggregation_id)
 
     def test_save_improper_formula(self):
         assert_raises(ParseError, self._save_observations_and_calculation,
@@ -81,22 +91,19 @@ class TestCalculation(TestBase):
     def test_save_non_existent_group(self):
         self._save_observations()
         assert_raises(ParseError, Calculation().save, self.dataset,
-                      self.formula, self.name, group='NON_EXISTENT_GROUP')
+                      self.formula, self.name, group_str='NON_EXISTENT_GROUP')
         try:
             Calculation().save(self.dataset, self.formula, self.name,
-                               group='NON_EXISTENT_GROUP')
+                               group_str='NON_EXISTENT_GROUP')
         except ParseError as e:
             self.assertTrue('Group' in e.__str__())
 
     def test_find(self):
         record = self._save_observations_and_calculation()
-        status = record.pop(Calculation.STATE)
-        self.assertEqual(status, Calculation.STATE_PENDING)
         rows = Calculation.find(self.dataset)
         new_record = rows[0].record
         status = new_record.pop(Calculation.STATE)
         self.assertEqual(status, Calculation.STATE_READY)
-        self.assertEqual(record, new_record)
 
     def test_sets_dependent_calculations(self):
         record = self._save_observations_and_calculation()

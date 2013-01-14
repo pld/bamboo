@@ -10,7 +10,7 @@ do
   esac
 done
 
-echo -e "\nBamboo command demo\n"
+echo -e "\nbamboo command demo\n"
 echo -e "Using host $HOST...\n"
 
 # post a csv url to bamboo

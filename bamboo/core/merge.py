@@ -5,7 +5,7 @@ from pandas import concat
 
 from bamboo.models.dataset import Dataset
 from bamboo.lib.io import import_dataset
-from bamboo.lib.utils import call_async
+from bamboo.lib.async import call_async
 
 
 class MergeError(Exception):
@@ -16,16 +16,13 @@ class MergeError(Exception):
 def merge_dataset_ids(dataset_ids):
     """Load a JSON array of dataset IDs and start a background merge task.
 
-    Args:
+    :param dataset_ids: An array of dataset IDs to merge.
 
-    - dataset_ids: An array of dataset IDs to merge.
-
-    Raises:
-        MergeError: If less than 2 datasets are provided. If a dataset cannot
-            be found for a dataset ID it is ignored. Therefore if 2 dataset IDs
-            are provided and one of them is bad an error is raised.  However,
-            if three dataset IDs are provided and one of them is bad, an error
-            is not raised.
+    :raises: `MergeError` if less than 2 datasets are provided. If a dataset
+        cannot be found for a dataset ID it is ignored. Therefore if 2 dataset
+        IDs are provided and one of them is bad an error is raised.  However,
+        if three dataset IDs are provided and one of them is bad, an error is
+        not raised.
     """
     dataset_ids = json.loads(dataset_ids)
     datasets = [Dataset.find_one(dataset_id) for dataset_id in dataset_ids]
@@ -43,19 +40,17 @@ def merge_dataset_ids(dataset_ids):
     return new_dataset
 
 
-@task
+@task(default_retry_delay=2)
 def _merge_datasets_task(new_dataset, datasets):
     """Merge datasets specified by dataset_ids.
 
-    Args:
-
-    - new_dataset: The dataset store the merged dataset in.
-    - dataset_ids: A list of IDs to merge into *new_dataset*.
+    :param new_dataset: The dataset store the merged dataset in.
+    :param dataset_ids: A list of IDs to merge into `new_dataset`.
     """
     # check that all datasets are in a 'ready' state
     if any([not dataset.is_ready for dataset in datasets]):
         [dataset.reload() for dataset in datasets]
-        raise _merge_datasets_task.retry(countdown=1)
+        raise _merge_datasets_task.retry()
 
     new_dframe = _merge_datasets(datasets)
 

@@ -1,0 +1,15 @@
+[
+    {
+        "name": "sweet foods",
+        "formula": "food_type in [\"deserts\", \"streat_sweets\"]"
+    },
+    {
+        "name": "in northern hemisphere",
+        "formula": "gps_latitude > 0"
+    },
+    {
+        "name": "sum of amount",
+        "formula": "sum(amount)",
+        "group": "risk_factor"
+    }
+]

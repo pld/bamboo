@@ -13,7 +13,7 @@ class TestCalculator(TestBase):
         self.dataset.save(
             self.test_dataset_ids['good_eats_with_calculations.csv'])
         dframe = recognize_dates(
-            self.test_data['good_eats_with_calculations.csv'])
+            self.get_data('good_eats_with_calculations.csv'))
         self.dataset.save_observations(dframe)
         self.group = None
         self.parser = Parser(self.dataset)
@@ -32,9 +32,10 @@ class TestCalculator(TestBase):
         self.start_num_cols = len(columns)
         self.added_num_cols = 0
 
-        column_labels_to_slugs = dict([
-            (column_attrs[Dataset.LABEL], (column_name)) for
-            (column_name, column_attrs) in self.dataset.schema.items()])
+        column_labels_to_slugs = {
+            column_attrs[Dataset.LABEL]: (column_name) for
+            (column_name, column_attrs) in self.dataset.schema.items()
+        }
         self.label_list, self.slugified_key_list = [
             list(ary) for ary in zip(*column_labels_to_slugs.items())
         ]
@@ -45,8 +46,9 @@ class TestCalculator(TestBase):
 
             calculator = Calculator(self.dataset)
 
-            calculator.calculate_column(formula, name, self.group)
+            groups = self.dataset.split_groups(self.group)
+            calculator.calculate_column(formula, name, groups)
 
-            self.column_labels_to_slugs = self.dataset.build_labels_to_slugs()
+            self.column_labels_to_slugs = self.dataset.schema.labels_to_slugs
 
             self._test_calculation_results(name, formula)
