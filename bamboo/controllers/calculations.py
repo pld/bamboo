@@ -18,7 +18,7 @@ class Calculations(AbstractController):
     value.
     """
 
-    def delete(self, dataset_id, name=None, group=None):
+    def delete(self, dataset_id, name, group=None):
         """Delete the calculation with `name` from the dataset.
 
         Delete the calculation with column `name` from the dataset specified by
