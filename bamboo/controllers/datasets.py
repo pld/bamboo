@@ -228,20 +228,20 @@ class Datasets(AbstractController):
         error = 'url, csv_file or schema required'
 
         try:
-            dataset = Dataset()
-            dataset.save()
+            if schema or url or csv_file or json_file:
+                dataset = Dataset()
+                dataset.save()
 
-            if schema:
-                dataset = import_schema_for_dataset(dataset, schema)
+                if schema:
+                    import_schema_for_dataset(dataset, schema)
 
-            if url:
-                dataset = import_data_from_url(dataset, url)
-            elif csv_file:
-                dataset = import_data_from_csv(dataset, csv_file)
-            elif json_file:
-                dataset = import_data_from_json(dataset, json_file)
+                if url:
+                    import_data_from_url(dataset, url)
+                elif csv_file:
+                    import_data_from_csv(dataset, csv_file)
+                elif json_file:
+                    import_data_from_json(dataset, json_file)
 
-            if dataset:
                 result = {Dataset.ID: dataset.dataset_id}
 
             perish = parse_int(perish, None)
