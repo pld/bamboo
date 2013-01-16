@@ -6,7 +6,6 @@ from bamboo.controllers.abstract_controller import AbstractController
 from bamboo.controllers.calculations import Calculations
 from bamboo.controllers.datasets import Datasets
 from bamboo.core.frame import DATASET_ID
-from bamboo.lib.io import create_dataset_from_url
 from bamboo.models.calculation import Calculation
 from bamboo.models.dataset import Dataset
 from bamboo.tests.decorators import requires_async
@@ -100,9 +99,8 @@ class TestCalculations(TestBase):
 
     @requires_async
     def test_create_async_not_ready(self):
-        self.dataset_id = create_dataset_from_url(
-            '%s%s' % (self._local_fixture_prefix(), 'good_eats_huge.csv'),
-            allow_local_file=True).dataset_id
+        self.dataset_id = self._create_dataset_from_url(
+            '%s%s' % (self._local_fixture_prefix(), 'good_eats_huge.csv'))
         response = json.loads(self._post_formula())
         dataset = Dataset.find_one(self.dataset_id)
 
@@ -116,9 +114,8 @@ class TestCalculations(TestBase):
 
     @requires_async
     def test_create_async_sets_calculation_status(self):
-        self.dataset_id = create_dataset_from_url(
-            '%s%s' % (self._local_fixture_prefix(), 'good_eats_huge.csv'),
-            allow_local_file=True).dataset_id
+        self.dataset_id = self._create_dataset_from_url(
+            '%s%s' % (self._local_fixture_prefix(), 'good_eats_huge.csv'))
 
         self._wait_for_dataset_state(self.dataset_id)
 

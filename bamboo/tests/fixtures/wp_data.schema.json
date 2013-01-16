@@ -1,0 +1,17 @@
+{
+    "functional": {
+        "label": "functional",
+        "olap_type": "dimension",
+        "simpletype": "boolean"
+    },
+    "submit_date": {
+        "label": "submit date",
+        "olap_type": "dimension",
+        "simpletype": "datetime"
+    },
+    "wp_id": {
+        "label": "water point ID",
+        "olap_type": "dimension",
+        "simpletype": "string"
+    }
+}

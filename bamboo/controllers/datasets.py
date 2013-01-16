@@ -5,8 +5,8 @@ from bamboo.core.frame import NonUniqueJoinError
 from bamboo.core.merge import merge_dataset_ids, MergeError
 from bamboo.core.summary import ColumnTypeError
 from bamboo.lib.exceptions import ArgumentError
-from bamboo.lib.io import create_dataset_from_url, create_dataset_from_csv,\
-    create_dataset_from_json, create_dataset_from_schema
+from bamboo.lib.io import import_data_from_url, import_data_from_csv,\
+    import_data_from_json, import_schema_for_dataset
 from bamboo.lib.utils import parse_int
 from bamboo.models.dataset import Dataset
 
@@ -228,16 +228,20 @@ class Datasets(AbstractController):
         error = 'url, csv_file or schema required'
 
         try:
-            dataset = None
-            if url:
-                dataset = create_dataset_from_url(url)
-            elif csv_file:
-                dataset = create_dataset_from_csv(csv_file)
-            elif json_file:
-                dataset = create_dataset_from_json(json_file)
-            elif schema:
-                dataset = create_dataset_from_schema(schema)
-            if dataset:
+            if schema or url or csv_file or json_file:
+                dataset = Dataset()
+                dataset.save()
+
+                if schema:
+                    import_schema_for_dataset(dataset, schema)
+
+                if url:
+                    import_data_from_url(dataset, url)
+                elif csv_file:
+                    import_data_from_csv(dataset, csv_file)
+                elif json_file:
+                    import_data_from_json(dataset, json_file)
+
                 result = {Dataset.ID: dataset.dataset_id}
 
             perish = parse_int(perish, None)
