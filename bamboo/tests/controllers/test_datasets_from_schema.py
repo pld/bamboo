@@ -1,5 +1,6 @@
 import simplejson as json
 
+from bamboo.lib.schema_builder import SIMPLETYPE
 from bamboo.models.dataset import Dataset
 from bamboo.tests.controllers.test_abstract_datasets import\
     TestAbstractDatasets
@@ -10,8 +11,6 @@ class TestDatasetsFromSchema(TestAbstractDatasets):
 
     def setUp(self):
         TestAbstractDatasets.setUp(self)
-        result = self._upload_from_schema('good_eats.schema.json')
-        self._test_summary_built(result)
 
     def _upload_from_schema(self, file_name):
         schema = open('tests/fixtures/%s' % file_name)
@@ -19,7 +18,12 @@ class TestDatasetsFromSchema(TestAbstractDatasets):
 
         return json.loads(self.controller.create(schema=mock_uploaded_file))
 
+    def _upload_good_eats_schema(self):
+        result = self._upload_from_schema('good_eats.schema.json')
+        self._test_summary_built(result)
+
     def test_create_from_schema(self):
+        self._upload_good_eats_schema()
         results = json.loads(self.controller.show(self.dataset_id))
 
         self.assertTrue(isinstance(results, list))
@@ -35,6 +39,7 @@ class TestDatasetsFromSchema(TestAbstractDatasets):
         self.assertEqual(results[Dataset.NUM_COLUMNS], self.NUM_COLS)
 
     def test_create_from_schema_and_update(self):
+        self._upload_good_eats_schema()
         results = json.loads(self.controller.show(self.dataset_id))
 
         self.assertFalse(len(results))
@@ -65,6 +70,7 @@ class TestDatasetsFromSchema(TestAbstractDatasets):
                 self.assertEqual(new_schema.cardinality(column), 1)
 
     def test_create_one_from_schema_and_join(self):
+        self._upload_good_eats_schema()
         left_dataset_id = self.dataset_id
         right_dataset_id = self._post_file('good_eats_aux.csv')
 
@@ -90,6 +96,7 @@ class TestDatasetsFromSchema(TestAbstractDatasets):
             self.assertEqual(schema_keys, expected_schema_keys)
 
     def test_create_two_from_schema_and_join(self):
+        self._upload_good_eats_schema()
         left_dataset_id = self.dataset_id
 
         schema = open('tests/fixtures/good_eats_aux.schema.json')
@@ -122,6 +129,7 @@ class TestDatasetsFromSchema(TestAbstractDatasets):
             self.assertEqual(schema_keys, expected_schema_keys)
 
     def test_create_two_from_schema_and_join_and_update_vacuous_rhs(self):
+        self._upload_good_eats_schema()
         left_dataset_id = self.dataset_id
 
         schema = open('tests/fixtures/good_eats_aux.schema.json')
@@ -154,6 +162,7 @@ class TestDatasetsFromSchema(TestAbstractDatasets):
         self.assertEqual(num_rows, len(results))
 
     def test_create_two_from_schema_and_join_and_update_child_rhs(self):
+        self._upload_good_eats_schema()
         left_dataset_id = self.dataset_id
 
         result = self._upload_from_schema('good_eats_aux.schema.json')
@@ -179,6 +188,7 @@ class TestDatasetsFromSchema(TestAbstractDatasets):
         self.assertEqual(num_rows, len(results))
 
     def test_create_two_from_schema_and_join_and_update_lhs_rhs(self):
+        self._upload_good_eats_schema()
         left_dataset_id = self.dataset_id
 
         result = self._upload_from_schema('good_eats_aux.schema.json')
@@ -209,3 +219,20 @@ class TestDatasetsFromSchema(TestAbstractDatasets):
         result = results[0]
         self.assertTrue('code' in result.keys())
         self.assertFalse(result['code'] is None)
+
+    def test_schema_with_boolean_column(self):
+        mock_csv_file = self._file_mock('wp_data.csv', add_prefix=True)
+        mock_schema_file = self._file_mock(
+            'wp_data.schema.json', add_prefix=True)
+        result = json.loads(self.controller.create(csv_file=mock_csv_file,
+                                                   schema=mock_schema_file))
+
+        self.assertTrue(isinstance(result, dict))
+        self.assertTrue(Dataset.ID in result)
+
+        dataset = Dataset.find_one(result[Dataset.ID])
+        mock_schema_file.file.seek(0)
+
+        for column, schema in json.loads(mock_schema_file.file.read()).items():
+            self.assertEqual(schema[SIMPLETYPE],
+                    dataset.schema[column][SIMPLETYPE])
