@@ -218,6 +218,8 @@ column.
 By ID with distinct
 ^^^^^^^^^^^^^^^^^^^
 
+To retrieve only the unique values in a column, pass the `distinct` parameter:
+
 .. code-block:: sh
 
     curl -g http://bamboo.io/datasets/8a3d74711475d8a51c84484fe73f24bd151242ea?select='{"rating":1}&distinct=rating'
