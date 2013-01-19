@@ -3,6 +3,7 @@ import simplejson as json
 import os
 import tempfile
 
+from celery.exceptions import RetryTaskError
 from celery.task import task
 import pandas as pd
 
@@ -31,8 +32,11 @@ def import_dataset(dataset, dframe=None, file_reader=None):
 
         dataset.save_observations(dframe)
     except Exception as e:
-        dataset.failed()
-        dataset.delete(countdown=86400)
+        if isinstance(e, RetryTaskError):
+            raise e
+        else:
+            dataset.failed()
+            dataset.delete(countdown=86400)
 
 
 def _file_reader(name, delete=False):
