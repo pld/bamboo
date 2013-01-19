@@ -124,6 +124,31 @@ you can create a dataset from this scema using:
         "id": "8a3d74711475d8a51c84484fe73f24bd151242ea"
     }
 
+Create a Dataset with data from a Schema
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+To create a dataset from a schema and upload a CSV file for it, use the
+following command:
+
+.. code-block:: sh
+
+    curl -X POST -F schema=@/home/modilabs/good_eats.schema.json csv_file=@/home/modilabs/good_eats.csv http://bamboo.io/datasets
+
+And similarly for a JSON file:
+
+.. code-block:: sh
+
+    curl -X POST -F schema=@/home/modilabs/good_eats.schema.json json_file=@/home/modilabs/good_eats.json http://bamboo.io/datasets
+
+**returns:**
+
+.. code-block:: javascript
+
+    {
+        "id": "8a3d74711475d8a51c84484fe73f24bd151242ea"
+    }
+
+
 Creating Multiple Calculations via JSON
 ---------------------------------------
 
@@ -180,3 +205,64 @@ that will be deleted after one day:
     {
         "id": "8a3d74711475d8a51c84484fe73f24bd151242ea"
     }
+
+Additional dataset query parameters
+---------------------------
+
+Dataset queries may take the following optional parameters:
+
+* *select*: This is a required argument, it can be 'all' or a
+    MongoDB JSON query
+* *distinct*: A field to return distinct results for.
+* *query*: If passed restrict results to rows matching this query.
+* *limit*: If passed limit the rows to this number.
+* *order_by*: If passed order the result using this column.
+* *format*: Format of output data, 'json' or 'csv'
+* *callback*: A JSONP callback function to wrap the result in.
+
+Export data using the format parameter
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+You may use the `format` parameter as an alternative to file extension
+notation.
+
+To export the data as CSV:
+
+.. code-block:: sh
+
+    curl http://bamboo.io/datasets/8a3d74711475d8a51c84484fe73f24bd151242ea&format=CSV
+
+To export the data as JSON:
+
+.. code-block:: sh
+
+    curl http://bamboo.io/datasets/8a3d74711475d8a51c84484fe73f24bd151242ea&format=JSON
+
+Ordering the results of a query
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The `order_by` parameter sorts the resulting rows according to a column value
+and a sign indicating to order ascending (default) or descending
+(the `-` sign).
+
+For example:
+
+.. code-block:: sh
+
+    curl http://bamboo.io/datasets/8a3d74711475d8a51c84484fe73f24bd151242ea&order_by=amount
+    curl http://bamboo.io/datasets/8a3d74711475d8a51c84484fe73f24bd151242ea&order_by=-amount
+
+Using a JSONP callback
+^^^^^^^^^^^^^^^^^^^^^^
+
+If you would like to retrieve your dataset from bamboo.io and process the
+result using JavaScript, you can define a JavaScript callback to do so.
+
+Suppose you have defined the JavaScript callback function
+`handleBambooDataset(json)` to process the JSON dataset.
+
+You can pass this to bamboo using the `json` parameter as follows:
+
+.. code-block:: sh
+
+    curl http://bamboo.io/datasets/8a3d74711475d8a51c84484fe73f24bd151242ea&jsonp=handleBambooDataset
