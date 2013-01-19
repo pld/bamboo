@@ -235,4 +235,4 @@ class TestDatasetsFromSchema(TestAbstractDatasets):
 
         for column, schema in json.loads(mock_schema_file.file.read()).items():
             self.assertEqual(schema[SIMPLETYPE],
-                    dataset.schema[column][SIMPLETYPE])
+                             dataset.schema[column][SIMPLETYPE])

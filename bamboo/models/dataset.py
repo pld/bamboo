@@ -409,7 +409,7 @@ class Dataset(AbstractModel):
 
     def save_observations(self, dframe):
         """Save rows in `dframe` for this dataset."""
-        Observation().save(dframe, self)
+        Observation.save(dframe, self)
         return self.dframe()
 
     def replace_observations(self, dframe, overwrite=False,

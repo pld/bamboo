@@ -23,7 +23,8 @@ class Observation(AbstractModel):
         query.update({
             DATASET_OBSERVATION_ID: dataset.dataset_observation_id
         })
-        cls.collection.remove(query, safe=True)
+
+        super(cls, Observation()).delete(query)
 
     @classmethod
     def find(cls, dataset, query=None, select=None, limit=0, order_by=None,
@@ -62,6 +63,7 @@ class Observation(AbstractModel):
             query, select, as_dict=True, limit=limit, order_by=order_by,
             as_cursor=as_cursor)
 
+    @classmethod
     def save(self, dframe, dataset):
         """Save data in `dframe` with the `dataset`.
 
