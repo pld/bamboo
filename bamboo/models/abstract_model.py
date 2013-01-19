@@ -84,7 +84,7 @@ class AbstractModel(object):
         return cls.__collection__
 
     @classmethod
-    def find(cls, query, select=None, distinct=None, as_dict=False,
+    def find(cls, query, select=None, as_dict=False,
              limit=0, order_by=None, as_cursor=False):
         """An interface to MongoDB's find functionality.
 
