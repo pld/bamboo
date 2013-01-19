@@ -293,6 +293,7 @@ class Dataset(AbstractModel):
             select.update(dict(zip(groups, [1] * len(groups))))
             select = json.dumps(select)
 
+        self.reload()
         dframe = self.dframe(query=query, select=select,
                              limit=limit, order_by=order_by)
 
