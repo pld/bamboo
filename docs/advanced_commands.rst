@@ -270,6 +270,15 @@ You can pass this to bamboo using the `json` parameter as follows:
 Updating Dataset Metadata
 -------------------------
 
+The following metadata fields can be added to a dataset:
+
+* *attribution*: attribution and original of this dataset.
+* *description*: a text description of the dataset.
+* *label*: a label or name for this dataset.
+* *license*: the license this dataset is under.
+
+The fieldname is in bold with suggested uses to the right.
+
 To set the metadata on a dataset, make a `PUT` request to `info`, this will
 also return the update dataset info.
 
