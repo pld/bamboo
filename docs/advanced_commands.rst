@@ -266,3 +266,59 @@ You can pass this to bamboo using the `json` parameter as follows:
 .. code-block:: sh
 
     curl http://bamboo.io/datasets/8a3d74711475d8a51c84484fe73f24bd151242ea&jsonp=handleBambooDataset
+
+Updating Dataset Metadata
+-------------------------
+
+The following metadata fields can be added to a dataset:
+
+* *attribution*: attribution and original of this dataset.
+* *description*: a text description of the dataset.
+* *label*: a label or name for this dataset.
+* *license*: the license this dataset is under.
+
+The fieldname is in bold with suggested uses to the right.
+
+To set the metadata on a dataset, make a `PUT` request to `info`, this will
+also return the update dataset info.
+
+.. code-block:: sh
+
+    curl -X PUT -d "description=Good%20eats%20description&license=public&attribution=mlberg&label=goodeats" http://bamboo.io/datasets/8a3d74711475d8a51c84484fe73f24bd151242ea/info
+
+**returns:**
+
+.. code-block:: javascript
+
+    {
+        "attribution": "mlberg",
+        "description": "Good eats description",
+        "id": "8a3d74711475d8a51c84484fe73f24bd151242ea",
+        "label": "goodeats",
+        "license": "public",
+        "schema": {
+            "amount": {
+                "label": "Amount",
+                "olap_type": "measure",
+                "simpletype": "float"
+            },
+            "rating": {
+                "label": "Rating",
+                "olap_type": "dimension",
+                "simpletype": "string",
+                "cardinality": 2
+            },
+            "food_type": {
+                "label": "Food Type",
+                "olap_type": "dimension",
+                "simpletype": "string",
+                "cardinality": 8
+            },
+            ...
+        },
+        "created_at": "2012-6-18 14:43:32",
+        "updated_at": "2012-6-18 14:43:32",
+        "num_rows": "500",
+        "num_columns": "30",
+        "state": "ready"
+    }

@@ -574,3 +574,21 @@ class TestDatasets(TestAbstractDatasets):
         result = json.loads(self.controller.show(dataset_id))
         self.assertTrue(isinstance(result, dict))
         self.assertTrue(Datasets.ERROR in result)
+
+    def test_set_info(self):
+        dataset_id = self._post_file('multiple_date_formats.csv')
+        kwargs = {
+            'attribution': '1',
+            'description': '2',
+            'label': '3',
+            'license': '4',
+        }
+        results = json.loads(self.controller.set_info(dataset_id, **kwargs))
+
+        self.assertEqual(results[Dataset.ID], dataset_id)
+
+        dataset = Dataset.find_one(dataset_id)
+
+        for key, value in dataset.info().items():
+            if kwargs.get(key):
+                self.assertEqual(value, kwargs[key])

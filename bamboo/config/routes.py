@@ -27,6 +27,8 @@ ROUTES = [
         '/datasets/:dataset_id', 'datasets', 'show'),
     ('datasets_info', 'GET',
         '/datasets/:dataset_id/info', 'datasets', 'info'),
+    ('datasets_set_info', 'PUT',
+        '/datasets/:dataset_id/info', 'datasets', 'set_info'),
     ('datasets_summary', 'GET',
         '/datasets/:dataset_id/summary', 'datasets', 'summary'),
     ('datasets_aggregations', 'GET',
