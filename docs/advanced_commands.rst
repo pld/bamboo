@@ -124,6 +124,31 @@ you can create a dataset from this scema using:
         "id": "8a3d74711475d8a51c84484fe73f24bd151242ea"
     }
 
+Create a Dataset with data from a Schema
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+To create a dataset from a schema and upload a CSV file for it, use the
+following command:
+
+.. code-block:: sh
+
+    curl -X POST -F schema=@/home/modilabs/good_eats.schema.json csv_file=@/home/modilabs/good_eats.csv http://bamboo.io/datasets
+
+And similarly for a JSON file:
+
+.. code-block:: sh
+
+    curl -X POST -F schema=@/home/modilabs/good_eats.schema.json json_file=@/home/modilabs/good_eats.json http://bamboo.io/datasets
+
+**returns:**
+
+.. code-block:: javascript
+
+    {
+        "id": "8a3d74711475d8a51c84484fe73f24bd151242ea"
+    }
+
+
 Creating Multiple Calculations via JSON
 ---------------------------------------
 
