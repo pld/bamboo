@@ -48,7 +48,7 @@ def _merge_datasets_task(new_dataset, datasets):
     :param dataset_ids: A list of IDs to merge into `new_dataset`.
     """
     # check that all datasets are in a 'ready' state
-    if any([not dataset.is_ready for dataset in datasets]):
+    if any([not dataset.is_ready and dataset.record for dataset in datasets]):
         [dataset.reload() for dataset in datasets]
         raise _merge_datasets_task.retry()
 
