@@ -47,7 +47,7 @@ class TestBase(unittest.TestCase):
         Database.db(TEST_DATABASE_NAME)
 
     def _drop_database(self):
-        Database.connection().drop_database(TEST_DATABASE_NAME)
+        Database.client().drop_database(TEST_DATABASE_NAME)
 
     def _local_fixture_prefix(self, filename=''):
         return 'file://localhost%s/tests/fixtures/%s' % (os.getcwd(), filename)
@@ -88,4 +88,5 @@ class TestBase(unittest.TestCase):
     def _create_dataset_from_url(self, url):
         dataset = Dataset()
         dataset.save()
-        return import_data_from_url(dataset, url, allow_local_file=True).dataset_id
+        return import_data_from_url(
+            dataset, url, allow_local_file=True).dataset_id

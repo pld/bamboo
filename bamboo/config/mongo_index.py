@@ -1,10 +1,11 @@
-from pymongo import Connection, ASCENDING
+from pymongo import ASCENDING
+
+from config.database import Database
 
 
 def ensure_indexing():
     """Ensure that bamboo models are indexed."""
-    connection = Connection('localhost', 27017)
-    db = connection.bamboo_dev
+    db = Database.db()
     calculations = db.calculations
     datasets = db.datasets
     observations = db.observations

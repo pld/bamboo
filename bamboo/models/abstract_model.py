@@ -43,6 +43,15 @@ class AbstractModel(object):
     def is_ready(self):
         return self.state == self.STATE_READY
 
+    @property
+    def clean_record(self):
+        """Remove reserved keys from records."""
+        _dict = {
+            key: value for (key, value) in self.record.items() if not key in
+            BAMBOO_RESERVED_KEYS
+        }
+        return remove_mongo_reserved_keys(_dict)
+
     @classmethod
     def set_collection(cls, collection_name):
         """Return a MongoDB collection for the passed name.
@@ -64,14 +73,6 @@ class AbstractModel(object):
             doc.update({self.ERROR_MESSAGE: message})
 
         self.update(doc)
-
-    def pending(self):
-        """Perist the state of the current instance to `STATE_PENDING`"""
-        self.update({self.STATE: self.STATE_PENDING})
-
-    def ready(self):
-        """Perist the state of the current instance to `STATE_READY`"""
-        self.update({self.STATE: self.STATE_READY})
 
     @classproperty
     @classmethod
@@ -138,14 +139,35 @@ class AbstractModel(object):
     def __nonzero__(self):
         return self.record is not None
 
-    @property
-    def clean_record(self):
-        """Remove reserved keys from records."""
-        _dict = {
-            key: value for (key, value) in self.record.items() if not key in
-            BAMBOO_RESERVED_KEYS
-        }
-        return remove_mongo_reserved_keys(_dict)
+    @classmethod
+    def batch_save(cls, dframe):
+        """Save records in batches to avoid document size maximum setting.
+
+        :param dframe: A DataFrame to save in the current model.
+        """
+        def command(records):
+            cls.collection.insert(records)
+
+        cls._batch_command(command, dframe)
+
+    @classmethod
+    def _batch_command(cls, command, dframe):
+        batches = int(ceil(float(len(dframe)) / DB_SAVE_BATCH_SIZE))
+
+        for batch in xrange(0, batches):
+            start = batch * DB_SAVE_BATCH_SIZE
+            end = (batch + 1) * DB_SAVE_BATCH_SIZE
+            records = [
+                row.to_dict() for (_, row) in dframe[start:end].iterrows()]
+            command(records)
+
+    def pending(self):
+        """Perist the state of the current instance to `STATE_PENDING`"""
+        self.update({self.STATE: self.STATE_PENDING})
+
+    def ready(self):
+        """Perist the state of the current instance to `STATE_READY`"""
+        self.update({self.STATE: self.STATE_READY})
 
     def create(self):
         model = self.__class__()
@@ -157,7 +179,7 @@ class AbstractModel(object):
 
         :param query: The query for rows to delete.
         """
-        self.collection.remove(query, safe=True)
+        self.collection.remove(query)
 
     def save(self, record):
         """Save `record` in this model's collection.
@@ -169,7 +191,7 @@ class AbstractModel(object):
 
         :returns: The record passed in.
         """
-        self.collection.insert(record, safe=True)
+        self.collection.insert(record)
         self.record = record
         return record
 
@@ -183,20 +205,10 @@ class AbstractModel(object):
         """
         record = dict_for_mongo(record)
         id_dict = {'_id': self.record['_id']}
-        self.collection.update(id_dict, {'$set': record}, safe=True)
+        self.collection.update(id_dict, {'$set': record})
 
         # Set record to the latest record from the database
         self.record = self.__class__.collection.find_one(id_dict)
-
-    def batch_save(self, dframe):
-        """Save records in batches to avoid document size maximum setting.
-
-        :param dframe: A DataFrame to save in the current model.
-        """
-        def command(records):
-            self.collection.insert(records, safe=True)
-
-        self._batch_command(command, dframe)
 
     def split_groups(self, group_str):
         """Split a string based on the group delimiter"""
@@ -204,13 +216,3 @@ class AbstractModel(object):
 
     def join_groups(self, groups):
         return self.GROUP_DELIMITER.join(groups)
-
-    def _batch_command(self, command, dframe):
-        batches = int(ceil(float(len(dframe)) / DB_SAVE_BATCH_SIZE))
-
-        for batch in xrange(0, batches):
-            start = batch * DB_SAVE_BATCH_SIZE
-            end = (batch + 1) * DB_SAVE_BATCH_SIZE
-            records = [
-                row.to_dict() for (_, row) in dframe[start:end].iterrows()]
-            command(records)
