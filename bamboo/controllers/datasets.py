@@ -63,6 +63,22 @@ class Datasets(AbstractController):
 
         return self._safe_get_and_call(dataset_id, _action, callback=callback)
 
+    def set_info(self, dataset_id, **kwargs):
+        """Set the metadata for a dataset.
+
+        :param dataset_id: ID of the dataset to update.
+        :param attribution: Text to set the attribution to.
+        :param description: Text to set the description to.
+        :param label: Text to set the label to.
+        :param license: Text to set the license to.
+
+        :returns: Success or error.
+        """
+        def _action(dataset):
+            return dataset.info(kwargs)
+
+        return self._safe_get_and_call(dataset_id, _action)
+
     def summary(self, dataset_id, query=None, select=None,
                 group=None, limit=0, order_by=None, callback=False):
         """Return a summary of the dataset ID given the passed parameters.
