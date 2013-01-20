@@ -617,8 +617,9 @@ class TestDatasets(TestAbstractDatasets):
             'gps_longitude',
         ] + [date_column]
 
-        for key in results[0].keys():
-            self.assertTrue(key in permitted_keys)
+        for result in results:
+            for key in result.keys():
+                self.assertTrue(key in permitted_keys)
 
     def test_resample_interval_correct(self):
         date_column, results = self._build_resample_result()
