@@ -1,6 +1,6 @@
 from pymongo import ASCENDING
 
-from config.database import Database
+from bamboo.config.db import Database
 
 
 def ensure_indexing():
