@@ -592,3 +592,43 @@ class TestDatasets(TestAbstractDatasets):
         for key, value in dataset.info().items():
             if kwargs.get(key):
                 self.assertEqual(value, kwargs[key])
+
+    def _build_resample_result(self):
+        date_column = 'submit_date'
+        dataset_id = self._post_file('good_eats.csv')
+        interval = 'W'
+        results = json.loads(self.controller.resample(
+            dataset_id, date_column, interval))
+
+        self.assertTrue(isinstance(results, list))
+
+        return [date_column, results]
+
+    def test_resample_only_shows_numeric(self):
+        date_column, results = self._build_resample_result()
+
+        permitted_keys = [
+            '_id',
+            '_percentage_complete',
+            'gps_alt',
+            'gps_precision',
+            'amount',
+            'gps_latitude',
+            'gps_longitude',
+        ] + [date_column]
+
+        for key in results[0].keys():
+            self.assertTrue(key in permitted_keys)
+
+    def test_resample_interval_correct(self):
+        date_column, results = self._build_resample_result()
+
+        last_date_time = None
+
+        for _dict in results:
+            new_date_time = _dict[date_column]['$date']
+
+            if last_date_time:
+                self.assertEqual(604800000, new_date_time - last_date_time)
+
+            last_date_time = new_date_time

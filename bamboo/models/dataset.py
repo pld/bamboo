@@ -533,3 +533,8 @@ class Dataset(AbstractModel):
         self.collection.update(
             {'_id': self.record['_id']},
             {'$pull': {self.PENDING_UPDATES: update_id}})
+
+    def resample(self, date_column, interval, how):
+        dframe = self.dframe().set_index(date_column)
+        resampled = BambooFrame(dframe.resample(interval, how=how))
+        return BambooFrame(resampled.reset_index())
