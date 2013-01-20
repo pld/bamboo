@@ -594,8 +594,8 @@ class TestDatasets(TestAbstractDatasets):
                 self.assertEqual(value, kwargs[key])
 
     def _build_resample_result(self):
-        date_column = 'submit_date'
         dataset_id = self._post_file('good_eats.csv')
+        date_column = 'submit_date'
         interval = 'W'
         results = json.loads(self.controller.resample(
             dataset_id, date_column, interval))
@@ -633,3 +633,25 @@ class TestDatasets(TestAbstractDatasets):
                 self.assertEqual(604800000, new_date_time - last_date_time)
 
             last_date_time = new_date_time
+
+    def test_resample_non_date_column(self):
+        dataset_id = self._post_file('good_eats.csv')
+        result = json.loads(self.controller.resample(
+            dataset_id, 'amount', 'W'))
+
+        self.assertTrue(isinstance(result, dict))
+        self.assertTrue(Datasets.ERROR in result)
+        self.assertTrue('DatetimeIndex' in result[Datasets.ERROR])
+
+    def test_resample_bad_interval(self):
+        dataset_id = self._post_file('good_eats.csv')
+        interval = 'BAD'
+        result = json.loads(self.controller.resample(
+            dataset_id, 'submit_date', interval))
+
+        self.assertTrue(isinstance(result, dict))
+        self.assertTrue(Datasets.ERROR in result)
+        self.assertEqual('Could not evaluate %s' % interval, result[Datasets.ERROR])
+
+    def test_rolling_mean(self):
+        pass

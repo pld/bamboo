@@ -341,6 +341,7 @@ class Datasets(AbstractController):
             return self._dataframe_as_content_type(content_type, dframe)
 
         return self._safe_get_and_call(dataset_id, action,
+                                       exceptions=(TypeError,),
                                        content_type=content_type)
 
     def _dataframe_as_content_type(self, content_type, dframe):
