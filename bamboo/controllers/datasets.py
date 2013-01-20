@@ -161,6 +161,7 @@ class Datasets(AbstractController):
             string of the rows matching the parameters.
         """
         limit = parse_int(limit, 0)
+        content_type = self._content_type_for_format(format)
 
         def action(dataset):
             dframe = dataset.dframe(
@@ -170,7 +171,7 @@ class Datasets(AbstractController):
             if distinct:
                 return sorted(dframe[0].tolist())
 
-            return self._dataframe_as_format(format, dframe)
+            return self._dataframe_as_content_type(content_type, dframe)
 
         return self._safe_get_and_call(
             dataset_id, action, callback=callback, content_type=content_type)
@@ -333,16 +334,20 @@ class Datasets(AbstractController):
     def resample(self, dataset_id, date_column, interval, how='mean',
                  format=None):
         """Resample a dataset."""
+        content_type = self._content_type_for_format(format)
+
         def action(dataset):
             dframe = dataset.resample(date_column, interval, how)
-            return self._dataframe_as_format(format, dframe)
+            return self._dataframe_as_content_type(content_type, dframe)
 
-        return self._safe_get_and_call(dataset_id, action)
+        return self._safe_get_and_call(dataset_id, action,
+                                       content_type=content_type)
 
-    def _dataframe_as_format(self, format, dframe):
-        content_type = self.CSV if format == self.CSV else self.JSON
-
+    def _dataframe_as_content_type(self, content_type, dframe):
         if content_type == self.CSV:
             return dframe.to_csv_as_string()
         else:
             return dframe.to_jsondict()
+
+    def _content_type_for_format(self, format):
+        return self.CSV if format == self.CSV else self.JSON
