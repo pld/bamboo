@@ -5,7 +5,7 @@ from time import gmtime, strftime
 
 from celery.task import task
 from celery.contrib.methods import task as class_task
-from pandas import concat, Series
+from pandas import concat, rolling_window, Series
 
 from bamboo.config.settings import DB_READ_BATCH_SIZE
 from bamboo.core.calculator import Calculator
@@ -533,3 +533,12 @@ class Dataset(AbstractModel):
         self.collection.update(
             {'_id': self.record['_id']},
             {'$pull': {self.PENDING_UPDATES: update_id}})
+
+    def resample(self, date_column, interval, how):
+        dframe = self.dframe().set_index(date_column)
+        resampled = dframe.resample(interval, how=how)
+        return BambooFrame(resampled.reset_index())
+
+    def rolling(self, win_type, window):
+        dframe = self.dframe()[self.schema.numeric_slugs]
+        return BambooFrame(rolling_window(dframe, window, win_type))

@@ -14,7 +14,7 @@ class TestObservation(TestBase):
 
     def _save_records(self):
         Observation.save(self.get_data('good_eats.csv'),
-                           self.dataset)
+                         self.dataset)
         records = Observation.find(self.dataset)
         self.assertTrue(isinstance(records, list))
         self.assertTrue(isinstance(records[0], dict))
@@ -31,7 +31,7 @@ class TestObservation(TestBase):
 
     def test_save_over_bulk(self):
         Observation.save(self.get_data('good_eats_large.csv'),
-                           self.dataset)
+                         self.dataset)
         records = Observation.find(self.dataset)
         self.assertEqual(len(records), 1001)
 

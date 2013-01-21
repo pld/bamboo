@@ -35,7 +35,7 @@ class Calculations(AbstractController):
         :returns: JSON with success if delete or an error string if the
             calculation could not be found.
         """
-        def _action(dataset):
+        def action(dataset):
             calculation = Calculation.find_one(dataset.dataset_id, name, group)
             if calculation:
                 calculation.delete(dataset)
@@ -44,7 +44,7 @@ class Calculations(AbstractController):
                 return {self.SUCCESS: message}
 
         return self._safe_get_and_call(
-            dataset_id, _action, exceptions=(DependencyError,),
+            dataset_id, action, exceptions=(DependencyError,),
             error = 'name and dataset_id combination not found')
 
     def create(self, dataset_id, formula=None, name=None, json_file=None,
@@ -68,7 +68,7 @@ class Calculations(AbstractController):
             string if the dataset could not be found, the formula could not be
             parsed, or the group was invalid.
         """
-        def _action(dataset):
+        def action(dataset):
             if json_file:
                 calculations = json.loads(json_file.file.read())
                 Calculation.create_from_list_or_dict(dataset, calculations)
@@ -84,7 +84,7 @@ class Calculations(AbstractController):
 
             return {self.SUCCESS: success_message}
 
-        return self._safe_get_and_call(dataset_id, _action,
+        return self._safe_get_and_call(dataset_id, action,
                                        exceptions=(ParseError,),
                                        success_status_code=201)
 
@@ -98,8 +98,8 @@ class Calculations(AbstractController):
             shows the calculations name, formula, group (if it exists), and
             state.
         """
-        def _action(dataset):
+        def action(dataset):
             result = Calculation.find(dataset)
             return [x.clean_record for x in result]
 
-        return self._safe_get_and_call(dataset_id, _action, callback=callback)
+        return self._safe_get_and_call(dataset_id, action, callback=callback)
