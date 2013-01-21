@@ -175,7 +175,9 @@ you can create a dataset from this json file using:
         "success": "created calculations from JSON for dataset: 8a3d74711475d8a51c84484fe73f24bd151242ea"
     }
 
-Note that the file can also contain a single dictionary, for example:
+.. note::
+
+    The file can also contain a single dictionary, for example:
 
 .. code-block:: javascript
 
@@ -323,8 +325,12 @@ also return the update dataset info.
         "state": "ready"
     }
 
+
+Timeseries operations on a dataset
+----------------------------------
+
 Resampling a dataset
---------------------
+^^^^^^^^^^^^^^^^^^^^
 
 If your dataset contains any date columns, you can resample numeric columns in
 your data based on any of these date columns.
@@ -401,3 +407,63 @@ following command:
             'gps_longitude': 1.530683878799998
         }
     ]
+
+Calculating rolling statistics
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+To compute *moving* or *rolling* statistics / moments you can use the
+``rolling`` request.
+
+Any options that can be passed to the pandas ``rolling_window`` function
+(`pandas docs <http://pandas.pydata.org/pandas-docs/dev/computation.html#moving-rolling-statistics-moments`_)
+can be passed as parameters to bamboo.
+
+Window types are passed as the ``win_type`` parameter. See
+`here <https://en.wikipedia.org/wiki/Window_function#Window_examples`_ for
+window type definitions and examples.
+
+For example, to calculating a rolling mean with a window of 3 values, use the
+following command:
+
+.. code-block:: sh
+
+    curl -X PUT -d "win_type=boxcar&window=3" http://bamboo.io/datasets/8a3d74711475d8a51c84484fe73f24bd151242ea/resample
+
+**returns:**
+
+.. code-block:: javascript
+
+    [
+        {
+            'gps_longitude': 'null',
+            '_percentage_complete': 'null',
+            'gps_latitude': 'null',
+            'amount': 'null',
+            'gps_alt': 'null',
+            '_id': 'null',
+            'gps_precision': 'null'
+        }, 
+        {
+            'gps_longitude': 'null',
+            '_percentage_complete': 'null',
+            'gps_latitude': 'null',
+            'amount': 'null',
+            'gps_alt': 'null',
+            '_id': 'null',
+            'gps_precision': 'null'
+        }, 
+        {
+            'gps_longitude': 28.97413979283333,
+            '_percentage_complete': 'null',
+            'gps_latitude': 41.018141275299996,
+            'amount': 4.583333333333333,
+            'gps_alt': 45.60001627606666,
+            '_id': 'null', 'gps_precision': 41.666666666666664
+        },
+        ...
+    ]
+
+.. note::
+    
+    The first ``window - 1`` rows will be null, because not enough
+    data will have been seen to calculate rolling statistics for those rows.

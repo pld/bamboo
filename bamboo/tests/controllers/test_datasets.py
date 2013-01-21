@@ -626,8 +626,8 @@ class TestDatasets(TestAbstractDatasets):
 
         last_date_time = None
 
-        for _dict in results:
-            new_date_time = _dict[date_column]['$date']
+        for row in results:
+            new_date_time = row[date_column]['$date']
 
             if last_date_time:
                 self.assertEqual(604800000, new_date_time - last_date_time)
@@ -651,7 +651,29 @@ class TestDatasets(TestAbstractDatasets):
 
         self.assertTrue(isinstance(result, dict))
         self.assertTrue(Datasets.ERROR in result)
-        self.assertEqual('Could not evaluate %s' % interval, result[Datasets.ERROR])
+        self.assertEqual(
+            'Could not evaluate %s' % interval, result[Datasets.ERROR])
 
     def test_rolling_mean(self):
-        pass
+        dataset_id = self._post_file('good_eats.csv')
+        window = 3
+        results = json.loads(self.controller.rolling(
+            dataset_id, window))
+
+        for i, row in enumerate(results):
+            if i < window - 1:
+                for value in row.values():
+                    self.assertEqual('null', value)
+            else:
+                self.assertTrue(isinstance(row['amount'], float))
+
+        print results
+
+    def test_rolling_bad_type(self):
+        dataset_id = self._post_file('good_eats.csv')
+        results = json.loads(self.controller.rolling(
+            dataset_id, 3, win_type='BAD'))
+
+        self.assertTrue(isinstance(results, dict))
+        self.assertTrue(Datasets.ERROR in results)
+        self.assertEqual('Unknown window type.', results[Datasets.ERROR])

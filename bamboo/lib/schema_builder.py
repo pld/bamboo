@@ -48,6 +48,10 @@ SIMPLETYPE_TO_DTYPE = {
 RE_ENCODED_COLUMN = re.compile(r'\W')
 
 
+def is_simpletype(col_schema, simpletype):
+    return col_schema[SIMPLETYPE] == simpletype
+
+
 class Schema(dict):
     @classmethod
     def safe_init(cls, arg):
@@ -62,13 +66,18 @@ class Schema(dict):
             (column_name, column_attrs) in self.items()
         }
 
+    @property
+    def numeric_slugs(self):
+        return [slug for slug, col_schema in self.items()
+                if is_simpletype(col_schema, FLOAT)]
+
     def cardinality(self, column):
         if self.is_dimension(column):
             return self[column].get(CARDINALITY)
 
     def is_date_simpletype(self, column_schema):
         column_schema = self[column_schema]
-        return column_schema[SIMPLETYPE] == DATETIME
+        return is_simpletype(column_schema, DATETIME)
 
     def is_dimension(self, column):
         col_schema = self.get(column)

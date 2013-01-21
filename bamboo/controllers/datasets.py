@@ -344,6 +344,18 @@ class Datasets(AbstractController):
                                        exceptions=(TypeError,),
                                        content_type=content_type)
 
+    def rolling(self, dataset_id, window, win_type='boxcar',
+                format=None):
+        """Calculate the rolling window over a dataset."""
+        content_type = self._content_type_for_format(format)
+
+        def action(dataset):
+            dframe = dataset.rolling(win_type, window)
+            return self._dataframe_as_content_type(content_type, dframe)
+
+        return self._safe_get_and_call(dataset_id, action,
+                                       content_type=content_type)
+
     def _dataframe_as_content_type(self, content_type, dframe):
         if content_type == self.CSV:
             return dframe.to_csv_as_string()
