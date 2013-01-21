@@ -56,6 +56,10 @@ ROUTES = [
         '/calculations/:dataset_id', 'calculations', 'delete'),
     ('calculations_delete_alias', 'DELETE',
         '/datasets/:dataset_id/calculations', 'calculations', 'delete'),
+    ('datasets_resample', 'GET',
+        '/datasets/:dataset_id/resample', 'datasets', 'resample'),
+    ('datasets_rolling', 'GET',
+        '/datasets/:dataset_id/rolling', 'datasets', 'rolling'),
     # version
     ('version', 'GET',
         '/', 'version', 'index'),
