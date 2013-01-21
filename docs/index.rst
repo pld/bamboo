@@ -46,6 +46,8 @@ Installation
 
     $ pip install bamboo-data
 
+Python pip package for `bamboo <http://pypi.python.org/pypi/bamboo-data/0.5.4.1>`_.
+
 Usage
 ^^^^^
 
