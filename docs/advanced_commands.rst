@@ -427,7 +427,7 @@ following command:
 
 .. code-block:: sh
 
-    curl -X PUT -d "win_type=boxcar&window=3" http://bamboo.io/datasets/8a3d74711475d8a51c84484fe73f24bd151242ea/resample
+    curl -X PUT -d "win_type=boxcar&window=3" http://bamboo.io/datasets/8a3d74711475d8a51c84484fe73f24bd151242ea/rolling
 
 **returns:**
 
