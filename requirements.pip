@@ -1,7 +1,7 @@
 # celery requires python-dateutil>=1.5,<2.0
 python-dateutil==1.5
 
-pandas==0.10.0
+pandas==0.10.1
 
 # for celery
 kombu==2.5.4
