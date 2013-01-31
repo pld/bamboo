@@ -81,6 +81,12 @@ Running the server in the foreground
 
 start mongodb on localhost and standard port
 
+start a celery worker
+
+.. code-block:: sh
+
+    $ celery worker --config=bamboo.config.celeryconfig
+
 .. code-block:: sh
 
     $ python ./scripts/run_server.py
