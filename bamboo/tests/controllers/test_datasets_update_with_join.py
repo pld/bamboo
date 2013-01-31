@@ -129,8 +129,7 @@ class TestDatasetsUpdateWithJoin(TestAbstractDatasetsUpdate):
         )
         self._put_row_updates(
             self.right_dataset_id,
-            file_name='updates_with_join/update_right/update.js'
-            'on'
+            file_name='updates_with_join/update_right/update.json'
         )
 
         self._verify_update_right()
@@ -143,8 +142,7 @@ class TestDatasetsUpdateWithJoin(TestAbstractDatasetsUpdate):
         )
         self._put_row_updates(
             self.right_dataset_id,
-            file_name='updates_with_join/update_right/update.js'
-            'on'
+            file_name='updates_with_join/update_right/update.json'
         )
 
         while True:
