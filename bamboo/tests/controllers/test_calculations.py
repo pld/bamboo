@@ -317,9 +317,9 @@ class TestCalculations(TestBase):
         self.assertTrue(self.controller.SUCCESS in response)
         self.assertTrue(self.dataset_id in response[self.controller.SUCCESS])
 
-    def test_create_dataset_with_duplicate_column_names(self):
+    def test_create_with_duplicate_names(self):
         formula_names_to_valid = {
-            'water_not_functioning_none': False,  # an already slugged column
+            'water_not_functioning_none': True,  # an already slugged column
             'water_not_functioning/none': False,  # a non-slug column
             'region': False,                # an existing column
             'date': False,                  # a reserved key and an existing column
@@ -387,6 +387,49 @@ class TestCalculations(TestBase):
             dataset = Dataset.find_one(dataset_id)
             dframe_after_update = dataset.dframe()
             self.assertEqual(len(dframe_after) + 1, len(dframe_after_update))
+
+    def test_cannot_create_aggregations_with_duplicate_names(self):
+        dataset_id = self._post_file('water_points.csv')
+
+        formula_name = 'name'
+
+        response = json.loads(self.controller.create(
+            dataset_id,
+            'newest(date_, water_functioning)',
+            formula_name))
+
+        self.assertTrue(self.controller.SUCCESS in response)
+
+        # another with the same name
+        response = json.loads(self.controller.create(
+            dataset_id,
+            'newest(date_, water_functioning)',
+            formula_name))
+
+        self.assertTrue(self.controller.ERROR in response)
+        self.assertTrue(formula_name in response[self.controller.ERROR])
+
+    def test_can_create_aggregations_with_duplicate_as_slug_names(self):
+        dataset_id = self._post_file('water_points.csv')
+
+        formula_name = 'name*'
+
+        response = json.loads(self.controller.create(
+            dataset_id,
+            'newest(date_, water_functioning)',
+            formula_name))
+
+        self.assertTrue(self.controller.SUCCESS in response)
+
+        # another with the same name
+        response = json.loads(self.controller.create(
+            dataset_id,
+            'newest(date_, water_functioning)',
+            'name_'))
+
+        self.assertTrue(self.controller.SUCCESS in response)
+
+
 
     def test_newest(self):
         expected_dataset = {

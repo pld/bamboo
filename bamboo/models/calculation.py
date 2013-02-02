@@ -10,8 +10,15 @@ from bamboo.lib.schema_builder import make_unique
 from bamboo.models.abstract_model import AbstractModel
 
 
-class CalculationError(Exception):
-    pass
+class UniqueCalculationError(Exception):
+
+    def __init__(self, name, current_names):
+        current_names_str = '", "'.join(current_names)
+        message = ('The calculation name "%s" is not unique for this dataset.'
+                   ' Please choose a name that does not exists.  The current '
+                   'names are: "%s"' % (name, current_names_str))
+
+        Exception.__init__(self, message)
 
 
 class DependencyError(Exception):
@@ -208,16 +215,16 @@ class Calculation(AbstractModel):
             # set group if aggregation and group unset
             if not group_str:
                 group_str = ''
-        else:
-            # check that the name is unique
-            current_names = dataset.labels + dataset.schema.keys()
 
-            if name in current_names:
-                current_names_str = '", "'.join(current_names)
-                raise CalculationError(
-                    'The calculation name "%s" is not unique for this dataset.'
-                    ' Please choose a name that does not exists.  The current '
-                    'names are: "%s"' % (name, current_names_str))
+            # check that name is unique for aggregation
+            aggregated_dataset = dataset.aggregated_dataset(groups)
+
+            if aggregated_dataset:
+                name = self._check_name_and_make_unique(name,
+                                                       aggregated_dataset)
+
+        else:
+            name = self._check_name_and_make_unique(name, dataset)
 
         record = {
             DATASET_ID: dataset.dataset_id,
@@ -287,3 +294,18 @@ class Calculation(AbstractModel):
             if calc:
                 self.add_dependency(calc.name)
                 calc.add_dependent_calculation(self.name)
+
+    def _check_name_and_make_unique(self, name, dataset):
+        """Check that the name is valid and make unique if valid.
+
+        :param name: The name to make unique.
+        :param dataset: The dataset to make unique for.
+        :raises: `UniqueCalculationError` if not unique.
+        :returns: A unique name.
+        """
+        current_names = dataset.labels
+
+        if name in current_names:
+            raise UniqueCalculationError(name, current_names)
+
+        return make_unique(name, dataset.schema.keys())
