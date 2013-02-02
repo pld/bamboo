@@ -10,6 +10,10 @@ from bamboo.lib.schema_builder import make_unique
 from bamboo.models.abstract_model import AbstractModel
 
 
+class CalculationError(Exception):
+    pass
+
+
 class DependencyError(Exception):
     pass
 
@@ -205,8 +209,15 @@ class Calculation(AbstractModel):
             if not group_str:
                 group_str = ''
         else:
-            # ensure the name is unique
-            name = make_unique(name, dataset.labels + dataset.schema.keys())
+            # check that the name is unique
+            current_names = dataset.labels + dataset.schema.keys()
+
+            if name in current_names:
+                current_names_str = '", "'.join(current_names)
+                raise CalculationError(
+                    'The calculation name "%s" is not unique for this dataset.'
+                    ' Please choose a name that does not exists.  The current '
+                    'names are: "%s"' % (name, current_names_str))
 
         record = {
             DATASET_ID: dataset.dataset_id,

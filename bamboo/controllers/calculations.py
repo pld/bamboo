@@ -3,7 +3,8 @@ import simplejson as json
 from bamboo.controllers.abstract_controller import AbstractController
 from bamboo.core.parser import ParseError
 from bamboo.lib.exceptions import ArgumentError
-from bamboo.models.calculation import Calculation, DependencyError
+from bamboo.models.calculation import Calculation, CalculationError,\
+    DependencyError
 
 
 class Calculations(AbstractController):
@@ -84,9 +85,9 @@ class Calculations(AbstractController):
 
             return {self.SUCCESS: success_message}
 
-        return self._safe_get_and_call(dataset_id, action,
-                                       exceptions=(ParseError,),
-                                       success_status_code=201)
+        return self._safe_get_and_call(
+            dataset_id, action, exceptions=(CalculationError, ParseError,),
+            success_status_code=201)
 
     def show(self, dataset_id, callback=False):
         """Retrieve the calculations for `dataset_id`.
