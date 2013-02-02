@@ -667,8 +667,6 @@ class TestDatasets(TestAbstractDatasets):
             else:
                 self.assertTrue(isinstance(row['amount'], float))
 
-        print results
-
     def test_rolling_bad_type(self):
         dataset_id = self._post_file('good_eats.csv')
         results = json.loads(self.controller.rolling(
