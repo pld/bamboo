@@ -29,7 +29,7 @@ Libraries that connect to *bamboo*
 JavaScript
 ^^^^^^^^^^
 
-`bamboo.JS <http://modilabs.github.com/bamboo_js/>`_
+`bamboo.JS <http://modilabs.github.com/bamboo.js/>`_
 
 Python
 ^^^^^^
