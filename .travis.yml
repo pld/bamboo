@@ -4,7 +4,7 @@ python:
 virtualenv:
       system_site_packages: true
 before_install:
-  - sudo apt-get install python-numpy python-scipy gfortran libatlas-base-dev
+  - sudo apt-get install -qq python-numpy gfortran libatlas-base-dev
 install:
   - pip install -r requirements.pip --use-mirrors
   - pip install -r requirements-test.pip --use-mirrors
