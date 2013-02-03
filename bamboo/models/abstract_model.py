@@ -62,18 +62,6 @@ class AbstractModel(object):
         """
         return Database.db()[collection_name]
 
-    def failed(self, message=None):
-        """Perist the state of the current instance to `STATE_FAILED`.
-
-        :params message: A string store as the error message, default None.
-        """
-        doc = {self.STATE: self.STATE_FAILED}
-
-        if message:
-            doc.update({self.ERROR_MESSAGE: message})
-
-        self.update(doc)
-
     @classproperty
     @classmethod
     def collection(cls):
@@ -83,6 +71,11 @@ class AbstractModel(object):
                 cls.__collectionname__)
 
         return cls.__collection__
+
+    @classmethod
+    def create(cls, *args):
+        model = cls()
+        return model.save(*args)
 
     @classmethod
     def find(cls, query, select=None, as_dict=False,
@@ -132,13 +125,6 @@ class AbstractModel(object):
         """
         return cls(cls.collection.find_one(query, select))
 
-    def __init__(self, record=None):
-        """Instantiate with data in `record`."""
-        self.record = record
-
-    def __nonzero__(self):
-        return self.record is not None
-
     @classmethod
     def batch_save(cls, dframe):
         """Save records in batches to avoid document size maximum setting.
@@ -161,6 +147,25 @@ class AbstractModel(object):
                 row.to_dict() for (_, row) in dframe[start:end].iterrows()]
             command(records)
 
+    def __init__(self, record=None):
+        """Instantiate with data in `record`."""
+        self.record = record
+
+    def __nonzero__(self):
+        return self.record is not None
+
+    def failed(self, message=None):
+        """Perist the state of the current instance to `STATE_FAILED`.
+
+        :params message: A string store as the error message, default None.
+        """
+        doc = {self.STATE: self.STATE_FAILED}
+
+        if message:
+            doc.update({self.ERROR_MESSAGE: message})
+
+        self.update(doc)
+
     def pending(self):
         """Perist the state of the current instance to `STATE_PENDING`"""
         self.update({self.STATE: self.STATE_PENDING})
@@ -168,11 +173,6 @@ class AbstractModel(object):
     def ready(self):
         """Perist the state of the current instance to `STATE_READY`"""
         self.update({self.STATE: self.STATE_READY})
-
-    def create(self):
-        model = self.__class__()
-        model.save()
-        return model
 
     def delete(self, query):
         """Delete rows matching query.
@@ -193,7 +193,7 @@ class AbstractModel(object):
         """
         self.collection.insert(record)
         self.record = record
-        return record
+        return self
 
     def update(self, record):
         """Update the current instance with `record`.

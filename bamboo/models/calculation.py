@@ -25,7 +25,7 @@ class DependencyError(Exception):
     pass
 
 
-@task
+@task(ignore_result=True)
 def delete_task(calculation, dataset, slug):
     """Background task to delete `calculation` and columns in its dataset.
 
@@ -53,7 +53,8 @@ class CalculateTask(Task):
             calculation.failed(traceback.format_exc())
 
 
-@task(base=CalculateTask, default_retry_delay=5, max_retries=10)
+@task(base=CalculateTask, default_retry_delay=5, max_retries=10,
+      ignore_result=True)
 def calculate_task(calculation, dataset):
     """Background task to run a calculation.
 
@@ -242,8 +243,7 @@ class Calculation(AbstractModel):
 
     @classmethod
     def create(cls, dataset, formula, name, group=None):
-        calculation = cls()
-        return calculation.save(dataset, formula, name, group)
+        return super(cls, cls).create(dataset, formula, name, group)
 
     @classmethod
     def create_from_list_or_dict(cls, dataset, calculations):
