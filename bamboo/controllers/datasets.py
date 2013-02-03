@@ -326,7 +326,7 @@ class Datasets(AbstractController):
 
         :returns: Success and merged dataset ID or error message.
         """
-        def action(dataset, on=on):
+        def action(dataset):
             other_dataset = Dataset.find_one(other_dataset_id)
 
             if other_dataset.record:
