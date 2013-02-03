@@ -116,7 +116,7 @@ class Datasets(AbstractController):
             if select == self.SELECT_ALL_FOR_SUMMARY:
                 select = None
 
-            return dataset.summarize(dataset, query, select,
+            return dataset.summarize(query, select,
                                      group, limit=limit,
                                      order_by=order_by)
 
