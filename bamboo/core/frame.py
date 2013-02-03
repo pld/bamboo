@@ -96,19 +96,31 @@ class BambooFrame(DataFrame):
         return list(set(_list).intersection(set(self.columns.tolist())))
 
     def join_dataset(self, other, on):
-        """Left join an `other` dataset."""
+        """Left join an `other` dataset.
+
+        :param other: Other dataset to join.
+        :param on: Column or 2 comma seperated columns to join on.
+
+        :returns: Joined DataFrame.
+
+        :raises: `KeyError` if join columns not in datasets.
+        """
+        on_lhs, on_rhs = (on.split(',') * 2)[:2]
+
         right_dframe = other.dframe(padded=True)
 
-        if on not in self.columns:
-            raise KeyError('no item named %s in left hand side dataset' % on)
+        if on_lhs not in self.columns:
+            raise KeyError('no item named "%s" in left hand side dataset' %
+                           on_lhs)
 
-        if on not in right_dframe.columns:
-            raise KeyError('no item named %s in right hand side dataset' % on)
+        if on_rhs not in right_dframe.columns:
+            raise KeyError('no item named "%s" in right hand side dataset' %
+                           on_rhs)
 
-        right_dframe = right_dframe.set_index(on)
+        right_dframe = right_dframe.set_index(on_rhs)
 
         if len(right_dframe.index) != len(right_dframe.index.unique()):
-            raise NonUniqueJoinError('The join column (%s) of the right hand s'
-                                     'ide dataset is not unique' % on)
+            raise NonUniqueJoinError('The join column "%s" of the right hand s'
+                                     'ide dataset is not unique' % on_rhs)
 
-        return self.__class__(self.join(right_dframe, on=on))
+        return self.__class__(self.join(right_dframe, on=on_lhs))

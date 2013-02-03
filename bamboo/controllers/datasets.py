@@ -309,6 +309,16 @@ class Datasets(AbstractController):
         The `on` column must exists in both dataset. The values in the `on`
         `on` column of the other dataset must be unique.
 
+        `on` can either be a single string to join on the same column in both
+        datasets, or a comman separated list of the name for the left hand side
+        and then the name for the right hand side. E.g.:
+
+            * on=food_type,foodtype
+
+        Will join on the left hand `food_type` column and the right hand
+        `foodtype` column.
+
+
         :param dataset_id: The left hand dataset to be joined onto.
         :param other_dataset_id: The right hand to join.
         :param on: A column to join on, this column must be unique in the other
@@ -316,7 +326,7 @@ class Datasets(AbstractController):
 
         :returns: Success and merged dataset ID or error message.
         """
-        def action(dataset):
+        def action(dataset, on=on):
             other_dataset = Dataset.find_one(other_dataset_id)
 
             if other_dataset.record:

@@ -493,6 +493,33 @@ class TestDatasets(TestAbstractDatasets):
         self.assertEqual([('left', left_dataset_id, on, joined_dataset_id)],
                          right_dataset.joined_dataset_ids)
 
+    def test_join_datasets_different_columns(self):
+        left_dataset_id = self._post_file()
+        right_dataset_id = self._post_file('good_eats_aux_join.csv')
+        on_lhs = 'food_type'
+        on_rhs = 'also_food_type'
+        on = '%s,%s' % (on_lhs, on_rhs)
+        results = json.loads(self.controller.join(
+            left_dataset_id, right_dataset_id, on=on))
+
+        self.assertTrue(isinstance(results, dict))
+        self.assertTrue(AbstractController.SUCCESS in results.keys())
+        self.assertTrue(Dataset.ID in results.keys())
+
+        joined_dataset_id = results[Dataset.ID]
+        data = json.loads(self.controller.show(joined_dataset_id))
+
+        self.assertTrue('code' in data[0].keys())
+
+        left_dataset = Dataset.find_one(left_dataset_id)
+        right_dataset = Dataset.find_one(right_dataset_id)
+
+        self.assertEqual([('right', right_dataset_id, on, joined_dataset_id)],
+                         left_dataset.joined_dataset_ids)
+        self.assertEqual([('left', left_dataset_id, on, joined_dataset_id)],
+                         right_dataset.joined_dataset_ids)
+
+
     def test_join_datasets_non_unique_rhs(self):
         left_dataset_id = self._post_file()
         right_dataset_id = self._post_file()

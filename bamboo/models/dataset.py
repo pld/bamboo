@@ -4,7 +4,6 @@ import uuid
 from time import gmtime, strftime
 
 from celery.task import task
-from celery.contrib.methods import task as class_task
 from pandas import concat, rolling_window, Series
 
 from bamboo.config.settings import DB_READ_BATCH_SIZE
@@ -279,7 +278,6 @@ class Dataset(AbstractModel):
         """Delete this dataset."""
         call_async(delete_task, self, countdown=countdown)
 
-    @class_task
     def summarize(self, query=None, select=None,
                   group_str=None, limit=0, order_by=None):
         """Build and return a summary of the data in this dataset.
@@ -473,6 +471,7 @@ class Dataset(AbstractModel):
         return BambooFrame([[''] * len(columns)], columns=columns)
 
     def join(self, other, on):
+        """Join with dataset `other` on the passed columns."""
         merged_dframe = self.dframe()
 
         if not len(merged_dframe.columns):
