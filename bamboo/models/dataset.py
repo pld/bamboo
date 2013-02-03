@@ -6,7 +6,6 @@ from time import gmtime, strftime
 from celery.task import task
 from pandas import concat, rolling_window, Series
 
-from bamboo.config.settings import DB_READ_BATCH_SIZE
 from bamboo.core.calculator import Calculator
 from bamboo.core.frame import BambooFrame, BAMBOO_RESERVED_KEY_PREFIX,\
     DATASET_ID, DATASET_OBSERVATION_ID, PARENT_DATASET_ID
@@ -213,8 +212,8 @@ class Dataset(AbstractModel, ImportableDataset):
         batch = 0
 
         while True:
-            start = batch * DB_READ_BATCH_SIZE
-            end = (batch + 1) * DB_READ_BATCH_SIZE
+            start = batch * self.DB_READ_BATCH_SIZE
+            end = start + self.DB_READ_BATCH_SIZE
 
             if limit > 0 and end > limit:
                 end = limit

@@ -1,7 +1,8 @@
 from math import ceil
 
+from pymongo.errors import AutoReconnect
+
 from bamboo.config.db import Database
-from bamboo.config.settings import DB_SAVE_BATCH_SIZE
 from bamboo.core.frame import BAMBOO_RESERVED_KEYS
 from bamboo.lib.decorators import classproperty
 from bamboo.lib.mongo import dict_for_mongo, remove_mongo_reserved_keys
@@ -23,8 +24,11 @@ class AbstractModel(object):
 
     # delimiter when passing multiple groups as a string
     GROUP_DELIMITER = ','
-
     ERROR_MESSAGE = 'error_message'
+
+    DB_READ_BATCH_SIZE = 1000
+    DB_SAVE_BATCH_SIZE = 2000
+    MIN_BATCH_SIZE = 50
 
     STATE = 'state'
     STATE_FAILED = 'failed'
@@ -138,15 +142,29 @@ class AbstractModel(object):
         def command(records):
             cls.collection.insert(records)
 
-        cls._batch_command(command, dframe)
+        batch_size = cls.DB_SAVE_BATCH_SIZE
+
+        cls._batch_command_wrapper(command, dframe, batch_size)
 
     @classmethod
-    def _batch_command(cls, command, dframe):
-        batches = int(ceil(float(len(dframe)) / DB_SAVE_BATCH_SIZE))
+    def _batch_command_wrapper(cls, command, dframe, batch_size):
+        try:
+            cls._batch_command(command, dframe, batch_size)
+        except AutoReconnect:
+            batch_size /= 2
+
+            # If batch size drop is less than MIN_BATCH_SIZE, assume the
+            # records are too large or there is another error and fail.
+            if batch_size >= cls.MIN_BATCH_SIZE:
+                cls._batch_command_wrapper(command, dframe, batch_size)
+
+    @classmethod
+    def _batch_command(cls, command, dframe, batch_size):
+        batches = int(ceil(float(len(dframe)) / batch_size))
 
         for batch in xrange(0, batches):
-            start = batch * DB_SAVE_BATCH_SIZE
-            end = (batch + 1) * DB_SAVE_BATCH_SIZE
+            start = batch * batch_size
+            end = start + batch_size
             records = [
                 row.to_dict() for (_, row) in dframe[start:end].iterrows()]
             command(records)
