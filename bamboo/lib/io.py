@@ -9,7 +9,6 @@ import pandas as pd
 
 from bamboo.core.frame import BambooFrame
 from bamboo.lib.async import call_async
-from bamboo.models.dataset import Dataset
 
 
 @task(ignore_result=True)
@@ -48,82 +47,84 @@ def _file_reader(name, delete=False):
             os.unlink(name)
 
 
-def import_data_from_url(dataset, url, allow_local_file=False):
-    """Load a URL, read from a CSV, add data to dataset.
 
-    :param dataset: Dataset to save in.
-    :param url: URL to load file from.
-    :param allow_local_file: Allow URL to refer to a local file.
+class ImportableDataset(object):
+    def import_from_url(self, url, allow_local_file=False):
+        """Load a URL, read from a CSV, add data to dataset.
 
-    :raises: `IOError` for an unreadable file or a bad URL.
+        :param dataset: Dataset to save in.
+        :param url: URL to load file from.
+        :param allow_local_file: Allow URL to refer to a local file.
 
-    :returns: The created dataset.
-    """
-    if not allow_local_file and isinstance(url, basestring)\
-            and url[0:4] == 'file':
-        raise IOError
+        :raises: `IOError` for an unreadable file or a bad URL.
 
-    call_async(import_dataset, dataset, file_reader=partial(_file_reader, url))
+        :returns: The created dataset.
+        """
+        if not allow_local_file and isinstance(url, basestring)\
+                and url[0:4] == 'file':
+            raise IOError
 
-    return dataset
+        call_async(import_dataset, self, file_reader=partial(_file_reader, url))
 
-
-def import_data_from_csv(dataset, csv_file):
-    """Import data from a CSV file.
-
-    .. note::
-
-        Write to a named tempfile in order  to get a handle for pandas'
-        `read_csv` function.
-
-    :param dataset: Dataset to save in.
-    :param csv_file: The CSV File to create a dataset from.
-
-    :returns: The created dataset.
-    """
-    tmpfile = tempfile.NamedTemporaryFile(delete=False)
-    tmpfile.write(csv_file.file.read())
-
-    # pandas needs a closed file for *read_csv*
-    tmpfile.close()
-
-    call_async(import_dataset, dataset,
-               file_reader=partial(_file_reader, tmpfile.name, delete=True))
-
-    return dataset
+        return self
 
 
-def import_data_from_json(dataset, json_file):
-    """Impor data from a JSON file.
+    def import_from_csv(self, csv_file):
+        """Import data from a CSV file.
 
-    :param dataset: Dataset to save in.
-    :param json_file: JSON file to import.
-    """
-    content = json_file.file.read()
+        .. note::
 
-    def file_reader(content):
-        return pd.DataFrame(json.loads(content))
+            Write to a named tempfile in order  to get a handle for pandas'
+            `read_csv` function.
 
-    call_async(import_dataset, dataset,
-               file_reader=partial(file_reader, content))
+        :param dataset: Dataset to save in.
+        :param csv_file: The CSV File to create a dataset from.
 
-    return dataset
+        :returns: The created dataset.
+        """
+        tmpfile = tempfile.NamedTemporaryFile(delete=False)
+        tmpfile.write(csv_file.file.read())
+
+        # pandas needs a closed file for *read_csv*
+        tmpfile.close()
+
+        call_async(import_dataset, self,
+                   file_reader=partial(_file_reader, tmpfile.name, delete=True))
+
+        return self
 
 
-def import_schema_for_dataset(dataset, schema):
-    """Create a dataset from a SDF schema file (JSON).
+    def import_from_json(self, json_file):
+        """Impor data from a JSON file.
 
-    :param schema: The SDF (JSON) file to create a dataset from.
+        :param dataset: Dataset to save in.
+        :param json_file: JSON file to import.
+        """
+        content = json_file.file.read()
 
-    :returns: The created dataset.
-    """
-    try:
-        schema = json.loads(schema.file.read())
-    except AttributeError:
-        schema = json.loads(schema)
+        def file_reader(content):
+            return pd.DataFrame(json.loads(content))
 
-    dataset.set_schema(schema)
+        call_async(import_dataset, self,
+                   file_reader=partial(file_reader, content))
 
-    call_async(import_dataset, dataset)
+        return self
 
-    return dataset
+
+    def import_schema(self, schema):
+        """Create a dataset from a SDF schema file (JSON).
+
+        :param schema: The SDF (JSON) file to create a dataset from.
+
+        :returns: The created dataset.
+        """
+        try:
+            schema = json.loads(schema.file.read())
+        except AttributeError:
+            schema = json.loads(schema)
+
+        self.set_schema(schema)
+
+        call_async(import_dataset, self)
+
+        return self

@@ -44,6 +44,10 @@ class AbstractModel(object):
         return self.state == self.STATE_READY
 
     @property
+    def record_ready(self):
+        return self.record is not None and self.state == self.STATE_READY
+
+    @property
     def clean_record(self):
         """Remove reserved keys from records."""
         _dict = {

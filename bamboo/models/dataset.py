@@ -13,6 +13,7 @@ from bamboo.core.frame import BambooFrame, BAMBOO_RESERVED_KEY_PREFIX,\
 from bamboo.core.summary import summarize
 from bamboo.lib.async import call_async
 from bamboo.lib.exceptions import ArgumentError
+from bamboo.lib.io import ImportableDataset
 from bamboo.lib.schema_builder import Schema
 from bamboo.models.abstract_model import AbstractModel
 from bamboo.models.calculation import Calculation
@@ -26,7 +27,7 @@ def delete_task(dataset):
     super(dataset.__class__, dataset).delete({DATASET_ID: dataset.dataset_id})
 
 
-class Dataset(AbstractModel):
+class Dataset(AbstractModel, ImportableDataset):
 
     __collectionname__ = 'datasets'
 
