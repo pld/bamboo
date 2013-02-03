@@ -23,7 +23,7 @@ Dependencies
 * python (tested on version 2.7)
 * mongodb
 
-for numpy, pandas, and scipy (in requirements.pip):
+for numpy, pandas, and scipy:
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 on Arch Linux: ``# pacman -S blas lapack gcc-fortran``
