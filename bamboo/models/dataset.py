@@ -161,6 +161,7 @@ class Dataset(AbstractModel, ImportableDataset):
         """Fetch the dframe for this dataset.
 
         :param select: An optional select to limit the fields in the dframe.
+        :param distinct: Return distinct entries for this field.
         :param keep_parent_ids: Do not remove parent IDs from the dframe,
             default False.
         :param limit: Limit on the number of rows in the returned dframe.
@@ -178,7 +179,7 @@ class Dataset(AbstractModel, ImportableDataset):
         """
         observations = self.observations(
             query=query, select=select, limit=limit, order_by=order_by,
-            as_cursor=True)
+            distinct=distinct, as_cursor=True)
 
         dframe = self._batch_read_dframe_from_cursor(
             observations, distinct, limit)
@@ -196,10 +197,18 @@ class Dataset(AbstractModel, ImportableDataset):
 
         return dframe
 
-    def _batch_read_dframe_from_cursor(self, observations, distinct, limit):
-        if distinct:
-            observations = observations.distinct(distinct)
+    def count(self, query=None, limit=0, distinct=None):
+        observations = self.observations(
+            query=query, limit=limit, distinct=distinct, as_cursor=True)
 
+        count = len(observations) if distinct else observations.count()
+
+        if limit > 0 and count > limit:
+            count = limit
+
+        return count
+
+    def _batch_read_dframe_from_cursor(self, observations, distinct, limit):
         dframes = []
         batch = 0
 
@@ -393,7 +402,7 @@ class Dataset(AbstractModel, ImportableDataset):
         }
 
     def observations(self, query=None, select=None, limit=0, order_by=None,
-                     as_cursor=False):
+                     distinct=None, as_cursor=False):
         """Return observations for this dataset.
 
         :param query: Optional query for MongoDB to limit rows returned.
@@ -402,8 +411,13 @@ class Dataset(AbstractModel, ImportableDataset):
             to this maximum.
         :param order_by: Order the returned observations.
         """
-        return Observation.find(self, query, select, limit=limit,
-                                order_by=order_by, as_cursor=as_cursor)
+        observations = Observation.find(self, query, select, limit=limit,
+                                        order_by=order_by, as_cursor=as_cursor)
+
+        if distinct:
+            observations = observations.distinct(distinct)
+
+        return observations
 
     def calculations(self):
         """Return the calculations for this dataset."""

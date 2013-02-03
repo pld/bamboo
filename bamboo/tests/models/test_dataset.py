@@ -37,8 +37,7 @@ class TestDataset(TestBase):
 
     def test_delete(self):
         for dataset_name in self.TEST_DATASETS:
-            record = Dataset()
-            record.save(self.test_dataset_ids[dataset_name])
+            Dataset.create(self.test_dataset_ids[dataset_name])
             records = Dataset.find(self.test_dataset_ids[dataset_name])
             self.assertNotEqual(records, [])
             record.delete()
@@ -47,8 +46,7 @@ class TestDataset(TestBase):
 
     def test_update(self):
         for dataset_name in self.TEST_DATASETS:
-            dataset = Dataset()
-            dataset.save(self.test_dataset_ids[dataset_name])
+            dataset = Dataset.create(self.test_dataset_ids[dataset_name])
             self.assertFalse('field' in dataset.record)
             dataset.update({'field': {'key': 'value'}})
             dataset = Dataset.find_one(self.test_dataset_ids[dataset_name])
@@ -59,8 +57,7 @@ class TestDataset(TestBase):
         illegal_col_regex = re.compile(r'\W')
 
         for dataset_name in self.TEST_DATASETS:
-            dataset = Dataset()
-            dataset.save(self.test_dataset_ids[dataset_name])
+            dataset = Dataset.create(self.test_dataset_ids[dataset_name])
             dataset.build_schema(self.get_data(dataset_name))
 
             # get dataset with new schema
@@ -97,8 +94,7 @@ class TestDataset(TestBase):
             self.assertTrue(len(df_columns) == 0)
 
     def test_dframe(self):
-        dataset = Dataset()
-        dataset.save(self.test_dataset_ids['good_eats.csv'])
+        dataset = Dataset.create(self.test_dataset_ids['good_eats.csv'])
         dataset.save_observations(
             recognize_dates(self.get_data('good_eats.csv')))
         records = [x for x in Observation.find(dataset)]
@@ -113,3 +109,10 @@ class TestDataset(TestBase):
             self.assertFalse(key in columns)
         # ensure date is converted
         self.assertTrue(isinstance(dframe.submit_date[0], datetime))
+
+    def test_count(self):
+        dataset = Dataset.create(self.test_dataset_ids['good_eats.csv'])
+        dataset.save_observations(
+            recognize_dates(self.get_data('good_eats.csv')))
+
+        self.assertEqual(len(dataset.dframe()), dataset.count())

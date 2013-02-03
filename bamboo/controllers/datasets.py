@@ -136,8 +136,15 @@ class Datasets(AbstractController):
 
         return self._safe_get_and_call(dataset_id, action, callback=callback)
 
-    def show(self, dataset_id, query=None, select=None, distinct=None,
-             limit=0, order_by=None, format=None, callback=False):
+    def show(self, dataset_id,
+                   query=None,
+                   select=None,
+                   distinct=None,
+                   limit=0,
+                   order_by=None,
+                   format=None,
+                   callback=False,
+                   count=False):
         """ Return rows for `dataset_id`, matching the passed parameters.
 
         Retrieve the dataset by ID then limit that data using the optional
@@ -145,14 +152,14 @@ class Datasets(AbstractController):
         `order_by` if passed.
 
         :param dataset_id: The dataset ID of the dataset to return.
-        :param select: This is a required argument, it can be 'all' or a
-            MongoDB JSON query
+        :param select: A MongoDB JSON query for select.
         :param distinct: A field to return distinct results for.
         :param query: If passed restrict results to rows matching this query.
         :param limit: If passed limit the rows to this number.
         :param order_by: If passed order the result using this column.
         :param format: Format of output data, 'json' or 'csv'
         :param callback: A JSONP callback function to wrap the result in.
+        :param count: Return the count for this query.
 
         :returns: An error message if `dataset_id` does not exist or the JSON
             for query or select is improperly formatted. Otherwise a JSON
@@ -162,12 +169,16 @@ class Datasets(AbstractController):
         content_type = self._content_type_for_format(format)
 
         def action(dataset):
-            dframe = dataset.dframe(
-                query=query, select=select, distinct=distinct,
-                limit=limit, order_by=order_by)
+            if count:
+                return dataset.count(query=query, distinct=distinct,
+                                     limit=limit)
+            else:
+                dframe = dataset.dframe(
+                    query=query, select=select, distinct=distinct,
+                    limit=limit, order_by=order_by)
 
-            if distinct:
-                return sorted(dframe[0].tolist())
+                if distinct:
+                    return sorted(dframe[0].tolist())
 
             return self._dataframe_as_content_type(content_type, dframe)
 

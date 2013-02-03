@@ -702,3 +702,36 @@ class TestDatasets(TestAbstractDatasets):
         self.assertTrue(isinstance(results, dict))
         self.assertTrue(Datasets.ERROR in results)
         self.assertEqual('Unknown window type.', results[Datasets.ERROR])
+
+    def test_count(self):
+        dataset_id = self._post_file()
+
+        results = json.loads(self.controller.show(dataset_id, count=True))
+
+        self.assertEqual(results, self.NUM_ROWS)
+
+    def test_count_with_distinct(self):
+        dataset_id = self._post_file()
+
+        results = json.loads(self.controller.show(
+            dataset_id, count=True, distinct='amount'))
+
+        self.assertEqual(results, self.NUM_ROWS - 4)
+
+    def test_count_with_limit(self):
+        dataset_id = self._post_file()
+        limit = 10
+
+        results = json.loads(self.controller.show(
+            dataset_id, count=True, limit=limit))
+
+        self.assertEqual(results, limit)
+
+    def test_count_with_query(self):
+        dataset_id = self._post_file()
+
+        results = json.loads(self.controller.show(
+            dataset_id, query='{"rating": "delectible"}',
+            count=True))
+
+        self.assertEqual(results, 11)

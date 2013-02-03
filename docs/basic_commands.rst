@@ -218,7 +218,7 @@ column.
 By ID with distinct
 ^^^^^^^^^^^^^^^^^^^
 
-To retrieve only the unique values in a column, pass the `distinct` parameter:
+To retrieve only the unique values in a column, pass the *distinct* parameter:
 
 .. code-block:: sh
 
@@ -286,6 +286,23 @@ epochs.
 
 Returns the rows with a time stamp less than 1320000000, which is October 30th
 2011.
+
+Only return the count
+^^^^^^^^^^^^^^^^^^^^^
+
+To only the return the number of records in your query pass *count=True*.
+The count will take into consideration the *query*, *distinct*, and *limit*
+parameters.
+
+.. code-block:: sh
+
+    curl -g http://bamboo.io/datasets/8a3d74711475d8a51c84484fe73f24bd151242ea?query='{"rating":"delectible"}'
+
+**returns:**
+
+.. code-block:: javascript
+
+    11
 
 Retrieve summary statistics for dataset
 ---------------------------------------

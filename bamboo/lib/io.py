@@ -34,7 +34,7 @@ def import_dataset(dataset, dframe=None, file_reader=None):
         if isinstance(e, RetryTaskError):
             raise e
         else:
-            dataset.failed(str(e))
+            dataset.failed(e.__str__())
             dataset.delete(countdown=86400)
 
 
