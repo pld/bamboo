@@ -6,7 +6,7 @@ from bamboo.controllers.abstract_controller import AbstractController
 class Version(AbstractController):
 
     # versioning
-    VERSION_NUMBER = '0.5.4'
+    VERSION_NUMBER = '0.5.5'
     VERSION_DESCRIPTION = 'alpha'
 
     def index(self):
