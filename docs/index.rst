@@ -17,12 +17,6 @@ BSD License".
 .. image:: https://secure.travis-ci.org/modilabs/bamboo.png?branch=master
   :target: http://travis-ci.org/modilabs/bamboo
 
-General configuration notes:
-
-    - Summarization on factor columns is disallowed based upon the number of
-      unique entries.  This is controlled by a parameter in the
-      ``core/summary`` module.
-
 Libraries that connect to *bamboo*
 ----------------------------------
 
@@ -108,6 +102,15 @@ Code Documentation
    core
    lib
    models
+
+Server Setup and Contributing Code
+----------------------------------
+
+.. toctree::
+   :maxdepth: 2
+
+   server_setup
+   contributing
 
 Indices and tables
 ==================
