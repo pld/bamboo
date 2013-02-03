@@ -16,13 +16,15 @@ class TestDataset(TestBase):
 
     def test_save(self):
         for dataset_name in self.TEST_DATASETS:
-            record = Dataset().save(self.test_dataset_ids[dataset_name])
+            dataset = Dataset().save(self.test_dataset_ids[dataset_name])
+            record = dataset.record
             self.assertTrue(isinstance(record, dict))
             self.assertTrue('_id' in record.keys())
 
     def test_find(self):
         for dataset_name in self.TEST_DATASETS:
-            record = Dataset().save(self.test_dataset_ids[dataset_name])
+            dataset = Dataset.create(self.test_dataset_ids[dataset_name])
+            record = dataset.record
             rows = Dataset.find(self.test_dataset_ids[dataset_name])
             self.assertEqual(record, rows[0].record)
             self.assertEqual(record, Dataset.find_one(
@@ -30,8 +32,8 @@ class TestDataset(TestBase):
 
     def test_create(self):
         for dataset_name in self.TEST_DATASETS:
-            dataset = Dataset().save(self.test_dataset_ids[dataset_name])
-            self.assertTrue(isinstance(dataset, dict))
+            dataset = Dataset.create(self.test_dataset_ids[dataset_name])
+            self.assertTrue(isinstance(dataset, Dataset))
 
     def test_delete(self):
         for dataset_name in self.TEST_DATASETS:

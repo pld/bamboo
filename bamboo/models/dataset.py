@@ -318,6 +318,10 @@ class Dataset(AbstractModel):
         return summarize(self, dframe, groups, group_str, query or select)
 
     @classmethod
+    def create(cls, dataset_id=None):
+        return super(cls, cls).create(dataset_id)
+
+    @classmethod
     def find_one(cls, dataset_id):
         """Return dataset for `dataset_id`."""
         return super(cls, cls).find_one({DATASET_ID: dataset_id})

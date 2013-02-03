@@ -68,8 +68,7 @@ class TestBase(unittest.TestCase):
         return MockUploadedFile(_file)
 
     def _post_file(self, file_name='good_eats.csv'):
-        dataset = Dataset()
-        dataset.save()
+        dataset = Dataset.create()
         return import_data_from_csv(
             dataset,
             self._file_mock(self._fixture_path_prefix(file_name))).dataset_id
@@ -86,7 +85,6 @@ class TestBase(unittest.TestCase):
         return dataset
 
     def _create_dataset_from_url(self, url):
-        dataset = Dataset()
-        dataset.save()
+        dataset = Dataset.create()
         return import_data_from_url(
             dataset, url, allow_local_file=True).dataset_id

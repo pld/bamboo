@@ -32,8 +32,7 @@ def merge_dataset_ids(dataset_ids):
         raise MergeError(
             'merge requires 2 datasets (found %s)' % len(datasets))
 
-    new_dataset = Dataset()
-    new_dataset.save()
+    new_dataset = Dataset.create()
 
     call_async(_merge_datasets_task, new_dataset, datasets)
 
