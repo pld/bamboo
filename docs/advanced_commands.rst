@@ -41,7 +41,7 @@ given column.
 
     {"id": "8a3d74711475d8a51c84484fe73f24bd151242ea"}
 
-Merging multiple datasets
+Merging multiple Datasets
 -------------------------
 
 To row-wise merge 2 or more datasets into a new dataset use the _merge_ command
@@ -60,7 +60,7 @@ the data has been merged.
 
     {"id": "8a3d74711475d8a51c84484fe73f24bd151242ea"}
 
-Joining Multiple Datasets
+Joining multiple Datasets
 -------------------------
 
 You can perform column joins between multiple datasets.  The column that is
@@ -97,6 +97,19 @@ For example supposing the 'food_type' column is in dataset with ID 8123 and
 .. code-block:: javascript
 
     {"id": "8a3d74711475d8a51c84484fe73f24bd151242ea"}
+
+Joining on different columns
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+To join column ``A`` in the left hand side dataset with column ``B`` in the
+right hand side dataset, set the ``on`` parameter to ``A,B``.
+
+Continuing the above example, suppose dataset 8123 has a "food_type" column
+but 9123 has a "foodtype" column, use the command:
+
+.. code-block:: sh
+
+    curl -X POST -d "dataset_id=8123&other_dataset_id=9123&on=food_type,foodtype" http://bamboo.io/datasets/join
 
 Creating a Dataset from a Schema
 --------------------------------

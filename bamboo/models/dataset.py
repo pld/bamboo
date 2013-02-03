@@ -4,30 +4,29 @@ import uuid
 from time import gmtime, strftime
 
 from celery.task import task
-from celery.contrib.methods import task as class_task
 from pandas import concat, rolling_window, Series
 
-from bamboo.config.settings import DB_READ_BATCH_SIZE
 from bamboo.core.calculator import Calculator
 from bamboo.core.frame import BambooFrame, BAMBOO_RESERVED_KEY_PREFIX,\
     DATASET_ID, DATASET_OBSERVATION_ID, PARENT_DATASET_ID
 from bamboo.core.summary import summarize
 from bamboo.lib.async import call_async
 from bamboo.lib.exceptions import ArgumentError
+from bamboo.lib.io import ImportableDataset
 from bamboo.lib.schema_builder import Schema
 from bamboo.models.abstract_model import AbstractModel
 from bamboo.models.calculation import Calculation
 from bamboo.models.observation import Observation
 
 
-@task
+@task(ignore_result=True)
 def delete_task(dataset):
     """Background task to delete dataset and its associated observations."""
     Observation.delete_all(dataset)
     super(dataset.__class__, dataset).delete({DATASET_ID: dataset.dataset_id})
 
 
-class Dataset(AbstractModel):
+class Dataset(AbstractModel, ImportableDataset):
 
     __collectionname__ = 'datasets'
 
@@ -161,6 +160,7 @@ class Dataset(AbstractModel):
         """Fetch the dframe for this dataset.
 
         :param select: An optional select to limit the fields in the dframe.
+        :param distinct: Return distinct entries for this field.
         :param keep_parent_ids: Do not remove parent IDs from the dframe,
             default False.
         :param limit: Limit on the number of rows in the returned dframe.
@@ -178,7 +178,7 @@ class Dataset(AbstractModel):
         """
         observations = self.observations(
             query=query, select=select, limit=limit, order_by=order_by,
-            as_cursor=True)
+            distinct=distinct, as_cursor=True)
 
         dframe = self._batch_read_dframe_from_cursor(
             observations, distinct, limit)
@@ -196,16 +196,24 @@ class Dataset(AbstractModel):
 
         return dframe
 
-    def _batch_read_dframe_from_cursor(self, observations, distinct, limit):
-        if distinct:
-            observations = observations.distinct(distinct)
+    def count(self, query=None, limit=0, distinct=None):
+        observations = self.observations(
+            query=query, limit=limit, distinct=distinct, as_cursor=True)
 
+        count = len(observations) if distinct else observations.count()
+
+        if limit > 0 and count > limit:
+            count = limit
+
+        return count
+
+    def _batch_read_dframe_from_cursor(self, observations, distinct, limit):
         dframes = []
         batch = 0
 
         while True:
-            start = batch * DB_READ_BATCH_SIZE
-            end = (batch + 1) * DB_READ_BATCH_SIZE
+            start = batch * self.DB_READ_BATCH_SIZE
+            end = start + self.DB_READ_BATCH_SIZE
 
             if limit > 0 and end > limit:
                 end = limit
@@ -279,7 +287,6 @@ class Dataset(AbstractModel):
         """Delete this dataset."""
         call_async(delete_task, self, countdown=countdown)
 
-    @class_task
     def summarize(self, query=None, select=None,
                   group_str=None, limit=0, order_by=None):
         """Build and return a summary of the data in this dataset.
@@ -318,6 +325,10 @@ class Dataset(AbstractModel):
                              limit=limit, order_by=order_by)
 
         return summarize(self, dframe, groups, group_str, query or select)
+
+    @classmethod
+    def create(cls, dataset_id=None):
+        return super(cls, cls).create(dataset_id)
 
     @classmethod
     def find_one(cls, dataset_id):
@@ -390,7 +401,7 @@ class Dataset(AbstractModel):
         }
 
     def observations(self, query=None, select=None, limit=0, order_by=None,
-                     as_cursor=False):
+                     distinct=None, as_cursor=False):
         """Return observations for this dataset.
 
         :param query: Optional query for MongoDB to limit rows returned.
@@ -399,8 +410,13 @@ class Dataset(AbstractModel):
             to this maximum.
         :param order_by: Order the returned observations.
         """
-        return Observation.find(self, query, select, limit=limit,
-                                order_by=order_by, as_cursor=as_cursor)
+        observations = Observation.find(self, query, select, limit=limit,
+                                        order_by=order_by, as_cursor=as_cursor)
+
+        if distinct:
+            observations = observations.distinct(distinct)
+
+        return observations
 
     def calculations(self):
         """Return the calculations for this dataset."""
@@ -473,6 +489,7 @@ class Dataset(AbstractModel):
         return BambooFrame([[''] * len(columns)], columns=columns)
 
     def join(self, other, on):
+        """Join with dataset `other` on the passed columns."""
         merged_dframe = self.dframe()
 
         if not len(merged_dframe.columns):

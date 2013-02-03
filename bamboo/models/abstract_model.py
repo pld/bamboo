@@ -1,7 +1,8 @@
 from math import ceil
 
+from pymongo.errors import AutoReconnect
+
 from bamboo.config.db import Database
-from bamboo.config.settings import DB_SAVE_BATCH_SIZE
 from bamboo.core.frame import BAMBOO_RESERVED_KEYS
 from bamboo.lib.decorators import classproperty
 from bamboo.lib.mongo import dict_for_mongo, remove_mongo_reserved_keys
@@ -23,8 +24,11 @@ class AbstractModel(object):
 
     # delimiter when passing multiple groups as a string
     GROUP_DELIMITER = ','
-
     ERROR_MESSAGE = 'error_message'
+
+    DB_READ_BATCH_SIZE = 1000
+    DB_SAVE_BATCH_SIZE = 2000
+    MIN_BATCH_SIZE = 50
 
     STATE = 'state'
     STATE_FAILED = 'failed'
@@ -42,6 +46,10 @@ class AbstractModel(object):
     @property
     def is_ready(self):
         return self.state == self.STATE_READY
+
+    @property
+    def record_ready(self):
+        return self.record is not None and self.state == self.STATE_READY
 
     @property
     def clean_record(self):
@@ -62,18 +70,6 @@ class AbstractModel(object):
         """
         return Database.db()[collection_name]
 
-    def failed(self, message=None):
-        """Perist the state of the current instance to `STATE_FAILED`.
-
-        :params message: A string store as the error message, default None.
-        """
-        doc = {self.STATE: self.STATE_FAILED}
-
-        if message:
-            doc.update({self.ERROR_MESSAGE: message})
-
-        self.update(doc)
-
     @classproperty
     @classmethod
     def collection(cls):
@@ -83,6 +79,11 @@ class AbstractModel(object):
                 cls.__collectionname__)
 
         return cls.__collection__
+
+    @classmethod
+    def create(cls, *args):
+        model = cls()
+        return model.save(*args)
 
     @classmethod
     def find(cls, query, select=None, as_dict=False,
@@ -132,13 +133,6 @@ class AbstractModel(object):
         """
         return cls(cls.collection.find_one(query, select))
 
-    def __init__(self, record=None):
-        """Instantiate with data in `record`."""
-        self.record = record
-
-    def __nonzero__(self):
-        return self.record is not None
-
     @classmethod
     def batch_save(cls, dframe):
         """Save records in batches to avoid document size maximum setting.
@@ -148,18 +142,51 @@ class AbstractModel(object):
         def command(records):
             cls.collection.insert(records)
 
-        cls._batch_command(command, dframe)
+        batch_size = cls.DB_SAVE_BATCH_SIZE
+
+        cls._batch_command_wrapper(command, dframe, batch_size)
 
     @classmethod
-    def _batch_command(cls, command, dframe):
-        batches = int(ceil(float(len(dframe)) / DB_SAVE_BATCH_SIZE))
+    def _batch_command_wrapper(cls, command, dframe, batch_size):
+        try:
+            cls._batch_command(command, dframe, batch_size)
+        except AutoReconnect:
+            batch_size /= 2
+
+            # If batch size drop is less than MIN_BATCH_SIZE, assume the
+            # records are too large or there is another error and fail.
+            if batch_size >= cls.MIN_BATCH_SIZE:
+                cls._batch_command_wrapper(command, dframe, batch_size)
+
+    @classmethod
+    def _batch_command(cls, command, dframe, batch_size):
+        batches = int(ceil(float(len(dframe)) / batch_size))
 
         for batch in xrange(0, batches):
-            start = batch * DB_SAVE_BATCH_SIZE
-            end = (batch + 1) * DB_SAVE_BATCH_SIZE
+            start = batch * batch_size
+            end = start + batch_size
             records = [
                 row.to_dict() for (_, row) in dframe[start:end].iterrows()]
             command(records)
+
+    def __init__(self, record=None):
+        """Instantiate with data in `record`."""
+        self.record = record
+
+    def __nonzero__(self):
+        return self.record is not None
+
+    def failed(self, message=None):
+        """Perist the state of the current instance to `STATE_FAILED`.
+
+        :params message: A string store as the error message, default None.
+        """
+        doc = {self.STATE: self.STATE_FAILED}
+
+        if message:
+            doc.update({self.ERROR_MESSAGE: message})
+
+        self.update(doc)
 
     def pending(self):
         """Perist the state of the current instance to `STATE_PENDING`"""
@@ -168,11 +195,6 @@ class AbstractModel(object):
     def ready(self):
         """Perist the state of the current instance to `STATE_READY`"""
         self.update({self.STATE: self.STATE_READY})
-
-    def create(self):
-        model = self.__class__()
-        model.save()
-        return model
 
     def delete(self, query):
         """Delete rows matching query.
@@ -193,7 +215,7 @@ class AbstractModel(object):
         """
         self.collection.insert(record)
         self.record = record
-        return record
+        return self
 
     def update(self, record):
         """Update the current instance with `record`.

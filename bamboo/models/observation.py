@@ -96,4 +96,4 @@ class Observation(AbstractModel):
             dataset.STATE: self.STATE_READY,
         })
 
-        call_async(dataset.summarize, dataset)
+        dataset.summarize()

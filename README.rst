@@ -24,7 +24,7 @@ Dependencies
 * mongodb
 
 for numpy, pandas, and scipy (in requirements.pip):
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 on Arch Linux: ``# pacman -S blas lapack gcc-fortran``
 
@@ -73,45 +73,6 @@ Installation
 
     $ ./scripts/install.sh
 
-Running the server
-------------------
-
-Running the server in the foreground
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-start mongodb on localhost and standard port
-
-start a celery worker
-
-.. code-block:: sh
-
-    $ celery worker --config=bamboo.config.celeryconfig
-
-.. code-block:: sh
-
-    $ python ./scripts/run_server.py
-
-Running the server as a daemon
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-start mongodb on localhost and standard port
-
-1. create a user named 'bamboo', with home directory ``/home/bamboo``
-2. create a virtualenv using virtualenvwrapper called 'bamboo'
-3. place the bamboo root directory in ``/var/www/bamboo/current``
-
-start the daemon using:
-
-.. code-block:: sh
-
-    $ /var/www/bamboo/current/scripts/bamboo.sh start
-
-stop the daemon using:
-
-.. code-block:: sh
-
-    $ /var/www/bamboo/current/scripts/bamboo.sh stop
-
 Example Usage
 -------------
 
@@ -150,46 +111,6 @@ posting a dataset
 
     $ curl -X POST -d "url=http://formhub.org/mberg/forms/good_eats/data.csv" http://bamboo.io/datasets
 
-On your local server
-^^^^^^^^^^^^^^^^^^^^
-
-start the bamboo server as above, then
-
-run the example basic commands
-
-.. code-block:: sh
-
-    $ ./scripts/commands.sh -l
-
-make requests to your local server
-
-.. code-block:: sh
-
-    $ curl -X POST -d "url=http://formhub.org/mberg/forms/good_eats/data.csv" http://localhost:8080/datasets
-
-Testing
--------
-
-install nose testing requirements
-
-.. code-block:: sh
-
-    $ pip install -r requirements-test.pip
-
-run tests
-
-.. code-block:: sh
-
-    $ cd bamboo
-    $ ../scripts/test.sh
-
-or run the profiler
-
-.. code-block:: sh
-
-    $ cd bamboo
-    $ ../scripts/test.sh -p
-
 Documentation
 -------------
 
@@ -198,45 +119,6 @@ Viewing Documentation
 
 The latest docs are available at http://bamboo.io/
       
-Building Documentation
-^^^^^^^^^^^^^^^^^^^^^^
-
-Install graphviz for class structure diagrams:
-
-on Arch Linux: ``# pacman -S graphviz``
-
-on Debian based: ``# apt-get install graphviz``
-
-.. code-block:: sh
-
-    $ pip install -r requirements-docs.pip
-    $ cd docs
-    $ make html
-
-Contributing Code
------------------
-
-To work on the code:
-
-1. fork this github project
-2. add tests for your new feature
-3. add the code for your new feature
-4. ensure it is pep8
-
-.. code-block:: sh
-
-    $ pip install pep8
-    $ pep8 bamboo
-
-5. ensure all existing tests and your new tests are passing
-
-.. code-block:: sh
-
-    $ cd bamboo
-    $ ../scripts/test.sh
-
-6. submit a pull request
-
 About
 -----
 

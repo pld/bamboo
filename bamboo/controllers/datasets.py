@@ -5,8 +5,6 @@ from bamboo.core.frame import NonUniqueJoinError
 from bamboo.core.merge import merge_dataset_ids, MergeError
 from bamboo.core.summary import ColumnTypeError
 from bamboo.lib.exceptions import ArgumentError
-from bamboo.lib.io import import_data_from_url, import_data_from_csv,\
-    import_data_from_json, import_schema_for_dataset
 from bamboo.lib.utils import parse_int
 from bamboo.models.dataset import Dataset
 
@@ -116,7 +114,7 @@ class Datasets(AbstractController):
             if select == self.SELECT_ALL_FOR_SUMMARY:
                 select = None
 
-            return dataset.summarize(dataset, query, select,
+            return dataset.summarize(query, select,
                                      group, limit=limit,
                                      order_by=order_by)
 
@@ -138,8 +136,15 @@ class Datasets(AbstractController):
 
         return self._safe_get_and_call(dataset_id, action, callback=callback)
 
-    def show(self, dataset_id, query=None, select=None, distinct=None,
-             limit=0, order_by=None, format=None, callback=False):
+    def show(self, dataset_id,
+                   query=None,
+                   select=None,
+                   distinct=None,
+                   limit=0,
+                   order_by=None,
+                   format=None,
+                   callback=False,
+                   count=False):
         """ Return rows for `dataset_id`, matching the passed parameters.
 
         Retrieve the dataset by ID then limit that data using the optional
@@ -147,14 +152,14 @@ class Datasets(AbstractController):
         `order_by` if passed.
 
         :param dataset_id: The dataset ID of the dataset to return.
-        :param select: This is a required argument, it can be 'all' or a
-            MongoDB JSON query
+        :param select: A MongoDB JSON query for select.
         :param distinct: A field to return distinct results for.
         :param query: If passed restrict results to rows matching this query.
         :param limit: If passed limit the rows to this number.
         :param order_by: If passed order the result using this column.
         :param format: Format of output data, 'json' or 'csv'
         :param callback: A JSONP callback function to wrap the result in.
+        :param count: Return the count for this query.
 
         :returns: An error message if `dataset_id` does not exist or the JSON
             for query or select is improperly formatted. Otherwise a JSON
@@ -164,12 +169,16 @@ class Datasets(AbstractController):
         content_type = self._content_type_for_format(format)
 
         def action(dataset):
-            dframe = dataset.dframe(
-                query=query, select=select, distinct=distinct,
-                limit=limit, order_by=order_by)
+            if count:
+                return dataset.count(query=query, distinct=distinct,
+                                     limit=limit)
+            else:
+                dframe = dataset.dframe(
+                    query=query, select=select, distinct=distinct,
+                    limit=limit, order_by=order_by)
 
-            if distinct:
-                return sorted(dframe[0].tolist())
+                if distinct:
+                    return sorted(dframe[0].tolist())
 
             return self._dataframe_as_content_type(content_type, dframe)
 
@@ -246,14 +255,14 @@ class Datasets(AbstractController):
                 dataset.save()
 
                 if schema:
-                    import_schema_for_dataset(dataset, schema)
+                    dataset.import_schema(schema)
 
                 if url:
-                    import_data_from_url(dataset, url)
+                    dataset.import_from_url(url)
                 elif csv_file:
-                    import_data_from_csv(dataset, csv_file)
+                    dataset.import_from_csv(csv_file)
                 elif json_file:
-                    import_data_from_json(dataset, json_file)
+                    dataset.import_from_json(json_file)
 
                 result = {Dataset.ID: dataset.dataset_id}
 
@@ -308,6 +317,16 @@ class Datasets(AbstractController):
 
         The `on` column must exists in both dataset. The values in the `on`
         `on` column of the other dataset must be unique.
+
+        `on` can either be a single string to join on the same column in both
+        datasets, or a comman separated list of the name for the left hand side
+        and then the name for the right hand side. E.g.:
+
+            * on=food_type,foodtype
+
+        Will join on the left hand `food_type` column and the right hand
+        `foodtype` column.
+
 
         :param dataset_id: The left hand dataset to be joined onto.
         :param other_dataset_id: The right hand to join.
