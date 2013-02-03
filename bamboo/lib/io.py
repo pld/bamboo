@@ -12,7 +12,7 @@ from bamboo.lib.async import call_async
 from bamboo.models.dataset import Dataset
 
 
-@task
+@task(ignore_result=True)
 def import_dataset(dataset, dframe=None, file_reader=None):
     """For reading a URL and saving the corresponding dataset.
 

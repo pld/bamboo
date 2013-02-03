@@ -19,7 +19,7 @@ from bamboo.models.calculation import Calculation
 from bamboo.models.observation import Observation
 
 
-@task
+@task(ignore_result=True)
 def delete_task(dataset):
     """Background task to delete dataset and its associated observations."""
     Observation.delete_all(dataset)

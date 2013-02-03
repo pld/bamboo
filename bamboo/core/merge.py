@@ -40,7 +40,7 @@ def merge_dataset_ids(dataset_ids):
     return new_dataset
 
 
-@task(default_retry_delay=2)
+@task(default_retry_delay=2, ignore_result=True)
 def _merge_datasets_task(new_dataset, datasets):
     """Merge datasets specified by dataset_ids.
 
