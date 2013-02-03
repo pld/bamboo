@@ -92,25 +92,20 @@ class TestDatasetsMerge(TestAbstractDatasets):
 
         merged_id = result[Dataset.ID]
 
-        # wait for background tasks for finish
-        while True:
-            results1 = json.loads(self.controller.show(dataset_id1))
-            results2 = json.loads(self.controller.show(dataset_id2))
-            results3 = json.loads(self.controller.show(merged_id))
-
-            if all([len(res) for res in [results1, results2, results3]]):
-                break
-
-            sleep(self.SLEEP_DELAY)
-
         while True:
             datasets = [Dataset.find_one(dataset_id)
-                        for dataset_id in [dataset_id1, dataset_id2]]
+                        for dataset_id in [merged_id, dataset_id1, dataset_id2]]
 
             if all([dataset.is_ready for dataset in datasets]):
                 break
 
             sleep(self.SLEEP_DELAY)
+
+        # Extra pause otherwise tear down deletes dataset
+        sleep(self.SLEEP_DELAY)
+
+        datasets = [Dataset.find_one(dataset_id)
+                    for dataset_id in [dataset_id1, dataset_id2]]
 
         for dataset in datasets:
             self.assertTrue(merged_id in dataset.merged_dataset_ids)
