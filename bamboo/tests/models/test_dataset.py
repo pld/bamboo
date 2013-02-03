@@ -37,10 +37,10 @@ class TestDataset(TestBase):
 
     def test_delete(self):
         for dataset_name in self.TEST_DATASETS:
-            Dataset.create(self.test_dataset_ids[dataset_name])
+            dataset = Dataset.create(self.test_dataset_ids[dataset_name])
             records = Dataset.find(self.test_dataset_ids[dataset_name])
             self.assertNotEqual(records, [])
-            record.delete()
+            dataset.delete()
             records = Dataset.find(self.test_dataset_ids[dataset_name])
             self.assertEqual(records, [])
 
