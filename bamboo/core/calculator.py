@@ -6,7 +6,6 @@ from pandas import concat
 from bamboo.core.aggregator import Aggregator
 from bamboo.core.frame import BambooFrame, NonUniqueJoinError
 from bamboo.core.parser import ParseError, Parser
-from bamboo.lib.async import call_async
 from bamboo.lib.mongo import MONGO_RESERVED_KEYS
 
 
@@ -259,10 +258,10 @@ class Calculator(object):
         # update the merged datasets with new_dframe
         for merged_dataset in self.dataset.merged_datasets:
             merged_calculator = Calculator(merged_dataset)
-            call_async(merged_calculator.calculate_updates,
-                       merged_calculator,
-                       slugified_data,
-                       parent_dataset_id=self.dataset.dataset_id)
+            merged_calculator.calculate_updates(
+                merged_calculator,
+                slugified_data,
+                parent_dataset_id=self.dataset.dataset_id)
 
     def _update_joined_datasets(self, new_dframe_raw):
         # update any joined datasets
@@ -287,7 +286,7 @@ class Calculator(object):
                         other_dataset, on)
 
                 joined_calculator = Calculator(joined_dataset)
-                call_async(joined_calculator.calculate_updates,
+                joined_calculator.calculate_updates(
                            joined_calculator, merged_dframe.to_jsondict(),
                            parent_dataset_id=self.dataset.dataset_id)
 
@@ -374,8 +373,9 @@ class Calculator(object):
 
             # calculate updates on the child
             merged_calculator = Calculator(merged_dataset)
-            call_async(merged_calculator.calculate_updates, merged_calculator,
-                       new_data, parent_dataset_id=agg_dataset.dataset_id)
+            merged_calculator.calculate_updates(
+                merged_calculator, new_data,
+                parent_dataset_id=agg_dataset.dataset_id)
 
     def _create_calculations_to_groups_and_datasets(self, calculations):
         """Create list of groups and calculations."""
