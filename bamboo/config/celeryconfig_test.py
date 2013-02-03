@@ -1,7 +1,7 @@
 from bamboo.config import settings
 
 BROKER_BACKEND = 'mongodb'
-BROKER_URL = 'mongodb://localhost:27017/%s' % settings.TEST_DATABASE_NAME
+BROKER_URL = 'mongodb://localhost:27017/'
 CELERY_RESULT_BACKEND = 'mongodb'
 CELERY_MONGODB_BACKEND_SETTINGS = {
     'host': 'localhost',
