@@ -185,11 +185,13 @@ class Datasets(AbstractController):
         return self._safe_get_and_call(
             dataset_id, action, callback=callback, content_type=content_type)
 
-    def merge(self, datasets=None):
+    def merge(self, datasets, mapping=None):
         """Merge the datasets with the dataset_ids in `datasets`.
 
         :param dataset: A JSON encoded array of dataset IDs for existing
             datasets.
+        :param mapping: An optional mapping from original column names to
+            destination names.
 
         :returns: An error if the datasets could not be found or less than two
             dataset IDs were passed.  Otherwise, the ID of the new merged
@@ -197,7 +199,9 @@ class Datasets(AbstractController):
         """
 
         def action(dataset):
-            dataset = merge_dataset_ids(datasets)
+            mapping = json.loads(mapping)
+            dataset_ids = json.loads(dataset_ids)
+            dataset = merge_dataset_ids(dataset_ids, mapping)
             return {Dataset.ID: dataset.dataset_id}
 
         return self._safe_get_and_call(

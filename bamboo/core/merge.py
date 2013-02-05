@@ -13,7 +13,7 @@ class MergeError(Exception):
     pass
 
 
-def merge_dataset_ids(dataset_ids):
+def merge_dataset_ids(dataset_ids, mapping):
     """Load a JSON array of dataset IDs and start a background merge task.
 
     :param dataset_ids: An array of dataset IDs to merge.
@@ -24,7 +24,6 @@ def merge_dataset_ids(dataset_ids):
         if three dataset IDs are provided and one of them is bad, an error is
         not raised.
     """
-    dataset_ids = json.loads(dataset_ids)
     datasets = [Dataset.find_one(dataset_id) for dataset_id in dataset_ids]
     datasets = [dataset for dataset in datasets if dataset.record]
 
