@@ -10,9 +10,9 @@ ROUTES = [
     ('dataset_options', 'OPTIONS',
         '/datasets/:dataset_id', 'datasets', 'options'),
     ('calculations_options', 'OPTIONS',
-        '/calculations/:dataset_id', 'calculations', 'options'),
-    ('calculations_options_alias', 'OPTIONS',
         '/datasets/:dataset_id/calculations', 'calculations', 'options'),
+    ('calculations_options_alias', 'OPTIONS',
+        '/datasets/:dataset_id/calculations/:name', 'calculations', 'options'),
     # root
     ('root', 'GET',
         '/', 'root', 'index'),
