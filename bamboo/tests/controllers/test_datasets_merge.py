@@ -15,7 +15,7 @@ class TestDatasetsMerge(TestAbstractDatasets):
 
     @requires_async
     def test_merge_datasets_0_not_enough(self):
-        result = json.loads(self.controller.merge(datasets=json.dumps([])))
+        result = json.loads(self.controller.merge(dataset_ids=json.dumps([])))
 
         self.assertTrue(isinstance(result, dict))
         self.assertTrue(self.controller.ERROR in result)
@@ -24,7 +24,7 @@ class TestDatasetsMerge(TestAbstractDatasets):
     def test_merge_datasets_1_not_enough(self):
         dataset_id = self._post_file()
         result = json.loads(self.controller.merge(
-            datasets=json.dumps([dataset_id])))
+            dataset_ids=json.dumps([dataset_id])))
 
         self.assertTrue(isinstance(result, dict))
         self.assertTrue(self.controller.ERROR in result)
@@ -33,7 +33,7 @@ class TestDatasetsMerge(TestAbstractDatasets):
     def test_merge_datasets_must_exist(self):
         dataset_id = self._post_file()
         result = json.loads(self.controller.merge(
-            datasets=json.dumps([dataset_id, 0000])))
+            dataset_ids=json.dumps([dataset_id, 0000])))
 
         self.assertTrue(isinstance(result, dict))
         self.assertTrue(self.controller.ERROR in result)
@@ -42,7 +42,7 @@ class TestDatasetsMerge(TestAbstractDatasets):
         dataset_id1 = self._post_file()
         dataset_id2 = self._post_file()
         result = json.loads(self.controller.merge(
-            datasets=json.dumps([dataset_id1, dataset_id2])))
+            dataset_ids=json.dumps([dataset_id1, dataset_id2])))
 
         self.assertTrue(isinstance(result, dict))
         self.assertTrue(Dataset.ID in result)
@@ -85,7 +85,7 @@ class TestDatasetsMerge(TestAbstractDatasets):
             Dataset.STATE_PENDING)
 
         result = json.loads(self.controller.merge(
-            datasets=json.dumps([dataset_id1, dataset_id2])))
+            dataset_ids=json.dumps([dataset_id1, dataset_id2])))
 
         self.assertTrue(isinstance(result, dict))
         self.assertTrue(Dataset.ID in result)
@@ -134,7 +134,7 @@ class TestDatasetsMerge(TestAbstractDatasets):
         dataset_id1 = self._post_file('good_eats_large.csv')
         dataset_id2 = self._post_file('good_eats_large.csv')
         result = json.loads(self.controller.merge(
-            datasets=json.dumps([dataset_id1, dataset_id2])))
+            dataset_ids=json.dumps([dataset_id1, dataset_id2])))
 
         self.assertTrue(isinstance(result, dict))
         self.assertTrue(Dataset.ID in result)
@@ -149,7 +149,7 @@ class TestDatasetsMerge(TestAbstractDatasets):
         dataset_id1 = self._post_file()
         dataset_id2 = self._post_file()
         result = json.loads(self.controller.merge(
-            datasets=json.dumps([dataset_id1, dataset_id2])))
+            dataset_ids=json.dumps([dataset_id1, dataset_id2])))
 
         self.assertTrue(isinstance(result, dict))
         self.assertTrue(Dataset.ID in result)
@@ -159,3 +159,29 @@ class TestDatasetsMerge(TestAbstractDatasets):
 
         for reserved_key in BAMBOO_RESERVED_KEYS + MONGO_RESERVED_KEY_STRS:
             self.assertFalse(reserved_key in row_keys)
+
+    def test_merge_with_map(self):
+        dataset_id1 = self._post_file()
+        dataset_id2 = self._post_file('good_eats_aux.csv')
+        result = json.loads(self.controller.merge(
+            dataset_ids=json.dumps([dataset_id1, dataset_id2]),
+            mapping=json.dumps({
+                dataset_id1: {
+                    "food_type": "food_type_2",
+                },
+                dataset_id2: {
+                    "code": "comments",
+                    "food_type": "food_type_2",
+                },
+            })))
+
+        expected_columns = Dataset.find_one(
+            dataset_id1).dframe().columns.tolist()
+        expected_columns.remove("food_type")
+        expected_columns.append("food_type_2")
+        expected_columns = set(expected_columns)
+
+        merged_dataset = Dataset.find_one(result[Dataset.ID])
+        new_columns = set(merged_dataset.dframe().columns)
+
+        self.assertEquals(expected_columns, new_columns)

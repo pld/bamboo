@@ -1,5 +1,7 @@
 import urllib2
 
+import simplejson as json
+
 from bamboo.controllers.abstract_controller import AbstractController
 from bamboo.core.frame import NonUniqueJoinError
 from bamboo.core.merge import merge_dataset_ids, MergeError
@@ -185,7 +187,7 @@ class Datasets(AbstractController):
         return self._safe_get_and_call(
             dataset_id, action, callback=callback, content_type=content_type)
 
-    def merge(self, datasets, mapping=None):
+    def merge(self, dataset_ids, mapping=None):
         """Merge the datasets with the dataset_ids in `datasets`.
 
         :param dataset: A JSON encoded array of dataset IDs for existing
@@ -198,10 +200,13 @@ class Datasets(AbstractController):
             dataset created by combining the datasets provided as an argument.
         """
 
-        def action(dataset):
-            mapping = json.loads(mapping)
+        def action(dataset, dataset_ids=dataset_ids, mapping=mapping):
+            if mapping:
+                mapping = json.loads(mapping)
+
             dataset_ids = json.loads(dataset_ids)
             dataset = merge_dataset_ids(dataset_ids, mapping)
+
             return {Dataset.ID: dataset.dataset_id}
 
         return self._safe_get_and_call(
