@@ -56,7 +56,7 @@ def _merge_datasets_task(new_dataset, datasets, mapping):
 
     # store the child dataset ID with each parent
     for dataset in datasets:
-        dataset.add_merged_dataset(new_dataset)
+        dataset.add_merged_dataset(mapping, new_dataset)
 
 
 def _merge_datasets(datasets, mapping):

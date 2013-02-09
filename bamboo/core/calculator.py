@@ -242,23 +242,13 @@ class Calculator(object):
 
     def _update_merged_datasets(self, new_data, labels_to_slugs):
         # store slugs as labels for child datasets
-        slugified_data = []
-
-        if not isinstance(new_data, list):
-            new_data = [new_data]
-
-        for row in new_data:
-            for key, value in row.iteritems():
-                if labels_to_slugs.get(key) and key not in MONGO_RESERVED_KEYS:
-                    del row[key]
-                    row[labels_to_slugs[key]] = value
-
-            slugified_data.append(row)
+        slugified_data = self._slugify_data(new_data, labels_to_slugs)
 
         # update the merged datasets with new_dframe
-        for merged_dataset in self.dataset.merged_datasets:
+        for mapping, merged_dataset in self.dataset.merged_datasets:
             merged_calculator = Calculator(merged_dataset)
-            # TODO accomodate merges with a mapping
+
+            slugified_data = self._remapped_data(mapping, slugified_data)
             merged_calculator.calculate_updates(
                 merged_calculator,
                 slugified_data,
@@ -403,6 +393,31 @@ class Calculator(object):
         return [
             item for sublist in calcs_to_data.values() for item in sublist
         ]
+
+    def _slugify_data(self, new_data, labels_to_slugs):
+        slugified_data = []
+
+        if not isinstance(new_data, list):
+            new_data = [new_data]
+
+        for row in new_data:
+            for key, value in row.iteritems():
+                if labels_to_slugs.get(key) and key not in MONGO_RESERVED_KEYS:
+                    del row[key]
+                    row[labels_to_slugs[key]] = value
+
+            slugified_data.append(row)
+
+        return slugified_data
+
+    def _remapped_data(self, mapping, slugified_data):
+        column_map = mapping.get(self.dataset.dataset_id)
+
+        if column_map:
+            slugified_data = [{column_map.get(k, k): v
+                for k, v in row.items()} for row in slugified_data]
+
+        return slugified_data
 
     def __getstate__(self):
         """Get state for pickle."""

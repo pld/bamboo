@@ -125,12 +125,22 @@ class Dataset(AbstractModel, ImportableDataset):
             self.joined_dataset_ids]
 
     @property
-    def merged_dataset_ids(self):
+    def merged_dataset_info(self):
         return self.record.get(self.MERGED_DATASETS, [])
 
     @property
+    def merged_dataset_ids(self):
+        return zip(*self.merged_dataset_info)[-1]
+
+    @property
     def merged_datasets(self):
-        return self._linked_datasets(self.merged_dataset_ids)
+        results = self.merged_dataset_info
+
+        if len(results):
+            mappings, ids = zip(*results)
+            results = zip(mappings, self._linked_datasets(ids))
+
+        return results
 
     @property
     def pending_updates(self):
@@ -241,10 +251,10 @@ class Dataset(AbstractModel, ImportableDataset):
         self._add_linked_data(self.JOINED_DATASETS, self.joined_dataset_ids,
                               new_data)
 
-    def add_merged_dataset(self, new_dataset):
+    def add_merged_dataset(self, mapping, new_dataset):
         """Add the ID of `new_dataset` to the list of merged datasets."""
-        self._add_linked_data(self.MERGED_DATASETS, self.merged_dataset_ids,
-                              new_dataset.dataset_id)
+        self._add_linked_data(self.MERGED_DATASETS, self.merged_dataset_info,
+                              [mapping, new_dataset.dataset_id])
 
     def _add_linked_data(self, link_key, existing_data, new_data):
         self.update({link_key: existing_data + [new_data]})
