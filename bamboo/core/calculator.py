@@ -357,7 +357,7 @@ class Calculator(object):
         # jsondict from new dframe
         new_data = new_agg_dframe.to_jsondict()
 
-        for merged_dataset in agg_dataset.merged_datasets:
+        for mapping, merged_dataset in agg_dataset.merged_datasets:
             # remove rows in child from this merged dataset
             merged_dataset.remove_parent_observations(
                 agg_dataset.dataset_id)
@@ -411,7 +411,7 @@ class Calculator(object):
         return slugified_data
 
     def _remapped_data(self, mapping, slugified_data):
-        column_map = mapping.get(self.dataset.dataset_id)
+        column_map = mapping.get(self.dataset.dataset_id) if mapping else None
 
         if column_map:
             slugified_data = [{column_map.get(k, k): v for k, v in row.items()}
