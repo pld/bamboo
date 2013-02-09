@@ -245,7 +245,7 @@ class Calculator(object):
         slugified_data = self._slugify_data(new_data, labels_to_slugs)
 
         # update the merged datasets with new_dframe
-        for mapping, merged_dataset in self.dataset.merged_datasets:
+        for mapping, merged_dataset in self.dataset.merged_datasets_with_map:
             merged_calculator = Calculator(merged_dataset)
 
             slugified_data = self._remapped_data(mapping, slugified_data)
@@ -357,7 +357,7 @@ class Calculator(object):
         # jsondict from new dframe
         new_data = new_agg_dframe.to_jsondict()
 
-        for mapping, merged_dataset in agg_dataset.merged_datasets:
+        for merged_dataset in agg_dataset.merged_datasets:
             # remove rows in child from this merged dataset
             merged_dataset.remove_parent_observations(
                 agg_dataset.dataset_id)

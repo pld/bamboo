@@ -130,10 +130,15 @@ class Dataset(AbstractModel, ImportableDataset):
 
     @property
     def merged_dataset_ids(self):
-        return zip(*self.merged_dataset_info)[-1]
+        results = self.merged_dataset_info
+        return zip(*results)[-1] if results else results
 
     @property
     def merged_datasets(self):
+        return self._linked_datasets(self.merged_dataset_ids)
+
+    @property
+    def merged_datasets_with_map(self):
         results = self.merged_dataset_info
 
         if len(results):
