@@ -1,5 +1,4 @@
 from math import ceil
-import simplejson as json
 import uuid
 from time import gmtime, strftime
 
@@ -313,12 +312,7 @@ class Dataset(AbstractModel, ImportableDataset):
 
         # if select append groups to select
         if select:
-            select = json.loads(select)
-            if not isinstance(select, dict):
-                raise ArgumentError('select argument must be a JSON dictionary'
-                                    ', found: %s.' % select)
             select.update(dict(zip(groups, [1] * len(groups))))
-            select = json.dumps(select)
 
         self.reload()
         dframe = self.dframe(query=query, select=select,
@@ -432,13 +426,12 @@ class Dataset(AbstractModel, ImportableDataset):
         """
         Observation.delete_all(self, {PARENT_DATASET_ID: parent_id})
 
-    def add_observations(self, json_data):
-        """Update `dataset` with new `data`."""
+    def add_observations(self, new_data):
+        """Update `dataset` with `new_data`."""
         record = self.record
         update_id = uuid.uuid4().hex
         self.add_pending_update(update_id)
 
-        new_data = json.loads(json_data)
         calculator = Calculator(self)
 
         new_dframe_raw = calculator.dframe_from_update(

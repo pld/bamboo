@@ -1,11 +1,6 @@
-import simplejson as json
-
-from bson import json_util
-
 from bamboo.core.frame import DATASET_OBSERVATION_ID
 from bamboo.lib.async import call_async
 from bamboo.lib.datetools import parse_timestamp_query
-from bamboo.lib.jsontools import JSONError
 from bamboo.models.abstract_model import AbstractModel
 
 
@@ -42,20 +37,11 @@ class Observation(AbstractModel):
         :returns: A list of dictionaries matching the passed in `query` and
             other parameters.
         """
-        try:
-            query = (query and json.loads(
-                query, object_hook=json_util.object_hook)) or {}
-
+        if query is not None:
             if dataset.schema:
                 query = parse_timestamp_query(query, dataset.schema)
-        except ValueError, err:
-            raise JSONError('cannot decode query: %s' % err.__str__())
-
-        if select:
-            try:
-                select = json.loads(select, object_hook=json_util.object_hook)
-            except ValueError, err:
-                raise JSONError('cannot decode select: %s' % err.__str__())
+        else:
+            query = {}
 
         query[DATASET_OBSERVATION_ID] = dataset.dataset_observation_id
 
