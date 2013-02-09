@@ -153,6 +153,8 @@ class TestDatasetsUpdateWithJoin(TestAbstractDatasetsUpdate):
                     len(results2) > self.NUM_ROWS_AUX:
                 break
             sleep(self.SLEEP_DELAY)
+
+        sleep(self.SLEEP_DELAY)
         self._verify_update_right()
 
     def test_datasets_update_right_non_unique_join(self):

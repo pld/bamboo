@@ -497,7 +497,7 @@ class TestCalculations(TestBase):
             if dataset.aggregated_datasets.get(group) and all(
                     [c.is_ready for c in dataset.calculations()]):
                 break
-            sleep(1)
+            sleep(self.SLEEP_DELAY)
 
         agg_dframe = dataset.aggregated_datasets[group].dframe()
         self.assertEqual(
@@ -525,7 +525,7 @@ class TestCalculations(TestBase):
             if not len(dataset.pending_updates):
                 break
 
-            sleep(1)
+            sleep(self.SLEEP_DELAY)
 
         dataset = Dataset.find_one(dataset_id)
         agg_dframe = dataset.aggregated_datasets[group].dframe()
@@ -574,7 +574,7 @@ class TestCalculations(TestBase):
             if not len(dataset.pending_updates) and all(calcs_not_pending):
                 break
 
-            sleep(1)
+            sleep(self.SLEEP_DELAY)
 
         for c in dataset.calculations():
             self.assertEqual(c.STATE_FAILED, c.state)
