@@ -134,15 +134,8 @@ class Datasets(AbstractController):
 
         return self._safe_get_and_call(dataset_id, action, callback=callback)
 
-    def show(self, dataset_id,
-                   query=None,
-                   select=None,
-                   distinct=None,
-                   limit=0,
-                   order_by=None,
-                   format=None,
-                   callback=False,
-                   count=False):
+    def show(self, dataset_id, query=None, select=None, distinct=None, limit=0,
+             order_by=None, format=None, callback=False, count=False):
         """ Return rows for `dataset_id`, matching the passed parameters.
 
         Retrieve the dataset by ID then limit that data using the optional

@@ -108,7 +108,8 @@ class TestDatasetsMerge(TestAbstractDatasets):
 
         while True:
             datasets = [Dataset.find_one(dataset_id)
-                        for dataset_id in [merged_id, dataset_id1, dataset_id2]]
+                        for dataset_id in [merged_id, dataset_id1, dataset_id2]
+                        ]
 
             if all([dataset.is_ready for dataset in datasets]):
                 break

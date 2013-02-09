@@ -278,8 +278,8 @@ class Calculator(object):
 
                 joined_calculator = Calculator(joined_dataset)
                 joined_calculator.calculate_updates(
-                           joined_calculator, merged_dframe.to_jsondict(),
-                           parent_dataset_id=self.dataset.dataset_id)
+                    joined_calculator, merged_dframe.to_jsondict(),
+                    parent_dataset_id=self.dataset.dataset_id)
 
     def dframe_from_update(self, new_data, labels_to_slugs):
         """Make a single-row dataframe for the additional data to add."""
@@ -414,8 +414,8 @@ class Calculator(object):
         column_map = mapping.get(self.dataset.dataset_id)
 
         if column_map:
-            slugified_data = [{column_map.get(k, k): v
-                for k, v in row.items()} for row in slugified_data]
+            slugified_data = [{column_map.get(k, k): v for k, v in row.items()}
+                              for row in slugified_data]
 
         return slugified_data
 

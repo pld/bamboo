@@ -319,12 +319,12 @@ class TestCalculations(TestBase):
 
     def test_create_with_duplicate_names(self):
         formula_names_to_valid = {
-            'water_not_functioning_none': True,  # an already slugged column
+            'water_not_functioning_none': True,   # an already slugged column
             'water_not_functioning/none': False,  # a non-slug column
-            'region': False,                # an existing column
-            'date': False,                  # a reserved key and an existing column
-            'sum': True,                   # a reserved key
-            }
+            'region': False,    # an existing column
+            'date': False,      # a reserved key and an existing column
+            'sum': True,        # a reserved key
+        }
 
         for formula_name, valid in formula_names_to_valid.items():
             dataset_id = self._post_file('water_points.csv')
@@ -338,12 +338,12 @@ class TestCalculations(TestBase):
 
             self.assertTrue(isinstance(response, dict))
 
-
             if valid:
                 self.assertTrue(self.controller.SUCCESS in response)
             else:
                 self.assertTrue(self.controller.ERROR in response)
-                self.assertTrue(formula_name in response[self.controller.ERROR])
+                self.assertTrue(
+                    formula_name in response[self.controller.ERROR])
 
             dataset = Dataset.find_one(dataset_id)
 
@@ -428,8 +428,6 @@ class TestCalculations(TestBase):
             'name_'))
 
         self.assertTrue(self.controller.SUCCESS in response)
-
-
 
     def test_newest(self):
         expected_dataset = {

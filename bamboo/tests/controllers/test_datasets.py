@@ -519,7 +519,6 @@ class TestDatasets(TestAbstractDatasets):
         self.assertEqual([('left', left_dataset_id, on, joined_dataset_id)],
                          right_dataset.joined_dataset_ids)
 
-
     def test_join_datasets_non_unique_rhs(self):
         left_dataset_id = self._post_file()
         right_dataset_id = self._post_file()
