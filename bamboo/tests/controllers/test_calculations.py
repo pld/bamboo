@@ -319,12 +319,12 @@ class TestCalculations(TestBase):
 
     def test_create_with_duplicate_names(self):
         formula_names_to_valid = {
-            'water_not_functioning_none': True,  # an already slugged column
+            'water_not_functioning_none': True,   # an already slugged column
             'water_not_functioning/none': False,  # a non-slug column
-            'region': False,                # an existing column
-            'date': False,                  # a reserved key and an existing column
-            'sum': True,                   # a reserved key
-            }
+            'region': False,    # an existing column
+            'date': False,      # a reserved key and an existing column
+            'sum': True,        # a reserved key
+        }
 
         for formula_name, valid in formula_names_to_valid.items():
             dataset_id = self._post_file('water_points.csv')
@@ -338,12 +338,12 @@ class TestCalculations(TestBase):
 
             self.assertTrue(isinstance(response, dict))
 
-
             if valid:
                 self.assertTrue(self.controller.SUCCESS in response)
             else:
                 self.assertTrue(self.controller.ERROR in response)
-                self.assertTrue(formula_name in response[self.controller.ERROR])
+                self.assertTrue(
+                    formula_name in response[self.controller.ERROR])
 
             dataset = Dataset.find_one(dataset_id)
 
@@ -429,8 +429,6 @@ class TestCalculations(TestBase):
 
         self.assertTrue(self.controller.SUCCESS in response)
 
-
-
     def test_newest(self):
         expected_dataset = {
             u'wp_functional': {0: u'no', 1: u'yes', 2: u'no', 3: u'yes'},
@@ -497,7 +495,7 @@ class TestCalculations(TestBase):
             if dataset.aggregated_datasets.get(group) and all(
                     [c.is_ready for c in dataset.calculations()]):
                 break
-            sleep(1)
+            sleep(self.SLEEP_DELAY)
 
         agg_dframe = dataset.aggregated_datasets[group].dframe()
         self.assertEqual(
@@ -525,7 +523,7 @@ class TestCalculations(TestBase):
             if not len(dataset.pending_updates):
                 break
 
-            sleep(1)
+            sleep(self.SLEEP_DELAY)
 
         dataset = Dataset.find_one(dataset_id)
         agg_dframe = dataset.aggregated_datasets[group].dframe()
@@ -574,7 +572,7 @@ class TestCalculations(TestBase):
             if not len(dataset.pending_updates) and all(calcs_not_pending):
                 break
 
-            sleep(1)
+            sleep(self.SLEEP_DELAY)
 
         for c in dataset.calculations():
             self.assertEqual(c.STATE_FAILED, c.state)

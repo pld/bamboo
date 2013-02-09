@@ -37,13 +37,12 @@ class TestDatasetsUpdateWithAggs(TestAbstractDatasetsUpdate):
         self.linked_dataset1_id = result['']
 
         # create merged datasets
-        result = json.loads(self.controller.merge(
-            datasets=json.dumps([self.dataset1_id, self.dataset2_id])))
+        result = json.loads(self.controller.merge(dataset_ids=json.dumps(
+            [self.dataset1_id, self.dataset2_id])))
         self.merged_dataset1_id = result[Dataset.ID]
 
-        result = json.loads(self.controller.merge(
-            datasets=json.dumps(
-                [self.merged_dataset1_id, self.linked_dataset1_id])))
+        result = json.loads(self.controller.merge(dataset_ids=json.dumps(
+            [self.merged_dataset1_id, self.linked_dataset1_id])))
         self.merged_dataset2_id = result[Dataset.ID]
 
     def test_setup_datasets(self):

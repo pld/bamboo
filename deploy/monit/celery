@@ -1,0 +1,4 @@
+check process celery
+    with pidfile /var/www/bamboo/shared/pids/celeryd.pid
+    start program = "/var/www/bamboo/shared/celeryd start" as uid bamboo and gid bamboo
+    stop program = "/var/www/bamboo/shared/celeryd stop" as uid bamboo and gid bamboo

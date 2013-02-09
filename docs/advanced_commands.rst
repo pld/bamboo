@@ -60,13 +60,41 @@ the data has been merged.
 
     {"id": "8a3d74711475d8a51c84484fe73f24bd151242ea"}
 
+Merge with a column mapping
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Merge takes an optional *mapping* parameter, which maps columns in the original
+dataset to columns in the new merged dataset.
+
+For example, a JSON mapping of:
+
+.. code-block:: javascript
+
+    {
+        "8123": {"foodtype": "food_type"},
+        "9123": {"foodType": "food_type"}
+    }
+
+will map the "foodtype" column from dataset ID 8123 and the "foodType" column
+from dataset 9123 to a canonical "food_type" column in the merged dataset.
+
+.. code-block:: sh
+
+    curl -X POST -d "datasets=[8123,9123]&mapping={\"8123\":{\"foodtype\":\"food_type\"},"9123":{\"foodType\":\"food_type\"}}" http://bamboo.io/datasets/merge
+
+**returns:**
+
+.. code-block:: javascript
+
+    {"id": "8a3d74711475d8a51c84484fe73f24bd151242ea"}
+
 Joining multiple Datasets
 -------------------------
 
 You can perform column joins between multiple datasets.  The column that is
 joined on must be unique in the right hand side dataset and must exist in both
 datasets. The left hand side dataset ID is specified in the URL, and the right
-hand side is passed as the *other_dataset_id* param.
+hand side is passed as the *other_dataset_id* parameter.
 
 If the join succeeds the ID of the new dataset is returned as JSON. If the join
 fails an error message is returned, also as JSON.

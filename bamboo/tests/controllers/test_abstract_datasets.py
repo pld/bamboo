@@ -38,6 +38,7 @@ class TestAbstractDatasets(TestBase):
         update = open('%s%s' % (self.FIXTURE_PATH, file_name), 'r').read()
         result = json.loads(self.controller.update(dataset_id=dataset_id,
                                                    update=update))
+
         if validate:
             self.assertTrue(isinstance(result, dict))
             self.assertTrue(Dataset.ID in result)

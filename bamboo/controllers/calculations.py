@@ -1,8 +1,7 @@
-import simplejson as json
-
 from bamboo.controllers.abstract_controller import AbstractController
 from bamboo.core.parser import ParseError
 from bamboo.lib.exceptions import ArgumentError
+from bamboo.lib.jsontools import safe_json_loads
 from bamboo.models.calculation import Calculation, UniqueCalculationError,\
     DependencyError
 
@@ -71,7 +70,7 @@ class Calculations(AbstractController):
         """
         def action(dataset):
             if json_file:
-                calculations = json.loads(json_file.file.read())
+                calculations = safe_json_loads(json_file.file.read())
                 Calculation.create_from_list_or_dict(dataset, calculations)
                 success_message = ('created calculations from JSON for dataset'
                                    ':%s' % dataset_id)

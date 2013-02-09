@@ -1,0 +1,4 @@
+check process bamboo
+    with pidfile /var/www/bamboo/shared/pids/uwsgi_bamboo.pid
+    start program = "/var/www/bamboo/current/scripts/bamboo_uwsgi.sh start" as uid bamboo and gid bamboo
+    stop program = "/var/www/bamboo/current/scripts/bamboo_uwsgi.sh stop" as uid bamboo and gid bamboo

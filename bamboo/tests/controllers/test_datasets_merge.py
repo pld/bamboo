@@ -13,9 +13,23 @@ from bamboo.tests.decorators import requires_async
 
 class TestDatasetsMerge(TestAbstractDatasets):
 
+    def _post_merge(self, dataset_ids):
+        dataset_id1, dataset_id2 = dataset_ids
+        return json.loads(self.controller.merge(
+            dataset_ids=json.dumps(dataset_ids),
+            mapping=json.dumps({
+                dataset_id1: {
+                    "food_type": "food_type_2",
+                },
+                dataset_id2: {
+                    "code": "comments",
+                    "food_type": "food_type_2",
+                },
+            })))[Dataset.ID]
+
     @requires_async
     def test_merge_datasets_0_not_enough(self):
-        result = json.loads(self.controller.merge(datasets=json.dumps([])))
+        result = json.loads(self.controller.merge(dataset_ids=json.dumps([])))
 
         self.assertTrue(isinstance(result, dict))
         self.assertTrue(self.controller.ERROR in result)
@@ -24,7 +38,7 @@ class TestDatasetsMerge(TestAbstractDatasets):
     def test_merge_datasets_1_not_enough(self):
         dataset_id = self._post_file()
         result = json.loads(self.controller.merge(
-            datasets=json.dumps([dataset_id])))
+            dataset_ids=json.dumps([dataset_id])))
 
         self.assertTrue(isinstance(result, dict))
         self.assertTrue(self.controller.ERROR in result)
@@ -33,7 +47,7 @@ class TestDatasetsMerge(TestAbstractDatasets):
     def test_merge_datasets_must_exist(self):
         dataset_id = self._post_file()
         result = json.loads(self.controller.merge(
-            datasets=json.dumps([dataset_id, 0000])))
+            dataset_ids=json.dumps([dataset_id, 0000])))
 
         self.assertTrue(isinstance(result, dict))
         self.assertTrue(self.controller.ERROR in result)
@@ -42,7 +56,7 @@ class TestDatasetsMerge(TestAbstractDatasets):
         dataset_id1 = self._post_file()
         dataset_id2 = self._post_file()
         result = json.loads(self.controller.merge(
-            datasets=json.dumps([dataset_id1, dataset_id2])))
+            dataset_ids=json.dumps([dataset_id1, dataset_id2])))
 
         self.assertTrue(isinstance(result, dict))
         self.assertTrue(Dataset.ID in result)
@@ -85,7 +99,7 @@ class TestDatasetsMerge(TestAbstractDatasets):
             Dataset.STATE_PENDING)
 
         result = json.loads(self.controller.merge(
-            datasets=json.dumps([dataset_id1, dataset_id2])))
+            dataset_ids=json.dumps([dataset_id1, dataset_id2])))
 
         self.assertTrue(isinstance(result, dict))
         self.assertTrue(Dataset.ID in result)
@@ -94,7 +108,8 @@ class TestDatasetsMerge(TestAbstractDatasets):
 
         while True:
             datasets = [Dataset.find_one(dataset_id)
-                        for dataset_id in [merged_id, dataset_id1, dataset_id2]]
+                        for dataset_id in [merged_id, dataset_id1, dataset_id2]
+                        ]
 
             if all([dataset.is_ready for dataset in datasets]):
                 break
@@ -134,7 +149,7 @@ class TestDatasetsMerge(TestAbstractDatasets):
         dataset_id1 = self._post_file('good_eats_large.csv')
         dataset_id2 = self._post_file('good_eats_large.csv')
         result = json.loads(self.controller.merge(
-            datasets=json.dumps([dataset_id1, dataset_id2])))
+            dataset_ids=json.dumps([dataset_id1, dataset_id2])))
 
         self.assertTrue(isinstance(result, dict))
         self.assertTrue(Dataset.ID in result)
@@ -149,7 +164,7 @@ class TestDatasetsMerge(TestAbstractDatasets):
         dataset_id1 = self._post_file()
         dataset_id2 = self._post_file()
         result = json.loads(self.controller.merge(
-            datasets=json.dumps([dataset_id1, dataset_id2])))
+            dataset_ids=json.dumps([dataset_id1, dataset_id2])))
 
         self.assertTrue(isinstance(result, dict))
         self.assertTrue(Dataset.ID in result)
@@ -159,3 +174,51 @@ class TestDatasetsMerge(TestAbstractDatasets):
 
         for reserved_key in BAMBOO_RESERVED_KEYS + MONGO_RESERVED_KEY_STRS:
             self.assertFalse(reserved_key in row_keys)
+
+    def test_merge_with_map(self):
+        dataset_id1 = self._post_file()
+        dataset_id2 = self._post_file('good_eats_aux.csv')
+        merged_dataset_id = self._post_merge([dataset_id1, dataset_id2])
+
+        expected_columns = Dataset.find_one(
+            dataset_id1).dframe().columns.tolist()
+        expected_columns.remove("food_type")
+        expected_columns.append("food_type_2")
+        expected_columns = set(expected_columns)
+
+        merged_dataset = Dataset.find_one(merged_dataset_id)
+        new_columns = set(merged_dataset.dframe().columns)
+
+        self.assertEquals(expected_columns, new_columns)
+
+    def test_merge_with_map_update(self):
+        dataset_id1 = self._post_file()
+        dataset_id2 = self._post_file('good_eats_aux.csv')
+        merged_dataset_id = self._post_merge([dataset_id1, dataset_id2])
+
+        original_ds2 = json.loads(self.controller.show(dataset_id2))
+        original_length = len(original_ds2)
+        original_merge = json.loads(self.controller.show(merged_dataset_id))
+        original_merge_length = len(original_merge)
+
+        self._put_row_updates(dataset_id2, 'good_eats_aux_update.json')
+        response = json.loads(self.controller.show(dataset_id2))
+        new_length = len(response)
+
+        for new_row in response:
+            if new_row not in original_ds2:
+                break
+
+        response = json.loads(self.controller.show(merged_dataset_id))
+
+        for new_merge_row in response:
+            if new_merge_row not in original_merge:
+                break
+
+        new_merge_length = len(response)
+
+        self.assertEqual(original_length + 1, new_length)
+        self.assertEqual(original_merge_length + 1, new_merge_length)
+        self.assertEqual(new_row['food_type'], new_merge_row['food_type_2'])
+        self.assertEqual(new_row['code'], new_merge_row['comments'])
+        merged_dataset = Dataset.find_one(merged_dataset_id)

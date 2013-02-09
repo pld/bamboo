@@ -1,5 +1,4 @@
 from bamboo.lib.datetools import recognize_dates
-from bamboo.lib.jsontools import JSONError
 from bamboo.models.dataset import Dataset
 from bamboo.models.observation import Observation
 from bamboo.tests.test_base import TestBase
@@ -42,29 +41,19 @@ class TestObservation(TestBase):
 
     def test_find_with_query(self):
         self._save_observations()
-        rows = Observation.find(self.dataset, '{"rating": "delectible"}')
+        rows = Observation.find(self.dataset, {"rating": "delectible"})
         self.assertTrue(isinstance(rows, list))
-
-    def test_find_with_bad_query_json(self):
-        self._save_observations()
-        self.assertRaises(JSONError, Observation.find, self.dataset,
-                          '{rating: "delectible"}')
 
     def test_find_with_select(self):
         self._save_observations()
-        rows = Observation.find(self.dataset, select='{"rating": 1}')
+        rows = Observation.find(self.dataset, select={"rating": 1})
         self.assertTrue(isinstance(rows, list))
         self.assertEquals(sorted(rows[0].keys()), ['_id', 'rating'])
 
-    def test_find_with_bad_select(self):
-        self._save_observations()
-        self.assertRaises(JSONError, Observation.find, self.dataset,
-                          select='{rating: 1}')
-
     def test_find_with_select_and_query(self):
         self._save_observations()
-        rows = Observation.find(self.dataset, '{"rating": "delectible"}',
-                                '{"rating": 1}')
+        rows = Observation.find(self.dataset, {"rating": "delectible"},
+                                {"rating": 1})
         self.assertTrue(isinstance(rows, list))
         self.assertEquals(sorted(rows[0].keys()), ['_id', 'rating'])
 

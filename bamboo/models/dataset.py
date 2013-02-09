@@ -1,5 +1,4 @@
 from math import ceil
-import simplejson as json
 import uuid
 from time import gmtime, strftime
 
@@ -126,12 +125,27 @@ class Dataset(AbstractModel, ImportableDataset):
             self.joined_dataset_ids]
 
     @property
-    def merged_dataset_ids(self):
+    def merged_dataset_info(self):
         return self.record.get(self.MERGED_DATASETS, [])
+
+    @property
+    def merged_dataset_ids(self):
+        results = self.merged_dataset_info
+        return zip(*results)[-1] if results else results
 
     @property
     def merged_datasets(self):
         return self._linked_datasets(self.merged_dataset_ids)
+
+    @property
+    def merged_datasets_with_map(self):
+        results = self.merged_dataset_info
+
+        if len(results):
+            mappings, ids = zip(*results)
+            results = zip(mappings, self._linked_datasets(ids))
+
+        return results
 
     @property
     def pending_updates(self):
@@ -242,10 +256,10 @@ class Dataset(AbstractModel, ImportableDataset):
         self._add_linked_data(self.JOINED_DATASETS, self.joined_dataset_ids,
                               new_data)
 
-    def add_merged_dataset(self, new_dataset):
+    def add_merged_dataset(self, mapping, new_dataset):
         """Add the ID of `new_dataset` to the list of merged datasets."""
-        self._add_linked_data(self.MERGED_DATASETS, self.merged_dataset_ids,
-                              new_dataset.dataset_id)
+        self._add_linked_data(self.MERGED_DATASETS, self.merged_dataset_info,
+                              [mapping, new_dataset.dataset_id])
 
     def _add_linked_data(self, link_key, existing_data, new_data):
         self.update({link_key: existing_data + [new_data]})
@@ -313,12 +327,7 @@ class Dataset(AbstractModel, ImportableDataset):
 
         # if select append groups to select
         if select:
-            select = json.loads(select)
-            if not isinstance(select, dict):
-                raise ArgumentError('select argument must be a JSON dictionary'
-                                    ', found: %s.' % select)
             select.update(dict(zip(groups, [1] * len(groups))))
-            select = json.dumps(select)
 
         self.reload()
         dframe = self.dframe(query=query, select=select,
@@ -432,13 +441,12 @@ class Dataset(AbstractModel, ImportableDataset):
         """
         Observation.delete_all(self, {PARENT_DATASET_ID: parent_id})
 
-    def add_observations(self, json_data):
-        """Update `dataset` with new `data`."""
+    def add_observations(self, new_data):
+        """Update `dataset` with `new_data`."""
         record = self.record
         update_id = uuid.uuid4().hex
         self.add_pending_update(update_id)
 
-        new_data = json.loads(json_data)
         calculator = Calculator(self)
 
         new_dframe_raw = calculator.dframe_from_update(

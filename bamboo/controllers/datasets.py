@@ -5,6 +5,7 @@ from bamboo.core.frame import NonUniqueJoinError
 from bamboo.core.merge import merge_dataset_ids, MergeError
 from bamboo.core.summary import ColumnTypeError
 from bamboo.lib.exceptions import ArgumentError
+from bamboo.lib.jsontools import safe_json_loads
 from bamboo.lib.utils import parse_int
 from bamboo.models.dataset import Dataset
 
@@ -103,16 +104,13 @@ class Datasets(AbstractController):
         :raises: `ArgumentError` if no select is supplied or dataset is not in
             ready state.
         """
-        def action(dataset, select=select, limit=limit):
+        def action(dataset, query=query, select=select, limit=limit):
             if not dataset.is_ready:
                 raise ArgumentError('dataset is not finished importing')
-            if select is None:
-                raise ArgumentError('no select')
 
             limit = parse_int(limit, 0)
-
-            if select == self.SELECT_ALL_FOR_SUMMARY:
-                select = None
+            query = self._parse_query(query)
+            select = self._parse_select(select, required=True)
 
             return dataset.summarize(query, select,
                                      group, limit=limit,
@@ -136,15 +134,8 @@ class Datasets(AbstractController):
 
         return self._safe_get_and_call(dataset_id, action, callback=callback)
 
-    def show(self, dataset_id,
-                   query=None,
-                   select=None,
-                   distinct=None,
-                   limit=0,
-                   order_by=None,
-                   format=None,
-                   callback=False,
-                   count=False):
+    def show(self, dataset_id, query=None, select=None, distinct=None, limit=0,
+             order_by=None, format=None, callback=False, count=False):
         """ Return rows for `dataset_id`, matching the passed parameters.
 
         Retrieve the dataset by ID then limit that data using the optional
@@ -165,10 +156,13 @@ class Datasets(AbstractController):
             for query or select is improperly formatted. Otherwise a JSON
             string of the rows matching the parameters.
         """
-        limit = parse_int(limit, 0)
         content_type = self._content_type_for_format(format)
 
-        def action(dataset):
+        def action(dataset, limit=limit, query=query, select=select):
+            limit = parse_int(limit, 0)
+            query = self._parse_query(query)
+            select = self._parse_select(select)
+
             if count:
                 return dataset.count(query=query, distinct=distinct,
                                      limit=limit)
@@ -185,19 +179,26 @@ class Datasets(AbstractController):
         return self._safe_get_and_call(
             dataset_id, action, callback=callback, content_type=content_type)
 
-    def merge(self, datasets=None):
+    def merge(self, dataset_ids, mapping=None):
         """Merge the datasets with the dataset_ids in `datasets`.
 
         :param dataset: A JSON encoded array of dataset IDs for existing
             datasets.
+        :param mapping: An optional mapping from original column names to
+            destination names.
 
         :returns: An error if the datasets could not be found or less than two
             dataset IDs were passed.  Otherwise, the ID of the new merged
             dataset created by combining the datasets provided as an argument.
         """
 
-        def action(dataset):
-            dataset = merge_dataset_ids(datasets)
+        def action(dataset, dataset_ids=dataset_ids, mapping=mapping):
+            if mapping:
+                mapping = safe_json_loads(mapping)
+
+            dataset_ids = safe_json_loads(dataset_ids)
+            dataset = merge_dataset_ids(dataset_ids, mapping)
+
             return {Dataset.ID: dataset.dataset_id}
 
         return self._safe_get_and_call(
@@ -286,8 +287,10 @@ class Datasets(AbstractController):
         :returns: A JSON dict with the ID of the dataset updated, or with an
             error message.
         """
-        def action(dataset):
+        def action(dataset, update=update):
+            update = safe_json_loads(update)
             dataset.add_observations(update)
+
             return {Dataset.ID: dataset_id}
 
         return self._safe_get_and_call(
@@ -383,3 +386,25 @@ class Datasets(AbstractController):
 
     def _content_type_for_format(self, format):
         return self.CSV if format == self.CSV else self.JSON
+
+    def _parse_select(self, select, required=False):
+        if required and select is None:
+            raise ArgumentError('no select')
+
+        if select == self.SELECT_ALL_FOR_SUMMARY:
+            select = None
+        elif select is not None:
+            select = safe_json_loads(select, error_title='select')
+
+            if not isinstance(select, dict):
+                raise ArgumentError(
+                    'select argument must be a JSON dictionary, found: %s.' %
+                    select)
+
+        return select
+
+    def _parse_query(self, query):
+        if query:
+            query = safe_json_loads(query, error_title='string')
+
+        return query

@@ -1,11 +1,10 @@
-import simplejson as json
-
 from celery.task import task
 from pandas import concat
 
-from bamboo.models.dataset import Dataset
+from bamboo.core.frame import BambooFrame
 from bamboo.lib.io import import_dataset
 from bamboo.lib.async import call_async
+from bamboo.models.dataset import Dataset
 
 
 class MergeError(Exception):
@@ -13,7 +12,7 @@ class MergeError(Exception):
     pass
 
 
-def merge_dataset_ids(dataset_ids):
+def merge_dataset_ids(dataset_ids, mapping):
     """Load a JSON array of dataset IDs and start a background merge task.
 
     :param dataset_ids: An array of dataset IDs to merge.
@@ -24,7 +23,6 @@ def merge_dataset_ids(dataset_ids):
         if three dataset IDs are provided and one of them is bad, an error is
         not raised.
     """
-    dataset_ids = json.loads(dataset_ids)
     datasets = [Dataset.find_one(dataset_id) for dataset_id in dataset_ids]
     datasets = [dataset for dataset in datasets if dataset.record]
 
@@ -34,13 +32,13 @@ def merge_dataset_ids(dataset_ids):
 
     new_dataset = Dataset.create()
 
-    call_async(_merge_datasets_task, new_dataset, datasets)
+    call_async(_merge_datasets_task, new_dataset, datasets, mapping)
 
     return new_dataset
 
 
 @task(default_retry_delay=2, ignore_result=True)
-def _merge_datasets_task(new_dataset, datasets):
+def _merge_datasets_task(new_dataset, datasets, mapping):
     """Merge datasets specified by dataset_ids.
 
     :param new_dataset: The dataset store the merged dataset in.
@@ -51,21 +49,31 @@ def _merge_datasets_task(new_dataset, datasets):
         [dataset.reload() for dataset in datasets]
         raise _merge_datasets_task.retry(countdown=1)
 
-    new_dframe = _merge_datasets(datasets)
+    new_dframe = _merge_datasets(datasets, mapping)
 
     # save the resulting dframe as a new dataset
     import_dataset(new_dataset, dframe=new_dframe)
 
     # store the child dataset ID with each parent
     for dataset in datasets:
-        dataset.add_merged_dataset(new_dataset)
+        dataset.add_merged_dataset(mapping, new_dataset)
 
 
-def _merge_datasets(datasets):
+def _merge_datasets(datasets, mapping):
     """Merge two or more datasets."""
     dframes = []
 
+    if not mapping:
+        mapping = {}
+
     for dataset in datasets:
-        dframes.append(dataset.dframe().add_parent_column(dataset.dataset_id))
+        dframe = dataset.dframe()
+        column_map = mapping.get(dataset.dataset_id)
+
+        if column_map:
+            dframe = BambooFrame(dframe.rename(columns=column_map))
+
+        dframe = dframe.add_parent_column(dataset.dataset_id)
+        dframes.append(dframe)
 
     return concat(dframes, ignore_index=True)

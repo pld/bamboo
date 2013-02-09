@@ -222,7 +222,7 @@ class Calculation(AbstractModel):
 
             if aggregated_dataset:
                 name = self._check_name_and_make_unique(name,
-                                                       aggregated_dataset)
+                                                        aggregated_dataset)
 
         else:
             name = self._check_name_and_make_unique(name, dataset)
@@ -251,8 +251,8 @@ class Calculation(AbstractModel):
             calculations = [calculations]
 
         if not len(calculations) or not isinstance(calculations, list):
-            raise ArgumentError(
-                'Improper format for JSON calculations.')
+            raise ArgumentError('Improper format for JSON calculations.')
+
         try:
             for calc in calculations:
                 cls.create(dataset, calc[cls.FORMULA], calc[cls.NAME],
