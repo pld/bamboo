@@ -258,6 +258,7 @@ class Calculator(object):
         # update the merged datasets with new_dframe
         for merged_dataset in self.dataset.merged_datasets:
             merged_calculator = Calculator(merged_dataset)
+            # TODO accomodate merges with a mapping
             merged_calculator.calculate_updates(
                 merged_calculator,
                 slugified_data,
