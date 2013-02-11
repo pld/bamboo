@@ -211,7 +211,7 @@ class Calculator(object):
             return Aggregator(self.dataset, self.dframe, groups,
                               self.parser.aggregation, name, columns)
 
-        return new_columns[0]
+        return columns[0]
 
     def _ensure_dframe(self):
         """Ensure `dframe` for the calculator's dataset is defined."""
