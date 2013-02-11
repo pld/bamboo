@@ -44,6 +44,10 @@ class AbstractModel(object):
         return self.record.get(self.ERROR_MESSAGE)
 
     @property
+    def is_pending(self):
+        return self.state == self.STATE_PENDING
+
+    @property
     def is_ready(self):
         return self.state == self.STATE_READY
 

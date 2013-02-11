@@ -1,6 +1,7 @@
 from bamboo.core.parser import Parser
 from bamboo.core.calculator import Calculator
 from bamboo.lib.datetools import recognize_dates
+from bamboo.models.calculation import Calculation
 from bamboo.models.dataset import Dataset
 from bamboo.tests.test_base import TestBase
 
@@ -47,7 +48,9 @@ class TestCalculator(TestBase):
             calculator = Calculator(self.dataset)
 
             groups = self.dataset.split_groups(self.group)
-            calculator.calculate_column(formula, name, groups)
+            calculation = Calculation()
+            calculation.save(self.dataset, formula, name, self.group)
+            calculator.calculate_columns([calculation])
 
             self.column_labels_to_slugs = self.dataset.schema.labels_to_slugs
 
