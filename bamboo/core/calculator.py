@@ -44,24 +44,6 @@ class Calculator(object):
         return aggregation
 
     def calculate_columns(self, calculations):
-        self._ensure_dframe()
-        new_dframe = self.dframe
-
-        for c in calculations:
-            column = self.calculate_column(c.formula, c.name, c.groups_as_list)
-
-            if column is not None:
-                new_dframe = new_dframe.join(column)
-
-        if len(new_dframe.columns) > len(self.dframe.columns):
-            self.dataset.replace_observations(new_dframe)
-
-        # propagate calculation to any merged child datasets
-        for merged_dataset in self.dataset.merged_datasets:
-            merged_calculator = Calculator(merged_dataset)
-            merged_calculator.propagate_column(self.dataset)
-
-    def calculate_column(self, formula, name, groups=None):
         """Calculate a new column based on `formula` store as `name`.
 
         The new column is joined to `dframe` and stored in `self.dataset`.
@@ -83,14 +65,25 @@ class Calculator(object):
         :param groups: A list of columns to group on for aggregate
             calculations.
         """
-        aggregation, new_columns = self.make_columns(formula, name)
+        self._ensure_dframe()
+        new_dframe = self.dframe
 
-        if aggregation:
-            agg = Aggregator(self.dataset, self.dframe,
-                             groups, aggregation, name)
-            agg.save(new_columns)
-        else:
-            return new_columns[0]
+        for c in calculations:
+            result = self.parse_to_columns_and_agg(
+                c.formula, c.name, c.groups_as_list)
+
+            if c.aggregation:
+                result.save()
+            else:
+                new_dframe = new_dframe.join(result)
+
+        if len(new_dframe.columns) > len(self.dframe.columns):
+            self.dataset.replace_observations(new_dframe)
+
+        # propagate calculation to any merged child datasets
+        for merged_dataset in self.dataset.merged_datasets:
+            merged_calculator = Calculator(merged_dataset)
+            merged_calculator.propagate_column(self.dataset)
 
     def dependent_columns(self):
         return self.parser.context.dependent_columns
@@ -199,22 +192,26 @@ class Calculator(object):
                         'Cannot update. This is the right hand join and the'
                         'column "%s" will become non-unique.' % on)
 
-    def make_columns(self, formula, name, dframe=None):
+    def parse_to_columns_and_agg(self, formula, name, groups, dframe=None):
         """Parse formula into function and variables."""
         if dframe is None:
             dframe = self.dataset.dframe()
 
-        aggregation, functions = self.parser.parse_formula(formula)
+        functions = self.parser.parse_formula(formula)
 
-        new_columns = []
+        columns = []
 
         for function in functions:
-            new_column = dframe.apply(
+            column = dframe.apply(
                 function, axis=1, args=(self.parser.context, ))
-            new_column.name = name
-            new_columns.append(new_column)
+            column.name = name
+            columns.append(column)
 
-        return aggregation, new_columns
+        if self.parser.aggregation:
+            return Aggregator(self.dataset, self.dframe, groups,
+                              self.parser.aggregation, name, columns)
+
+        return new_columns[0]
 
     def _ensure_dframe(self):
         """Ensure `dframe` for the calculator's dataset is defined."""
@@ -358,12 +355,10 @@ class Calculator(object):
         :param agg_dataset: The DataSet to store the aggregation in.
         """
         # parse aggregation and build column arguments
-        aggregation, new_columns = self.make_columns(
-            formula, name, new_dframe)
+        aggregation = self.parse_to_columns_and_agg(
+            formula, name, groups, new_dframe)
 
-        agg = Aggregator(self.dataset, self.dframe,
-                         groups, aggregation, name)
-        new_agg_dframe = agg.update(agg_dataset, self, formula, new_columns)
+        new_agg_dframe = agg.update(agg_dataset, self, formula)
 
         # jsondict from new dframe
         new_data = new_agg_dframe.to_jsondict()
