@@ -18,39 +18,46 @@ class TestCalculation(TestBase):
     def _save_calculation(self, formula):
         if not formula:
             formula = self.formula
-        return self.calculation.save(self.dataset, formula, self.name)
+        return Calculation.create(self.dataset, formula, self.name)
 
     def _save_observations(self):
         self.dataset.save_observations(self.get_data('good_eats.csv'))
 
     def _save_observations_and_calculation(self, formula=None):
         self._save_observations()
-        self.calculation = Calculation()
         return self._save_calculation(formula)
 
     def test_save(self):
-        record = self._save_observations_and_calculation()
+        calculation = self._save_observations_and_calculation()
+
+        self.assertTrue(isinstance(calculation, Calculation))
+
+        record = calculation.record
+
         self.assertTrue(isinstance(record, dict))
         self.assertTrue(Calculation.FORMULA in record.keys())
         self.assertTrue(Calculation.STATE in record.keys())
+
         record = Calculation.find(self.dataset)[0].record
+
         self.assertEqual(record[Calculation.STATE], Calculation.STATE_READY)
         self.assertTrue(Calculation(record).is_ready)
 
     def test_save_set_status(self):
-        record = self._save_observations_and_calculation()
+        record = self._save_observations_and_calculation().record
+
         self.assertTrue(isinstance(record, dict))
         self.assertTrue(Calculation.FORMULA in record.keys())
 
     def test_save_set_aggregation(self):
-        record = self._save_observations_and_calculation('max(amount)')
-        calculation = Calculation.find(self.dataset)[0]
+        calculation = self._save_observations_and_calculation('max(amount)')
+
         self.assertEqual('max', calculation.aggregation)
 
     def test_save_set_aggregation_id(self):
-        record = self._save_observations_and_calculation('max(amount)')
+        calculation = self._save_observations_and_calculation('max(amount)')
         agg_id = self.dataset.aggregated_datasets_dict['']
-        calculation = Calculation.find(self.dataset)[0]
+
         self.assertEqual(agg_id, calculation.aggregation_id)
 
     def test_save_improper_formula(self):

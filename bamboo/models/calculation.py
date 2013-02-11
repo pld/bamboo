@@ -49,13 +49,15 @@ def delete_task(calculation, dataset, slug):
 class CalculateTask(Task):
     def after_return(self, status, retval, task_id, args, kwargs, einfo=None):
         if status == 'FAILURE':
-            calculation = args[0]
-            calculation.failed(traceback.format_exc())
+            calculations = args[0]
+
+            for calculation in calculations:
+                calculation.failed(traceback.format_exc())
 
 
 @task(base=CalculateTask, default_retry_delay=5, max_retries=10,
       ignore_result=True)
-def calculate_task(calculation, dataset):
+def calculate_task(calculations, dataset):
     """Background task to run a calculation.
 
     Set calculation to failed and raise if an exception occurs.
@@ -64,20 +66,20 @@ def calculate_task(calculation, dataset):
     :param dataset: Dataset to run calculation on.
     """
     # block until other calculations for this dataset are finished
-    calculation.restart_if_has_pending(dataset)
+    calculations[0].restart_if_has_pending(dataset, calculations[1:])
     dataset.clear_summary_stats()
 
     calculator = Calculator(dataset)
-    calculator.calculate_column(calculation.formula, calculation.name,
-                                calculation.groups_as_list)
-    calculation.add_dependencies(dataset, calculator.dependent_columns())
+    calculator.calculate_columns(calculations)
 
-    if calculation.aggregation is not None:
-        dataset.reload()
-        aggregated_id = dataset.aggregated_datasets_dict[calculation.group]
-        calculation.set_aggregation_id(aggregated_id)
+    for calculation in calculations:
+        calculation.add_dependencies(dataset, calculator.dependent_columns())
 
-    calculation.ready()
+        if calculation.aggregation is not None:
+            aggregated_id = dataset.aggregated_datasets_dict[calculation.group]
+            calculation.set_aggregation_id(aggregated_id)
+
+        calculation.ready()
 
 
 class Calculation(AbstractModel):
@@ -237,13 +239,13 @@ class Calculation(AbstractModel):
         }
         super(self.__class__, self).save(record)
 
-        call_async(calculate_task, self, dataset)
-
-        return record
+        return self
 
     @classmethod
     def create(cls, dataset, formula, name, group=None):
-        return super(cls, cls).create(dataset, formula, name, group)
+        calculation = super(cls, cls).create(dataset, formula, name, group)
+        call_async(calculate_task, [calculation], dataset)
+        return calculation
 
     @classmethod
     def create_from_list_or_dict(cls, dataset, calculations):
@@ -253,12 +255,16 @@ class Calculation(AbstractModel):
         if not len(calculations) or not isinstance(calculations, list):
             raise ArgumentError('Improper format for JSON calculations.')
 
+        # Pull out args to check JSON format
         try:
-            for calc in calculations:
-                cls.create(dataset, calc[cls.FORMULA], calc[cls.NAME],
-                           calc.get(cls.GROUP))
+            calculations = [[c[cls.FORMULA], c[cls.NAME], c.get(cls.GROUP)]
+                            for c in calculations]
         except KeyError as e:
             raise ArgumentError('Required key %s not found in JSON' % e)
+
+        calculations = [cls().save(dataset, formula, name, group)
+                        for formula, name, group in calculations]
+        call_async(calculate_task, calculations, dataset)
 
     @classmethod
     def find_one(cls, dataset_id, name, group=None):
@@ -277,11 +283,12 @@ class Calculation(AbstractModel):
         return super(cls, cls).find({DATASET_ID: dataset.dataset_id},
                                     order_by='name')
 
-    def restart_if_has_pending(self, dataset):
-        unfinished_calcs = [
-            calc for calc in dataset.calculations() if not calc.is_ready]
+    def restart_if_has_pending(self, dataset, current_calcs=[]):
+        current_names = sorted([self.name] + [c.name for c in current_calcs])
+        unfinished = [c for c in dataset.calculations() if not c.is_ready]
+        unfinished_names = [c.name for c in unfinished[:len(current_names)]]
 
-        if len(unfinished_calcs) and self.name != unfinished_calcs[0].name:
+        if len(unfinished) and current_names != sorted(unfinished_names):
             raise calculate_task.retry()
 
     def add_dependencies(self, dataset, dependent_columns):

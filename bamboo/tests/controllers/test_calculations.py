@@ -493,7 +493,7 @@ class TestCalculations(TestBase):
             dataset = Dataset.find_one(dataset_id)
 
             if dataset.aggregated_datasets.get(group) and all(
-                    [c.is_ready for c in dataset.calculations()]):
+                    [not c.is_pending for c in dataset.calculations()]):
                 break
             sleep(self.SLEEP_DELAY)
 

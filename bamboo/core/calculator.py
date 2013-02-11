@@ -43,6 +43,24 @@ class Calculator(object):
 
         return aggregation
 
+    def calculate_columns(self, calculations):
+        self._ensure_dframe()
+        new_dframe = self.dframe
+
+        for c in calculations:
+            column = self.calculate_column(c.formula, c.name, c.groups_as_list)
+
+            if column is not None:
+                new_dframe = new_dframe.join(column)
+
+        if len(new_dframe.columns) > len(self.dframe.columns):
+            self.dataset.replace_observations(new_dframe)
+
+        # propagate calculation to any merged child datasets
+        for merged_dataset in self.dataset.merged_datasets:
+            merged_calculator = Calculator(merged_dataset)
+            merged_calculator.propagate_column(self.dataset)
+
     def calculate_column(self, formula, name, groups=None):
         """Calculate a new column based on `formula` store as `name`.
 
@@ -65,21 +83,14 @@ class Calculator(object):
         :param groups: A list of columns to group on for aggregate
             calculations.
         """
-        self._ensure_dframe()
-
         aggregation, new_columns = self.make_columns(formula, name)
 
         if aggregation:
-            agg = Aggregator(self.dataset, self.dataset.dframe(),
+            agg = Aggregator(self.dataset, self.dframe,
                              groups, aggregation, name)
             agg.save(new_columns)
         else:
-            self.dataset.replace_observations(self.dframe.join(new_columns[0]))
-
-        # propagate calculation to any merged child datasets
-        for merged_dataset in self.dataset.merged_datasets:
-            merged_calculator = Calculator(merged_dataset)
-            merged_calculator.propagate_column(self.dataset)
+            return new_columns[0]
 
     def dependent_columns(self):
         return self.parser.context.dependent_columns
