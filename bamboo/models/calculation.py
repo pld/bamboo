@@ -39,6 +39,7 @@ def delete_task(calculation, dataset, slug):
     del dframe[slug]
     dataset.replace_observations(dframe, overwrite=True)
     calculation.remove_dependencies()
+    dataset.clear_summary_stats(column=slug)
 
     super(calculation.__class__, calculation).delete({
         DATASET_ID: calculation.dataset_id,

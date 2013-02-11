@@ -168,7 +168,7 @@ class TestCalculations(TestBase):
         self.assertTrue(isinstance(result, dict))
         self.assertTrue(Datasets.ERROR in result.keys())
 
-    def test_create_remove_summary(self):
+    def test_create_update_summary(self):
         dataset_id = self._post_file()
         Datasets().summary(
             dataset_id,
@@ -179,9 +179,9 @@ class TestCalculations(TestBase):
         self.assertTrue(isinstance(dataset.stats[Dataset.ALL], dict))
 
         self._post_formula()
+
         # stats should have new column for calculation
         dataset = Dataset.find_one(self.dataset_id)
-
         self.assertTrue(self.name in dataset.stats.get(Dataset.ALL).keys())
 
     def test_delete_nonexistent_calculation(self):
@@ -197,8 +197,18 @@ class TestCalculations(TestBase):
         self.assertTrue(AbstractController.SUCCESS in result)
 
         dataset = Dataset.find_one(self.dataset_id)
-
         self.assertTrue(self.name not in dataset.schema.labels_to_slugs)
+
+    def test_delete_update_summary(self):
+        self._post_formula()
+
+        dataset = Dataset.find_one(self.dataset_id)
+        self.assertTrue(self.name in dataset.stats.get(Dataset.ALL).keys())
+
+        json.loads(self.controller.delete(self.dataset_id, self.name))
+
+        dataset = Dataset.find_one(self.dataset_id)
+        self.assertTrue(self.name not in dataset.stats.get(Dataset.ALL).keys())
 
     def test_show_jsonp(self):
         self._post_formula()
