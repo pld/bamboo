@@ -264,12 +264,18 @@ class Dataset(AbstractModel, ImportableDataset):
     def _add_linked_data(self, link_key, existing_data, new_data):
         self.update({link_key: existing_data + [new_data]})
 
-    def clear_summary_stats(self, field=ALL):
-        """Remove summary stats for `field`."""
+    def clear_summary_stats(self, group=ALL, column=None):
+        """Remove summary stats for `group` and optional `column`."""
         stats = self.stats
 
         if stats:
-            stats.pop(field, None)
+            if column:
+                stats_for_field = stats.get(group)
+
+                if stats_for_field:
+                    stats_for_field.pop(column, None)
+            else:
+                stats.pop(group, None)
             self.update({self.STATS: stats})
 
     def save(self, dataset_id=None):
