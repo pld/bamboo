@@ -394,6 +394,7 @@ class TestCalculations(TestBase):
                 'water_source_type': 'borehole',
             }
             result = self._post_update(dataset_id, update)
+            self.assertTrue(Dataset.ID in result.keys())
             dataset = Dataset.find_one(dataset_id)
             dframe_after_update = dataset.dframe()
             self.assertEqual(len(dframe_after) + 1, len(dframe_after_update))

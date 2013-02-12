@@ -69,13 +69,14 @@ class Calculator(object):
         new_dframe = self.dframe
 
         for c in calculations:
-            result = self.parse_to_columns_and_agg(
-                c.formula, c.name, c.groups_as_list)
 
             if c.aggregation:
-                result.save()
+                aggregation = self.parse_aggregation(
+                    c.formula, c.name, c.groups_as_list)
+                aggregation.save()
             else:
-                new_dframe = new_dframe.join(result)
+                columns = self.parse_columns(c.formula, c.name)
+                new_dframe = new_dframe.join(columns[0])
 
         if len(new_dframe.columns) > len(self.dframe.columns):
             self.dataset.replace_observations(new_dframe)
@@ -172,6 +173,30 @@ class Calculator(object):
 
         self.dataset.update_complete(update_id)
 
+    def parse_aggregation(self, formula, name, groups, dframe=None):
+        columns = self.parse_columns(formula, name, dframe)
+
+        return Aggregator(self.dataset, self.dframe, groups,
+                          self.parser.aggregation, name, columns)
+
+
+    def parse_columns(self, formula, name, dframe=None):
+        """Parse formula into function and variables."""
+        if dframe is None:
+            dframe = self.dataset.dframe()
+
+        functions = self.parser.parse_formula(formula)
+
+        columns = []
+
+        for function in functions:
+            column = dframe.apply(
+                function, axis=1, args=(self.parser.context, ))
+            column.name = name
+            columns.append(column)
+
+        return columns
+
     def _check_update_is_valid(self, new_dframe_raw):
         """Check if the update is valid.
 
@@ -191,27 +216,6 @@ class Calculator(object):
                     raise NonUniqueJoinError(
                         'Cannot update. This is the right hand join and the'
                         'column "%s" will become non-unique.' % on)
-
-    def parse_to_columns_and_agg(self, formula, name, groups, dframe=None):
-        """Parse formula into function and variables."""
-        if dframe is None:
-            dframe = self.dataset.dframe()
-
-        functions = self.parser.parse_formula(formula)
-
-        columns = []
-
-        for function in functions:
-            column = dframe.apply(
-                function, axis=1, args=(self.parser.context, ))
-            column.name = name
-            columns.append(column)
-
-        if self.parser.aggregation:
-            return Aggregator(self.dataset, self.dframe, groups,
-                              self.parser.aggregation, name, columns)
-
-        return columns[0]
 
     def _ensure_dframe(self):
         """Ensure `dframe` for the calculator's dataset is defined."""
@@ -233,7 +237,7 @@ class Calculator(object):
             if calculation.aggregation is not None:
                 aggregations.append(calculation)
             else:
-                _, function = self.parser.parse_formula(calculation.formula)
+                function = self.parser.parse_formula(calculation.formula)
                 new_column = new_dframe.apply(function[0], axis=1,
                                               args=(self.parser.context, ))
                 potential_name = calculation.name
@@ -355,10 +359,9 @@ class Calculator(object):
         :param agg_dataset: The DataSet to store the aggregation in.
         """
         # parse aggregation and build column arguments
-        aggregation = self.parse_to_columns_and_agg(
-            formula, name, groups, new_dframe)
+        aggregation = self.parse_aggregation(formula, name, groups, new_dframe)
 
-        new_agg_dframe = agg.update(agg_dataset, self, formula)
+        new_agg_dframe = aggregation.update(agg_dataset, self, formula)
 
         # jsondict from new dframe
         new_data = new_agg_dframe.to_jsondict()

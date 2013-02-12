@@ -80,7 +80,7 @@ class Aggregator(object):
     def _dframe_from_calculator(self, calculator, formula, dframe):
         """Create a new aggregation and update return updated dframe."""
         # build column arguments from original dframe
-        _, columns = calculator.make_columns(
+        columns = calculator.parse_columns(
             formula, self.name, self.dframe)
         new_dframe = self.aggregation.eval(columns)
 
