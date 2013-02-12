@@ -13,15 +13,17 @@ class Aggregator(object):
     this dataset.  Otherwise create a new linked dataset.
     """
 
-    def __init__(self, dataset, dframe, groups, _type, name):
+    def __init__(self, dataset, dframe, groups, _type, name, columns):
         """Create an Aggregator.
 
+        :param columns: The columns to aggregate over.
         :param dataset: The dataset to aggregate.
         :param dframe: The DataFrame to aggregate.
         :param groups: A list of columns to group on.
         :param _type: The aggreagtion to perform.
         :param name: The name of the aggregation.
         """
+        self.columns = columns
         self.dataset = dataset
         self.dframe = dframe
         self.groups = groups
@@ -29,16 +31,15 @@ class Aggregator(object):
         aggregation = AGGREGATIONS.get(_type)
         self.aggregation = aggregation(self.name, self.groups, self.dframe)
 
-    def save(self, columns):
-        """Save this aggregation applied to the passed in columns.
+    def save(self):
+        """Save this aggregation.
 
         If an aggregated dataset for this aggregations group already exists
         store in this dataset, if not create a new aggregated dataset and store
         the aggregation in this new aggregated dataset.
 
-        :param columns: The column aggregate.
         """
-        new_dframe = BambooFrame(self.aggregation.eval(columns))
+        new_dframe = BambooFrame(self.aggregation.eval(self.columns))
         new_dframe = new_dframe.add_parent_column(self.dataset.dataset_id)
 
         agg_dataset = self.dataset.aggregated_dataset(self.groups)
@@ -53,7 +54,7 @@ class Aggregator(object):
 
         self.new_dframe = new_dframe
 
-    def update(self, child_dataset, calculator, formula, columns):
+    def update(self, child_dataset, calculator, formula):
         """Attempt to reduce an update and store."""
         parent_dataset_id = self.dataset.dataset_id
 
@@ -67,7 +68,7 @@ class Aggregator(object):
         if not self.groups and 'reduce' in dir(self.aggregation):
             # if it is not grouped and a reduce is defined
             dframe = BambooFrame(
-                self.aggregation.reduce(dframe, columns))
+                self.aggregation.reduce(dframe, self.columns))
         else:
             dframe = self._dframe_from_calculator(calculator, formula, dframe)
 
@@ -79,7 +80,7 @@ class Aggregator(object):
     def _dframe_from_calculator(self, calculator, formula, dframe):
         """Create a new aggregation and update return updated dframe."""
         # build column arguments from original dframe
-        _, columns = calculator.make_columns(
+        columns = calculator.parse_columns(
             formula, self.name, self.dframe)
         new_dframe = self.aggregation.eval(columns)
 
