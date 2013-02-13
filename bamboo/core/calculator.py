@@ -7,6 +7,7 @@ from bamboo.core.aggregator import Aggregator
 from bamboo.core.frame import BambooFrame, NonUniqueJoinError
 from bamboo.core.parser import ParseError, Parser
 from bamboo.lib.mongo import MONGO_RESERVED_KEYS
+from bamboo.lib.schema_builder import make_unique
 
 
 class Calculator(object):
@@ -192,7 +193,7 @@ class Calculator(object):
         for function in functions:
             column = dframe.apply(
                 function, axis=1, args=(self.parser.context, ))
-            column.name = name
+            column.name = make_unique(name, [c.name for c in columns])
             columns.append(column)
 
         return columns
