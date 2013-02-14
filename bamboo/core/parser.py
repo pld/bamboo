@@ -278,7 +278,7 @@ class Parser(object):
         else:
             functions.append(partial(self.parsed_expr.eval))
 
-        return self.aggregation, functions
+        return functions
 
     def validate_formula(self, formula, row):
         """Validate the *formula* on an example *row* of data.
@@ -294,7 +294,7 @@ class Parser(object):
         self.aggregation = None
 
         # check valid formula
-        aggregation, functions = self.parse_formula(formula)
+        functions = self.parse_formula(formula)
 
         if not self.context.schema:
             raise ParseError(
@@ -307,7 +307,7 @@ class Parser(object):
         except KeyError, err:
             raise ParseError('Missing column reference: %s' % err)
 
-        return aggregation
+        return self.aggregation
 
     def _build_caseless_or_expression(self, strings):
         literals = [
