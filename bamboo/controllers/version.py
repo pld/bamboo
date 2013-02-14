@@ -1,4 +1,5 @@
 import simplejson as json
+from subprocess import check_output
 
 from bamboo.controllers.abstract_controller import AbstractController
 
@@ -13,5 +14,8 @@ class Version(AbstractController):
         """Return JSON of version and version description"""
         return json.dumps({
             'version': self.VERSION_NUMBER,
-            'description': self.VERSION_DESCRIPTION
+            'description': self.VERSION_DESCRIPTION,
+            'branch': check_output(['git', 'rev-parse', '--abbrev-ref',
+                'HEAD']).strip(),
+            'commit': check_output(['git', 'rev-parse', 'HEAD']).strip(),
         })

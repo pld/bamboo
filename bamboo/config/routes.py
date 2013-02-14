@@ -62,7 +62,7 @@ ROUTES = [
         '/datasets/:dataset_id/rolling', 'datasets', 'rolling'),
     # version
     ('version', 'GET',
-        '/', 'version', 'index'),
+        '/version', 'version', 'index'),
 ]
 
 

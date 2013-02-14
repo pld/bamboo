@@ -12,4 +12,12 @@ class TestVersion(TestBase):
 
     def test_index(self):
         response = json.loads(self.controller.index())
-        self.assertTrue('version' in response.keys())
+        response_keys = response.keys()
+        keys = [
+            'version',
+            'description',
+            'branch',
+            'commit',
+        ]
+        for key in keys:
+            self.assertTrue(key in response_keys)
