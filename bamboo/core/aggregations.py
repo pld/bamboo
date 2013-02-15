@@ -1,6 +1,7 @@
 from math import isnan
 
 from pandas import concat, DataFrame, Series
+from scipy.stats.stats import pearsonr
 
 from bamboo.lib.utils import minint, parse_float
 
@@ -40,18 +41,40 @@ class Aggregation(object):
         return DataFrame({self.name: Series([value])})
 
     def _groupby(self):
-        return self.dframe[self.groups].join(
-            self.column).groupby(self.groups, as_index=False)
+        return self.dframe[self.groups].join(concat(
+            self.columns, axis=1)).groupby(self.groups, as_index=False)
 
 
-class MultiColumnAggregation(Aggregation):
-    """Interface for aggregations that create multiple columns."""
+class RatioAggregation(Aggregation):
+    """Calculate the ratio.
 
-    def group(self, columns):
+    Columns with N/A for either the numerator or denominator are ignored.  This
+    will store associated numerator and denominator columns.  Written as
+    ``ratio(NUMERATOR, DENOMINATOR)``. Where `NUMERATOR` and `DENOMINATOR` are
+    both valid formulas.
+    """
+
+    formula_name = 'ratio'
+
+    def group(self):
+        return self._group(self.columns)
+
+    def _group(self, columns):
         dframe = self.dframe[self.groups]
         dframe = self._build_dframe(dframe, columns)
         groupby = dframe.groupby(self.groups, as_index=False)
         return self._add_calculated_column(groupby.sum())
+
+    def agg(self):
+        dframe = DataFrame(index=self.column.index)
+
+        dframe = self._build_dframe(dframe, self.columns)
+        column_names = [self._name_for_idx(i) for i in xrange(0, 2)]
+        dframe = dframe.dropna(subset=column_names)
+
+        dframe = DataFrame([dframe.sum().to_dict()])
+
+        return self._add_calculated_column(dframe)
 
     def reduce(self, dframe, columns):
         """Reduce the columns and store in `dframe`.
@@ -92,6 +115,44 @@ class MultiColumnAggregation(Aggregation):
     def _agg_dframe(self, dframe):
         return dframe[self._name_for_idx(0)].apply(float) /\
             dframe[self._name_for_idx(1)]
+
+
+class PearsonAggregation(Aggregation):
+    """Calculate the ratio.
+    """
+
+    formula_name = 'pearson'
+
+    def agg(self):
+        coor, pvalue = self._pearsonr(self.columns)
+        pvalue_column = Series([pvalue], name=self._pvalue_name)
+        return self._value_to_dframe(coor).join(pvalue_column)
+
+    def group(self):
+        def pearson(dframe):
+            columns = [dframe[name] for name in dframe.columns[-2:]]
+
+            return DataFrame([self._pearsonr(columns)],
+                             columns=[self.name, self._pvalue_name])
+
+        groupby = self._groupby()
+        dframe = groupby.apply(pearson).reset_index()
+
+        # remove extra index column
+        del dframe[dframe.columns[len(self.groups)]]
+        return dframe
+
+    def _pearsonr(self, columns):
+        columns = [c.dropna() for c in columns]
+        shared_index = reduce(
+            lambda x, y: x.index.intersection(y.index), columns)
+        columns = [c.ix[shared_index] for c in columns]
+
+        return pearsonr(*columns)
+
+    @property
+    def _pvalue_name(self):
+        return '%s_pvalue' % self.name
 
 
 class MaxAggregation(Aggregation):
@@ -145,14 +206,14 @@ class NewestAggregation(Aggregation):
     """For the newest index column get the value column."""
 
     formula_name = 'newest'
-
-    index_column = 0
     value_column = 1
 
     def agg(self):
-        self.columns[self.index_column].name = 'index'
-        idframe = DataFrame(self.columns[self.value_column]).join(
-            self.columns[self.index_column]).dropna().reset_index()
+        index, values = self.columns
+        index.name = 'index'
+        values.name = self.name
+
+        idframe = DataFrame(values).join(index).dropna().reset_index()
         idx = idframe['index'].argmax()
         result = idframe[self.name].get_value(idx)
 
@@ -165,24 +226,24 @@ class NewestAggregation(Aggregation):
 
         newest_col = self.columns[self.value_column][indices]
         newest_col.index = argmax_df.index
+        newest_col.name = self.name
 
         return argmax_df.join(newest_col)
 
 
-class MeanAggregation(MultiColumnAggregation):
+class MeanAggregation(RatioAggregation, Aggregation):
     """Calculate the arithmetic mean.
 
     Written as ``mean(FORMULA)``. Where `FORMULA` is a valid formula.
 
-    Because mean is irreducible this inherits from `MultiColumnAggregation` to
+    Because mean is a ratio this inherits from `RatioAggregation` to
     use its reduce generic implementation.
     """
 
     formula_name = 'mean'
 
     def group(self):
-        return super(self.__class__, self).group(
-            [self.column, Series([1] * len(self.column))])
+        return self._group([self.column, Series([1] * len(self.column))])
 
     def agg(self):
         dframe = DataFrame(index=[0])
@@ -194,6 +255,24 @@ class MeanAggregation(MultiColumnAggregation):
         dframe = DataFrame([dframe.sum().to_dict()])
 
         return self._add_calculated_column(dframe)
+
+
+class StandardDeviationAggregation(Aggregation):
+    """Calculate the standard deviation. Written as ``std(FORMULA)``.
+
+    Where `FORMULA` is a valid formula.
+    """
+
+    formula_name = 'std'
+
+
+class VarianceAggregation(Aggregation):
+    """Calculate the variance. Written as ``var(FORMULA)``.
+
+    Where `FORMULA` is a valid formula.
+    """
+
+    formula_name = 'var'
 
 
 class MedianAggregation(Aggregation):
@@ -228,32 +307,6 @@ class SumAggregation(Aggregation):
         dframe[self.name] += self.agg()[self.name]
 
         return dframe
-
-
-class RatioAggregation(MultiColumnAggregation):
-    """Calculate the ratio.
-
-    Columns with N/A for either the numerator or denominator are ignored.  This
-    will store associated numerator and denominator columns.  Written as
-    ``ratio(NUMERATOR, DENOMINATOR)``. Where `NUMERATOR` and `DENOMINATOR` are
-    both valid formulas.
-    """
-
-    formula_name = 'ratio'
-
-    def group(self):
-        return super(self.__class__, self).group(self.columns)
-
-    def agg(self):
-        dframe = DataFrame(index=self.column.index)
-
-        dframe = self._build_dframe(dframe, self.columns)
-        column_names = [self._name_for_idx(i) for i in xrange(0, 2)]
-        dframe = dframe.dropna(subset=column_names)
-
-        dframe = DataFrame([dframe.sum().to_dict()])
-
-        return self._add_calculated_column(dframe)
 
 
 class CountAggregation(Aggregation):
@@ -297,6 +350,6 @@ class CountAggregation(Aggregation):
 # dict of formula names to aggregation classes
 AGGREGATIONS = {
     cls.formula_name: cls for cls in
-    Aggregation.__subclasses__() + MultiColumnAggregation.__subclasses__()
+    Aggregation.__subclasses__()
     if cls.formula_name
 }

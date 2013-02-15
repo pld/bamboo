@@ -9,6 +9,8 @@ from bamboo.tests.core.test_calculator import TestCalculator
 class TestAggregations(TestCalculator):
 
     AGGREGATION_RESULTS = {
+        'var(amount)': 132918.536184,
+        'std(amount)': 364.57994,
         'max(amount)': 1600,
         'mean(amount)': 105.65789473684211,
         'median(amount)': 12,
@@ -24,6 +26,7 @@ class TestAggregations(TestCalculator):
         'count(risk_factor in ["low_risk"])': 18.0,
         'argmax(submit_date)': 18.0,
         'newest(submit_date, amount)': 28.0,
+        'pearson(gps_latitude, amount)':  -0.67643,
     }
 
     GROUP_TO_RESULTS = {
@@ -39,6 +42,9 @@ class TestAggregations(TestCalculator):
     def setUp(self):
         TestCalculator.setUp(self)
         self.calculations = [
+            'pearson(gps_latitude, amount)',
+            'var(amount)',
+            'std(amount)',
             'max(amount)',
             'mean(amount)',
             'median(amount)',
@@ -58,18 +64,20 @@ class TestAggregations(TestCalculator):
         self.expected_length = defaultdict(int)
         self.groups_list = None
 
-    def _offset_for_ratio(self, formula, _int):
-        if formula[0:4] in ['mean', 'rati']:
-            _int += 2
-        return _int
+    def _offset_for_formula(self, formula, num_columns):
+        if formula[:4] in ['mean', 'rati']:
+            num_columns += 2
+        elif formula[:7] == 'pearson':
+            num_columns += 1
+
+        return num_columns
 
     def _get_initial_len(self, formula, groups_list):
         initial_len = 0 if self.group == '' else len(groups_list)
-        return self._offset_for_ratio(formula, initial_len)
+        return self._offset_for_formula(formula, initial_len)
 
-    def _columns_per_aggregation(self, formula):
-        initial_len = 1
-        return self._offset_for_ratio(formula, initial_len)
+    def _columns_per_aggregation(self, formula, initial_num_columns=1):
+        return self._offset_for_formula(formula, initial_num_columns)
 
     def _calculations_to_results(self, formula, row):
         if self.group:
@@ -82,16 +90,6 @@ class TestAggregations(TestCalculator):
             return self.AGGREGATION_RESULTS[formula]
 
     def _test_calculation_results(self, name, formula):
-        if self.group:
-            self.groups_list = self.dataset.split_groups(self.group)
-        else:
-            self.group = ''
-
-        if not self.group in self.expected_length:
-            self.expected_length[self.group] = self._get_initial_len(
-                formula, self.groups_list)
-
-        # add an extra column for the group names
         self.expected_length[self.group] += self._columns_per_aggregation(
             formula)
 
@@ -103,7 +101,6 @@ class TestAggregations(TestCalculator):
         name = linked_dset.schema.labels_to_slugs[name]
 
         self.assertTrue(name in linked_dframe.columns)
-
         self.assertEqual(len(linked_dframe.columns),
                          self.expected_length[self.group])
 
@@ -128,17 +125,22 @@ class TestAggregations(TestCalculator):
             msg = self._equal_msg(result, stored, formula)
             self.assertAlmostEqual(result, stored, self.places, msg)
 
-    def test_calculator(self):
+    def _test_aggregation(self):
+        if self.group:
+            self.groups_list = self.dataset.split_groups(self.group)
+            self.expected_length[self.group] += len(self.groups_list)
+        else:
+            self.group = ''
+
         self._test_calculator()
 
-    def test_calculator_with_group(self):
+    def test_aggregation(self):
+        self._test_aggregation()
+
+    def test_aggregation_with_group(self):
         self.group = 'food_type'
-        self._test_calculator()
+        self._test_aggregation()
 
-    def test_calculator_with_group_list(self):
-        self.group = 'food_type'
-        self._test_calculator()
-
-    def test_calculator_with_multigroup_list(self):
+    def test_aggregation_with_multigroup(self):
         self.group = 'food_type,rating'
-        self._test_calculator()
+        self._test_aggregation()

@@ -42,6 +42,24 @@ themselves, e.g. ``risk_factor in ["low_risk"]``.
     sum(amount)
     sum(risk_factor in ["low_risk"])
 
+``std(formula)``
+-----------------
+
+Standard deviation:
+
+.. code-block:: sh
+
+    std(amount)
+
+``var(formula)``
+-----------------
+
+Variance:
+
+.. code-block:: sh
+
+    var(amount)
+
 ``ratio(numerator_formula, denominator_formula)``
 -------------------------------------------------
 
@@ -104,3 +122,17 @@ is equivalent to:
 .. code-block:: sh
 
     newest(submit_date, amount)
+
+``pearson(formula1, formula2)``
+----------------------------------------
+
+Calculate the Pearson correlation coefficient and p-value for two columns
+defined by `formula1` and `formula2`.  The p-value is stored in a column named
+after the original name with the suffix "_pvalue".
+
+For example, we may expect that the number of teachers is correlated with the
+number of students:
+
+.. code-block:: sh
+
+    pearson(num_teachers, num_students)
