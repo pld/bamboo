@@ -125,17 +125,22 @@ class PearsonAggregation(Aggregation):
 
     def agg(self):
         coor, pvalue = self._pearsonr(self.columns)
-        pvalue_column = Series([pvalue], name='%s_pvalue' % self.name)
+        pvalue_column = Series([pvalue], name=self._pvalue_name)
         return self._value_to_dframe(coor).join(pvalue_column)
 
     def group(self):
         def pearson(dframe):
-            columns = [dframe[name] for name in dframe.columns[1:]]
+            columns = [dframe[name] for name in dframe.columns[-2:]]
 
-            return self._pearsonr(columns)
+            return DataFrame([self._pearsonr(columns)],
+                             columns=[self.name, self._pvalue_name])
 
         groupby = self._groupby()
-        return groupby.agg(pearson)
+        dframe = groupby.apply(pearson).reset_index()
+
+        # remove extra index column
+        del dframe[dframe.columns[len(self.groups)]]
+        return dframe
 
     def _pearsonr(self, columns):
         columns = [c.dropna() for c in columns]
@@ -144,6 +149,10 @@ class PearsonAggregation(Aggregation):
         columns = [c.ix[shared_index] for c in columns]
 
         return pearsonr(*columns)
+
+    @property
+    def _pvalue_name(self):
+        return '%s_pvalue' % self.name
 
 
 class MaxAggregation(Aggregation):

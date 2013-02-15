@@ -42,9 +42,9 @@ class TestAggregations(TestCalculator):
     def setUp(self):
         TestCalculator.setUp(self)
         self.calculations = [
-            #'pearson(gps_latitude, amount)',
-            #'var(amount)',
-            #'std(amount)',
+            'pearson(gps_latitude, amount)',
+            'var(amount)',
+            'std(amount)',
             'max(amount)',
             'mean(amount)',
             'median(amount)',
@@ -141,10 +141,6 @@ class TestAggregations(TestCalculator):
         self.group = 'food_type'
         self._test_aggregation()
 
-    def test_aggregation_with_group_list(self):
-        self.group = 'food_type'
-        self._test_aggregation()
-
-    def test_aggregation_with_multigroup_list(self):
+    def test_aggregation_with_multigroup(self):
         self.group = 'food_type,rating'
         self._test_aggregation()
