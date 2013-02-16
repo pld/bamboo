@@ -310,17 +310,12 @@ class Dataset(AbstractModel, ImportableDataset):
     def summarize(self, dframe, groups=[], no_cache=False):
         """Build and return a summary of the data in this dataset.
 
-        Return a summary of dframe grouped by `group_str`, or the overall
-        summary if no group is specified.
+        Return a summary of dframe grouped by `groups`, or the overall
+        summary if no groups are specified.
 
-        If either query or select are passed a cached result will not be
-        returned.
-
-        :param group_str: A column in the dataset as a string or a list comma
-            separated columns to group on.
         :param dframe: An optional dframe to summarize, if None fetch a dframe
-        :param query: An optional MongoDB query.
-        :param select: An optional select to limit the columns summarized.
+        :param groups: A list of columns to group on.
+        :param no_cache: Do not fetch a cached summary.
 
         :returns: A summary of the dataset as a dict. Numeric columns will be
             summarized by the arithmetic mean, standard deviation, and
