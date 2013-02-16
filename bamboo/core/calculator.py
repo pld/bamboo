@@ -164,8 +164,9 @@ class Calculator(object):
         updated_dframe = concat([existing_dframe, new_dframe])
 
         # update (overwrite) the dataset with the new merged dframe
-        self.dframe = self.dataset.replace_observations(
+        self.dataset.replace_observations(
             updated_dframe, set_num_columns=False)
+        self.dframe = self.dataset.dframe()
         self.dataset.clear_summary_stats()
 
         self._update_aggregate_datasets(aggregations, new_dframe)

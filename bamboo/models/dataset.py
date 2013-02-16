@@ -307,39 +307,28 @@ class Dataset(AbstractModel, ImportableDataset):
         """Delete this dataset."""
         call_async(delete_task, self, countdown=countdown)
 
-    def summarize(self, query=None, select=None,
-                  group_str=None, limit=0, order_by=None):
+    def summarize(self, dframe, groups=[], no_cache=False):
         """Build and return a summary of the data in this dataset.
 
-        Return a summary of the rows/values filtered by `query` and `select`
-        and grouped by `group_str`, or the overall summary if no group is
-        specified.
+        Return a summary of dframe grouped by `group_str`, or the overall
+        summary if no group is specified.
 
-        :param query: An optional MongoDB query to limit the data summarized.
-        :param select: An optional select to limit the columns summarized.
+        If either query or select are passed a cached result will not be
+        returned.
+
         :param group_str: A column in the dataset as a string or a list comma
-          separated columns to group on.
+            separated columns to group on.
+        :param dframe: An optional dframe to summarize, if None fetch a dframe
+        :param query: An optional MongoDB query.
+        :param select: An optional select to limit the columns summarized.
 
-        :returns: A JSON summary of the dataset. Numeric columns will be
+        :returns: A summary of the dataset as a dict. Numeric columns will be
             summarized by the arithmetic mean, standard deviation, and
             percentiles. Dimensional columns will be summarized by counts.
         """
-        # interpret none as all
-        if not group_str:
-            group_str = self.ALL
-
-        # split group in case of multigroups
-        groups = self.split_groups(group_str)
-
-        # if select append groups to select
-        if select:
-            select.update(dict(zip(groups, [1] * len(groups))))
-
         self.reload()
-        dframe = self.dframe(query=query, select=select,
-                             limit=limit, order_by=order_by)
 
-        return summarize(self, dframe, groups, group_str, query or select)
+        return summarize(self, dframe, groups, no_cache)
 
     @classmethod
     def create(cls, dataset_id=None):
@@ -469,8 +458,7 @@ class Dataset(AbstractModel, ImportableDataset):
 
     def save_observations(self, dframe):
         """Save rows in `dframe` for this dataset."""
-        Observation.save(dframe, self)
-        return self.dframe()
+        return Observation.save(dframe, self)
 
     def replace_observations(self, dframe, overwrite=False,
                              set_num_columns=True):
@@ -482,7 +470,6 @@ class Dataset(AbstractModel, ImportableDataset):
         """
         self.build_schema(dframe, overwrite=overwrite,
                           set_num_columns=set_num_columns)
-        dframe = self.add_id_column_to_dframe(dframe)
         Observation.delete_all(self)
 
         return self.save_observations(dframe)
@@ -532,7 +519,7 @@ class Dataset(AbstractModel, ImportableDataset):
 
         return self
 
-    def add_id_column_to_dframe(self, dframe):
+    def encode_dframe_columns(self, dframe):
         encoded_columns_map = self.schema.rename_map_for_dframe(dframe)
 
         dframe = dframe.rename(columns=encoded_columns_map)
@@ -540,7 +527,7 @@ class Dataset(AbstractModel, ImportableDataset):
         id_column = Series([self.dataset_observation_id] * len(dframe))
         id_column.name = DATASET_OBSERVATION_ID
 
-        return dframe.join(id_column)
+        return BambooFrame(dframe.join(id_column))
 
     def new_agg_dataset(self, dframe, groups):
         agg_dataset = self.create()

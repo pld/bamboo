@@ -66,20 +66,14 @@ class Observation(AbstractModel):
         if not dataset.schema:
             dataset.build_schema(dframe)
 
-        # save the data, if there is any
-        num_rows = 0
-
-        if dframe is not None:
-            if not DATASET_OBSERVATION_ID in dframe.columns:
-                dframe = dataset.add_id_column_to_dframe(dframe)
-
+        if not DATASET_OBSERVATION_ID in dframe.columns:
+            self.batch_save(dataset.encode_dframe_columns(dframe))
+        else:
             self.batch_save(dframe)
-            num_rows = len(dframe)
 
         # add metadata to dataset, discount ID column
         dataset.update({
-            dataset.NUM_ROWS: num_rows,
+            dataset.NUM_ROWS: len(dframe),
             dataset.STATE: self.STATE_READY,
         })
-
-        dataset.summarize()
+        dataset.summarize(dframe)

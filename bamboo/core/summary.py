@@ -67,20 +67,22 @@ def summarize_with_groups(dframe, groups, dataset):
         dframe.groupby(groups).apply(summarize_df, groups, dataset))
 
 
-def summarize(dataset, dframe, groups, group_str, no_cache):
+def summarize(dataset, dframe, groups, no_cache):
     """Raises a ColumnTypeError if grouping on a non-dimensional column."""
     # do not allow group by numeric types
     for group in groups:
-        if group != dataset.ALL and not dataset.schema.is_dimension(group):
+        if not dataset.schema.is_dimension(group):
             raise ColumnTypeError("group: '%s' is not a dimension." % group)
+
+    group_str = dataset.join_groups(groups) or dataset.ALL
 
     # check cached stats for group and update as necessary
     stats = dataset.stats
     if no_cache or not stats.get(group_str):
-        group_stats = summarize_df(dframe, dataset=dataset) if\
-            group_str == dataset.ALL else\
-            summarize_with_groups(dframe, groups, dataset)
+        group_stats = summarize_with_groups(dframe, groups, dataset) if\
+            groups else summarize_df(dframe, dataset=dataset)
         stats.update({group_str: group_stats})
+
         if not no_cache:
             dataset.update({dataset.STATS: dict_for_mongo(stats)})
 

@@ -112,9 +112,17 @@ class Datasets(AbstractController):
             query = self._parse_query(query)
             select = self._parse_select(select, required=True)
 
-            return dataset.summarize(query, select,
-                                     group, limit=limit,
-                                     order_by=order_by)
+            groups = dataset.split_groups(group)
+
+            # if select append groups to select
+            if select:
+                select.update(dict(zip(groups, [1] * len(groups))))
+
+            dframe = dataset.dframe(query=query, select=select, limit=limit,
+                                    order_by=order_by)
+
+            return dataset.summarize(dframe, groups=groups,
+                                     no_cache=query or select)
 
         return self._safe_get_and_call(dataset_id, action, callback=callback,
                                        exceptions=(ColumnTypeError,))

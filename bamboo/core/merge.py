@@ -52,7 +52,7 @@ def _merge_datasets_task(new_dataset, datasets, mapping):
     new_dframe = _merge_datasets(datasets, mapping)
 
     # save the resulting dframe as a new dataset
-    import_dataset(new_dataset, dframe=new_dframe)
+    new_dataset.save_observations(new_dframe)
 
     # store the child dataset ID with each parent
     for dataset in datasets:
