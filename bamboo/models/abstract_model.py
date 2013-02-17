@@ -219,6 +219,7 @@ class AbstractModel(object):
         """
         self.collection.insert(record)
         self.record = record
+
         return self
 
     def update(self, record):

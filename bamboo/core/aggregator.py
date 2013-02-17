@@ -73,9 +73,10 @@ class Aggregator(object):
             dframe = self._dframe_from_calculator(calculator, formula, dframe)
 
         new_agg_dframe = concat([child_dataset.dframe(), dframe])
+        new_agg_dframe = new_agg_dframe.add_parent_column(parent_dataset_id)
 
-        return child_dataset.replace_observations(
-            new_agg_dframe.add_parent_column(parent_dataset_id))
+        child_dataset.replace_observations(new_agg_dframe)
+        return child_dataset.dframe()
 
     def _dframe_from_calculator(self, calculator, formula, dframe):
         """Create a new aggregation and update return updated dframe."""

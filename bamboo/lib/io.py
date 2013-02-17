@@ -12,24 +12,21 @@ from bamboo.lib.async import call_async
 
 
 @task(ignore_result=True)
-def import_dataset(dataset, dframe=None, file_reader=None):
+def import_dataset(dataset, file_reader, delete=False):
     """For reading a URL and saving the corresponding dataset.
 
-    Import the `dframe` into the `dataset` if passed.  If a
-    `filepath_or_buffer` is passed load as a dframe.  All exceptions are caught
-    and on exception the dataset is marked as failed and set for
-    deletion after 24 hours.
+    Import a DataFrame using the provided `file_reader` function. All
+    exceptions are caught and on exception the dataset is marked as failed and
+    set for deletion after 24 hours.
 
     :param dataset: The dataset to import into.
-    :param dframe: The DataFrame to import, default None.
-    :param filepath_or_buffer: Link to file to import, default None.
+    :param file_reader: Function for reading the dataset.
     :param delete: Delete filepath_or_buffer after import, default False.
     """
+    dframe = file_reader()
+    dataset.save_observations(dframe)
     try:
-        if file_reader:
-            dframe = file_reader()
-
-        dataset.save_observations(dframe)
+        pass
     except Exception as e:
         if isinstance(e, RetryTaskError):
             raise e
@@ -64,7 +61,7 @@ class ImportableDataset(object):
             raise IOError
 
         call_async(
-            import_dataset, self, file_reader=partial(_file_reader, url))
+            import_dataset, self, partial(_file_reader, url))
 
         return self
 
@@ -87,7 +84,7 @@ class ImportableDataset(object):
         # pandas needs a closed file for *read_csv*
         tmpfile.close()
 
-        call_async(import_dataset, self, file_reader=partial(
+        call_async(import_dataset, self, partial(
             _file_reader, tmpfile.name, delete=True))
 
         return self
@@ -104,7 +101,7 @@ class ImportableDataset(object):
             return pd.DataFrame(json.loads(content))
 
         call_async(import_dataset, self,
-                   file_reader=partial(file_reader, content))
+                   partial(file_reader, content))
 
         return self
 
@@ -121,7 +118,6 @@ class ImportableDataset(object):
             schema = json.loads(schema)
 
         self.set_schema(schema)
-
-        call_async(import_dataset, self)
+        self.ready()
 
         return self

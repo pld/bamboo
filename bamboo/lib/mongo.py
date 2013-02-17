@@ -87,14 +87,17 @@ def _decode_from_mongo(key):
 def dict_for_mongo(_dict):
     """Encode all keys in `_dict` for MongoDB."""
     for key, value in _dict.items():
+        if _is_invalid_for_mongo(key):
+            del _dict[key]
+            key = _encode_for_mongo(key)
+
         if isinstance(value, list):
-            value = [dict_for_mongo(obj)
+            _dict[key] = [dict_for_mongo(obj)
                      if isinstance(obj, dict) else obj for obj in value]
         elif isinstance(value, dict):
-            value = dict_for_mongo(value)
-        elif _is_invalid_for_mongo(key):
-            del _dict[key]
-            _dict[_encode_for_mongo(key)] = value
+            _dict[key] = dict_for_mongo(value)
+        else:
+            _dict[key] = value
 
     return _dict
 
