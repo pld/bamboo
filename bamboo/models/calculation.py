@@ -176,11 +176,12 @@ class Calculation(AbstractModel):
 
         if not self.group is None:
             # it is an aggregate calculation
-            if not self.group in dataset.aggregated_datasets:
+            dataset = dataset.aggregated_dataset(self.group)
+
+            if not dataset:
                 raise ArgumentError(
-                    'Aggregation with group "%s" does not exists yet for '
+                    'Aggregation with group "%s" does not exist for '
                     'dataset' % self.group)
-            dataset = dataset.aggregated_datasets[self.group]
 
         slug = dataset.schema.labels_to_slugs.get(self.name)
 
@@ -217,8 +218,7 @@ class Calculation(AbstractModel):
 
         if aggregation:
             # set group if aggregation and group unset
-            if not group_str:
-                group_str = ''
+            group_str = group_str or ''
 
             # check that name is unique for aggregation
             aggregated_dataset = dataset.aggregated_dataset(groups)

@@ -78,15 +78,19 @@ def summarize(dataset, dframe, groups, no_cache):
 
     # check cached stats for group and update as necessary
     stats = dataset.stats
-    if no_cache or not stats.get(group_str):
+    group_stats = stats.get(group_str)
+
+    if no_cache or not group_stats:
         group_stats = summarize_with_groups(dframe, groups, dataset) if\
             groups else summarize_df(dframe, dataset=dataset)
-        stats.update({group_str: group_stats})
 
         if not no_cache:
+            stats.update({group_str: group_stats})
             dataset.update({dataset.STATS: dict_for_mongo(stats)})
 
-    stats_to_return = dict_from_mongo(stats.get(group_str))
+    stats_dict = dict_from_mongo(group_stats)
 
-    return stats_to_return if group_str == dataset.ALL else {
-        group_str: stats_to_return}
+    if groups:
+        stats_dict = {group_str: stats_dict}
+
+    return stats_dict

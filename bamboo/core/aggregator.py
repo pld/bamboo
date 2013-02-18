@@ -7,7 +7,7 @@ from bamboo.core.frame import BambooFrame
 class Aggregator(object):
     """Perform a aggregations on datasets.
 
-    Apply the `aggregation` to group columns in `group_str` and the `columns`
+    Apply the `aggregation` to group columns by `groups` and the `columns`
     of the `dframe`. Store the resulting `dframe` as a linked dataset for
     `dataset`. If a linked dataset with the same groups already exists update
     this dataset.  Otherwise create a new linked dataset.

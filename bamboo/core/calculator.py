@@ -45,11 +45,10 @@ class Calculator(object):
         return aggregation
 
     def calculate_columns(self, calculations):
-        """Calculate a new column based on `formula` store as `name`.
+        """Calculate and store new columns for `calculations`.
 
-        The new column is joined to `dframe` and stored in `self.dataset`.
-        The `group_str` is only applicable to aggregations and groups for
-        aggregations.
+        The new columns are join t othe Calculation dframe and replace the
+        dataset's observations.
 
         .. note::
 
@@ -60,11 +59,7 @@ class Calculator(object):
 
             Therefore, perform these actions asychronously.
 
-        :param formula: The formula parsed by `self.parser` and applied to
-            `self.dframe`.
-        :param name: The name of the new column or aggregate column.
-        :param groups: A list of columns to group on for aggregate
-            calculations.
+        :param calculations: A list of calculations.
         """
         self._ensure_dframe()
         new_dframe = self.dframe
@@ -180,7 +175,6 @@ class Calculator(object):
 
         return Aggregator(self.dataset, self.dframe, groups,
                           self.parser.aggregation, name, columns)
-
 
     def parse_columns(self, formula, name, dframe=None):
         """Parse formula into function and variables."""
@@ -336,8 +330,7 @@ class Calculator(object):
         calcs_to_data = self._create_calculations_to_groups_and_datasets(
             calculations)
 
-        for formula, slug, group_str, dataset in calcs_to_data:
-            groups = self.dataset.split_groups(group_str)
+        for formula, slug, groups, dataset in calcs_to_data:
             self._update_aggregate_dataset(formula, new_dframe, slug, groups,
                                            dataset)
 
@@ -388,7 +381,7 @@ class Calculator(object):
         }
         calculations = set([calc.name for calc in calculations])
 
-        for group, dataset in self.dataset.aggregated_datasets.items():
+        for group, dataset in self.dataset.aggregated_datasets:
             labels_to_slugs = dataset.schema.labels_to_slugs
             calculations_for_dataset = list(set(
                 labels_to_slugs.keys()).intersection(calculations))
