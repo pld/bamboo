@@ -154,7 +154,8 @@ class TestDatasetsUpdateWithJoin(TestAbstractDatasetsUpdate):
                 break
             sleep(self.SLEEP_DELAY)
 
-        sleep(self.SLEEP_DELAY)
+        # so check succeeds before test teardown
+        sleep(3 * self.SLEEP_DELAY)
         self._verify_update_right()
 
     def test_datasets_update_right_non_unique_join(self):

@@ -105,8 +105,8 @@ class Dataset(AbstractModel, ImportableDataset):
 
     @property
     def aggregated_datasets(self):
-        return {group: self.find_one(_id) for (group, _id) in
-                self.aggregated_datasets_dict.items()}
+        return [(self.split_groups(group), self.find_one(_id)) for (
+            group, _id) in self.aggregated_datasets_dict.items()]
 
     @property
     def joined_dataset_ids(self):
@@ -165,6 +165,9 @@ class Dataset(AbstractModel, ImportableDataset):
         return self.schema.cardinality(col)
 
     def aggregated_dataset(self, groups):
+        if not isinstance(groups, list):
+            groups = [groups]
+
         _id = self.aggregated_datasets_dict.get(self.join_groups(groups))
 
         return self.find_one(_id) if _id else None
@@ -527,9 +530,9 @@ class Dataset(AbstractModel, ImportableDataset):
     def new_agg_dataset(self, dframe, groups):
         agg_dataset = self.create()
         agg_dataset.save_observations(dframe)
-        group_str = self.join_groups(groups)
 
         # store a link to the new dataset
+        group_str = self.join_groups(groups)
         agg_datasets_dict = self.aggregated_datasets_dict
         agg_datasets_dict[group_str] = agg_dataset.dataset_id
         self.update({

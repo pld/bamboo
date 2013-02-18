@@ -15,7 +15,7 @@ class Version(AbstractController):
         return json.dumps({
             'version': self.VERSION_NUMBER,
             'description': self.VERSION_DESCRIPTION,
-            'branch': check_output(['git', 'rev-parse', '--abbrev-ref',
-                'HEAD']).strip(),
+            'branch': check_output([
+                'git', 'rev-parse', '--abbrev-ref', 'HEAD']).strip(),
             'commit': check_output(['git', 'rev-parse', 'HEAD']).strip(),
         })

@@ -92,8 +92,8 @@ def dict_for_mongo(_dict):
             key = _encode_for_mongo(key)
 
         if isinstance(value, list):
-            _dict[key] = [dict_for_mongo(obj)
-                     if isinstance(obj, dict) else obj for obj in value]
+            _dict[key] = [dict_for_mongo(obj) if isinstance(obj, dict) else obj
+                          for obj in value]
         elif isinstance(value, dict):
             _dict[key] = dict_for_mongo(value)
         else:

@@ -26,7 +26,7 @@ class TestAggregations(TestCalculator):
         'count(risk_factor in ["low_risk"])': 18.0,
         'argmax(submit_date)': 18.0,
         'newest(submit_date, amount)': 28.0,
-        'pearson(gps_latitude, amount)':  -0.67643,
+        'pearson(gps_latitude, amount)': -0.67643,
     }
 
     GROUP_TO_RESULTS = {
@@ -94,7 +94,7 @@ class TestAggregations(TestCalculator):
             formula)
 
         # retrieve linked dataset
-        linked_dset = self.dataset.aggregated_datasets[self.group]
+        linked_dset = self.dataset.aggregated_dataset(self.group)
         self.assertFalse(linked_dset is None)
         linked_dframe = linked_dset.dframe()
 

@@ -237,9 +237,9 @@ class AbstractModel(object):
         # Set record to the latest record from the database
         self.record = self.__class__.collection.find_one(id_dict)
 
-    def split_groups(self, group_str):
+    def split_groups(self, groups):
         """Split a string based on the group delimiter"""
-        return group_str.split(self.GROUP_DELIMITER) if group_str else []
+        return groups.split(self.GROUP_DELIMITER) if groups else []
 
     def join_groups(self, groups):
         return self.GROUP_DELIMITER.join(groups)
