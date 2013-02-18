@@ -23,10 +23,9 @@ def import_dataset(dataset, file_reader, delete=False):
     :param file_reader: Function for reading the dataset.
     :param delete: Delete filepath_or_buffer after import, default False.
     """
-    dframe = file_reader()
-    dataset.save_observations(dframe)
     try:
-        pass
+        dframe = file_reader()
+        dataset.save_observations(dframe)
     except Exception as e:
         if isinstance(e, RetryTaskError):
             raise e
