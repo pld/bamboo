@@ -551,6 +551,12 @@ class Dataset(AbstractModel, ImportableDataset):
             {'$pull': {self.PENDING_UPDATES: update_id}})
 
     def resample(self, date_column, interval, how):
+        """Resample a dataset given a new time frame.
+
+        :param date_column: The date column use as the index for resampling.
+        :param interval: The interval code for resampling.
+        :param how: How to aggregate in the resample.
+        """
         dframe = self.dframe().set_index(date_column)
         resampled = dframe.resample(interval, how=how)
         return BambooFrame(resampled.reset_index())
