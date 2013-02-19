@@ -1,4 +1,4 @@
-from  base64 import b64encode
+from base64 import b64encode
 import simplejson as json
 import re
 
