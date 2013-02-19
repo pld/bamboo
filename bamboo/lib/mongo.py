@@ -72,7 +72,8 @@ def dict_from_mongo(_dict):
                      if isinstance(obj, dict) else obj for obj in value]
         elif isinstance(value, dict):
             value = dict_from_mongo(value)
-        elif _was_encoded_for_mongo(key):
+
+        if _was_encoded_for_mongo(key):
             del _dict[key]
             _dict[_decode_from_mongo(key)] = value
 
