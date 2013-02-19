@@ -47,7 +47,6 @@ class ImportableDataset(object):
     def import_from_url(self, url, allow_local_file=False):
         """Load a URL, read from a CSV, add data to dataset.
 
-        :param dataset: Dataset to save in.
         :param url: URL to load file from.
         :param allow_local_file: Allow URL to refer to a local file.
 
@@ -72,13 +71,15 @@ class ImportableDataset(object):
             Write to a named tempfile in order  to get a handle for pandas'
             `read_csv` function.
 
-        :param dataset: Dataset to save in.
         :param csv_file: The CSV File to create a dataset from.
 
         :returns: The created dataset.
         """
+        if 'file' in dir(csv_file):
+            csv_file = csv_file.file
+
         tmpfile = tempfile.NamedTemporaryFile(delete=False)
-        tmpfile.write(csv_file.file.read())
+        tmpfile.write(csv_file.read())
 
         # pandas needs a closed file for *read_csv*
         tmpfile.close()
@@ -91,7 +92,6 @@ class ImportableDataset(object):
     def import_from_json(self, json_file):
         """Impor data from a JSON file.
 
-        :param dataset: Dataset to save in.
         :param json_file: JSON file to import.
         """
         content = json_file.file.read()

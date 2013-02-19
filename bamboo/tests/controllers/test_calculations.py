@@ -240,7 +240,7 @@ class TestCalculations(TestBase):
         self.assertTrue(AbstractController.SUCCESS in result)
 
         dataset = Dataset.find_one(self.dataset_id)
-        agg_dataset = Dataset.find_one(dataset.aggregated_datasets_dict[''])
+        agg_dataset = dataset.aggregated_dataset('')
 
         self.assertTrue(self.name not in agg_dataset.schema.labels_to_slugs)
 
@@ -449,7 +449,7 @@ class TestCalculations(TestBase):
                                'newest(submit_date,functional)',
                                'wp_functional', group='id')
         dataset = Dataset.find_one(dataset_id)
-        agg_ds = dataset.aggregated_datasets['id']
+        agg_ds = dataset.aggregated_dataset('id')
 
         self.assertEqual(expected_dataset, agg_ds.dframe().to_dict())
 
@@ -462,7 +462,7 @@ class TestCalculations(TestBase):
         previous_num_rows = dataset.num_rows
 
         self.assertTrue(self.controller.SUCCESS in results.keys())
-        self.assertFalse(dataset.aggregated_datasets.get('') is None)
+        self.assertFalse(dataset.aggregated_dataset('') is None)
 
         update = {
             'submit_date': '2013-01-05',
@@ -478,10 +478,9 @@ class TestCalculations(TestBase):
 
         dataset = Dataset.find_one(dataset_id)
         current_num_rows = dataset.num_rows
+        agg_df = dataset.aggregated_dataset('').dframe()
 
-        self.assertEqual(
-            dataset.aggregated_datasets[''].dframe().get_value(0, 'wp_newest'),
-            'D')
+        self.assertEqual(agg_df.get_value(0, 'wp_newest'), 'D')
         self.assertEqual(current_num_rows, previous_num_rows + 2)
 
     @requires_async
@@ -503,12 +502,12 @@ class TestCalculations(TestBase):
         while True:
             dataset = Dataset.find_one(dataset_id)
 
-            if dataset.aggregated_datasets.get(group) and all(
+            if dataset.aggregated_dataset(group) and all(
                     [not c.is_pending for c in dataset.calculations()]):
                 break
             sleep(self.SLEEP_DELAY)
 
-        agg_dframe = dataset.aggregated_datasets[group].dframe()
+        agg_dframe = dataset.aggregated_dataset(group).dframe()
         self.assertEqual(
             set(['wp_id', 'wp_functional', 'latest_submit_date']),
             set(agg_dframe.columns.tolist()))
@@ -537,7 +536,7 @@ class TestCalculations(TestBase):
             sleep(self.SLEEP_DELAY)
 
         dataset = Dataset.find_one(dataset_id)
-        agg_dframe = dataset.aggregated_datasets[group].dframe()
+        agg_dframe = dataset.aggregated_dataset(group).dframe()
 
         self.assertEqual(agg_dframe.get_value(0, 'wp_id'), 'A')
         self.assertEqual(current_num_rows, previous_num_rows + 2)
