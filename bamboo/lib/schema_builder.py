@@ -45,7 +45,7 @@ SIMPLETYPE_TO_DTYPE = {
     INTEGER: np.int64,
 }
 
-RE_ENCODED_COLUMN = re.compile(r'\W')
+RE_ENCODED_COLUMN = re.compile(ur'(?u)\W')
 
 
 def is_simpletype(col_schema, simpletype):

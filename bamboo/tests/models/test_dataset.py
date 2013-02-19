@@ -9,7 +9,7 @@ from bamboo.models.dataset import Dataset
 from bamboo.models.observation import Observation
 from bamboo.lib.datetools import recognize_dates
 from bamboo.lib.mongo import MONGO_RESERVED_KEY_STRS
-from bamboo.lib.schema_builder import OLAP_TYPE, SIMPLETYPE
+from bamboo.lib.schema_builder import OLAP_TYPE, RE_ENCODED_COLUMN, SIMPLETYPE
 
 
 class TestDataset(TestBase):
@@ -54,8 +54,6 @@ class TestDataset(TestBase):
             self.assertEqual(dataset.record['field'], {'key': 'value'})
 
     def test_build_schema(self):
-        illegal_col_regex = re.compile(r'\W')
-
         for dataset_name in self.TEST_DATASETS:
             dataset = Dataset.create(self.test_dataset_ids[dataset_name])
             dataset.build_schema(self.get_data(dataset_name))
@@ -76,7 +74,7 @@ class TestDataset(TestBase):
                 seen_columns.append(column_name)
 
                 # check column name is only legal chars
-                self.assertFalse(illegal_col_regex.search(column_name))
+                self.assertFalse(RE_ENCODED_COLUMN.search(column_name))
 
                 # check has require attributes
                 self.assertTrue(SIMPLETYPE in column_attributes)
@@ -84,7 +82,9 @@ class TestDataset(TestBase):
                 self.assertTrue(Dataset.LABEL in column_attributes)
 
                 # check label is an original column
-                self.assertTrue(column_attributes[Dataset.LABEL] in df_columns)
+                original_col = column_attributes[Dataset.LABEL]
+                error_msg = '%s not in %s' % (original_col, df_columns)
+                self.assertTrue(original_col in df_columns, error_msg)
                 df_columns.remove(column_attributes[Dataset.LABEL])
 
                 # check not reserved key
