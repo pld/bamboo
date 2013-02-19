@@ -16,6 +16,7 @@ def safe_command_request(args):
         # or if there's no git repository
         return ''
 
+
 def get_version():
     return {'version': VERSION_NUMBER,
             'version_major': VERSION_MAJOR,
