@@ -22,6 +22,7 @@ class TestBase(unittest.TestCase):
         'kenya_secondary_schools_2007.csv',
         'soil_samples.csv',
         'water_points.csv',
+        'unicode.csv',
     ]
 
     test_data = {}
@@ -39,7 +40,8 @@ class TestBase(unittest.TestCase):
         data = self.test_data.get(dataset_name)
         if data is None:
             data = self.test_data[dataset_name] = read_csv(
-                '%s%s' % (self._local_fixture_prefix(), dataset_name))
+                '%s%s' % (self._local_fixture_prefix(), dataset_name),
+                encoding='utf-8')
         return data
 
     def _create_database(self):

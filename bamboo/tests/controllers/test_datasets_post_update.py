@@ -64,6 +64,23 @@ class TestDatasetsPostUpdate(TestAbstractDatasets):
         # ensure new row is in results
         self.assertTrue(self._update_values in results)
 
+    def test_dataset_update_unicode(self):
+        num_rows_before_update = 1
+        data = [
+            {u'\u03c7': u'\u03b1', u'\u03c8': u'\u03b2'},
+            {u'\u03c7': u'\u03b3', u'\u03c8': u'\u03b4'},
+        ]
+        self.dataset_id = self._post_file('unicode.csv')
+        self._put_row_updates(file_name='unicode.json')
+        results = json.loads(self.controller.show(self.dataset_id))
+        num_rows_after_update = len(results)
+
+        self.assertEqual(num_rows_after_update, num_rows_before_update + 1)
+        self._check_schema(results)
+
+        dataset = Dataset.find_one(self.dataset_id)
+        self.assertEqual(data, dataset.dframe().to_jsondict())
+
     def test_dataset_update_with_slugs(self):
         self.dataset_id = self._post_file(self._file_name_with_slashes)
         self._post_calculations(self.default_formulae)

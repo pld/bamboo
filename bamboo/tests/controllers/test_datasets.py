@@ -56,6 +56,28 @@ class TestDatasets(TestAbstractDatasets):
         results = self._test_summary_built(result)
         self._test_summary_no_group(results)
 
+    def test_create_from_csv_unicode(self):
+        dframe_length = 1
+        dframe_data = [{u'\u03c7': u'\u03b1', u'\u03c8': u'\u03b2'}]
+
+        _file_name = 'unicode.csv'
+        self._file_path = self._file_path.replace(self._file_name, _file_name)
+        result = self._upload_mocked_file()
+
+        self.assertTrue(isinstance(result, dict))
+        self.assertTrue(Dataset.ID in result)
+
+        dataset = Dataset.find_one(result[Dataset.ID])
+
+        self.assertEqual(Dataset.STATE_READY, dataset.state)
+
+        dframe = dataset.dframe()
+
+        self.assertEqual(dframe_length, len(dframe))
+        self.assertEqual(dframe_data, dframe.to_jsondict())
+
+        self._test_summary_built(result)
+
     def test_create_from_csv_mixed_col(self):
         dframe_length = 8
         _file_name = 'good_eats_mixed.csv'
