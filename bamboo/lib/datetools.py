@@ -19,13 +19,15 @@ def recognize_dates(dframe):
 
     :returns: A DataFrame with column values convert to datetime types.
     """
-    new_dframe = copy.deepcopy(dframe)
-
-    for idx, dtype in enumerate(dframe.dtypes):
+    for i, dtype in enumerate(dframe.dtypes):
         if dtype.type == np.object_:
-            _convert_column_to_date(new_dframe, dframe.columns[idx])
+            column = dframe.columns[i]
+            new_column = _convert_column_to_date(dframe, column)
 
-    return new_dframe
+            if not new_column is None:
+                dframe[column] = new_column
+
+    return dframe
 
 
 def recognize_dates_from_schema(dframe, schema):
@@ -36,15 +38,17 @@ def recognize_dates_from_schema(dframe, schema):
 
     :returns: A DataFrame with column values convert to datetime types.
     """
-    new_dframe = copy.deepcopy(dframe)
     dframe_columns = dframe.columns.tolist()
 
     for column, column_schema in schema.items():
         if column in dframe_columns and\
                 schema.is_date_simpletype(column):
-            _convert_column_to_date(new_dframe, column)
+            new_column = _convert_column_to_date(dframe, column)
 
-    return new_dframe
+            if not new_column is None:
+                dframe[column] = new_column
+
+    return dframe
 
 
 def _is_potential_date(value):
@@ -54,16 +58,23 @@ def _is_potential_date(value):
 def _convert_column_to_date(dframe, column):
     """Inline conversion of column in dframe to date type."""
     try:
-        new_column = Series([
-            date_parse(field) if _is_potential_date(field) else field for
-            field in dframe[column].tolist()])
-        dframe[column] = new_column
+        return dframe[column].apply(parse_date)
+    except AttributeError:
+        # it is already a datetime
+        pass
     except ValueError:
         # it is not a correctly formatted date
         pass
     except OverflowError:
         # it is a number that is too large to be a date
         pass
+
+
+def parse_date(x):
+    try:
+        return date_parse(x) if _is_potential_date(x) else x
+    except ValueError:
+        return datetime.strptime(x, '%d%b%Y')
 
 
 def parse_str_to_unix_time(value):
