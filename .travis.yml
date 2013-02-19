@@ -2,12 +2,13 @@ language: python
 python:
   - "2.7"
 virtualenv:
-      system_site_packages: true
+  system_site_packages: true
 before_install:
   - sudo apt-get install -qq python-numpy gfortran libatlas-base-dev
 install:
   - pip install -r requirements.pip --use-mirrors
   - pip install -r requirements-test.pip --use-mirrors
+  - pip freeze
 script:
   - ./celeryd/celeryd start
   - cd bamboo
