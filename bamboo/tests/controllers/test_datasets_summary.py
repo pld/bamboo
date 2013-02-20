@@ -5,6 +5,7 @@ import simplejson as json
 from bamboo.lib.mongo import ILLEGAL_VALUES
 from bamboo.controllers.datasets import Datasets
 from bamboo.core.summary import SUMMARY
+from bamboo.lib.mongo import _encode_for_mongo
 from bamboo.models.dataset import Dataset
 from bamboo.tests.controllers.test_abstract_datasets import\
     TestAbstractDatasets
@@ -59,10 +60,14 @@ class TestDatasetsSummary(TestAbstractDatasets):
         summaries = json.loads(self.controller.summary(
             dataset_id, select=self.controller.SELECT_ALL_FOR_SUMMARY))
 
-        from bamboo.lib.mongo import _encode_for_mongo
         encoded_values = [b64encode(value) for value in ILLEGAL_VALUES]
 
-        for summary in summaries.values():
+        for column, summary in summaries.iteritems():
+            # check the column names
+            for encoded_value in encoded_values:
+                self.assertFalse(encoded_value in column, '%s in %s' %
+                                 (encoded_value, column))
+            # check in "summary" for encoded keys (possibly from data)
             for key in summary.values()[0].keys():
                 for encoded_value in encoded_values:
                     self.assertFalse(encoded_value in key, '%s in %s' %
