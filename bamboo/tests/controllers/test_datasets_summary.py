@@ -73,6 +73,18 @@ class TestDatasetsSummary(TestAbstractDatasets):
                     self.assertFalse(encoded_value in key, '%s in %s' %
                                      (encoded_value, key))
 
+    def test_summary_unicode(self):
+        file_name = 'unicode.csv'
+        dataset_id = self._post_file(file_name=file_name)
+        results = self.controller.summary(
+            dataset_id, select=self.controller.SELECT_ALL_FOR_SUMMARY)
+        results = self._test_summary_results(results)
+        columns = [col for col in
+                   self.get_data(file_name).columns.tolist()]
+        summary_keys = results.keys()
+        for column in columns:
+            self.assertTrue(column in summary_keys)
+
     def test_summary_no_select(self):
         dataset_id = self._post_file()
         results = json.loads(self.controller.summary(dataset_id))

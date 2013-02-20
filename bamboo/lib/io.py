@@ -34,13 +34,17 @@ def import_dataset(dataset, file_reader, delete=False):
             dataset.delete(countdown=86400)
 
 
-def _file_reader(name, delete=False):
+def csv_file_reader(name, delete=False):
     try:
         return BambooFrame(
-            pd.read_csv(name)).recognize_dates()
+            pd.read_csv(name, encoding='utf-8')).recognize_dates()
     finally:
         if delete:
             os.unlink(name)
+
+
+def json_file_reader(content):
+    return pd.DataFrame(json.loads(content))
 
 
 class ImportableDataset(object):
@@ -59,7 +63,7 @@ class ImportableDataset(object):
             raise IOError
 
         call_async(
-            import_dataset, self, partial(_file_reader, url))
+            import_dataset, self, partial(csv_file_reader, url))
 
         return self
 
@@ -85,7 +89,7 @@ class ImportableDataset(object):
         tmpfile.close()
 
         call_async(import_dataset, self, partial(
-            _file_reader, tmpfile.name, delete=True))
+            csv_file_reader, tmpfile.name, delete=True))
 
         return self
 
@@ -96,11 +100,8 @@ class ImportableDataset(object):
         """
         content = json_file.file.read()
 
-        def file_reader(content):
-            return pd.DataFrame(json.loads(content))
-
         call_async(import_dataset, self,
-                   partial(file_reader, content))
+                   partial(json_file_reader, content))
 
         return self
 
