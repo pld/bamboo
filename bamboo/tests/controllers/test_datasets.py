@@ -48,6 +48,17 @@ class TestDatasets(TestAbstractDatasets):
         return json.loads(self.controller.create(
             csv_file=mock_uploaded_file, **kwargs))
 
+    def _wait_for_dataset(self, dataset_id):
+        while True:
+            results = json.loads(self.controller.show(dataset_id))
+            if len(results):
+                break
+            sleep(self.SLEEP_DELAY)
+
+        sleep(self.SLEEP_DELAY)
+
+        return results
+
     def test_create_from_csv(self):
         result = self._upload_mocked_file()
         self.assertTrue(isinstance(result, dict))
@@ -186,6 +197,20 @@ class TestDatasets(TestAbstractDatasets):
         results = self._test_summary_built(result)
         self._test_summary_no_group(results)
 
+    @requires_async
+    def test_create_from_json_async(self):
+        mock = self._file_mock(self._fixture_path_prefix('good_eats.json'))
+        result = json.loads(self.controller.create(
+            json_file=mock))
+
+        self.assertTrue(isinstance(result, dict))
+        self.assertTrue(Dataset.ID in result)
+
+        self._wait_for_dataset(result[Dataset.ID])
+
+        results = self._test_summary_built(result)
+        self._test_summary_no_group(results)
+
     def test_create_no_url_or_csv(self):
         result = json.loads(self.controller.create())
 
@@ -212,11 +237,8 @@ class TestDatasets(TestAbstractDatasets):
     @requires_async
     def test_show_async(self):
         dataset_id = self._post_file()
-        while True:
-            results = json.loads(self.controller.show(dataset_id))
-            if len(results):
-                break
-            sleep(self.SLEEP_DELAY)
+
+        results = self._wait_for_dataset(dataset_id)
 
         self.assertTrue(isinstance(results, list))
         self.assertTrue(isinstance(results[0], dict))
