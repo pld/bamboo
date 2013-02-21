@@ -15,12 +15,12 @@ script:
   - ls -ld /dev/shm
   - sudo chmod a+wt /dev/shm
   - ls -ld /dev/shm
-  - ./celeryd/celeryd start
+  - sudo ./celeryd/celeryd start
   - tail -f ./celeryd/celeryd.log&
   - cd bamboo
   - nosetests
   - cd ..
-  - ./celeryd/celeryd stop
+  - sudo ./celeryd/celeryd stop
 services:
   - mongodb
 notifications:
