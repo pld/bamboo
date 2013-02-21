@@ -12,6 +12,7 @@ from bamboo.tests.decorators import requires_async
 from bamboo.tests.test_base import TestBase
 from bamboo.tests.controllers.test_abstract_datasets import\
     TestAbstractDatasets
+from bamboo.lib.utils import is_float_nan
 
 
 class TestCalculations(TestBase):
@@ -489,12 +490,33 @@ class TestCalculations(TestBase):
         group = 'wp_id'
         self._wait_for_dataset_state(dataset_id)
 
-        results = json.loads(self.controller.create(dataset_id,
-                             'newest(submit_date,functional)', 'wp_functional',
-                             group=group))
-        results = json.loads(self.controller.create(dataset_id,
-                             'max(submit_date)', 'latest_submit_date',
-                             group=group))
+        test_calculations = {
+            'newest(submit_date,functional)': 'wp_functional',
+            'max(submit_date)': 'latest_submit_date',
+            'ratio(functional in ["yes"], 1)': 'wp_func_ratio'}
+
+        expected_results = {'wp_id': ['A', 'B', 'C', 'n/a'],
+                            'wp_functional': ['yes', 'no', 'yes', 'yes'],
+                            'wp_func_ratio': [1.0, 0.0, 1.0, 1.0],
+                            'wp_func_ratio_denominator': [1, 1, 1, 1],
+                            'wp_func_ratio_numerator': [1.0, 0.0, 1.0, 1.0],
+                            'latest_submit_date': [1356998400, 1357084800,
+                                                   1357171200, 1357257600]}
+
+        expected_results_after = {
+        'wp_id': ['A', 'B', 'C', 'D', 'n/a'],
+            'wp_functional': ['no', 'no', 'yes', 'yes'],
+            'wp_func_ratio': [0.5, 0.0, 1.0, 1.0, 1.0],
+            'wp_func_ratio_denominator': [2.0, 1.0, 1.0, 1.0, 1.0],
+            'wp_func_ratio_numerator': [1.0, 0.0, 1.0, 1.0, 1.0],
+            'latest_submit_date': [1357603200.0, 1357084800.0,
+                                   1357171200.0, 1357257600.0]}
+
+        for formula, name in test_calculations.items():
+            results = json.loads(self.controller.create(
+                dataset_id, formula, name, group=group))
+
+            self.assertTrue(self.controller.SUCCESS in results.keys())
 
         dataset = Dataset.find_one(dataset_id)
         previous_num_rows = dataset.num_rows
@@ -508,11 +530,12 @@ class TestCalculations(TestBase):
             sleep(self.SLEEP_DELAY)
 
         agg_dframe = dataset.aggregated_dataset(group).dframe()
-        self.assertEqual(
-            set(['wp_id', 'wp_functional', 'latest_submit_date']),
-            set(agg_dframe.columns.tolist()))
+        self.assertEqual(set(expected_results.keys()),
+                         set(agg_dframe.columns.tolist()))
 
-        self.assertTrue(self.controller.SUCCESS in results.keys())
+        for column, results in expected_results.items():
+            self.assertEqual(results,
+                             agg_dframe[column].tolist())
 
         update = {
             'wp_id': 'D',
@@ -538,10 +561,13 @@ class TestCalculations(TestBase):
         dataset = Dataset.find_one(dataset_id)
         agg_dframe = dataset.aggregated_dataset(group).dframe()
 
-        self.assertEqual(agg_dframe.get_value(0, 'wp_id'), 'A')
         self.assertEqual(current_num_rows, previous_num_rows + 2)
-        self.assertEqual(set(agg_dframe[group]),
-                         set(['A', 'B', 'C', 'D', 'n/a']))
+        self.assertEqual(set(expected_results_after.keys()),
+                         set(agg_dframe.columns.tolist()))
+        for column, results in expected_results_after.items():
+            column = [x for x in agg_dframe[column].tolist() if not
+                    is_float_nan(x)]
+            self.assertEqual(results, column)
 
     @requires_async
     def test_fail_in_background(self):
