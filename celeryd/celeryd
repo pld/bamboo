@@ -22,7 +22,7 @@
 
 DEFAULT_PID_FILE="celeryd/celeryd.pid"
 DEFAULT_LOG_FILE="celeryd/celeryd.log"
-DEFAULT_LOG_LEVEL="INFO"
+DEFAULT_LOG_LEVEL="DEBUG"
 DEFAULT_NODES="celery"
 DEFAULT_CELERYD="-m celery.bin.celeryd_detach"
 
