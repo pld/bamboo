@@ -4,13 +4,16 @@ python:
 virtualenv:
   system_site_packages: true
 before_install:
-  - sudo apt-get install -qq python-numpy gfortran libatlas-base-dev
+  - sudo apt-get install -qq gfortran libatlas-base-dev
 install:
+  - pip freeze
+  - pip install numpy
   - pip install -r requirements.pip --use-mirrors
   - pip install -r requirements-test.pip --use-mirrors
   - pip freeze
 script:
   - ./celeryd/celeryd start
+  - tail -f ./celeryd/celeryd.log&
   - cd bamboo
   - nosetests
   - cd ..
