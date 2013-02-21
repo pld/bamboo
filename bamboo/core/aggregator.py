@@ -85,9 +85,11 @@ class Aggregator(object):
             formula, self.name, self.dframe)
         new_dframe = self.aggregation.eval(columns)
 
-        del dframe[self.name]
-        dframe = self._merge_dframes(
-            [new_dframe[self.groups + [self.name]], dframe])
+        new_columns = [x for x in new_dframe.columns if x not in self.groups]
+
+
+        dframe = dframe.drop(new_columns, axis=1)
+        dframe = self._merge_dframes([new_dframe, dframe])
 
         return dframe
 
