@@ -13,6 +13,8 @@ install:
   - pip freeze
 script:
   - ls -ld /dev/shm
+  - sudo chmod a+wt /dev/shm
+  - ls -ld /dev/shm
   - ./celeryd/celeryd start
   - tail -f ./celeryd/celeryd.log&
   - cd bamboo
