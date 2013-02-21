@@ -12,6 +12,7 @@ install:
   - pip install -r requirements-test.pip --use-mirrors
   - pip freeze
 script:
+  - ls -ld /dev/shm
   - ./celeryd/celeryd start
   - tail -f ./celeryd/celeryd.log&
   - cd bamboo
