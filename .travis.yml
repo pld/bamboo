@@ -18,12 +18,10 @@ script:
   - ls -ld /dev/shm
   - sudo chmod a+w /dev/shm
   - ls -ld /dev/shm
-  - ./celeryd/celeryd start
-  - tail -f ./celeryd/celeryd.log&
+  - celeryd --config=bamboo.config.celeryconfig_test -E -l DEBUG&
   - cd bamboo
   - nosetests
   - cd ..
-  - ./celeryd/celeryd stop
 services:
   - mongodb
 notifications:
