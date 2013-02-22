@@ -12,6 +12,9 @@ install:
   - pip install -r requirements-test.pip --use-mirrors
   - pip freeze
 script:
+  - id
+  - uname -a
+  - ls -ld /tmp
   - ls -ld /dev/shm
   - sudo chmod a+w /dev/shm
   - ls -ld /dev/shm
