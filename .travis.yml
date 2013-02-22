@@ -13,14 +13,14 @@ install:
   - pip freeze
 script:
   - ls -ld /dev/shm
-  - sudo chmod a+wt /dev/shm
+  - sudo chmod a+w /dev/shm
   - ls -ld /dev/shm
-  - sudo ./celeryd/celeryd start
+  - ./celeryd/celeryd start
   - tail -f ./celeryd/celeryd.log&
   - cd bamboo
   - nosetests
   - cd ..
-  - sudo ./celeryd/celeryd stop
+  - ./celeryd/celeryd stop
 services:
   - mongodb
 notifications:
