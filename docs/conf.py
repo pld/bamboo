@@ -19,7 +19,7 @@ import os
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 sys.path.insert(0, os.path.abspath('..'))
 
-from bamboo.version import VERSION_NUMBER, VERSION_DESCRIPTION
+from bamboo.lib.version import VERSION_NUMBER, VERSION_DESCRIPTION
 
 # -- General configuration ----------------------------------------------------
 
