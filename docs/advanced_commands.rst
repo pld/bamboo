@@ -391,7 +391,7 @@ following command:
 
 .. code-block:: sh
 
-    curl -X PUT -d "date_column=submit_date&interval=M&how=mean" http://bamboo.io/datasets/8a3d74711475d8a51c84484fe73f24bd151242ea/resample
+    curl -X GET -d "date_column=submit_date&interval=M&how=mean" http://bamboo.io/datasets/8a3d74711475d8a51c84484fe73f24bd151242ea/resample
 
 **returns:**
 
@@ -483,7 +483,7 @@ following command:
             'gps_alt': 'null',
             '_id': 'null',
             'gps_precision': 'null'
-        }, 
+        },
         {
             'gps_longitude': 'null',
             '_percentage_complete': 'null',
@@ -492,7 +492,7 @@ following command:
             'gps_alt': 'null',
             '_id': 'null',
             'gps_precision': 'null'
-        }, 
+        },
         {
             'gps_longitude': 28.97413979283333,
             '_percentage_complete': 'null',
@@ -505,6 +505,6 @@ following command:
     ]
 
 .. note::
-    
+
     The first ``window - 1`` rows will be null, because not enough
     data will have been seen to calculate rolling statistics for those rows.
