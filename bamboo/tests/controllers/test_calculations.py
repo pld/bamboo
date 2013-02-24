@@ -504,7 +504,7 @@ class TestCalculations(TestBase):
                                                    1357171200, 1357257600]}
 
         expected_results_after = {
-        'wp_id': ['A', 'B', 'C', 'D', 'n/a'],
+            'wp_id': ['A', 'B', 'C', 'D', 'n/a'],
             'wp_functional': ['no', 'no', 'yes', 'yes'],
             'wp_func_ratio': [0.5, 0.0, 1.0, 1.0, 1.0],
             'wp_func_ratio_denominator': [2.0, 1.0, 1.0, 1.0, 1.0],
@@ -566,7 +566,7 @@ class TestCalculations(TestBase):
                          set(agg_dframe.columns.tolist()))
         for column, results in expected_results_after.items():
             column = [x for x in agg_dframe[column].tolist() if not
-                    is_float_nan(x)]
+                      is_float_nan(x)]
             self.assertEqual(results, column)
 
     @requires_async

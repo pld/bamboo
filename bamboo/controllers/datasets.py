@@ -245,7 +245,7 @@ class Datasets(AbstractController):
         :param csv_file: An uploaded CSV file to read from.
         :param json_file: An uploaded JSON file to read from.
         :param schema: A SDF schema file (JSON)
-        :param perish: Number of seconds after which to dlete the dataset.
+        :param perish: Number of seconds after which to delete the dataset.
 
         :returns: An error message if `url`, `csv_file`, or `scehma` are not
             provided. An error message if an improperly formatted value raises
@@ -373,6 +373,27 @@ class Datasets(AbstractController):
         return self._safe_get_and_call(dataset_id, action,
                                        exceptions=(TypeError,),
                                        content_type=content_type)
+
+    def set_olap_type(self, dataset_id, column, olap_type):
+        """Set the OLAP Type for this `column` of dataset.
+
+        Only columns with an original OLAP Type of 'measure' can be modified.
+        This includes columns with Simple Type integer, float, and datetime.
+
+        :param dataset_id: The ID of the dataset to modify.
+        :param column: The column to set the OLAP Type for.
+        :param olap_type: The OLAP Type to set. Must be 'dimension' or
+            'measure'.
+        """
+
+        def action(dataset):
+            dataset.set_olap_type(column, olap_type)
+
+            return {self.SUCCESS: 'set OLAP Type for column "%s" to "%s".' % (
+                column, olap_type),
+                Dataset.ID: dataset_id}
+
+        return self._safe_get_and_call(dataset_id, action)
 
     def rolling(self, dataset_id, window, win_type='boxcar',
                 format=None):

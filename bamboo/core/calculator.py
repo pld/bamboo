@@ -316,7 +316,7 @@ class Calculator(object):
                     slug = labels_to_slugs.get(
                         col, col if col in labels_to_slugs.values() else None)
 
-                    # if slug is valid of there is an empty dframe
+                    # if slug is valid or there is an empty dframe
                     if (slug or col in labels_to_slugs.keys()) and (
                             dframe_empty or slug in columns):
                         filtered_row[slug] = self.dataset.schema.convert_type(

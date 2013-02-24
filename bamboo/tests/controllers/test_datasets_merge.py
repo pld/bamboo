@@ -111,13 +111,11 @@ class TestDatasetsMerge(TestAbstractDatasets):
                         for dataset_id in [merged_id, dataset_id1, dataset_id2]
                         ]
 
-            if all([dataset.is_ready for dataset in datasets]):
+            if all([dataset.record_ready for dataset in datasets]) and all(
+                  [d.merged_dataset_ids for d in datasets[1:]]):
                 break
 
             sleep(self.SLEEP_DELAY)
-
-        # Extra pause otherwise tear down deletes dataset
-        sleep(self.SLEEP_DELAY)
 
         datasets = [Dataset.find_one(dataset_id)
                     for dataset_id in [dataset_id1, dataset_id2]]

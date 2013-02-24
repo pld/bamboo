@@ -197,7 +197,7 @@ class Dataset(AbstractModel, ImportableDataset):
             query=query, select=select, limit=limit, order_by=order_by,
             distinct=distinct, as_cursor=True)
 
-        dframe = self._batch_read_dframe_from_cursor(
+        dframe = self.__batch_read_dframe_from_cursor(
             observations, distinct, limit)
 
         dframe.decode_mongo_reserved_keys()
@@ -214,6 +214,15 @@ class Dataset(AbstractModel, ImportableDataset):
         return dframe
 
     def count(self, query=None, limit=0, distinct=None):
+        """Return the count of rows matching query in dataset.
+
+        :param query: The query to search for.
+        :type query: Dictionary or None, default None.
+        :param limit: The maximum number of rows to count.
+        :type limit: Integer, default 0.
+        :param distinct: A distinct restriction.
+        :type distinct: Dictionary or None, default None.
+        """
         observations = self.observations(
             query=query, limit=limit, distinct=distinct, as_cursor=True)
 
@@ -223,36 +232,6 @@ class Dataset(AbstractModel, ImportableDataset):
             count = limit
 
         return count
-
-    def _batch_read_dframe_from_cursor(self, observations, distinct, limit):
-        dframes = []
-        batch = 0
-
-        while True:
-            start = batch * self.DB_READ_BATCH_SIZE
-            end = start + self.DB_READ_BATCH_SIZE
-
-            if limit > 0 and end > limit:
-                end = limit
-
-            # if there is a limit and we are done
-            if start >= end:
-                break
-
-            current_observations = [ob for ob in observations[start:end]]
-
-            # if the batches exhausted the data
-            if not len(current_observations):
-                break
-
-            dframes.append(BambooFrame(current_observations))
-
-            if not distinct:
-                observations.rewind()
-
-            batch += 1
-
-        return BambooFrame(concat(dframes) if len(dframes) else [])
 
     def add_joined_dataset(self, new_data):
         """Add the ID of `new_dataset` to the list of joined datasets."""
@@ -307,7 +286,10 @@ class Dataset(AbstractModel, ImportableDataset):
         return super(self.__class__, self).save(record)
 
     def delete(self, countdown=0):
-        """Delete this dataset."""
+        """Delete this dataset.
+
+        :param countdown: Delete dataset after this number of seconds.
+        """
         call_async(delete_task, self, countdown=countdown)
 
     def summarize(self, dframe, groups=[], no_cache=False):
@@ -427,8 +409,6 @@ class Dataset(AbstractModel, ImportableDataset):
     def remove_parent_observations(self, parent_id):
         """Remove obervations for this dataset with the passed `parent_id`.
 
-        Args:
-
         :param parent_id: Remove observations with this ID as their parent
             dataset ID.
         """
@@ -455,7 +435,10 @@ class Dataset(AbstractModel, ImportableDataset):
             {'$push': {self.PENDING_UPDATES: update_id}})
 
     def save_observations(self, dframe):
-        """Save rows in `dframe` for this dataset."""
+        """Save rows in `dframe` for this dataset.
+
+        :param dframe: DataFrame to save rows from.
+        """
         return Observation.save(dframe, self)
 
     def replace_observations(self, dframe, overwrite=False,
@@ -463,6 +446,10 @@ class Dataset(AbstractModel, ImportableDataset):
         """Remove all rows for this dataset and save the rows in `dframe`.
 
         :param dframe: Replace rows in this dataset with this DataFrame's rows.
+        :param overwrite: If true replace the schema, otherwise update it.
+            Default False.
+        :param set_num_columns: If true update the dataset stored number of
+            columns.  Default True.
 
         :returns: BambooFrame equivalent to the passed in `dframe`.
         """
@@ -488,7 +475,11 @@ class Dataset(AbstractModel, ImportableDataset):
         return BambooFrame([[''] * len(columns)], columns=columns)
 
     def join(self, other, on):
-        """Join with dataset `other` on the passed columns."""
+        """Join with dataset `other` on the passed columns.
+
+        :param other: The other dataset to join.
+        :param on: The column in this and the `other` dataset to join on.
+        """
         merged_dframe = self.dframe()
 
         if not len(merged_dframe.columns):
@@ -518,6 +509,15 @@ class Dataset(AbstractModel, ImportableDataset):
         return self
 
     def encode_dframe_columns(self, dframe):
+        """Encode the columns in `dframe` to slugs and add ID column.
+
+        The ID column is the dataset_observation_id for this dataset.  This is
+        used to link observations to a specific dataset.
+
+        :param dframe: The DataFame to rename columns in and add an ID column
+            to.
+        :returns: A the modified `dframe` as a BambooFrame.
+        """
         encoded_columns_map = self.schema.rename_map_for_dframe(dframe)
 
         dframe = dframe.rename(columns=encoded_columns_map)
@@ -528,6 +528,14 @@ class Dataset(AbstractModel, ImportableDataset):
         return BambooFrame(dframe.join(id_column))
 
     def new_agg_dataset(self, dframe, groups):
+        """Create an aggregated dataset for this dataset.
+
+        Creates and saves a dataset from the given `dframe`.  Then stores this
+        dataset as an aggregated dataset given `groups` for `self`.
+
+        :param dframe: The DataFrame to store in the new aggregated dataset.
+        :param groups: The groups associated with this aggregated dataset.
+        """
         agg_dataset = self.create()
         agg_dataset.save_observations(dframe)
 
@@ -539,6 +547,17 @@ class Dataset(AbstractModel, ImportableDataset):
             self.AGGREGATED_DATASETS: agg_datasets_dict})
 
     def has_pending_updates(self, update_id):
+        """Check if this dataset has pending updates.
+
+        Call the update identfied by `update_id` the current update. A dataset
+        has pending updates if, not including the current update, there are any
+        pending updates and the update at the top of the queue is not the
+        current update.
+
+        :param update_id: An update to exclude when checking for pending
+            updates.
+        :returns: True if there are pending updates, False otherwise.
+        """
         self.reload()
         pending_updates = self.pending_updates
 
@@ -546,6 +565,10 @@ class Dataset(AbstractModel, ImportableDataset):
             set(pending_updates) - set([update_id]))
 
     def update_complete(self, update_id):
+        """Remove `update_id` from this datasets list of pending updates.
+
+        :param update_id: The ID of the completed update.
+        """
         self.collection.update(
             {'_id': self.record['_id']},
             {'$pull': {self.PENDING_UPDATES: update_id}})
@@ -556,11 +579,66 @@ class Dataset(AbstractModel, ImportableDataset):
         :param date_column: The date column use as the index for resampling.
         :param interval: The interval code for resampling.
         :param how: How to aggregate in the resample.
+        :returns: A BambooFrame of the resampled DataFrame for this dataset.
         """
         dframe = self.dframe().set_index(date_column)
         resampled = dframe.resample(interval, how=how)
         return BambooFrame(resampled.reset_index())
 
     def rolling(self, win_type, window):
+        """Calculate a rolling window over all numeric columns.
+
+        :param win_type: The type of window, see pandas pandas.rolling_window.
+        :param window: The number of observations used for calculating the
+            window.
+        :returns: A BambooFrame of the rolling window calculated for this
+            dataset.
+        """
         dframe = self.dframe()[self.schema.numeric_slugs]
         return BambooFrame(rolling_window(dframe, window, win_type))
+
+    def set_olap_type(self, column, olap_type):
+        """Set the OLAP Type for this `column` of dataset.
+
+        Only columns with an original OLAP Type of 'measure' can be modified.
+        This includes columns with Simple Type integer, float, and datetime.
+
+        :param column: The column to set the OLAP Type for.
+        :param olap_type: The OLAP Type to set. Must be 'dimension' or
+            'measure'.
+        """
+        schema = self.schema
+        schema.set_olap_type(column, olap_type)
+
+        self.set_schema(schema, False)
+
+    def __batch_read_dframe_from_cursor(self, observations, distinct, limit):
+        """Read a DataFrame from a MongoDB Cursor in batches."""
+        dframes = []
+        batch = 0
+
+        while True:
+            start = batch * self.DB_READ_BATCH_SIZE
+            end = start + self.DB_READ_BATCH_SIZE
+
+            if limit > 0 and end > limit:
+                end = limit
+
+            # if there is a limit and we are done
+            if start >= end:
+                break
+
+            current_observations = [ob for ob in observations[start:end]]
+
+            # if the batches exhausted the data
+            if not len(current_observations):
+                break
+
+            dframes.append(BambooFrame(current_observations))
+
+            if not distinct:
+                observations.rewind()
+
+            batch += 1
+
+        return BambooFrame(concat(dframes) if len(dframes) else [])

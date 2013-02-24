@@ -13,7 +13,6 @@ class Aggregation(object):
     :param columns: List of columns to aggregate.
     :param formula_name: The string to refer to this aggregation.
     """
-
     column = None
     columns = None
     formula_name = None
@@ -45,6 +44,42 @@ class Aggregation(object):
             self.columns, axis=1)).groupby(self.groups, as_index=False)
 
 
+class CountAggregation(Aggregation):
+    """Calculate the count of rows fulfilling the criteria in the formula.
+
+    N/A values are ignored unless there are no arguments to the function, in
+    which case it returns the number of rows in the dataset.
+
+    Written as ``count(CRITERIA)``. Where `CRITERIA` is an optional boolean
+    expression that signifies which rows are to be counted.
+    """
+    formula_name = 'count'
+
+    def group(self):
+        if self.column is not None:
+            joined = self.dframe[self.groups].join(
+                self.column)
+            joined = joined[self.column]
+            groupby = joined.groupby(self.groups, as_index=False)
+            result = groupby.agg(
+                self.formula_name)[self.column.name].reset_index()
+        else:
+            result = self.dframe[self.groups]
+            result = result.groupby(self.groups).apply(lambda x: len(x)).\
+                reset_index().rename(columns={0: self.name})
+
+        return result
+
+    def agg(self):
+        if self.column is not None:
+            self.column = self.column[self.column]
+            result = float(self.column.__getattribute__(self.formula_name)())
+        else:
+            result = len(self.dframe)
+
+        return self._value_to_dframe(result)
+
+
 class RatioAggregation(Aggregation):
     """Calculate the ratio.
 
@@ -53,7 +88,6 @@ class RatioAggregation(Aggregation):
     ``ratio(NUMERATOR, DENOMINATOR)``. Where `NUMERATOR` and `DENOMINATOR` are
     both valid formulas.
     """
-
     formula_name = 'ratio'
 
     def group(self):
@@ -117,10 +151,136 @@ class RatioAggregation(Aggregation):
             dframe[self._name_for_idx(1)]
 
 
-class PearsonAggregation(Aggregation):
-    """Calculate the ratio.
-    """
+class ArgMaxAggregation(Aggregation):
+    """Return the index for the maximum of a column.
 
+    Written as ``argmax(FORMULA)``. Where `FORMULA` is a valid formula.
+    """
+    formula_name = 'argmax'
+
+    def group(self):
+        """For when aggregation is called with a group parameter."""
+        self.column = self.column.apply(lambda value: parse_float(value))
+        group_dframe = self.dframe[self.groups].join(self.column)
+        indices = group_dframe.reset_index().set_index(
+            self.groups + [self.name])
+
+        def max_index_for_row(row):
+            groups = row[self.groups]
+            value = row[self.name]
+
+            xsection = indices.xs(groups, level=self.groups)
+
+            if isnan(value):
+                return minint()
+
+            max_index = xsection.get_value(value, 'index')
+
+            if isinstance(max_index, Series):
+                max_index = max_index.max()
+
+            return max_index
+
+        groupby_max = self._groupby().max().reset_index()
+        column = groupby_max.apply(max_index_for_row, axis=1).apply(int)
+        column.name = self.name
+
+        return DataFrame(column).join(groupby_max[self.groups])
+
+
+class MaxAggregation(Aggregation):
+    """Calculate the maximum.
+
+    Written as ``max(FORMULA)``. Where `FORMULA` is a valid formula.
+    """
+    formula_name = 'max'
+
+
+class MeanAggregation(RatioAggregation, Aggregation):
+    """Calculate the arithmetic mean.
+
+    Written as ``mean(FORMULA)``. Where `FORMULA` is a valid formula.
+
+    Because mean is a ratio this inherits from `RatioAggregation` to
+    use its generic reduce implementation.
+    """
+    formula_name = 'mean'
+
+    def group(self):
+        return self._group([self.column, Series([1] * len(self.column))])
+
+    def agg(self):
+        dframe = DataFrame(index=[0])
+
+        columns = [
+            Series([col]) for col in [self.column.sum(), len(self.column)]]
+
+        dframe = self._build_dframe(dframe, columns)
+        dframe = DataFrame([dframe.sum().to_dict()])
+
+        return self._add_calculated_column(dframe)
+
+
+class MedianAggregation(Aggregation):
+    """Calculate the median. Written as ``median(FORMULA)``.
+
+    Where `FORMULA` is a valid formula.
+    """
+    formula_name = 'median'
+
+
+class MinAggregation(Aggregation):
+    """Calculate the minimum.
+
+    Written as ``min(FORMULA)``. Where `FORMULA` is a valid formula.
+    """
+    formula_name = 'min'
+
+
+class NewestAggregation(Aggregation):
+    """Return the second column's value at the newest row in the first column.
+
+    Find the maximum value for the first column and return the entry at that
+    row from the second column.
+
+    Written as ``newest(INDEX_FORMULA, VALUE_FORMULA)`` where ``INDEX_FORMULA``
+    and ``VALUE_FORMULA`` are valid formulae.
+    """
+    formula_name = 'newest'
+    value_column = 1
+
+    def agg(self):
+        index, values = self.columns
+        index.name = 'index'
+        values.name = self.name
+
+        idframe = DataFrame(values).join(index).dropna().reset_index()
+        idx = idframe['index'].argmax()
+        result = idframe[self.name].get_value(idx)
+
+        return self._value_to_dframe(result)
+
+    def group(self):
+        argmax_agg = ArgMaxAggregation(self.name, self.groups, self.dframe)
+        argmax_df = argmax_agg.eval(self.columns)
+        indices = argmax_df.pop(self.name)
+
+        newest_col = self.columns[self.value_column][indices]
+        newest_col.index = argmax_df.index
+        newest_col.name = self.name
+
+        return argmax_df.join(newest_col)
+
+
+class PearsonAggregation(Aggregation):
+    """Calculate the Pearson correlation and associatd p-value.
+
+    Calculate the Pearson correlation coefficient between two columns and the
+    p-value for that correlation coefficient.
+
+    Written as ``pearson(FORMULA1, FORMULA2)``. Where ``FORMULA1`` and
+    ``FORMULA2`` are valid formulae.
+    """
     formula_name = 'pearson'
 
     def agg(self):
@@ -155,142 +315,12 @@ class PearsonAggregation(Aggregation):
         return '%s_pvalue' % self.name
 
 
-class MaxAggregation(Aggregation):
-    """Calculate the maximum.
-
-    Written as ``max(FORMULA)``. Where `FORMULA` is a valid formula.
-    """
-
-    formula_name = 'max'
-
-
-class ArgMaxAggregation(Aggregation):
-    """Return the index for the maximum of a column.
-
-    Written as ``argmax(FORMULA)``. Where `FORMULA` is a valid formula.
-    """
-
-    formula_name = 'argmax'
-
-    def group(self):
-        """For when aggregation is called with a group parameter."""
-        self.column = self.column.apply(lambda value: parse_float(value))
-        group_dframe = self.dframe[self.groups].join(self.column)
-        indices = group_dframe.reset_index().set_index(
-            self.groups + [self.name])
-
-        def max_index_for_row(row):
-            groups = row[self.groups]
-            value = row[self.name]
-
-            xsection = indices.xs(groups, level=self.groups)
-
-            if isnan(value):
-                return minint()
-
-            max_index = xsection.get_value(value, 'index')
-
-            if isinstance(max_index, Series):
-                max_index = max_index.max()
-
-            return max_index
-
-        groupby_max = self._groupby().max().reset_index()
-        column = groupby_max.apply(max_index_for_row, axis=1).apply(int)
-        column.name = self.name
-
-        return DataFrame(column).join(groupby_max[self.groups])
-
-
-class NewestAggregation(Aggregation):
-    """For the newest index column get the value column."""
-
-    formula_name = 'newest'
-    value_column = 1
-
-    def agg(self):
-        index, values = self.columns
-        index.name = 'index'
-        values.name = self.name
-
-        idframe = DataFrame(values).join(index).dropna().reset_index()
-        idx = idframe['index'].argmax()
-        result = idframe[self.name].get_value(idx)
-
-        return self._value_to_dframe(result)
-
-    def group(self):
-        argmax_agg = ArgMaxAggregation(self.name, self.groups, self.dframe)
-        argmax_df = argmax_agg.eval(self.columns)
-        indices = argmax_df.pop(self.name)
-
-        newest_col = self.columns[self.value_column][indices]
-        newest_col.index = argmax_df.index
-        newest_col.name = self.name
-
-        return argmax_df.join(newest_col)
-
-
-class MeanAggregation(RatioAggregation, Aggregation):
-    """Calculate the arithmetic mean.
-
-    Written as ``mean(FORMULA)``. Where `FORMULA` is a valid formula.
-
-    Because mean is a ratio this inherits from `RatioAggregation` to
-    use its reduce generic implementation.
-    """
-
-    formula_name = 'mean'
-
-    def group(self):
-        return self._group([self.column, Series([1] * len(self.column))])
-
-    def agg(self):
-        dframe = DataFrame(index=[0])
-
-        columns = [
-            Series([col]) for col in [self.column.sum(), len(self.column)]]
-
-        dframe = self._build_dframe(dframe, columns)
-        dframe = DataFrame([dframe.sum().to_dict()])
-
-        return self._add_calculated_column(dframe)
-
-
 class StandardDeviationAggregation(Aggregation):
     """Calculate the standard deviation. Written as ``std(FORMULA)``.
 
     Where `FORMULA` is a valid formula.
     """
-
     formula_name = 'std'
-
-
-class VarianceAggregation(Aggregation):
-    """Calculate the variance. Written as ``var(FORMULA)``.
-
-    Where `FORMULA` is a valid formula.
-    """
-
-    formula_name = 'var'
-
-
-class MedianAggregation(Aggregation):
-    """Calculate the median. Written as ``median(FORMULA)``.
-
-    Where `FORMULA` is a valid formula.
-    """
-
-    formula_name = 'median'
-
-
-class MinAggregation(Aggregation):
-    """Calculate the minimum.
-
-    Written as ``min(FORMULA)``. Where `FORMULA` is a valid formula.
-    """
-
-    formula_name = 'min'
 
 
 class SumAggregation(Aggregation):
@@ -298,7 +328,6 @@ class SumAggregation(Aggregation):
 
     Written as ``sum(FORMULA)``. Where `FORMULA` is a valid formula.
     """
-
     formula_name = 'sum'
 
     def reduce(self, dframe, columns):
@@ -309,42 +338,12 @@ class SumAggregation(Aggregation):
         return dframe
 
 
-class CountAggregation(Aggregation):
-    """Calculate the count of rows fulfilling the criteria in the formula.
+class VarianceAggregation(Aggregation):
+    """Calculate the variance. Written as ``var(FORMULA)``.
 
-    N/A values are ignored unless there is no arguments to the
-    function, in which case is simply returns the number of rows
-    in the dataset.
-    Written as
-    ``count(CRITERIA)``. Where `CRITERIA` is an optional boolean expression
-    that signifies which rows are to be counted.
+    Where `FORMULA` is a valid formula.
     """
-
-    formula_name = 'count'
-
-    def group(self):
-        if self.column is not None:
-            joined = self.dframe[self.groups].join(
-                self.column)
-            joined = joined[self.column]
-            groupby = joined.groupby(self.groups, as_index=False)
-            result = groupby.agg(
-                self.formula_name)[self.column.name].reset_index()
-        else:
-            result = self.dframe[self.groups]
-            result = result.groupby(self.groups).apply(lambda x: len(x)).\
-                reset_index().rename(columns={0: self.name})
-
-        return result
-
-    def agg(self):
-        if self.column is not None:
-            self.column = self.column[self.column]
-            result = float(self.column.__getattribute__(self.formula_name)())
-        else:
-            result = len(self.dframe)
-
-        return self._value_to_dframe(result)
+    formula_name = 'var'
 
 
 # dict of formula names to aggregation classes

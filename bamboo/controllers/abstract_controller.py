@@ -51,7 +51,8 @@ class AbstractController(object):
 
         return ''
 
-    def dump_or_error(self, obj, error_message, callback=False):
+    def dump_or_error(self, obj, error_message=DEFAULT_ERROR_MESSAGE,
+                      callback=False):
         """Dump JSON or return error message, potentially with callback.
 
         If `obj` is None `error_message` is returned and the HTTP status code

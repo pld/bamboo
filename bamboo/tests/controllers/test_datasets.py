@@ -9,7 +9,8 @@ import simplejson as json
 
 from bamboo.controllers.abstract_controller import AbstractController
 from bamboo.controllers.datasets import Datasets
-from bamboo.lib.schema_builder import CARDINALITY, DATETIME, SIMPLETYPE
+from bamboo.lib.schema_builder import CARDINALITY, DATETIME, OLAP_TYPE,\
+    SIMPLETYPE
 from bamboo.models.dataset import Dataset
 from bamboo.tests.controllers.test_abstract_datasets import\
     TestAbstractDatasets
@@ -794,3 +795,54 @@ class TestDatasets(TestAbstractDatasets):
             count=True))
 
         self.assertEqual(results, 11)
+
+    def test_set_olap_type(self):
+        new_olap_type = 'dimension'
+        column = 'amount'
+
+        dataset_id = self._post_file()
+
+        results = json.loads(self.controller.info(dataset_id))
+        expected_schema = results[Dataset.SCHEMA]
+        expected_schema[column][OLAP_TYPE] = new_olap_type
+
+        # set OLAP Type
+        results = json.loads(self.controller.set_olap_type(
+            dataset_id, column, new_olap_type))
+        self.assertTrue(Datasets.SUCCESS in results.keys())
+
+        # Check new schema
+        results = json.loads(self.controller.info(dataset_id))
+        new_schema = results[Dataset.SCHEMA]
+        self.assertEqual(expected_schema, new_schema)
+
+        # set OLAP Type back
+        new_olap_type = 'measure'
+        expected_schema[column][OLAP_TYPE] = new_olap_type
+        results = json.loads(self.controller.set_olap_type(
+            dataset_id, column, new_olap_type))
+        self.assertTrue(Datasets.SUCCESS in results.keys())
+
+        # Check new schema
+        results = json.loads(self.controller.info(dataset_id))
+        new_schema = results[Dataset.SCHEMA]
+        self.assertEqual(expected_schema, new_schema)
+
+    def test_set_olap_type_fails_for_dimension(self):
+        new_olap_type = 'measure'
+        column = 'food_type'
+
+        dataset_id = self._post_file()
+
+        results = json.loads(self.controller.info(dataset_id))
+        expected_schema = results[Dataset.SCHEMA]
+
+        # set OLAP Type
+        results = json.loads(self.controller.set_olap_type(
+            dataset_id, column, new_olap_type))
+        self.assertTrue(Datasets.ERROR in results.keys())
+
+        # Check schema does not change
+        results = json.loads(self.controller.info(dataset_id))
+        new_schema = results[Dataset.SCHEMA]
+        self.assertEqual(expected_schema, new_schema)
