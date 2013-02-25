@@ -25,7 +25,7 @@ class TestDatasets(TestAbstractDatasets):
         self._file_uri = self._local_fixture_prefix(self._file_name)
         self.url = 'http://formhub.org/mberg/forms/good_eats/data.csv'
 
-    def _test_get_with_query_or_select(
+    def __test_get_with_query_or_select(
             self, query='{}', select=None, distinct=None, num_results=None,
             result_keys=None):
         dataset_id = self._post_file()
@@ -43,13 +43,13 @@ class TestDatasets(TestAbstractDatasets):
         if query != '{}':
             self.assertEqual(len(results), num_results)
 
-    def _upload_mocked_file(self, **kwargs):
+    def __upload_mocked_file(self, **kwargs):
         mock_uploaded_file = self._file_mock(self._file_path)
 
         return json.loads(self.controller.create(
             csv_file=mock_uploaded_file, **kwargs))
 
-    def _wait_for_dataset(self, dataset_id):
+    def __wait_for_dataset(self, dataset_id):
         while True:
             results = json.loads(self.controller.show(dataset_id))
             if len(results):
@@ -61,7 +61,7 @@ class TestDatasets(TestAbstractDatasets):
         return results
 
     def test_create_from_csv(self):
-        result = self._upload_mocked_file()
+        result = self.__upload_mocked_file()
         self.assertTrue(isinstance(result, dict))
         self.assertTrue(Dataset.ID in result)
 
@@ -74,7 +74,7 @@ class TestDatasets(TestAbstractDatasets):
 
         _file_name = 'unicode.csv'
         self._file_path = self._file_path.replace(self._file_name, _file_name)
-        result = self._upload_mocked_file()
+        result = self.__upload_mocked_file()
 
         self.assertTrue(isinstance(result, dict))
         self.assertTrue(Dataset.ID in result)
@@ -94,7 +94,7 @@ class TestDatasets(TestAbstractDatasets):
         dframe_length = 8
         _file_name = 'good_eats_mixed.csv'
         self._file_path = self._file_path.replace(self._file_name, _file_name)
-        result = self._upload_mocked_file()
+        result = self.__upload_mocked_file()
 
         self.assertTrue(isinstance(result, dict))
         self.assertTrue(Dataset.ID in result)
@@ -111,7 +111,7 @@ class TestDatasets(TestAbstractDatasets):
         as nan, a float value."""
         _file_name = 'good_eats_nan_float.csv'
         self._file_path = self._file_path.replace(self._file_name, _file_name)
-        result = self._upload_mocked_file()
+        result = self.__upload_mocked_file()
 
         self.assertTrue(isinstance(result, dict))
         self.assertTrue(Dataset.ID in result)
@@ -207,7 +207,7 @@ class TestDatasets(TestAbstractDatasets):
         self.assertTrue(isinstance(result, dict))
         self.assertTrue(Dataset.ID in result)
 
-        self._wait_for_dataset(result[Dataset.ID])
+        self.__wait_for_dataset(result[Dataset.ID])
 
         results = self._test_summary_built(result)
         self._test_summary_no_group(results)
@@ -239,7 +239,7 @@ class TestDatasets(TestAbstractDatasets):
     def test_show_async(self):
         dataset_id = self._post_file()
 
-        results = self._wait_for_dataset(dataset_id)
+        results = self.__wait_for_dataset(dataset_id)
 
         self.assertTrue(isinstance(results, list))
         self.assertTrue(isinstance(results[0], dict))
@@ -307,13 +307,13 @@ class TestDatasets(TestAbstractDatasets):
         self.assertTrue(Datasets.ERROR in results)
 
     def test_show_with_query(self):
-        self._test_get_with_query_or_select('{"rating": "delectible"}',
-                                            num_results=11)
+        self.__test_get_with_query_or_select('{"rating": "delectible"}',
+                                             num_results=11)
 
     @requires_async
     def test_show_with_query_async(self):
-        self._test_get_with_query_or_select('{"rating": "delectible"}',
-                                            num_results=0)
+        self.__test_get_with_query_or_select('{"rating": "delectible"}',
+                                             num_results=0)
 
     def test_show_with_query_limit_order_by(self):
 
@@ -349,27 +349,27 @@ class TestDatasets(TestAbstractDatasets):
         query = {
             'submit_date': {'$lt': mktime(datetime.now().timetuple())}
         }
-        self._test_get_with_query_or_select(
+        self.__test_get_with_query_or_select(
             query=json.dumps(query),
             num_results=self.NUM_ROWS)
         query = {
             'submit_date': {'$gt': mktime(datetime.now().timetuple())}
         }
-        self._test_get_with_query_or_select(
+        self.__test_get_with_query_or_select(
             query=json.dumps(query),
             num_results=0)
         date = mktime(datetime(2012, 2, 1, 0).timetuple())
         query = {
             'submit_date': {'$gt': date}
         }
-        self._test_get_with_query_or_select(
+        self.__test_get_with_query_or_select(
             query=json.dumps(query),
             num_results=4)
 
     def test_show_with_select(self):
-        self._test_get_with_query_or_select(select='{"rating": 1}',
-                                            num_results=self.NUM_ROWS,
-                                            result_keys=['rating'])
+        self.__test_get_with_query_or_select(select='{"rating": 1}',
+                                             num_results=self.NUM_ROWS,
+                                             result_keys=['rating'])
 
     def test_show_with_distinct(self):
         dataset_id = self._post_file()
@@ -379,10 +379,10 @@ class TestDatasets(TestAbstractDatasets):
         self.assertEqual(['delectible', 'epic_eat'], results)
 
     def test_show_with_select_and_query(self):
-        self._test_get_with_query_or_select('{"rating": "delectible"}',
-                                            '{"rating": 1}',
-                                            num_results=11,
-                                            result_keys=['rating'])
+        self.__test_get_with_query_or_select('{"rating": "delectible"}',
+                                             '{"rating": 1}',
+                                             num_results=11,
+                                             result_keys=['rating'])
 
     def test_aggregations_datasets_empty(self):
         self.dataset_id = self._post_file()
@@ -644,7 +644,7 @@ class TestDatasets(TestAbstractDatasets):
     @requires_async
     def test_perishable_dataset(self):
         perish_after = 2
-        result = self._upload_mocked_file(perish=perish_after)
+        result = self.__upload_mocked_file(perish=perish_after)
         self.assertTrue(isinstance(result, dict))
         self.assertTrue(Dataset.ID in result)
         dataset_id = result[Dataset.ID]

@@ -132,17 +132,11 @@ class Calculation(AbstractModel):
         return self.record.get(self.DEPENDENT_CALCULATIONS, [])
 
     def add_dependency(self, name):
-        self._add_and_update_set(self.DEPENDENCIES, self.dependencies, name)
+        self.__add_and_update_set(self.DEPENDENCIES, self.dependencies, name)
 
     def add_dependent_calculation(self, name):
-        self._add_and_update_set(self.DEPENDENT_CALCULATIONS,
-                                 self.dependent_calculations, name)
-
-    def _add_and_update_set(self, link_key, existing, new):
-        new_list = list(set(existing + [new]))
-
-        if new_list != existing:
-            self.update({link_key: new_list})
+        self.__add_and_update_set(self.DEPENDENT_CALCULATIONS,
+                                  self.dependent_calculations, name)
 
     def remove_dependent_calculation(self, name):
         new_dependent_calcs = self.dependent_calculations
@@ -224,11 +218,11 @@ class Calculation(AbstractModel):
             aggregated_dataset = dataset.aggregated_dataset(groups)
 
             if aggregated_dataset:
-                name = self._check_name_and_make_unique(name,
-                                                        aggregated_dataset)
+                name = self.__check_name_and_make_unique(name,
+                                                         aggregated_dataset)
 
         else:
-            name = self._check_name_and_make_unique(name, dataset)
+            name = self.__check_name_and_make_unique(name, dataset)
 
         record = {
             DATASET_ID: dataset.dataset_id,
@@ -303,7 +297,7 @@ class Calculation(AbstractModel):
                 self.add_dependency(calc.name)
                 calc.add_dependent_calculation(self.name)
 
-    def _check_name_and_make_unique(self, name, dataset):
+    def __check_name_and_make_unique(self, name, dataset):
         """Check that the name is valid and make unique if valid.
 
         :param name: The name to make unique.
@@ -317,3 +311,9 @@ class Calculation(AbstractModel):
             raise UniqueCalculationError(name, current_names)
 
         return make_unique(name, dataset.schema.keys())
+
+    def __add_and_update_set(self, link_key, existing, new):
+        new_list = list(set(existing + [new]))
+
+        if new_list != existing:
+            self.update({link_key: new_list})

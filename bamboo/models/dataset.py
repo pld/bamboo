@@ -235,16 +235,13 @@ class Dataset(AbstractModel, ImportableDataset):
 
     def add_joined_dataset(self, new_data):
         """Add the ID of `new_dataset` to the list of joined datasets."""
-        self._add_linked_data(self.JOINED_DATASETS, self.joined_dataset_ids,
-                              new_data)
+        self.__add_linked_data(self.JOINED_DATASETS, self.joined_dataset_ids,
+                               new_data)
 
     def add_merged_dataset(self, mapping, new_dataset):
         """Add the ID of `new_dataset` to the list of merged datasets."""
-        self._add_linked_data(self.MERGED_DATASETS, self.merged_dataset_info,
-                              [mapping, new_dataset.dataset_id])
-
-    def _add_linked_data(self, link_key, existing_data, new_data):
-        self.update({link_key: existing_data + [new_data]})
+        self.__add_linked_data(self.MERGED_DATASETS, self.merged_dataset_info,
+                               [mapping, new_dataset.dataset_id])
 
     def clear_summary_stats(self, group=ALL, column=None):
         """Remove summary stats for `group` and optional `column`."""
@@ -642,3 +639,6 @@ class Dataset(AbstractModel, ImportableDataset):
             batch += 1
 
         return BambooFrame(concat(dframes) if len(dframes) else [])
+
+    def __add_linked_data(self, link_key, existing_data, new_data):
+        self.update({link_key: existing_data + [new_data]})

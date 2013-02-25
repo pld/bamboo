@@ -80,11 +80,6 @@ def dict_from_mongo(_dict):
     return _dict
 
 
-def _decode_from_mongo(key):
-    return reduce(lambda s, expr: expr[0].sub(expr[1], s),
-                  RE_LEGAL_MAP, key)
-
-
 def dict_for_mongo(_dict):
     """Encode all keys in `_dict` for MongoDB."""
     for key, value in _dict.items():
@@ -101,6 +96,11 @@ def dict_for_mongo(_dict):
             _dict[key] = value
 
     return _dict
+
+
+def _decode_from_mongo(key):
+    return reduce(lambda s, expr: expr[0].sub(expr[1], s),
+                  RE_LEGAL_MAP, key)
 
 
 def _encode_for_mongo(key):

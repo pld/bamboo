@@ -18,11 +18,11 @@ class EvalTerm(object):
 
     def operator_operands(self, tokenlist):
         """Generator to extract operators and operands in pairs."""
-        _it = iter(tokenlist)
+        it = iter(tokenlist)
 
         while 1:
             try:
-                yield (_it.next(), _it.next())
+                yield (it.next(), it.next())
             except StopIteration:
                 break
 
@@ -44,9 +44,9 @@ class EvalConstant(EvalTerm):
                 context.dependent_columns.add(self.value)
 
             # test is date and parse as date
-            return self._parse_field(field, context)
+            return self.__parse_field(field, context)
 
-    def _parse_field(self, field, context):
+    def __parse_field(self, field, context):
             schema = context.schema
 
             if schema and schema.is_date_simpletype(self.value):
@@ -118,10 +118,9 @@ class EvalExpOp(EvalBinaryArithOp):
 
 
 class EvalComparisonOp(EvalTerm):
-    """Class to evaluate comparison expressions.
-    """
+    """Class to evaluate comparison expressions."""
 
-    opMap = {
+    op_map = {
         "<": lambda a, b: a < b,
         "<=": lambda a, b: a <= b,
         ">": lambda a, b: a > b,
@@ -134,7 +133,7 @@ class EvalComparisonOp(EvalTerm):
         val1 = np.float64(self.value[0].eval(row, context))
 
         for oper, val in self.operator_operands(self.value[1:]):
-            fn = EvalComparisonOp.opMap[oper]
+            fn = EvalComparisonOp.op_map[oper]
             val2 = np.float64(val.eval(row, context))
             if not fn(val1, val2):
                 break

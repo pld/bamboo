@@ -103,7 +103,7 @@ class RatioAggregation(Aggregation):
         dframe = DataFrame(index=self.column.index)
 
         dframe = self._build_dframe(dframe, self.columns)
-        column_names = [self._name_for_idx(i) for i in xrange(0, 2)]
+        column_names = [self.__name_for_idx(i) for i in xrange(0, 2)]
         dframe = dframe.dropna(subset=column_names)
 
         dframe = DataFrame([dframe.sum().to_dict()])
@@ -123,11 +123,11 @@ class RatioAggregation(Aggregation):
         for column in new_dframe.columns:
             dframe[column] += new_dframe[column]
 
-        dframe[self.name] = self._agg_dframe(dframe)
+        dframe[self.name] = self.__agg_dframe(dframe)
 
         return dframe
 
-    def _name_for_idx(self, idx):
+    def __name_for_idx(self, idx):
         return '%s_%s' % (self.name, {
             0: 'numerator',
             1: 'denominator',
@@ -135,20 +135,20 @@ class RatioAggregation(Aggregation):
 
     def _build_dframe(self, dframe, columns):
         for idx, column in enumerate(columns):
-            column.name = self._name_for_idx(idx)
+            column.name = self.__name_for_idx(idx)
 
         return concat([dframe] + [DataFrame(col) for col in columns], axis=1)
 
     def _add_calculated_column(self, dframe):
-        column = dframe[self._name_for_idx(0)].apply(float) /\
-            dframe[self._name_for_idx(1)]
+        column = dframe[self.__name_for_idx(0)].apply(float) /\
+            dframe[self.__name_for_idx(1)]
         column.name = self.name
 
         return dframe.join(column)
 
-    def _agg_dframe(self, dframe):
-        return dframe[self._name_for_idx(0)].apply(float) /\
-            dframe[self._name_for_idx(1)]
+    def __agg_dframe(self, dframe):
+        return dframe[self.__name_for_idx(0)].apply(float) /\
+            dframe[self.__name_for_idx(1)]
 
 
 class ArgMaxAggregation(Aggregation):
@@ -284,15 +284,15 @@ class PearsonAggregation(Aggregation):
     formula_name = 'pearson'
 
     def agg(self):
-        coor, pvalue = self._pearsonr(self.columns)
-        pvalue_column = Series([pvalue], name=self._pvalue_name)
+        coor, pvalue = self.__pearsonr(self.columns)
+        pvalue_column = Series([pvalue], name=self.__pvalue_name)
         return self._value_to_dframe(coor).join(pvalue_column)
 
     def group(self):
         def pearson(dframe):
             columns = [dframe[name] for name in dframe.columns[-2:]]
 
-            return DataFrame([self._pearsonr(columns)],
+            return DataFrame([self.__pearsonr(columns)],
                              columns=[self.name, self._pvalue_name])
 
         groupby = self._groupby()
@@ -302,7 +302,7 @@ class PearsonAggregation(Aggregation):
         del dframe[dframe.columns[len(self.groups)]]
         return dframe
 
-    def _pearsonr(self, columns):
+    def __pearsonr(self, columns):
         columns = [c.dropna() for c in columns]
         shared_index = reduce(
             lambda x, y: x.index.intersection(y.index), columns)
@@ -311,7 +311,7 @@ class PearsonAggregation(Aggregation):
         return pearsonr(*columns)
 
     @property
-    def _pvalue_name(self):
+    def __pvalue_name(self):
         return '%s_pvalue' % self.name
 
 

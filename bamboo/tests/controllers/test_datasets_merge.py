@@ -112,7 +112,7 @@ class TestDatasetsMerge(TestAbstractDatasets):
                         ]
 
             if all([dataset.record_ready for dataset in datasets]) and all(
-                  [d.merged_dataset_ids for d in datasets[1:]]):
+                    [d.merged_dataset_ids for d in datasets[1:]]):
                 break
 
             sleep(self.SLEEP_DELAY)
