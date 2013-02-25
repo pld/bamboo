@@ -293,7 +293,7 @@ class PearsonAggregation(Aggregation):
             columns = [dframe[name] for name in dframe.columns[-2:]]
 
             return DataFrame([self.__pearsonr(columns)],
-                             columns=[self.name, self._pvalue_name])
+                             columns=[self.name, self.__pvalue_name])
 
         groupby = self._groupby()
         dframe = groupby.apply(pearson).reset_index()
