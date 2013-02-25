@@ -42,7 +42,9 @@ ROUTES = [
     ('datasets_join_alias', 'POST',
         '/datasets/join', 'datasets', 'join'),
     ('datasets_drop_columns', 'PUT',
-        '/datasets/drop_columns', 'datasets', 'drop_columns'),
+        '/datasets/:dataset_id/drop_columns', 'datasets', 'drop_columns'),
+    ('datasets_set_olap_type', 'PUT',
+        '/datasets/:dataset_id/set_olap_type', 'datasets', 'set_olap_type'),
     # calculations
     ('calculations_create', 'POST',
         '/calculations/:dataset_id', 'calculations', 'create'),

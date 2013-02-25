@@ -109,8 +109,8 @@ class Datasets(AbstractController):
                 raise ArgumentError('dataset is not finished importing')
 
             limit = parse_int(limit, 0)
-            query = self._parse_query(query)
-            select = self._parse_select(select, required=True)
+            query = self.__parse_query(query)
+            select = self.__parse_select(select, required=True)
 
             groups = dataset.split_groups(group)
 
@@ -164,12 +164,12 @@ class Datasets(AbstractController):
             for query or select is improperly formatted. Otherwise a JSON
             string of the rows matching the parameters.
         """
-        content_type = self._content_type_for_format(format)
+        content_type = self.__content_type_for_format(format)
 
         def action(dataset, limit=limit, query=query, select=select):
             limit = parse_int(limit, 0)
-            query = self._parse_query(query)
-            select = self._parse_select(select)
+            query = self.__parse_query(query)
+            select = self.__parse_select(select)
 
             if count:
                 return dataset.count(query=query, distinct=distinct,
@@ -182,7 +182,7 @@ class Datasets(AbstractController):
                 if distinct:
                     return sorted(dframe[0].tolist())
 
-            return self._dataframe_as_content_type(content_type, dframe)
+            return self.__dataframe_as_content_type(content_type, dframe)
 
         return self._safe_get_and_call(
             dataset_id, action, callback=callback, content_type=content_type)
@@ -245,7 +245,7 @@ class Datasets(AbstractController):
         :param csv_file: An uploaded CSV file to read from.
         :param json_file: An uploaded JSON file to read from.
         :param schema: A SDF schema file (JSON)
-        :param perish: Number of seconds after which to dlete the dataset.
+        :param perish: Number of seconds after which to delete the dataset.
 
         :returns: An error message if `url`, `csv_file`, or `scehma` are not
             provided. An error message if an improperly formatted value raises
@@ -284,7 +284,7 @@ class Datasets(AbstractController):
             error = 'could not get a filehandle for: %s' % csv_file
 
         self.set_response_params(result, success_status_code=201)
-        return self.dump_or_error(result, error)
+        return self._dump_or_error(result, error)
 
     def update(self, dataset_id, update):
         """Update the `dataset_id` with the new rows as JSON.
@@ -364,38 +364,59 @@ class Datasets(AbstractController):
     def resample(self, dataset_id, date_column, interval, how='mean',
                  format=None):
         """Resample a dataset."""
-        content_type = self._content_type_for_format(format)
+        content_type = self.__content_type_for_format(format)
 
         def action(dataset):
             dframe = dataset.resample(date_column, interval, how)
-            return self._dataframe_as_content_type(content_type, dframe)
+            return self.__dataframe_as_content_type(content_type, dframe)
 
         return self._safe_get_and_call(dataset_id, action,
                                        exceptions=(TypeError,),
                                        content_type=content_type)
 
+    def set_olap_type(self, dataset_id, column, olap_type):
+        """Set the OLAP Type for this `column` of dataset.
+
+        Only columns with an original OLAP Type of 'measure' can be modified.
+        This includes columns with Simple Type integer, float, and datetime.
+
+        :param dataset_id: The ID of the dataset to modify.
+        :param column: The column to set the OLAP Type for.
+        :param olap_type: The OLAP Type to set. Must be 'dimension' or
+            'measure'.
+        """
+
+        def action(dataset):
+            dataset.set_olap_type(column, olap_type)
+
+            return {self.SUCCESS: 'set OLAP Type for column "%s" to "%s".' % (
+                column, olap_type),
+                Dataset.ID: dataset_id}
+
+        return self._safe_get_and_call(dataset_id, action)
+
     def rolling(self, dataset_id, window, win_type='boxcar',
                 format=None):
         """Calculate the rolling window over a dataset."""
-        content_type = self._content_type_for_format(format)
+        content_type = self.__content_type_for_format(format)
 
         def action(dataset):
             dframe = dataset.rolling(win_type, window)
-            return self._dataframe_as_content_type(content_type, dframe)
+            return self.__dataframe_as_content_type(content_type, dframe)
 
         return self._safe_get_and_call(dataset_id, action,
                                        content_type=content_type)
 
-    def _dataframe_as_content_type(self, content_type, dframe):
+    def __dataframe_as_content_type(self, content_type, dframe):
         if content_type == self.CSV:
             return dframe.to_csv_as_string()
         else:
             return dframe.to_jsondict()
 
-    def _content_type_for_format(self, format):
+    def __content_type_for_format(self, format):
         return self.CSV if format == self.CSV else self.JSON
 
-    def _parse_select(self, select, required=False):
+    def __parse_select(self, select, required=False):
         if required and select is None:
             raise ArgumentError('no select')
 
@@ -411,7 +432,7 @@ class Datasets(AbstractController):
 
         return select
 
-    def _parse_query(self, query):
+    def __parse_query(self, query):
         if query:
             query = safe_json_loads(query, error_title='string')
 

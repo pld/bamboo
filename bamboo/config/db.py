@@ -9,22 +9,22 @@ class Database(object):
     """Container for the MongoDB client."""
 
     # MongoDB client default host and port
-    _client = MongoClient('localhost', 27017, w=1, j=True)
-    _db = None
+    __client__ = MongoClient('localhost', 27017, w=1, j=True)
+    __db__ = None
 
     @classmethod
     def create_db(cls, db_name):
-        """Create a database `db_name` under the `_client`.
+        """Create a database `db_name`.
 
         :param cls: The class to set a client on.
         :param db_name: The name of the collection to create.
         """
-        cls._db = cls._client[db_name]
+        cls.__db__ = cls.__client__[db_name]
 
     @classmethod
     def client(cls):
-        """Return the database `_client`."""
-        return cls._client
+        """Return the database client."""
+        return cls.__client__
 
     @classmethod
     def db(cls, name=None):
@@ -36,6 +36,6 @@ class Database(object):
         :param name: The name of the database to create, default None.
         :returns: The created database.
         """
-        if not cls._db or name:
+        if not cls.__db__ or name:
             cls.create_db(name or settings.DATABASE_NAME)
-        return cls._db
+        return cls.__db__

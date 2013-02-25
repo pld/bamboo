@@ -35,7 +35,7 @@ class BambooFrame(DataFrame):
 
     def decode_mongo_reserved_keys(self):
         """Decode MongoDB reserved keys in this DataFrame."""
-        reserved_keys = self._column_intersect(MONGO_RESERVED_KEYS)
+        reserved_keys = self.__column_intersect(MONGO_RESERVED_KEYS)
         rename_dict = {}
 
         for key in reserved_keys:
@@ -58,7 +58,7 @@ class BambooFrame(DataFrame):
 
         :param keep_parent_ids: Keep parent column if True, default False.
         """
-        reserved_keys = self._column_intersect(BAMBOO_RESERVED_KEYS)
+        reserved_keys = self.__column_intersect(BAMBOO_RESERVED_KEYS)
 
         if keep_parent_ids and PARENT_DATASET_ID in reserved_keys:
             reserved_keys.remove(PARENT_DATASET_ID)
@@ -91,10 +91,6 @@ class BambooFrame(DataFrame):
         self.to_csv(buffer, encoding='utf-8', index=False)
         return buffer.getvalue()
 
-    def _column_intersect(self, _list):
-        """Return the intersection of `_list` and this DataFrame's columns."""
-        return list(set(_list).intersection(set(self.columns.tolist())))
-
     def join_dataset(self, other, on):
         """Left join an `other` dataset.
 
@@ -124,3 +120,7 @@ class BambooFrame(DataFrame):
                                      'ide dataset is not unique' % on_rhs)
 
         return self.__class__(self.join(right_dframe, on=on_lhs))
+
+    def __column_intersect(self, _list):
+        """Return the intersection of `_list` and this DataFrame's columns."""
+        return list(set(_list).intersection(set(self.columns.tolist())))

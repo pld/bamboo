@@ -49,7 +49,7 @@ class Aggregator(object):
                 new_dframe, self.groups)
         else:
             agg_dframe = agg_dataset.dframe()
-            new_dframe = self._merge_dframes([agg_dframe, new_dframe])
+            new_dframe = self.__merge_dframes([agg_dframe, new_dframe])
             agg_dataset.replace_observations(new_dframe)
 
         self.new_dframe = new_dframe
@@ -70,7 +70,7 @@ class Aggregator(object):
             dframe = BambooFrame(
                 self.aggregation.reduce(dframe, self.columns))
         else:
-            dframe = self._dframe_from_calculator(calculator, formula, dframe)
+            dframe = self.__dframe_from_calculator(calculator, formula, dframe)
 
         new_agg_dframe = concat([child_dataset.dframe(), dframe])
         new_agg_dframe = new_agg_dframe.add_parent_column(parent_dataset_id)
@@ -78,7 +78,7 @@ class Aggregator(object):
         child_dataset.replace_observations(new_agg_dframe)
         return child_dataset.dframe()
 
-    def _dframe_from_calculator(self, calculator, formula, dframe):
+    def __dframe_from_calculator(self, calculator, formula, dframe):
         """Create a new aggregation and update return updated dframe."""
         # build column arguments from original dframe
         columns = calculator.parse_columns(
@@ -87,13 +87,12 @@ class Aggregator(object):
 
         new_columns = [x for x in new_dframe.columns if x not in self.groups]
 
-
         dframe = dframe.drop(new_columns, axis=1)
-        dframe = self._merge_dframes([new_dframe, dframe])
+        dframe = self.__merge_dframes([new_dframe, dframe])
 
         return dframe
 
-    def _merge_dframes(self, dframes):
+    def __merge_dframes(self, dframes):
         if self.groups:
             # set indexes on new dataframes to merge correctly
             dframes = [dframe.set_index(self.groups) for dframe in dframes]

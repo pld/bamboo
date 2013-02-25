@@ -29,12 +29,12 @@ class TestBase(unittest.TestCase):
     test_dataset_ids = {}
 
     def setUp(self):
-        self._drop_database()
-        self._create_database()
-        self._load_test_data()
+        self.__drop_database()
+        self.__create_database()
+        self.__load_test_data()
 
     def tearDown(self):
-        self._drop_database()
+        self.__drop_database()
 
     def get_data(self, dataset_name):
         data = self.test_data.get(dataset_name)
@@ -44,11 +44,9 @@ class TestBase(unittest.TestCase):
                 encoding='utf-8')
         return data
 
-    def _create_database(self):
-        Database.db(TEST_DATABASE_NAME)
-
-    def _drop_database(self):
-        Database.client().drop_database(TEST_DATABASE_NAME)
+    def _create_dataset_from_url(self, url):
+        dataset = Dataset.create()
+        return dataset.import_from_url(url, allow_local_file=True).dataset_id
 
     def _local_fixture_prefix(self, filename=''):
         return 'file://localhost%s/tests/fixtures/%s' % (os.getcwd(), filename)
@@ -56,17 +54,13 @@ class TestBase(unittest.TestCase):
     def _fixture_path_prefix(self, filename=''):
         return '/%s/tests/fixtures/%s' % (os.getcwd(), filename)
 
-    def _load_test_data(self):
-        for dataset_name in self.TEST_DATASETS:
-            self.test_dataset_ids[dataset_name] = uuid.uuid4().hex
-
     def _file_mock(self, file_path, add_prefix=False):
         if add_prefix:
             file_path = self._fixture_path_prefix(file_path)
 
-        _file = open(file_path, 'r')
+        file_ = open(file_path, 'r')
 
-        return MockUploadedFile(_file)
+        return MockUploadedFile(file_)
 
     def _post_file(self, file_name='good_eats.csv'):
         dataset = Dataset.create()
@@ -84,6 +78,12 @@ class TestBase(unittest.TestCase):
 
         return dataset
 
-    def _create_dataset_from_url(self, url):
-        dataset = Dataset.create()
-        return dataset.import_from_url(url, allow_local_file=True).dataset_id
+    def __create_database(self):
+        Database.db(TEST_DATABASE_NAME)
+
+    def __drop_database(self):
+        Database.client().drop_database(TEST_DATABASE_NAME)
+
+    def __load_test_data(self):
+        for dataset_name in self.TEST_DATASETS:
+            self.test_dataset_ids[dataset_name] = uuid.uuid4().hex

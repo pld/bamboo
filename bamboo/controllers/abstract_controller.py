@@ -28,13 +28,6 @@ class AbstractController(object):
     DEFAULT_SUCCESS_STATUS_CODE = 200
     ERROR_STATUS_CODE = 400
 
-    def _add_cors_headers(self):
-        cherrypy.response.headers['Access-Control-Allow-Origin'] = '*'
-        cherrypy.response.headers['Access-Control-Allow-Methods'] =\
-            'GET, POST, PUT, DELETE, OPTIONS'
-        cherrypy.response.headers['Access-Control-Allow-Headers'] =\
-            'Content-Type, Accept'
-
     def options(self, dataset_id=None, name=None):
         """Set Cross Origin Resource Sharing (CORS) headers.
 
@@ -45,13 +38,29 @@ class AbstractController(object):
 
         :returns: An empty string with the proper response headers for CORS.
         """
-        self._add_cors_headers()
+        self.__add_cors_headers()
         cherrypy.response.headers['Content-Length'] = 0
         cherrypy.response.status = 204
 
         return ''
 
-    def dump_or_error(self, obj, error_message, callback=False):
+    def set_response_params(self, obj,
+                            success_status_code=DEFAULT_SUCCESS_STATUS_CODE,
+                            content_type=JSON):
+        """Set response parameters.
+
+        :param obj: The object to set the response for.
+        :param content_type: The content type.
+        :param success_status_code: The HTTP status code to return, default is
+            DEFAULT_SUCCESS_STATUS_CODE.
+        """
+        cherrypy.response.headers['Content-Type'] = 'application/%s' % (
+            content_type)
+        cherrypy.response.status = success_status_code if obj is not None else\
+            self.ERROR_STATUS_CODE
+
+    def _dump_or_error(self, obj, error_message=DEFAULT_ERROR_MESSAGE,
+                       callback=False):
         """Dump JSON or return error message, potentially with callback.
 
         If `obj` is None `error_message` is returned and the HTTP status code
@@ -69,24 +78,9 @@ class AbstractController(object):
             obj = {self.ERROR: error_message}
 
         result = obj if isinstance(obj, str) else dump_mongo_json(obj)
-        self._add_cors_headers()
+        self.__add_cors_headers()
 
         return '%s(%s)' % (callback, result) if callback else result
-
-    def set_response_params(self, obj,
-                            success_status_code=DEFAULT_SUCCESS_STATUS_CODE,
-                            content_type=JSON):
-        """Set response parameters.
-
-        :param obj: The object to set the response for.
-        :param content_type: The content type.
-        :param success_status_code: The HTTP status code to return, default is
-            DEFAULT_SUCCESS_STATUS_CODE.
-        """
-        cherrypy.response.headers['Content-Type'] = 'application/%s' % (
-            content_type)
-        cherrypy.response.status = success_status_code if obj is not None else\
-            self.ERROR_STATUS_CODE
 
     def _safe_get_and_call(self, dataset_id, action, callback=None,
                            exceptions=(),
@@ -127,4 +121,11 @@ class AbstractController(object):
             error = err.__str__()
 
         self.set_response_params(result, success_status_code, content_type)
-        return self.dump_or_error(result, error, callback)
+        return self._dump_or_error(result, error, callback)
+
+    def __add_cors_headers(self):
+        cherrypy.response.headers['Access-Control-Allow-Origin'] = '*'
+        cherrypy.response.headers['Access-Control-Allow-Methods'] =\
+            'GET, POST, PUT, DELETE, OPTIONS'
+        cherrypy.response.headers['Access-Control-Allow-Headers'] =\
+            'Content-Type, Accept'

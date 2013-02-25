@@ -21,7 +21,7 @@ class TestParser(TestBase):
         self.assertEqual(func(self.row, self.parser.context), 1)
 
     def test_bnf(self):
-        result = self.parser._build_bnf()
+        result = self.parser._Parser__build_bnf()
         self.assertNotEqual(self.parser.bnf, None)
 
     def test_parse_formula_with_var(self):

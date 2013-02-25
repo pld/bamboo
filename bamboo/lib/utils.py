@@ -2,6 +2,11 @@ from math import isnan
 from sys import maxint
 
 
+def is_float_nan(num):
+    """Return True is `num` is a float and NaN."""
+    return isinstance(num, float) and isnan(num)
+
+
 def minint():
     return -maxint - 1
 
@@ -19,8 +24,3 @@ def _parse_type(_type, value, default):
         return _type(value)
     except ValueError:
         return value if default is None else default
-
-
-def is_float_nan(num):
-    """Return True is `num` is a float and NaN."""
-    return isinstance(num, float) and isnan(num)

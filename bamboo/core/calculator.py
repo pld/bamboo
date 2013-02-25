@@ -61,7 +61,7 @@ class Calculator(object):
 
         :param calculations: A list of calculations.
         """
-        self._ensure_dframe()
+        self.__ensure_dframe()
         new_dframe = self.dframe
 
         for c in calculations:
@@ -133,8 +133,8 @@ class Calculator(object):
         :param parent_dataset_id: If passed add ID as parent ID to column,
             default is None.
         """
-        self._ensure_dframe()
-        self._ensure_ready(update_id)
+        self.__ensure_dframe()
+        self.__ensure_ready(update_id)
 
         labels_to_slugs = self.dataset.schema.labels_to_slugs
 
@@ -146,7 +146,7 @@ class Calculator(object):
         new_dframe = new_dframe_raw.recognize_dates_from_schema(
             self.dataset.schema)
 
-        new_dframe, aggregations = self._add_calcs_and_find_aggregations(
+        new_dframe, aggregations = self.__add_calcs_and_find_aggregations(
             new_dframe, labels_to_slugs)
 
         # set parent id if provided
@@ -164,9 +164,9 @@ class Calculator(object):
         self.dframe = self.dataset.dframe()
         self.dataset.clear_summary_stats()
 
-        self._update_aggregate_datasets(aggregations, new_dframe)
-        self._update_merged_datasets(new_data, labels_to_slugs)
-        self._update_joined_datasets(new_dframe_raw)
+        self.__update_aggregate_datasets(aggregations, new_dframe)
+        self.__update_merged_datasets(new_data, labels_to_slugs)
+        self.__update_joined_datasets(new_dframe_raw)
 
         self.dataset.update_complete(update_id)
 
@@ -213,19 +213,19 @@ class Calculator(object):
                         'Cannot update. This is the right hand join and the'
                         'column "%s" will become non-unique.' % on)
 
-    def _ensure_dframe(self):
+    def __ensure_dframe(self):
         """Ensure `dframe` for the calculator's dataset is defined."""
         if self.dframe is None:
             self.dframe = self.dataset.dframe()
 
-    def _ensure_ready(self, update_id):
+    def __ensure_ready(self, update_id):
         # dataset must not be pending
         if not self.dataset.is_ready or (
                 update_id and self.dataset.has_pending_updates(update_id)):
             self.dataset.reload()
             raise self.calculate_updates.retry()
 
-    def _add_calcs_and_find_aggregations(self, new_dframe, labels_to_slugs):
+    def __add_calcs_and_find_aggregations(self, new_dframe, labels_to_slugs):
         aggregations = []
         calculations = self.dataset.calculations()
 
@@ -248,21 +248,21 @@ class Calculator(object):
 
         return new_dframe, aggregations
 
-    def _update_merged_datasets(self, new_data, labels_to_slugs):
+    def __update_merged_datasets(self, new_data, labels_to_slugs):
         # store slugs as labels for child datasets
-        slugified_data = self._slugify_data(new_data, labels_to_slugs)
+        slugified_data = self.__slugify_data(new_data, labels_to_slugs)
 
         # update the merged datasets with new_dframe
         for mapping, merged_dataset in self.dataset.merged_datasets_with_map:
             merged_calculator = Calculator(merged_dataset)
 
-            slugified_data = self._remapped_data(mapping, slugified_data)
+            slugified_data = self.__remapped_data(mapping, slugified_data)
             merged_calculator.calculate_updates(
                 merged_calculator,
                 slugified_data,
                 parent_dataset_id=self.dataset.dataset_id)
 
-    def _update_joined_datasets(self, new_dframe_raw):
+    def __update_joined_datasets(self, new_dframe_raw):
         # update any joined datasets
         for direction, other_dataset, on, joined_dataset in\
                 self.dataset.joined_datasets:
@@ -291,7 +291,7 @@ class Calculator(object):
 
     def dframe_from_update(self, new_data, labels_to_slugs):
         """Make a single-row dataframe for the additional data to add."""
-        self._ensure_dframe()
+        self.__ensure_dframe()
 
         if not isinstance(new_data, list):
             new_data = [new_data]
@@ -316,7 +316,7 @@ class Calculator(object):
                     slug = labels_to_slugs.get(
                         col, col if col in labels_to_slugs.values() else None)
 
-                    # if slug is valid of there is an empty dframe
+                    # if slug is valid or there is an empty dframe
                     if (slug or col in labels_to_slugs.keys()) and (
                             dframe_empty or slug in columns):
                         filtered_row[slug] = self.dataset.schema.convert_type(
@@ -326,16 +326,16 @@ class Calculator(object):
 
         return BambooFrame(filtered_data)
 
-    def _update_aggregate_datasets(self, calculations, new_dframe):
-        calcs_to_data = self._create_calculations_to_groups_and_datasets(
+    def __update_aggregate_datasets(self, calculations, new_dframe):
+        calcs_to_data = self.__create_calculations_to_groups_and_datasets(
             calculations)
 
         for formula, slug, groups, dataset in calcs_to_data:
-            self._update_aggregate_dataset(formula, new_dframe, slug, groups,
-                                           dataset)
+            self.__update_aggregate_dataset(formula, new_dframe, slug, groups,
+                                            dataset)
 
-    def _update_aggregate_dataset(self, formula, new_dframe, name, groups,
-                                  agg_dataset):
+    def __update_aggregate_dataset(self, formula, new_dframe, name, groups,
+                                   agg_dataset):
         """Update the aggregated dataset built for `self` with `calculation`.
 
         Proceed with the following steps:
@@ -372,7 +372,7 @@ class Calculator(object):
                 merged_calculator, new_data,
                 parent_dataset_id=agg_dataset.dataset_id)
 
-    def _create_calculations_to_groups_and_datasets(self, calculations):
+    def __create_calculations_to_groups_and_datasets(self, calculations):
         """Create list of groups and calculations."""
         calcs_to_data = defaultdict(list)
 
@@ -398,7 +398,7 @@ class Calculator(object):
             item for sublist in calcs_to_data.values() for item in sublist
         ]
 
-    def _slugify_data(self, new_data, labels_to_slugs):
+    def __slugify_data(self, new_data, labels_to_slugs):
         slugified_data = []
 
         if not isinstance(new_data, list):
@@ -414,7 +414,7 @@ class Calculator(object):
 
         return slugified_data
 
-    def _remapped_data(self, mapping, slugified_data):
+    def __remapped_data(self, mapping, slugified_data):
         column_map = mapping.get(self.dataset.dataset_id) if mapping else None
 
         if column_map:

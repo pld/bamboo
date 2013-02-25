@@ -32,13 +32,13 @@ def merge_dataset_ids(dataset_ids, mapping):
 
     new_dataset = Dataset.create()
 
-    call_async(_merge_datasets_task, new_dataset, datasets, mapping)
+    call_async(__merge_datasets_task, new_dataset, datasets, mapping)
 
     return new_dataset
 
 
 @task(default_retry_delay=2, ignore_result=True)
-def _merge_datasets_task(new_dataset, datasets, mapping):
+def __merge_datasets_task(new_dataset, datasets, mapping):
     """Merge datasets specified by dataset_ids.
 
     :param new_dataset: The dataset store the merged dataset in.
@@ -47,9 +47,9 @@ def _merge_datasets_task(new_dataset, datasets, mapping):
     # check that all datasets are in a 'ready' state
     while any([not dataset.record_ready for dataset in datasets]):
         [dataset.reload() for dataset in datasets]
-        raise _merge_datasets_task.retry(countdown=1)
+        raise __merge_datasets_task.retry(countdown=1)
 
-    new_dframe = _merge_datasets(datasets, mapping)
+    new_dframe = __merge_datasets(datasets, mapping)
 
     # save the resulting dframe as a new dataset
     new_dataset.save_observations(new_dframe)
@@ -59,7 +59,7 @@ def _merge_datasets_task(new_dataset, datasets, mapping):
         dataset.add_merged_dataset(mapping, new_dataset)
 
 
-def _merge_datasets(datasets, mapping):
+def __merge_datasets(datasets, mapping):
     """Merge two or more datasets."""
     dframes = []
 
