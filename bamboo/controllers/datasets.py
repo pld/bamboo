@@ -8,6 +8,7 @@ from bamboo.lib.exceptions import ArgumentError
 from bamboo.lib.jsontools import safe_json_loads
 from bamboo.lib.utils import parse_int
 from bamboo.models.dataset import Dataset
+from bamboo.models.observation import Observation
 
 
 class Datasets(AbstractController):
@@ -409,6 +410,44 @@ class Datasets(AbstractController):
 
         return self._safe_get_and_call(dataset_id, action,
                                        content_type=content_type)
+
+    def row_delete(self, dataset_id, index):
+        """Delete a row from dataset by index.
+
+        :param dataset_id: The dataset to modify.
+        :param index: The index to delete in the dataset.
+        """
+        def action(dataset):
+            Observation.delete(dataset, index)
+
+            return {
+                self.SUCCESS: 'Deleted row with index "%s".' % index,
+                Dataset.ID: dataset_id}
+
+        return self._safe_get_and_call(dataset_id, action)
+
+    def row_update(self, dataset_id, index, data):
+        """Update a row in dataset by index.
+
+        Update the row in dataset identified by `index` by updating it with the
+        JSON dict `data`.  If there is a column in the DataFrame for which
+        there is not a corresponding key in `data` that column will not be
+        modified.
+
+        :param dataset_id: The dataset to modify.
+        :param index: The index to update.
+        :param data: A JSON dict to update the row with.
+        """
+        # TODO guard against join column uniquity loss.
+        def action(dataset, data=data):
+            data = safe_json_loads(data)
+            Observation.update(dataset, index, data)
+
+            return {
+                self.SUCCESS: 'Updated row with index "%s".' % index,
+                Dataset.ID: dataset_id}
+
+        return self._safe_get_and_call(dataset_id, action)
 
     def __dataframe_as_content_type(self, content_type, dframe):
         if content_type == self.CSV:

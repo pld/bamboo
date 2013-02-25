@@ -12,10 +12,12 @@ from bamboo.lib.mongo import dump_mongo_json, mongo_prefix_reserved_key,\
 BAMBOO_RESERVED_KEY_PREFIX = 'BAMBOO_RESERVED_KEY_'
 DATASET_ID = BAMBOO_RESERVED_KEY_PREFIX + 'dataset_id'
 DATASET_OBSERVATION_ID = BAMBOO_RESERVED_KEY_PREFIX + 'dataset_observation_id'
+INDEX = BAMBOO_RESERVED_KEY_PREFIX + 'index'
 PARENT_DATASET_ID = BAMBOO_RESERVED_KEY_PREFIX + 'parent_dataset_id'
 BAMBOO_RESERVED_KEYS = [
     DATASET_ID,
     DATASET_OBSERVATION_ID,
+    INDEX,
     PARENT_DATASET_ID,
 ]
 

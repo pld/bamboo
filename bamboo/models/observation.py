@@ -1,4 +1,4 @@
-from bamboo.core.frame import DATASET_OBSERVATION_ID
+from bamboo.core.frame import DATASET_OBSERVATION_ID, INDEX
 from bamboo.lib.async import call_async
 from bamboo.lib.datetools import parse_timestamp_query
 from bamboo.models.abstract_model import AbstractModel
@@ -7,6 +7,13 @@ from bamboo.models.abstract_model import AbstractModel
 class Observation(AbstractModel):
 
     __collectionname__ = 'observations'
+
+    @classmethod
+    def delete(cls, dataset, index):
+        query = {INDEX: index,
+                 DATASET_OBSERVATION_ID: dataset.dataset_observation_id}
+
+        super(cls, cls()).delete(query)
 
     @classmethod
     def delete_all(cls, dataset, query={}):
@@ -19,7 +26,7 @@ class Observation(AbstractModel):
             DATASET_OBSERVATION_ID: dataset.dataset_observation_id
         })
 
-        super(cls, Observation()).delete(query)
+        super(cls, cls()).delete(query)
 
     @classmethod
     def find(cls, dataset, query=None, select=None, limit=0, order_by=None,
@@ -62,11 +69,14 @@ class Observation(AbstractModel):
         :param dframe: The DataFrame (or BambooFrame) to store.
         :param dataset: The dataset to store the dframe in.
         """
-        # build schema for the dataset after having read it from file.
+        # Build schema for the dataset after having read it from file.
         if not dataset.schema:
             dataset.build_schema(dframe)
 
+        dframe = self.__add_index_to_dframe(dframe)
+
         if not DATASET_OBSERVATION_ID in dframe.columns:
+            # This dframe has not been saved before, encode its columns.
             self.batch_save(dataset.encode_dframe_columns(dframe))
         else:
             self.batch_save(dframe)
@@ -77,3 +87,33 @@ class Observation(AbstractModel):
             dataset.STATE: self.STATE_READY,
         })
         dataset.summarize(dframe)
+
+    @classmethod
+    def update(cls, dataset, index, record):
+        """Update a dataset row by index.
+
+        The record dictionary will update, not replace, the data in the row at
+        index.
+
+        :param dataset: The dataset to update a row for.
+        :param dex: The index of the row to update.
+        :param record: The dictionary to update the row with.
+        """
+        query = {INDEX: index,
+                 DATASET_OBSERVATION_ID: dataset.dataset_observation_id}
+
+        observation = cls.find_one(query)
+        super(cls, observation).update(record)
+
+    @classmethod
+    def __add_index_to_dframe(self, dframe):
+        if not INDEX in dframe.columns:
+            # No index, create index for this dframe.
+
+            if not 'index' in dframe.columns:
+                # Custom index not supplied, use pandas default index.
+                dframe = dframe.reset_index()
+
+            dframe.rename(columns={'index': INDEX}, inplace=True)
+
+        return dframe
