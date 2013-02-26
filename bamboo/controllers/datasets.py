@@ -190,7 +190,7 @@ class Datasets(AbstractController):
     def merge(self, dataset_ids, mapping=None):
         """Merge the datasets with the dataset_ids in `datasets`.
 
-        :param dataset: A JSON encoded array of dataset IDs for existing
+        :param dataset_ids: A JSON encoded array of dataset IDs for existing
             datasets.
         :param mapping: An optional mapping from original column names to
             destination names.
