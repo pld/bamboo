@@ -45,14 +45,14 @@ Merging multiple Datasets
 -------------------------
 
 To row-wise merge 2 or more datasets into a new dataset use the _merge_ command
-. For example, to merge two datasets with IDs 8123 and 9123, use the following
-command. This will return the ID of the new merged dataset.  The merge occurs
-in the background.  When the dataset status is set to "ready" you can be sure
-the data has been merged.
+. For example, to merge two datasets with IDs 8a3d7 and 2de98,
+use the following command. This will return the ID of the new merged dataset.
+The merge occurs in the background.  When the dataset status is set to "ready"
+you can be sure the data has been merged.
 
 .. code-block:: sh
 
-    curl -X POST -d "datasets=[8123, 9123]" http://bamboo.io/datasets/merge
+    curl -X POST -d "dataset_ids=[\"8a3d7\", \"2de98\"]" http://bamboo.io/datasets/merge
 
 **returns:**
 
@@ -71,16 +71,16 @@ For example, a JSON mapping of:
 .. code-block:: javascript
 
     {
-        "8123": {"foodtype": "food_type"},
-        "9123": {"foodType": "food_type"}
+        "8a3d7": {"foodtype": "food_type"},
+        "2de98": {"foodType": "food_type"}
     }
 
-will map the "foodtype" column from dataset ID 8123 and the "foodType" column
-from dataset 9123 to a canonical "food_type" column in the merged dataset.
+will map the "foodtype" column from dataset ID 8a3d7 and the "foodType" column
+from dataset 2de98 to a canonical "food_type" column in the merged dataset.
 
 .. code-block:: sh
 
-    curl -X POST -d "datasets=[8123,9123]&mapping={\"8123\":{\"foodtype\":\"food_type\"},"9123":{\"foodType\":\"food_type\"}}" http://bamboo.io/datasets/merge
+    curl -X POST -d "datasets=[8a3d7,2de98]&mapping={\"8a3d7\":{\"foodtype\":\"food_type\"},"2de98":{\"foodType\":\"food_type\"}}" http://bamboo.io/datasets/merge
 
 **returns:**
 
@@ -103,8 +103,8 @@ Updates which are subsequently made to either the left hand side or the right
 hand side dataset will be propagated to the joined dataset. Updates to the
 right hand side that make the join column non-unique will be disallowed.
 
-For example supposing the 'food_type' column is in dataset with ID 8123 and
-9123, you can join the two datasets on that column by executing:
+For example supposing the 'food_type' column is in dataset with ID 8a3d7 and
+2de98, you can join the two datasets on that column by executing:
 
 .. note::
 
@@ -118,7 +118,7 @@ For example supposing the 'food_type' column is in dataset with ID 8123 and
 
 .. code-block:: sh
 
-    curl -X POST -d "dataset_id=8123&other_dataset_id=9123&on=food_type" http://bamboo.io/datasets/join
+    curl -X POST -d "dataset_id=8a3d7&other_dataset_id=2de98&on=food_type" http://bamboo.io/datasets/join
 
 **returns:**
 
@@ -132,12 +132,12 @@ Joining on different columns
 To join column ``A`` in the left hand side dataset with column ``B`` in the
 right hand side dataset, set the ``on`` parameter to ``A,B``.
 
-Continuing the above example, suppose dataset 8123 has a "food_type" column
-but 9123 has a "foodtype" column, use the command:
+Continuing the above example, suppose dataset 8a3d7 has a "food_type" column
+but 2de98 has a "foodtype" column, use the command:
 
 .. code-block:: sh
 
-    curl -X POST -d "dataset_id=8123&other_dataset_id=9123&on=food_type,foodtype" http://bamboo.io/datasets/join
+    curl -X POST -d "dataset_id=8a3d7&other_dataset_id=2de98&on=food_type,foodtype" http://bamboo.io/datasets/join
 
 Creating a Dataset from a Schema
 --------------------------------
