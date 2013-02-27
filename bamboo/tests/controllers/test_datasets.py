@@ -743,16 +743,25 @@ class TestDatasets(TestAbstractDatasets):
 
     def test_rolling_mean(self):
         dataset_id = self._post_file('good_eats.csv')
-        window = 3
+        window = '3'
         results = json.loads(self.controller.rolling(
             dataset_id, window))
+        self.assertTrue(isinstance(results, list))
 
         for i, row in enumerate(results):
-            if i < window - 1:
+            if i < int(window) - 1:
                 for value in row.values():
                     self.assertEqual('null', value)
             else:
                 self.assertTrue(isinstance(row['amount'], float))
+
+    def test_rolling_bad_window(self):
+        dataset_id = self._post_file('good_eats.csv')
+        window = '3n'
+        results = json.loads(self.controller.rolling(
+            dataset_id, window))
+        print results
+        self.assertTrue(Datasets.ERROR in results.keys())
 
     def test_rolling_bad_type(self):
         dataset_id = self._post_file('good_eats.csv')
