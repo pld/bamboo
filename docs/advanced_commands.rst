@@ -391,7 +391,7 @@ following command:
 
 .. code-block:: sh
 
-    curl -X GET -d "date_column=submit_date&interval=M&how=mean" http://bamboo.io/datasets/8a3d74711475d8a51c84484fe73f24bd151242ea/resample
+    curl http://bamboo.io/datasets/8a3d74711475d8a51c84484fe73f24bd151242ea/resample?date_column=submit_date&interval=M&how=mean
 
 **returns:**
 
