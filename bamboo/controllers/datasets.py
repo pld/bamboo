@@ -401,7 +401,7 @@ class Datasets(AbstractController):
         content_type = self.__content_type_for_format(format)
 
         def action(dataset):
-            dframe = dataset.rolling(win_type, window)
+            dframe = dataset.rolling(win_type, int(window))
             return self.__dataframe_as_content_type(content_type, dframe)
 
         return self._safe_get_and_call(dataset_id, action,
