@@ -366,6 +366,28 @@ also return the update dataset info.
         "state": "ready"
     }
 
+Setting the OLAP Type
+^^^^^^^^^^^^^^^^^^^^^
+
+By default columns with numeric data are treated as measures and return summary
+statistics.  However, if your numeric data represents indentifiers it may be
+semantically dimensional.  You can use set OLAP Type to treat numeric data
+dimensionally.
+
+Any numeric column can be converted to a dimension and back.  Dimension columns
+cannot be modified.  For example, to convert the numeric column ``amount`` to a
+dimension:
+
+.. code-block:: sh
+
+    curl -X PUT -d "column=amount&olap_type=dimension" http://bamboo.io/datasets/8a3d74711475d8a51c84484fe73f24bd151242ea/set_olap_type
+
+**returns:**
+
+.. code-block:: javascript
+
+    {"success": "set OLAP Type for column 'amount' to 'dimension'}
+
 
 Timeseries operations on a dataset
 ----------------------------------
@@ -508,24 +530,3 @@ following command:
 
     The first ``window - 1`` rows will be null, because not enough
     data will have been seen to calculate rolling statistics for those rows.
-
-Settings the OLAP Type
-^^^^^^^^^^^^^^^^^^^^^^
-
-By default columns with numeric data are treated as measures and return summary
-statistics.  However, if your numeric data represents indentifiers it may be
-semantically dimensional.  You can use set OLAP Type to treat numeric data
-dimensionally.
-
-Any numeric column can be converted to a dimension and back.  Dimension columns
-cannot be modified.
-
-.. code-block:: sh
-
-    curl -X PUT -d "column=amount&olap_type=dimension" http://bamboo.io/datasets/8a3d74711475d8a51c84484fe73f24bd151242ea/set_olap_type
-
-**returns:**
-
-.. code-block:: javascript
-
-    {"success": "set OLAP Type for column 'amount' to 'dimension'}
