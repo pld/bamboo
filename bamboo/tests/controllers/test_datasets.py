@@ -760,7 +760,6 @@ class TestDatasets(TestAbstractDatasets):
         window = '3n'
         results = json.loads(self.controller.rolling(
             dataset_id, window))
-        print results
         self.assertTrue(Datasets.ERROR in results.keys())
 
     def test_rolling_bad_type(self):
