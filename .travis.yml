@@ -4,10 +4,9 @@ python:
 virtualenv:
   system_site_packages: true
 before_install:
-  - sudo apt-get install -qq gfortran libatlas-base-dev
+  - sudo apt-get install -qq gfortran libatlas-base-dev python-numpy python-scipy
 install:
   - pip freeze
-  - pip install numpy
   - pip install -r requirements.pip --use-mirrors
   - pip install -r requirements-test.pip --use-mirrors
   - pip freeze
@@ -19,7 +18,7 @@ script:
   - sudo chmod a+w /dev/shm
   - sudo chown `whoami` /dev/shm
   - ls -ld /dev/shm
-  - celeryd --config=bamboo.config.celeryconfig_test -E -l DEBUG&
+  - sudo celeryd --config=bamboo.config.celeryconfig_test -E -l DEBUG&
   - cd bamboo
   - nosetests
   - cd ..
