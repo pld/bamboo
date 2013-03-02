@@ -72,6 +72,7 @@ REST API Usage
    :maxdepth: 2
 
    basic_commands
+   manipulating_data
    advanced_commands
 
 Formula Reference
