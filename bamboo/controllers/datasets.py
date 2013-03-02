@@ -121,7 +121,6 @@ class Datasets(AbstractController):
 
             dframe = dataset.dframe(query=query, select=select, limit=limit,
                                     order_by=order_by)
-
             return dataset.summarize(dframe, groups=groups,
                                      no_cache=query or select)
 

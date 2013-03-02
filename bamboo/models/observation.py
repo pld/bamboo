@@ -1,4 +1,4 @@
-from bamboo.core.frame import DATASET_OBSERVATION_ID, INDEX
+from bamboo.core.frame import BambooFrame, DATASET_OBSERVATION_ID, INDEX
 from bamboo.lib.async import call_async
 from bamboo.lib.datetools import parse_timestamp_query
 from bamboo.models.abstract_model import AbstractModel
@@ -81,6 +81,8 @@ class Observation(AbstractModel):
         else:
             self.batch_save(dframe)
 
+        dframe.remove_bamboo_reserved_keys()
+
         # add metadata to dataset, discount ID column
         dataset.update({
             dataset.NUM_ROWS: len(dframe),
@@ -116,4 +118,4 @@ class Observation(AbstractModel):
 
             dframe.rename(columns={'index': INDEX}, inplace=True)
 
-        return dframe
+        return BambooFrame(dframe)

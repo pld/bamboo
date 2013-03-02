@@ -5,10 +5,8 @@ from time import mktime, sleep
 from urllib2 import URLError
 
 from mock import patch
-from pandas import Series
 import simplejson as json
 
-from bamboo.controllers.abstract_controller import AbstractController
 from bamboo.controllers.datasets import Datasets
 from bamboo.lib.schema_builder import CARDINALITY, DATETIME, OLAP_TYPE,\
     SIMPLETYPE
@@ -482,9 +480,9 @@ class TestDatasets(TestAbstractDatasets):
         dataset_id = self._post_file()
         result = json.loads(self.controller.delete(dataset_id))
 
-        self.assertTrue(AbstractController.SUCCESS in result)
+        self.assertTrue(Datasets.SUCCESS in result)
         self.assertEqual(
-            result[AbstractController.SUCCESS],
+            result[Datasets.SUCCESS],
             'deleted dataset: %s' % dataset_id)
 
     def test_delete_bad_id(self):
@@ -507,8 +505,8 @@ class TestDatasets(TestAbstractDatasets):
             self.controller.drop_columns(dataset_id, ['food_type']))
 
         self.assertTrue(isinstance(results, dict))
-        self.assertTrue(AbstractController.SUCCESS in results)
-        self.assertTrue('dropped' in results[AbstractController.SUCCESS])
+        self.assertTrue(Datasets.SUCCESS in results)
+        self.assertTrue('dropped' in results[Datasets.SUCCESS])
 
         results = json.loads(self.controller.show(dataset_id))
 
@@ -521,7 +519,7 @@ class TestDatasets(TestAbstractDatasets):
             self.controller.drop_columns('313514', ['food_type']))
 
         self.assertTrue(isinstance(results, dict))
-        self.assertTrue(AbstractController.ERROR in results)
+        self.assertTrue(Datasets.ERROR in results)
 
     def test_drop_columns_non_existent_column(self):
         dataset_id = self._post_file()
@@ -529,7 +527,7 @@ class TestDatasets(TestAbstractDatasets):
             self.controller.drop_columns(dataset_id, ['foo']))
 
         self.assertTrue(isinstance(results, dict))
-        self.assertTrue(AbstractController.ERROR in results)
+        self.assertTrue(Datasets.ERROR in results)
 
     def test_join_datasets(self):
         left_dataset_id = self._post_file()
@@ -539,7 +537,7 @@ class TestDatasets(TestAbstractDatasets):
             left_dataset_id, right_dataset_id, on=on))
 
         self.assertTrue(isinstance(results, dict))
-        self.assertTrue(AbstractController.SUCCESS in results.keys())
+        self.assertTrue(Datasets.SUCCESS in results.keys())
         self.assertTrue(Dataset.ID in results.keys())
 
         joined_dataset_id = results[Dataset.ID]
@@ -565,7 +563,7 @@ class TestDatasets(TestAbstractDatasets):
             left_dataset_id, right_dataset_id, on=on))
 
         self.assertTrue(isinstance(results, dict))
-        self.assertTrue(AbstractController.SUCCESS in results.keys())
+        self.assertTrue(Datasets.SUCCESS in results.keys())
         self.assertTrue(Dataset.ID in results.keys())
 
         joined_dataset_id = results[Dataset.ID]
@@ -588,9 +586,9 @@ class TestDatasets(TestAbstractDatasets):
             left_dataset_id, right_dataset_id, on='food_type'))
 
         self.assertTrue(isinstance(results, dict))
-        self.assertTrue(AbstractController.ERROR in results.keys())
-        self.assertTrue('right' in results[AbstractController.ERROR])
-        self.assertTrue('not unique' in results[AbstractController.ERROR])
+        self.assertTrue(Datasets.ERROR in results.keys())
+        self.assertTrue('right' in results[Datasets.ERROR])
+        self.assertTrue('not unique' in results[Datasets.ERROR])
 
     def test_join_datasets_on_col_not_in_lhs(self):
         left_dataset_id = self._post_file()
@@ -600,8 +598,8 @@ class TestDatasets(TestAbstractDatasets):
             left_dataset_id, right_dataset_id, on=on))
 
         self.assertTrue(isinstance(results, dict))
-        self.assertTrue(AbstractController.ERROR in results.keys())
-        self.assertTrue('left' in results[AbstractController.ERROR])
+        self.assertTrue(Datasets.ERROR in results.keys())
+        self.assertTrue('left' in results[Datasets.ERROR])
 
     def test_join_datasets_on_col_not_in_rhs(self):
         left_dataset_id = self._post_file()
@@ -611,8 +609,8 @@ class TestDatasets(TestAbstractDatasets):
             left_dataset_id, right_dataset_id, on=on))
 
         self.assertTrue(isinstance(results, dict))
-        self.assertTrue(AbstractController.ERROR in results.keys())
-        self.assertTrue('right' in results[AbstractController.ERROR])
+        self.assertTrue(Datasets.ERROR in results.keys())
+        self.assertTrue('right' in results[Datasets.ERROR])
 
     def test_bad_date(self):
         dataset_id = self._post_file('bad_date.csv')
@@ -764,34 +762,3 @@ class TestDatasets(TestAbstractDatasets):
         results = json.loads(self.controller.info(dataset_id))
         new_schema = results[Dataset.SCHEMA]
         self.assertEqual(expected_schema, new_schema)
-
-    def test_delete_row(self):
-        dataset_id = self._post_file()
-        index = 0
-        expected_dframe = Dataset.find_one(
-            dataset_id).dframe()[index + 1:].reset_index()
-        del expected_dframe['index']
-
-        results = json.loads(self.controller.row_delete(dataset_id, index))
-        self.assertTrue(Datasets.SUCCESS in results.keys())
-
-        dframe = Dataset.find_one(dataset_id).dframe()
-        self.assertEqual(self.NUM_ROWS - 1, len(dframe))
-        self._check_dframes_are_equal(expected_dframe, dframe)
-
-    def test_update_row(self):
-        dataset_id = self._post_file()
-        index = 0
-        update = {'amount': 10, 'food_type': 'breakfast'}
-        expected_dframe = Dataset.find_one(dataset_id).dframe()
-        expected_row = expected_dframe.ix[0].to_dict()
-        expected_row.update(update)
-        expected_dframe.ix[0] = Series(expected_row)
-
-        results = json.loads(self.controller.row_update(dataset_id, index,
-                                                        json.dumps(update)))
-        self.assertTrue(Datasets.SUCCESS in results.keys())
-
-        dframe = Dataset.find_one(dataset_id).dframe()
-        self.assertEqual(self.NUM_ROWS, len(dframe))
-        self._check_dframes_are_equal(expected_dframe, dframe)
