@@ -427,6 +427,17 @@ class Datasets(AbstractController):
 
         return self._safe_get_and_call(dataset_id, action)
 
+    def row_show(self, dataset_id, index):
+        """Show a row by index.
+
+        :param dataset_id: The dataset to fetch a row from.
+        :param index: The index of the row to fetch.
+        """
+        def action(dataset):
+            return Observation.find_one(dataset, index).clean_record
+
+        return self._safe_get_and_call(dataset_id, action)
+
     def row_update(self, dataset_id, index, data):
         """Update a row in dataset by index.
 

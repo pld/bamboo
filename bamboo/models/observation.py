@@ -57,7 +57,19 @@ class Observation(AbstractModel):
             as_cursor=as_cursor)
 
     @classmethod
-    def save(self, dframe, dataset):
+    def find_one(cls, dataset, index):
+        """Return row by index.
+
+        :param dataset: The dataset to find the row for.
+        :param index: The index of the row to find.
+        """
+        query = {INDEX: index,
+                 DATASET_OBSERVATION_ID: dataset.dataset_observation_id}
+
+        return super(cls, cls).find_one(query)
+
+    @classmethod
+    def save(cls, dframe, dataset):
         """Save data in `dframe` with the `dataset`.
 
         Encode `dframe` for MongoDB, and add fields to identify it with the
@@ -73,20 +85,20 @@ class Observation(AbstractModel):
         if not dataset.schema:
             dataset.build_schema(dframe)
 
-        dframe = self.__add_index_to_dframe(dframe)
+        dframe = cls.__add_index_to_dframe(dframe)
 
         if not DATASET_OBSERVATION_ID in dframe.columns:
             # This dframe has not been saved before, encode its columns.
-            self.batch_save(dataset.encode_dframe_columns(dframe))
+            cls.batch_save(dataset.encode_dframe_columns(dframe))
         else:
-            self.batch_save(dframe)
+            cls.batch_save(dframe)
 
         dframe.remove_bamboo_reserved_keys()
 
         # add metadata to dataset, discount ID column
         dataset.update({
             dataset.NUM_ROWS: len(dframe),
-            dataset.STATE: self.STATE_READY,
+            dataset.STATE: cls.STATE_READY,
         })
         dataset.summarize(dframe)
 
@@ -101,10 +113,7 @@ class Observation(AbstractModel):
         :param dex: The index of the row to update.
         :param record: The dictionary to update the row with.
         """
-        query = {INDEX: index,
-                 DATASET_OBSERVATION_ID: dataset.dataset_observation_id}
-
-        observation = cls.find_one(query)
+        observation = cls.find_one(dataset, index)
         super(cls, observation).update(record)
 
     @classmethod

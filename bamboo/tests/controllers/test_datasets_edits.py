@@ -12,6 +12,13 @@ class TestDatasetsEdits(TestAbstractDatasets):
     def setUp(self):
         TestAbstractDatasets.setUp(self)
 
+    def test_show_row(self):
+        dataset_id = self._post_file()
+        result = json.loads(self.controller.row_show(dataset_id, 0))
+
+        self.assertTrue(isinstance(result, dict))
+        self.assertEqual(9.0, result['amount'])
+
     def test_delete_row(self):
         dataset_id = self._post_file()
         index = 0
