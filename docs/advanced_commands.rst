@@ -405,8 +405,13 @@ function can be passed as parameters to bamboo.
 The parameters are
 
 * ``date_column``: The date column to resample on.
-* ``interval``: A code for the interval to use, any pandas codes are accepted, e.g. 'D' for daily, 'W' for weekly, 'M' for monthly.
-* ``how``: (Optional) How to calculate the grouped samples.  The default is 'mean'.
+* ``interval``: A code for the interval to use, any pandas codes are accepted,
+    e.g. 'D' for daily, 'W' for weekly, 'M' for monthly.
+* ``how``: (Optional) How to calculate the grouped samples.  The default is 
+    'mean'.
+* ``query``: (Optional) A MongoDB query to restrict the dataset, only data
+    matching the query will be resampled.
+* ``format``: (Optional) Set to 'csv' to return a CSV of the resampled data.
 
 For example, to resample a dataset at monthly intervals by mean use the
 following command:
