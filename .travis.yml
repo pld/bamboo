@@ -12,13 +12,14 @@ install:
   - pip freeze
 script:
   - id
+  - whoami
   - uname -a
   - ls -ld /tmp
   - ls -ld /dev/shm
   - sudo chmod a+w /dev/shm
   - sudo chown `whoami` /dev/shm
   - ls -ld /dev/shm
-  - sudo celeryd --config=bamboo.config.celeryconfig_test -E -l DEBUG&
+  - celeryd --config=bamboo.config.celeryconfig_test -E -l DEBUG&
   - cd bamboo
   - nosetests
   - cd ..
