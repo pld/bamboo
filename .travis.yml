@@ -4,9 +4,9 @@ python:
 virtualenv:
   system_site_packages: true
 before_install:
-  - sudo apt-get install -qq gfortran libatlas-base-dev python-numpy python-scipy
+  - sudo apt-get install -qq gfortran libatlas-base-dev python-numpy
 install:
-  - pip install -r requirements.pip --use-mirrors
+  - pip install -qr requirements.pip --use-mirrors
   - pip install -qr requirements-test.pip --use-mirrors
 script:
   - sudo rmdir /dev/shm
