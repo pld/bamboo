@@ -8,6 +8,7 @@ from bamboo.lib.exceptions import ArgumentError
 from bamboo.lib.jsontools import safe_json_loads
 from bamboo.lib.utils import parse_int
 from bamboo.models.dataset import Dataset
+from bamboo.models.observation import Observation
 
 
 class Datasets(AbstractController):
@@ -120,7 +121,6 @@ class Datasets(AbstractController):
 
             dframe = dataset.dframe(query=query, select=select, limit=limit,
                                     order_by=order_by)
-
             return dataset.summarize(dframe, groups=groups,
                                      no_cache=query or select)
 
@@ -143,7 +143,8 @@ class Datasets(AbstractController):
         return self._safe_get_and_call(dataset_id, action, callback=callback)
 
     def show(self, dataset_id, query=None, select=None, distinct=None, limit=0,
-             order_by=None, format=None, callback=False, count=False):
+             order_by=None, format=None, callback=False, count=False,
+             index=False):
         """ Return rows for `dataset_id`, matching the passed parameters.
 
         Retrieve the dataset by ID then limit that data using the optional
@@ -159,6 +160,7 @@ class Datasets(AbstractController):
         :param format: Format of output data, 'json' or 'csv'
         :param callback: A JSONP callback function to wrap the result in.
         :param count: Return the count for this query.
+        :param index: Include index with data.
 
         :returns: An error message if `dataset_id` does not exist or the JSON
             for query or select is improperly formatted. Otherwise a JSON
@@ -177,7 +179,7 @@ class Datasets(AbstractController):
             else:
                 dframe = dataset.dframe(
                     query=query, select=select, distinct=distinct,
-                    limit=limit, order_by=order_by)
+                    limit=limit, order_by=order_by, index=index)
 
                 if distinct:
                     return sorted(dframe[0].tolist())
@@ -409,6 +411,54 @@ class Datasets(AbstractController):
 
         return self._safe_get_and_call(dataset_id, action,
                                        content_type=content_type)
+
+    def row_delete(self, dataset_id, index):
+        """Delete a row from dataset by index.
+
+        :param dataset_id: The dataset to modify.
+        :param index: The index to delete in the dataset.
+        """
+        def action(dataset):
+            Observation.delete(dataset, index)
+
+            return {
+                self.SUCCESS: 'Deleted row with index "%s".' % index,
+                Dataset.ID: dataset_id}
+
+        return self._safe_get_and_call(dataset_id, action)
+
+    def row_show(self, dataset_id, index):
+        """Show a row by index.
+
+        :param dataset_id: The dataset to fetch a row from.
+        :param index: The index of the row to fetch.
+        """
+        def action(dataset):
+            return Observation.find_one(dataset, index).clean_record
+
+        return self._safe_get_and_call(dataset_id, action)
+
+    def row_update(self, dataset_id, index, data):
+        """Update a row in dataset by index.
+
+        Update the row in dataset identified by `index` by updating it with the
+        JSON dict `data`.  If there is a column in the DataFrame for which
+        there is not a corresponding key in `data` that column will not be
+        modified.
+
+        :param dataset_id: The dataset to modify.
+        :param index: The index to update.
+        :param data: A JSON dict to update the row with.
+        """
+        def action(dataset, data=data):
+            data = safe_json_loads(data)
+            Observation.update(dataset, index, data)
+
+            return {
+                self.SUCCESS: 'Updated row with index "%s".' % index,
+                Dataset.ID: dataset_id}
+
+        return self._safe_get_and_call(dataset_id, action)
 
     def __dataframe_as_content_type(self, content_type, dframe):
         if content_type == self.CSV:

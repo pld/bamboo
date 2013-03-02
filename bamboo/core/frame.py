@@ -12,10 +12,12 @@ from bamboo.lib.mongo import dump_mongo_json, mongo_prefix_reserved_key,\
 BAMBOO_RESERVED_KEY_PREFIX = 'BAMBOO_RESERVED_KEY_'
 DATASET_ID = BAMBOO_RESERVED_KEY_PREFIX + 'dataset_id'
 DATASET_OBSERVATION_ID = BAMBOO_RESERVED_KEY_PREFIX + 'dataset_observation_id'
+INDEX = BAMBOO_RESERVED_KEY_PREFIX + 'index'
 PARENT_DATASET_ID = BAMBOO_RESERVED_KEY_PREFIX + 'parent_dataset_id'
 BAMBOO_RESERVED_KEYS = [
     DATASET_ID,
     DATASET_OBSERVATION_ID,
+    INDEX,
     PARENT_DATASET_ID,
 ]
 
@@ -29,7 +31,7 @@ class BambooFrame(DataFrame):
 
     def add_parent_column(self, parent_dataset_id):
         """Add parent ID column to this DataFrame."""
-        column = Series([parent_dataset_id] * len(self))
+        column = Series([parent_dataset_id] * len(self), index=self.index)
         column.name = PARENT_DATASET_ID
         return self.__class__(self.join(column))
 
@@ -53,15 +55,13 @@ class BambooFrame(DataFrame):
     def recognize_dates_from_schema(self, schema):
         return recognize_dates_from_schema(self, schema)
 
-    def remove_bamboo_reserved_keys(self, keep_parent_ids=False):
+    def remove_bamboo_reserved_keys(self, exclude=[]):
         """Remove reserved internal columns in this DataFrame.
 
         :param keep_parent_ids: Keep parent column if True, default False.
         """
         reserved_keys = self.__column_intersect(BAMBOO_RESERVED_KEYS)
-
-        if keep_parent_ids and PARENT_DATASET_ID in reserved_keys:
-            reserved_keys.remove(PARENT_DATASET_ID)
+        reserved_keys = reserved_keys.difference(set(exclude))
 
         for column in reserved_keys:
             del self[column]
@@ -121,6 +121,6 @@ class BambooFrame(DataFrame):
 
         return self.__class__(self.join(right_dframe, on=on_lhs))
 
-    def __column_intersect(self, _list):
-        """Return the intersection of `_list` and this DataFrame's columns."""
-        return list(set(_list).intersection(set(self.columns.tolist())))
+    def __column_intersect(self, list_):
+        """Return the intersection of `list_` and this DataFrame's columns."""
+        return set(list_).intersection(set(self.columns.tolist()))

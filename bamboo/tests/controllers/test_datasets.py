@@ -7,7 +7,6 @@ from urllib2 import URLError
 from mock import patch
 import simplejson as json
 
-from bamboo.controllers.abstract_controller import AbstractController
 from bamboo.controllers.datasets import Datasets
 from bamboo.lib.schema_builder import CARDINALITY, DATETIME, OLAP_TYPE,\
     SIMPLETYPE
@@ -255,6 +254,14 @@ class TestDatasets(TestAbstractDatasets):
         self.assertTrue(isinstance(results[0], dict))
         self.assertEqual(len(results), self.NUM_ROWS)
 
+    def test_show_index(self):
+        dataset_id = self._post_file()
+        results = json.loads(self.controller.show(dataset_id, index=True))
+
+        for row in results:
+            self.assertTrue('index' in row.keys())
+
+
     def test_info(self):
         dataset_id = self._post_file()
         results = json.loads(self.controller.info(dataset_id))
@@ -481,9 +488,9 @@ class TestDatasets(TestAbstractDatasets):
         dataset_id = self._post_file()
         result = json.loads(self.controller.delete(dataset_id))
 
-        self.assertTrue(AbstractController.SUCCESS in result)
+        self.assertTrue(Datasets.SUCCESS in result)
         self.assertEqual(
-            result[AbstractController.SUCCESS],
+            result[Datasets.SUCCESS],
             'deleted dataset: %s' % dataset_id)
 
     def test_delete_bad_id(self):
@@ -506,8 +513,8 @@ class TestDatasets(TestAbstractDatasets):
             self.controller.drop_columns(dataset_id, ['food_type']))
 
         self.assertTrue(isinstance(results, dict))
-        self.assertTrue(AbstractController.SUCCESS in results)
-        self.assertTrue('dropped' in results[AbstractController.SUCCESS])
+        self.assertTrue(Datasets.SUCCESS in results)
+        self.assertTrue('dropped' in results[Datasets.SUCCESS])
 
         results = json.loads(self.controller.show(dataset_id))
 
@@ -520,7 +527,7 @@ class TestDatasets(TestAbstractDatasets):
             self.controller.drop_columns('313514', ['food_type']))
 
         self.assertTrue(isinstance(results, dict))
-        self.assertTrue(AbstractController.ERROR in results)
+        self.assertTrue(Datasets.ERROR in results)
 
     def test_drop_columns_non_existent_column(self):
         dataset_id = self._post_file()
@@ -528,7 +535,7 @@ class TestDatasets(TestAbstractDatasets):
             self.controller.drop_columns(dataset_id, ['foo']))
 
         self.assertTrue(isinstance(results, dict))
-        self.assertTrue(AbstractController.ERROR in results)
+        self.assertTrue(Datasets.ERROR in results)
 
     def test_join_datasets(self):
         left_dataset_id = self._post_file()
@@ -538,7 +545,7 @@ class TestDatasets(TestAbstractDatasets):
             left_dataset_id, right_dataset_id, on=on))
 
         self.assertTrue(isinstance(results, dict))
-        self.assertTrue(AbstractController.SUCCESS in results.keys())
+        self.assertTrue(Datasets.SUCCESS in results.keys())
         self.assertTrue(Dataset.ID in results.keys())
 
         joined_dataset_id = results[Dataset.ID]
@@ -564,7 +571,7 @@ class TestDatasets(TestAbstractDatasets):
             left_dataset_id, right_dataset_id, on=on))
 
         self.assertTrue(isinstance(results, dict))
-        self.assertTrue(AbstractController.SUCCESS in results.keys())
+        self.assertTrue(Datasets.SUCCESS in results.keys())
         self.assertTrue(Dataset.ID in results.keys())
 
         joined_dataset_id = results[Dataset.ID]
@@ -587,9 +594,9 @@ class TestDatasets(TestAbstractDatasets):
             left_dataset_id, right_dataset_id, on='food_type'))
 
         self.assertTrue(isinstance(results, dict))
-        self.assertTrue(AbstractController.ERROR in results.keys())
-        self.assertTrue('right' in results[AbstractController.ERROR])
-        self.assertTrue('not unique' in results[AbstractController.ERROR])
+        self.assertTrue(Datasets.ERROR in results.keys())
+        self.assertTrue('right' in results[Datasets.ERROR])
+        self.assertTrue('not unique' in results[Datasets.ERROR])
 
     def test_join_datasets_on_col_not_in_lhs(self):
         left_dataset_id = self._post_file()
@@ -599,8 +606,8 @@ class TestDatasets(TestAbstractDatasets):
             left_dataset_id, right_dataset_id, on=on))
 
         self.assertTrue(isinstance(results, dict))
-        self.assertTrue(AbstractController.ERROR in results.keys())
-        self.assertTrue('left' in results[AbstractController.ERROR])
+        self.assertTrue(Datasets.ERROR in results.keys())
+        self.assertTrue('left' in results[Datasets.ERROR])
 
     def test_join_datasets_on_col_not_in_rhs(self):
         left_dataset_id = self._post_file()
@@ -610,8 +617,8 @@ class TestDatasets(TestAbstractDatasets):
             left_dataset_id, right_dataset_id, on=on))
 
         self.assertTrue(isinstance(results, dict))
-        self.assertTrue(AbstractController.ERROR in results.keys())
-        self.assertTrue('right' in results[AbstractController.ERROR])
+        self.assertTrue(Datasets.ERROR in results.keys())
+        self.assertTrue('right' in results[Datasets.ERROR])
 
     def test_bad_date(self):
         dataset_id = self._post_file('bad_date.csv')

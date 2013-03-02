@@ -290,15 +290,19 @@ class Calculator(object):
                     parent_dataset_id=self.dataset.dataset_id)
 
     def dframe_from_update(self, new_data, labels_to_slugs):
-        """Make a single-row dataframe for the additional data to add."""
-        self.__ensure_dframe()
+        """Make a single-row dataframe for the additional data to add.
 
-        if not isinstance(new_data, list):
-            new_data = [new_data]
+        :param new_data: Data to add to dframe.
+        :type new_data: List.
+        :param labels_to_slugs: Map of labels to slugs.
+        """
+        self.__ensure_dframe()
 
         filtered_data = []
         columns = self.dframe.columns
-        dframe_empty = not len(columns)
+        num_columns = len(columns)
+        num_rows = len(self.dframe)
+        dframe_empty = not num_columns
 
         if dframe_empty:
             columns = self.dataset.schema.keys()
@@ -308,7 +312,7 @@ class Calculator(object):
             for col, val in row.iteritems():
                 # special case for reserved keys (e.g. _id)
                 if col in MONGO_RESERVED_KEYS:
-                    if (not len(columns) or col in columns) and\
+                    if (not num_columns or col in columns) and\
                             col not in filtered_row.keys():
                         filtered_row[col] = val
                 else:
@@ -324,7 +328,9 @@ class Calculator(object):
 
             filtered_data.append(filtered_row)
 
-        return BambooFrame(filtered_data)
+        index = range(num_rows, num_rows + len(filtered_data))
+
+        return BambooFrame(filtered_data, index=index)
 
     def __update_aggregate_datasets(self, calculations, new_dframe):
         calcs_to_data = self.__create_calculations_to_groups_and_datasets(

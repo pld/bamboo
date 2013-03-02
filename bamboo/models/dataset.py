@@ -7,7 +7,7 @@ from pandas import concat, rolling_window, Series
 
 from bamboo.core.calculator import Calculator
 from bamboo.core.frame import BambooFrame, BAMBOO_RESERVED_KEY_PREFIX,\
-    DATASET_ID, DATASET_OBSERVATION_ID, PARENT_DATASET_ID
+    DATASET_ID, DATASET_OBSERVATION_ID, INDEX, PARENT_DATASET_ID
 from bamboo.core.summary import summarize
 from bamboo.lib.async import call_async
 from bamboo.lib.exceptions import ArgumentError
@@ -173,7 +173,8 @@ class Dataset(AbstractModel, ImportableDataset):
         return self.find_one(_id) if _id else None
 
     def dframe(self, query=None, select=None, distinct=None,
-               keep_parent_ids=False, limit=0, order_by=None, padded=False):
+               keep_parent_ids=False, limit=0, order_by=None, padded=False,
+               index=False):
         """Fetch the dframe for this dataset.
 
         :param select: An optional select to limit the fields in the dframe.
@@ -201,7 +202,18 @@ class Dataset(AbstractModel, ImportableDataset):
             observations, distinct, limit)
 
         dframe.decode_mongo_reserved_keys()
-        dframe.remove_bamboo_reserved_keys(keep_parent_ids)
+
+        excluded = []
+
+        if keep_parent_ids:
+            excluded.append(PARENT_DATASET_ID)
+        if index:
+            excluded.append(INDEX)
+
+        dframe.remove_bamboo_reserved_keys(excluded)
+
+        if index:
+            dframe = BambooFrame(dframe.rename(columns={INDEX: 'index'}))
 
         if padded:
             if len(dframe.columns):
@@ -416,6 +428,9 @@ class Dataset(AbstractModel, ImportableDataset):
         record = self.record
         update_id = uuid.uuid4().hex
         self.add_pending_update(update_id)
+
+        if not isinstance(new_data, list):
+            new_data = [new_data]
 
         calculator = Calculator(self)
 
