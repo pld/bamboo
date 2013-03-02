@@ -17,6 +17,7 @@ script:
   - ls -ld /tmp
   - ls -ld /dev/shm
   - sudo chmod a+w /dev/shm
+  - sudo chown `whoami` /dev/shm
   - ls -ld /dev/shm
   - celeryd --config=bamboo.config.celeryconfig_test -E -l DEBUG&
   - cd bamboo
