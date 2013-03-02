@@ -4,25 +4,18 @@ python:
 virtualenv:
   system_site_packages: true
 before_install:
-  - sudo apt-get install -qq gfortran libatlas-base-dev python-numpy python-scipy
+  - sudo apt-get install -qq gfortran libatlas-base-dev python-numpy
 install:
-  - pip freeze
   - pip install -r requirements.pip --use-mirrors
   - pip install -r requirements-test.pip --use-mirrors
-  - pip freeze
 script:
-  - id
-  - whoami
-  - uname -a
-  - ls -ld /tmp
-  - ls -ld /dev/shm
-  - sudo chmod a+w /dev/shm
-  - sudo chown `whoami` /dev/shm
-  - ls -ld /dev/shm
-  - celeryd --config=bamboo.config.celeryconfig_test -E -l DEBUG&
-  - cd bamboo
+  - sudo rmdir /dev/shm
+  - sudo ln -Tsf /{run,dev}/shm
+  - ./celeryd/celeryd start
+  - pushd -q bamboo
   - nosetests
-  - cd ..
+  - popd -q
+  - ./celeryd/celeryd stop
 services:
   - mongodb
 notifications:
