@@ -362,12 +362,15 @@ class Datasets(AbstractController):
             dataset_id, action, exceptions=(KeyError, NonUniqueJoinError))
 
     def resample(self, dataset_id, date_column, interval, how='mean',
-                 format=None):
+                 query=None, format=None):
         """Resample a dataset."""
         content_type = self.__content_type_for_format(format)
 
-        def action(dataset):
-            dframe = dataset.resample(date_column, interval, how)
+        def action(dataset, query=query):
+            if query:
+                query = safe_json_loads(query)
+
+            dframe = dataset.resample(date_column, interval, how, query=query)
             return self.__dataframe_as_content_type(content_type, dframe)
 
         return self._safe_get_and_call(dataset_id, action,

@@ -570,7 +570,7 @@ class Dataset(AbstractModel, ImportableDataset):
             {'_id': self.record['_id']},
             {'$pull': {self.PENDING_UPDATES: update_id}})
 
-    def resample(self, date_column, interval, how):
+    def resample(self, date_column, interval, how, query=None):
         """Resample a dataset given a new time frame.
 
         :param date_column: The date column use as the index for resampling.
@@ -578,7 +578,7 @@ class Dataset(AbstractModel, ImportableDataset):
         :param how: How to aggregate in the resample.
         :returns: A BambooFrame of the resampled DataFrame for this dataset.
         """
-        dframe = self.dframe().set_index(date_column)
+        dframe = self.dframe(query=query).set_index(date_column)
         resampled = dframe.resample(interval, how=how)
         return BambooFrame(resampled.reset_index())
 
