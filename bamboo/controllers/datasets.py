@@ -450,7 +450,6 @@ class Datasets(AbstractController):
         :param index: The index to update.
         :param data: A JSON dict to update the row with.
         """
-        # TODO guard against join column uniquity loss.
         def action(dataset, data=data):
             data = safe_json_loads(data)
             Observation.update(dataset, index, data)
