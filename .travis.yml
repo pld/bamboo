@@ -12,9 +12,9 @@ script:
   - sudo rmdir /dev/shm
   - sudo ln -Tsf /{run,dev}/shm
   - ./celeryd/celeryd start
-  - pushd -q bamboo
+  - pushd bamboo
   - nosetests
-  - popd -q
+  - popd
   - ./celeryd/celeryd stop
 services:
   - mongodb
