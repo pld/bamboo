@@ -184,3 +184,11 @@ class TestDatasetsPostUpdate(TestAbstractDatasets):
         self.assertTrue(Datasets.ERROR in result)
         self.assertEqual(dataset.num_rows, self.NUM_ROWS)
         self.assertEqual(expected_col_schema, dataset.schema[column])
+
+    def test_index_on_update(self):
+        self.dataset_id = self._post_file(self._file_name_with_slashes)
+        self._put_row_updates()
+        results = json.loads(self.controller.show(self.dataset_id, index=True))
+
+        for i, row in enumerate(results):
+            self.assertEqual(i, row['index'])

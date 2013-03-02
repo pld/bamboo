@@ -143,7 +143,8 @@ class Datasets(AbstractController):
         return self._safe_get_and_call(dataset_id, action, callback=callback)
 
     def show(self, dataset_id, query=None, select=None, distinct=None, limit=0,
-             order_by=None, format=None, callback=False, count=False):
+             order_by=None, format=None, callback=False, count=False,
+             index=False):
         """ Return rows for `dataset_id`, matching the passed parameters.
 
         Retrieve the dataset by ID then limit that data using the optional
@@ -159,6 +160,7 @@ class Datasets(AbstractController):
         :param format: Format of output data, 'json' or 'csv'
         :param callback: A JSONP callback function to wrap the result in.
         :param count: Return the count for this query.
+        :param index: Include index with data.
 
         :returns: An error message if `dataset_id` does not exist or the JSON
             for query or select is improperly formatted. Otherwise a JSON
@@ -177,7 +179,7 @@ class Datasets(AbstractController):
             else:
                 dframe = dataset.dframe(
                     query=query, select=select, distinct=distinct,
-                    limit=limit, order_by=order_by)
+                    limit=limit, order_by=order_by, index=index)
 
                 if distinct:
                     return sorted(dframe[0].tolist())

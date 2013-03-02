@@ -50,9 +50,9 @@ ROUTES = [
     ('datasets_update', 'PUT',
         '/datasets/:dataset_id', 'datasets', 'update'),
     ('datasets_row_delete', 'DELETE', '/datasets/:dataset_id/row/:index',
-        'datasets', 'row_delete')
+        'datasets', 'row_delete'),
     ('datasets_row_update', 'PUT', '/datasets/:dataset_id/row/:index',
-        'datasets', 'row_update')
+        'datasets', 'row_update'),
     # calculations
     ('calculations_create', 'POST',
         '/calculations/:dataset_id', 'calculations', 'create'),

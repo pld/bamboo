@@ -42,4 +42,3 @@ class TestDatasetsEdits(TestAbstractDatasets):
         dframe = Dataset.find_one(dataset_id).dframe()
         self.assertEqual(self.NUM_ROWS, len(dframe))
         self._check_dframes_are_equal(expected_dframe, dframe)
-

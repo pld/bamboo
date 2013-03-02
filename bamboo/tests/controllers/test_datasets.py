@@ -254,6 +254,14 @@ class TestDatasets(TestAbstractDatasets):
         self.assertTrue(isinstance(results[0], dict))
         self.assertEqual(len(results), self.NUM_ROWS)
 
+    def test_show_index(self):
+        dataset_id = self._post_file()
+        results = json.loads(self.controller.show(dataset_id, index=True))
+
+        for row in results:
+            self.assertTrue('index' in row.keys())
+
+
     def test_info(self):
         dataset_id = self._post_file()
         results = json.loads(self.controller.info(dataset_id))
