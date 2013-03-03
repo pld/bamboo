@@ -1,7 +1,7 @@
 import imp
 from distutils.core import setup
 
-imp.load_source('bamboo_version', 'bamboo/version.py')
+imp.load_source('bamboo_version', 'bamboo/lib/version.py')
 from bamboo_version import VERSION_NUMBER
 
 setup(
