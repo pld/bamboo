@@ -265,14 +265,28 @@ class TestDatasets(TestAbstractDatasets):
     def test_info(self):
         dataset_id = self._post_file()
         results = json.loads(self.controller.info(dataset_id))
+        expected_keys = [Dataset.ID, Dataset.LABEL, Dataset.DESCRIPTION,
+                         Dataset.LICENSE, Dataset.ATTRIBUTION,
+                         Dataset.CREATED_AT, Dataset.PARENT_IDS, Dataset.UPDATED_AT,
+                         Dataset.SCHEMA, Dataset.NUM_ROWS, Dataset.NUM_COLUMNS,
+                         Dataset.STATE]
 
         self.assertTrue(isinstance(results, dict))
-        self.assertTrue(Dataset.SCHEMA in results.keys())
-        self.assertTrue(Dataset.NUM_ROWS in results.keys())
+
+        for key in expected_keys:
+            self.assertTrue(key in results.keys())
+
         self.assertEqual(results[Dataset.NUM_ROWS], self.NUM_ROWS)
-        self.assertTrue(Dataset.NUM_COLUMNS in results.keys())
         self.assertEqual(results[Dataset.NUM_COLUMNS], self.NUM_COLS)
         self.assertEqual(results[Dataset.STATE], Dataset.STATE_READY)
+        self.assertEqual(results[Dataset.PARENT_IDS], [])
+
+    def test_info_parent_ids(self):
+        self.dataset_id = self._post_file()
+        self._post_calculations(self.default_formulae + ['sum(amount)'])
+        agg_id = json.loads(self.controller.aggregations(self.dataset_id))['']
+        results = json.loads(self.controller.info(agg_id))
+        self.assertEqual([self.dataset_id], results[Dataset.PARENT_IDS])
 
     def test_info_cardinality(self):
         dataset_id = self._post_file()
@@ -401,8 +415,7 @@ class TestDatasets(TestAbstractDatasets):
 
     def test_aggregations_datasets(self):
         self.dataset_id = self._post_file()
-        self._post_calculations(
-            formulae=self.default_formulae + ['sum(amount)'])
+        self._post_calculations(self.default_formulae + ['sum(amount)'])
 
         results = self._test_aggregations()
 

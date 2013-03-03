@@ -45,6 +45,7 @@ class Dataset(AbstractModel, ImportableDataset):
     NUM_COLUMNS = 'num_columns'
     NUM_ROWS = 'num_rows'
     MERGED_DATASETS = 'merged_datasets'
+    PARENT_IDS = 'parent_ids'
     PENDING_UPDATES = 'pending_updates'
     SCHEMA = 'schema'
     UPDATED_AT = 'updated_at'
@@ -379,6 +380,9 @@ class Dataset(AbstractModel, ImportableDataset):
                            if key in self.updatable_keys}
             self.update(update_dict)
 
+        parent_ids = self.observations(select={PARENT_DATASET_ID: 1},
+                                distinct=PARENT_DATASET_ID)
+
         return {
             self.ID: self.dataset_id,
             self.LABEL: self.label,
@@ -391,6 +395,7 @@ class Dataset(AbstractModel, ImportableDataset):
             self.NUM_COLUMNS: self.num_columns,
             self.NUM_ROWS: self.num_rows,
             self.STATE: self.state,
+            self.PARENT_IDS: parent_ids,
         }
 
     def observations(self, query=None, select=None, limit=0, order_by=None,
@@ -403,6 +408,9 @@ class Dataset(AbstractModel, ImportableDataset):
             to this maximum.
         :param order_by: Order the returned observations.
         """
+        if distinct:
+            as_cursor = True
+
         observations = Observation.find(self, query, select, limit=limit,
                                         order_by=order_by, as_cursor=as_cursor)
 
