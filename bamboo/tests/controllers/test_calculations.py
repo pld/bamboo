@@ -60,13 +60,14 @@ class TestCalculations(TestBase):
 
         self.assertTrue(error_text in response[self.controller.ERROR])
 
-    def __test_create_from_json(self, json_filename, non_agg_cols=1, ex_len=1):
+    def __test_create_from_json(self, json_filename, non_agg_cols=1, ex_len=1,
+                                group=None):
         json_filepath = 'tests/fixtures/%s' % json_filename
         mock_uploaded_file = self._file_mock(json_filepath)
         dataset = Dataset.find_one(self.dataset_id)
         prev_columns = len(dataset.dframe().columns)
         response = json.loads(self.controller.create(
-            self.dataset_id, json_file=mock_uploaded_file))
+            self.dataset_id, json_file=mock_uploaded_file, group=group))
 
         self.assertTrue(isinstance(response, dict))
         self.assertTrue(self.controller.SUCCESS in response)
