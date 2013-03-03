@@ -10,6 +10,16 @@
     {
         "name": "sum of amount",
         "formula": "sum(amount)",
-        "group": "risk_factor"
+        "groups": "risk_factor"
+    },
+    {
+        "name": "mean of amount",
+        "formula": "mean(amount)",
+        "groups": "risk_factor,food_type"
+    },
+    {
+        "name": "mean of amount",
+        "formula": "mean(amount)",
+        "groups": ["risk_factor", "food_type"]
     }
 ]

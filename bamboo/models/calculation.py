@@ -250,15 +250,26 @@ class Calculation(AbstractModel):
         if not len(calculations) or not isinstance(calculations, list):
             raise ArgumentError('Improper format for JSON calculations.')
 
+        parsed_calculations = []
+
         # Pull out args to check JSON format
         try:
-            calculations = [[c[cls.FORMULA], c[cls.NAME], c.get(cls.GROUP)]
-                            for c in calculations]
+            for c in calculations:
+                groups = c.get("groups")
+
+                if not isinstance(groups, list):
+                    groups = [groups]
+
+                for group in groups:
+                    parsed_calculations.append([
+                        c[cls.FORMULA],
+                        c[cls.NAME], group])
+
         except KeyError as e:
             raise ArgumentError('Required key %s not found in JSON' % e)
 
         calculations = [cls().save(dataset, formula, name, group)
-                        for formula, name, group in calculations]
+                        for formula, name, group in parsed_calculations]
         call_async(calculate_task, calculations, dataset)
 
     @classmethod

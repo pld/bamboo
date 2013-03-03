@@ -99,6 +99,24 @@ you can create a dataset from this json file using:
         "formula": "gps_latitude > 0"
     }
 
+Replicating a Calculation Across Groups
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+To create the same calculation with multiple groups you may include a
+``groups`` key in your JSON file with the value as a list of groups to create
+the calculation for.
+
+The ``groups`` key can also be set to a string, in which case bamboo will
+create a single calculation with the value as the group.
+
+For example, below the second to third calculation is created with the group
+*risk_factor*, and the fourth with the single multi-group *risk_factor* and
+*food_type*.  The final calculation is create twice, once for the group
+*risk_factor*, and once for the group *food_type*.
+
+.. literalinclude:: ../bamboo/tests/fixtures/good_eats_group.calculations.json
+   :language: javascript
+
 Create a "perishable" dataset
 -----------------------------
 
@@ -126,15 +144,15 @@ Additional dataset query parameters
 
 Dataset queries may take the following optional parameters:
 
-- *select*: This is a required argument, it can be 'all' or a
-    MongoDB JSON query
-- *distinct*: A field to return distinct results for.
-- *query*: If passed restrict results to rows matching this query.
-- *limit*: If passed limit the rows to this number.
-- *order_by*: If passed order the result using this column.
-- *format*: Format of output data, 'json' or 'csv'
-- *callback*: A JSONP callback function to wrap the result in.
-- *index*: Boolean, if true also return the index.  Default false.
+- ``select``: This is a required argument, it can be 'all' or a
+   MongoDB JSON query
+- ``distinct``: A field to return distinct results for.
+- ``query``: If passed restrict results to rows matching this query.
+- ``limit``: If passed limit the rows to this number.
+- ``order_by``: If passed order the result using this column.
+- ``format``: Format of output data, 'json' or 'csv'
+- ``callback``: A JSONP callback function to wrap the result in.
+- ``index``: Boolean, if true also return the index.  Default false.
 
 Export data using the format parameter
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
