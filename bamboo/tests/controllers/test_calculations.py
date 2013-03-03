@@ -60,14 +60,13 @@ class TestCalculations(TestBase):
 
         self.assertTrue(error_text in response[self.controller.ERROR])
 
-    def __test_create_from_json(self, json_filename, non_agg_cols=1,
-                                group=None, ex_len=1):
+    def __test_create_from_json(self, json_filename, non_agg_cols=1, ex_len=1):
         json_filepath = 'tests/fixtures/%s' % json_filename
         mock_uploaded_file = self._file_mock(json_filepath)
         dataset = Dataset.find_one(self.dataset_id)
         prev_columns = len(dataset.dframe().columns)
         response = json.loads(self.controller.create(
-            self.dataset_id, json_file=mock_uploaded_file, group=group))
+            self.dataset_id, json_file=mock_uploaded_file))
 
         self.assertTrue(isinstance(response, dict))
         self.assertTrue(self.controller.SUCCESS in response)
@@ -280,12 +279,16 @@ class TestCalculations(TestBase):
 
     def test_create_multiple_with_group(self):
         self.dataset_id = self._post_file()
-        group = 'risk_factor'
+        groups = ['risk_factor', 'risk_factor,food_type', 'food_type']
         dataset = self.__test_create_from_json(
-            'good_eats_group.calculations.json',
-            non_agg_cols=2, ex_len=3, group=group)
+            'good_eats_group.calculations.json', non_agg_cols=2, ex_len=6)
 
-        self.assertTrue(group in dataset.aggregated_datasets_dict.keys())
+        for group in groups:
+            self.assertTrue(group in dataset.aggregated_datasets_dict.keys())
+            dframe = dataset.aggregated_dataset(group).dframe()
+
+            for column in Calculation().split_groups(group):
+                self.assertTrue(column in dframe.columns)
 
     def test_create_with_missing_args(self):
         self.dataset_id = self._post_file()
