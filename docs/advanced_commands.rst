@@ -45,13 +45,13 @@ following command:
 
 .. code-block:: sh
 
-    curl -X POST -F schema=@/home/modilabs/good_eats.schema.json csv_file=@/home/modilabs/good_eats.csv http://bamboo.io/datasets
+    curl -X POST -F schema=@/home/modilabs/good_eats.schema.json -F csv_file=@/home/modilabs/good_eats.csv http://bamboo.io/datasets
 
 And similarly for a JSON file:
 
 .. code-block:: sh
 
-    curl -X POST -F schema=@/home/modilabs/good_eats.schema.json json_file=@/home/modilabs/good_eats.json http://bamboo.io/datasets
+    curl -X POST -F schema=@/home/modilabs/good_eats.schema.json -F json_file=@/home/modilabs/good_eats.json http://bamboo.io/datasets
 
 **returns:**
 
@@ -298,7 +298,7 @@ The parameters are
 * ``date_column``: The date column to resample on.
 * ``interval``: A code for the interval to use, any pandas codes are accepted,
     e.g. 'D' for daily, 'W' for weekly, 'M' for monthly.
-* ``how``: (Optional) How to calculate the grouped samples.  The default is 
+* ``how``: (Optional) How to calculate the grouped samples.  The default is
     'mean'.
 * ``query``: (Optional) A MongoDB query to restrict the dataset, only data
     matching the query will be resampled.
