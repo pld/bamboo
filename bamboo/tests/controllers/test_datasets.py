@@ -64,6 +64,10 @@ class TestDatasets(TestAbstractDatasets):
         self.assertTrue(isinstance(result, dict))
         self.assertTrue(Dataset.ID in result)
 
+        # test parse type as date correctly
+        dframe = Dataset.find_one(result[Dataset.ID]).dframe()
+        self.assertTrue(isinstance(dframe.submit_date[0], datetime))
+
         results = self._test_summary_built(result)
         self._test_summary_no_group(results)
 
@@ -193,6 +197,10 @@ class TestDatasets(TestAbstractDatasets):
 
         self.assertTrue(isinstance(result, dict))
         self.assertTrue(Dataset.ID in result)
+
+        # test parse type as date correctly
+        dframe = Dataset.find_one(result[Dataset.ID]).dframe()
+        self.assertTrue(isinstance(dframe.submit_date[0], datetime))
 
         results = self._test_summary_built(result)
         self._test_summary_no_group(results)
