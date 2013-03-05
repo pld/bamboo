@@ -119,7 +119,7 @@ class TestDatasets(TestAbstractDatasets):
         self._test_summary_no_group(results)
         results = json.loads(self.controller.info(self.dataset_id))
         simpletypes = pickle.load(
-            open(self._fixture_path_prefix('good_eats_simpletypes.p'), 'rb'))
+            open(self._fixture_path_prefix('good_eats_simpletypes.pkl'), 'rb'))
 
         for column_name, column_schema in results[Dataset.SCHEMA].items():
             self.assertEqual(
@@ -297,7 +297,7 @@ class TestDatasets(TestAbstractDatasets):
 
         schema = results[Dataset.SCHEMA]
         cardinalities = pickle.load(
-            open(self._fixture_path_prefix('good_eats_cardinalities.p'), 'rb'))
+            open(self._fixture_path_prefix('good_eats_cardinalities.pkl'), 'rb'))
 
         for key, column in schema.items():
             self.assertTrue(CARDINALITY in column.keys())
