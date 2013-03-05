@@ -41,21 +41,21 @@ class TestDatasetsUpdateWithJoin(TestAbstractDatasetsUpdate):
     def test_setup_datasets(self):
         self._verify_dataset(
             self.left_dataset_id,
-            'updates_with_join/originals/left_dataset.p')
+            'updates_with_join/originals/left_dataset.pkl')
         self._verify_dataset(
             self.right_dataset_id,
-            'updates_with_join/originals/right_dataset.p')
+            'updates_with_join/originals/right_dataset.pkl')
         self._verify_dataset(
             self.joined_dataset_id,
-            'updates_with_join/originals/joined_dataset.p')
+            'updates_with_join/originals/joined_dataset.pkl')
 
     def _verify_update_left(self):
         self._verify_dataset(
             self.left_dataset_id,
-            'updates_with_join/update_left/left_dataset.p')
+            'updates_with_join/update_left/left_dataset.pkl')
         self._verify_dataset(
             self.joined_dataset_id,
-            'updates_with_join/update_left/joined_dataset.p')
+            'updates_with_join/update_left/joined_dataset.pkl')
 
     def test_datasets_update_left(self):
         self._put_row_updates(
@@ -87,11 +87,11 @@ class TestDatasetsUpdateWithJoin(TestAbstractDatasetsUpdate):
         self._verify_dataset(
             self.left_dataset_id,
             'updates_with_join/update_left_no_join_col/left_dat'
-            'aset.p')
+            'aset.pkl')
         self._verify_dataset(
             self.joined_dataset_id,
             'updates_with_join/update_left_no_join_col/joined_d'
-            'ataset.p')
+            'ataset.pkl')
 
     def test_datasets_update_left_no_join_col(self):
         self._put_row_updates(
@@ -114,13 +114,13 @@ class TestDatasetsUpdateWithJoin(TestAbstractDatasetsUpdate):
     def _verify_update_right(self):
         self._verify_dataset(
             self.left_dataset_id,
-            'updates_with_join/update_right/left_dataset.p')
+            'updates_with_join/update_right/left_dataset.pkl')
         self._verify_dataset(
             self.right_dataset_id,
-            'updates_with_join/update_right/right_dataset.p')
+            'updates_with_join/update_right/right_dataset.pkl')
         self._verify_dataset(
             self.joined_dataset_id,
-            'updates_with_join/update_right/joined_dataset.p')
+            'updates_with_join/update_right/joined_dataset.pkl')
 
     def test_datasets_update_right(self):
         self._put_row_updates(
@@ -166,7 +166,7 @@ class TestDatasetsUpdateWithJoin(TestAbstractDatasetsUpdate):
         )
         self._verify_dataset(
             self.right_dataset_id,
-            'updates_with_join/originals/right_dataset.p')
+            'updates_with_join/originals/right_dataset.pkl')
         self._verify_dataset(
             self.joined_dataset_id,
-            'updates_with_join/originals/joined_dataset.p')
+            'updates_with_join/originals/joined_dataset.pkl')
