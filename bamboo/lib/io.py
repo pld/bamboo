@@ -44,7 +44,7 @@ def csv_file_reader(name, delete=False):
 
 
 def json_file_reader(content):
-    return pd.DataFrame(json.loads(content))
+    return BambooFrame(json.loads(content)).recognize_dates()
 
 
 class ImportableDataset(object):
