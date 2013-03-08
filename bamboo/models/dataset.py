@@ -17,6 +17,7 @@ from bamboo.models.abstract_model import AbstractModel
 from bamboo.models.calculation import Calculation
 from bamboo.models.observation import Observation
 
+from bamboo.lib.utils import print_time as pt
 
 @task(ignore_result=True)
 def delete_task(dataset):
@@ -48,6 +49,10 @@ class Dataset(AbstractModel, ImportableDataset):
     PENDING_UPDATES = 'pending_updates'
     SCHEMA = 'schema'
     UPDATED_AT = 'updated_at'
+
+    def __init__(self, record=None):
+        super(Dataset, self).__init__(record)
+        self._dframe = None
 
     # commonly accessed variables
     @property
@@ -173,7 +178,8 @@ class Dataset(AbstractModel, ImportableDataset):
         return self.find_one(_id) if _id else None
 
     def dframe(self, query=None, select=None, distinct=None,
-               keep_parent_ids=False, limit=0, order_by=None, padded=False):
+               keep_parent_ids=False, limit=0, order_by=None, padded=False,
+               reload=False):
         """Fetch the dframe for this dataset.
 
         :param select: An optional select to limit the fields in the dframe.
@@ -193,23 +199,50 @@ class Dataset(AbstractModel, ImportableDataset):
             passed to MongoDB. BambooFrame will not have parent ids if
             `keep_parent_ids` is False.
         """
+        from bamboo.lib.utils import print_time as pt
+        cacheable = True
+        # bypass cache if we need specific version
+        if query or select or distinct or keep_parent_ids or limit or order_by\
+                or padded:
+            cacheable = False
+
+        # use cached copy if we have already fetched it
+        if cacheable and not reload and self._dframe is not None:
+            pt('USING CACHED VERSION! YAY!', ['cache'])
+            return self._dframe
+
+        pt(">>> DFRAME START", ['db'])
+        pt("gathering observations")
+        print "fuck my nuts twice"
         observations = self.observations(
             query=query, select=select, limit=limit, order_by=order_by,
             distinct=distinct, as_cursor=True)
 
+        pt("batch reading dframe from cursor")
         dframe = self._batch_read_dframe_from_cursor(
             observations, distinct, limit)
 
+        pt("decoding mongo reserved keys")
         dframe.decode_mongo_reserved_keys()
+        pt("removing bamboo reserved keys")
         dframe.remove_bamboo_reserved_keys(keep_parent_ids)
 
         if padded:
+            pt("PADDED BEGIN")
             if len(dframe.columns):
                 on = dframe.columns[0]
                 place_holder = self.place_holder_dframe(dframe).set_index(on)
                 dframe = BambooFrame(dframe.join(place_holder, on=on))
             else:
                 dframe = self.place_holder_dframe()
+            pt("PADDED END")
+
+        pt("<<< DFRAME END")
+
+        if cacheable:
+            pt('caching dframe in dataset')
+            self._dframe = dframe
+            pt('finished caching dframe in dataset')
 
         return dframe
 
@@ -308,7 +341,7 @@ class Dataset(AbstractModel, ImportableDataset):
 
     def delete(self, countdown=0):
         """Delete this dataset."""
-        call_async(delete_task, self, countdown=countdown)
+        call_async(delete_task, self.clear_cache(), countdown=countdown)
 
     def summarize(self, dframe, groups=[], no_cache=False):
         """Build and return a summary of the data in this dataset.
@@ -316,7 +349,7 @@ class Dataset(AbstractModel, ImportableDataset):
         Return a summary of dframe grouped by `groups`, or the overall
         summary if no groups are specified.
 
-        :param dframe: An optional dframe to summarize, if None fetch a dframe
+        :param dframe: dframe to summarize
         :param groups: A list of columns to group on.
         :param no_cache: Do not fetch a cached summary.
 
@@ -324,6 +357,8 @@ class Dataset(AbstractModel, ImportableDataset):
             summarized by the arithmetic mean, standard deviation, and
             percentiles. Dimensional columns will be summarized by counts.
         """
+        pt("dataset.summarize commences")
+        # XXX why is this here?
         self.reload()
 
         return summarize(self, dframe, groups, no_cache)
@@ -433,6 +468,8 @@ class Dataset(AbstractModel, ImportableDataset):
             dataset ID.
         """
         Observation.delete_all(self, {PARENT_DATASET_ID: parent_id})
+        # clear the cached dframe
+        self._dframe = None
 
     def add_observations(self, new_data):
         """Update `dataset` with `new_data`."""
@@ -446,6 +483,7 @@ class Dataset(AbstractModel, ImportableDataset):
             new_data, self.schema.labels_to_slugs)
         calculator._check_update_is_valid(new_dframe_raw)
 
+        calculator.dataset.clear_cache()
         call_async(calculator.calculate_updates, calculator, new_data,
                    new_dframe_raw=new_dframe_raw, update_id=update_id)
 
@@ -456,6 +494,7 @@ class Dataset(AbstractModel, ImportableDataset):
 
     def save_observations(self, dframe):
         """Save rows in `dframe` for this dataset."""
+        pt("saving observation")
         return Observation.save(dframe, self)
 
     def replace_observations(self, dframe, overwrite=False,
@@ -489,32 +528,50 @@ class Dataset(AbstractModel, ImportableDataset):
 
     def join(self, other, on):
         """Join with dataset `other` on the passed columns."""
+        pt('in Dataset.join')
+        pt('getting dframe')
         merged_dframe = self.dframe()
+        pt('got dframe, checking if empty')
 
         if not len(merged_dframe.columns):
             # Empty dataset, simulate columns
+            pt('empty dframe, setting placeholder')
             merged_dframe = self.place_holder_dframe()
 
+        pt('joining other dframe')
         merged_dframe = merged_dframe.join_dataset(other, on)
+        pt('finished joining dframe, creating dataset')
         merged_dataset = self.create()
 
         if self.num_rows and other.num_rows:
+            pt('calling save observations on merged_dframe')
             merged_dataset.save_observations(merged_dframe)
         else:
+            pt('one of dframes was empty, calling build schema')
             merged_dataset.build_schema(merged_dframe, set_num_columns=True)
+            pt('setting merged_dataset to ready')
             merged_dataset.ready()
 
+        pt('adding joined dataset to self')
         self.add_joined_dataset(
             ('right', other.dataset_id, on, merged_dataset.dataset_id))
+        pt('adding joined dataset to other')
         other.add_joined_dataset(
             ('left', self.dataset_id, on, merged_dataset.dataset_id))
 
+        pt('returning merged_dataset')
         return merged_dataset
 
     def reload(self):
         dataset = Dataset.find_one(self.dataset_id)
         self.record = dataset.record
+        # XXX do we really need to clear the cached dframe?
+        self.clear_cache()
 
+        return self
+
+    def clear_cache(self):
+        self._dframe = None
         return self
 
     def encode_dframe_columns(self, dframe):

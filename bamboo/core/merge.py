@@ -32,6 +32,10 @@ def merge_dataset_ids(dataset_ids, mapping):
 
     new_dataset = Dataset.create()
 
+    # XXX not sure if we need to do this...
+    for dataset in datasets:
+        dataset.clear_cache()
+
     call_async(_merge_datasets_task, new_dataset, datasets, mapping)
 
     return new_dataset

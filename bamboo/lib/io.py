@@ -23,9 +23,15 @@ def import_dataset(dataset, file_reader, delete=False):
     :param file_reader: Function for reading the dataset.
     :param delete: Delete filepath_or_buffer after import, default False.
     """
+    from bamboo.lib.utils import print_time as pt
+    print 'trying to fucking print'
+    pt('trying to fucking pt')
     try:
+        pt('dframe = file_reader()')
         dframe = file_reader()
+        pt('dataset.save_observations(dframe)')
         dataset.save_observations(dframe)
+        pt('after dataset.save_observations(dframe)')
     except Exception as e:
         if isinstance(e, RetryTaskError):
             raise e
@@ -88,6 +94,8 @@ class ImportableDataset(object):
         # pandas needs a closed file for *read_csv*
         tmpfile.close()
 
+        from bamboo.lib.utils import print_time as pt
+        pt('call_async: import_dataset')
         call_async(import_dataset, self, partial(
             csv_file_reader, tmpfile.name, delete=True))
 

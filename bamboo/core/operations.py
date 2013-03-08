@@ -29,6 +29,12 @@ class EvalTerm(object):
     def operation(self, oper, result, val):
         return self.operations[oper](result, val)
 
+    def get_children(self):
+        return []
+
+    def dependent_columns(self, schema):
+        return []
+
 
 class EvalConstant(EvalTerm):
     """Class to evaluate a parsed constant or variable."""
@@ -57,6 +63,11 @@ class EvalConstant(EvalTerm):
     def field(self, row):
         return row.get(self.value)
 
+    def dependent_columns(self, schema):
+        if self.value in schema.labels_to_slugs.values():
+            return [self.value]
+        return []
+
 
 class EvalString(EvalTerm):
     """Class to evaluate a parsed string."""
@@ -74,6 +85,9 @@ class EvalSignOp(EvalTerm):
     def eval(self, row, context):
         mult = {'+': 1, '-': -1}[self.sign]
         return mult * self.value.eval(row, context)
+
+    def get_children(self):
+        return [self.value]
 
 
 class EvalBinaryArithOp(EvalTerm):
@@ -97,6 +111,12 @@ class EvalBinaryArithOp(EvalTerm):
                 return np.nan
 
         return result
+
+    def get_children(self):
+        children = [self.value[0]]
+        for oper, val in self.operator_operands(self.value[1:]):
+            children.append(val)
+        return children
 
 
 class EvalMultOp(EvalBinaryArithOp):
@@ -144,6 +164,12 @@ class EvalComparisonOp(EvalTerm):
 
         return False
 
+    def get_children(self):
+        children = [self.value[0]]
+        for oper, val in self.operator_operands(self.value[1:]):
+            children.append(val)
+        return children
+
 
 class EvalNotOp(EvalTerm):
     """Class to evaluate not expressions."""
@@ -153,6 +179,9 @@ class EvalNotOp(EvalTerm):
 
     def eval(self, row, context):
         return not self.value.eval(row, context)
+
+    def get_children(self):
+        return [self.value]
 
 
 class EvalBinaryBooleanOp(EvalTerm):
@@ -172,6 +201,12 @@ class EvalBinaryBooleanOp(EvalTerm):
 
         return result
 
+    def get_children(self):
+        children = [self.value[0]]
+        for oper, val in self.operator_operands(self.value[1:]):
+            children.append(val)
+        return children
+
 
 class EvalAndOp(EvalBinaryBooleanOp):
     """Class to distinguish precedence of and expressions."""
@@ -190,24 +225,28 @@ class EvalInOp(EvalTerm):
         val_to_test = str(self.value[0].eval(row, context))
         val_list = []
 
-        # loop through values, skip atom literal
         for val in self.value[1:]:
             val_list.append(val.eval(row, context))
 
         return val_to_test in val_list
+
+    def get_children(self):
+        return [val for val in self.value]
 
 
 class EvalCaseOp(EvalTerm):
     """Class to eval case statements."""
 
     def eval(self, row, context):
-        # skip 'case' literal
         for token in self.value:
             case_result = token.eval(row, context)
             if case_result:
                 return case_result
 
         return np.nan
+
+    def get_children(self):
+        return [val for val in self.value]
 
 
 class EvalMapOp(EvalTerm):
@@ -219,12 +258,23 @@ class EvalMapOp(EvalTerm):
 
         return False
 
+    def get_children(self):
+        if self.tokens[0] == 'default':
+            return [self.tokens[1]]
+        return self.tokens[0:2]
+
 
 class EvalFunction(object):
     """Class to eval functions."""
 
     def __init__(self, tokens):
         self.value = tokens[0][1]
+
+    def get_children(self):
+        return [self.value]
+
+    def dependent_columns(self, schema):
+        return []
 
 
 class EvalDate(EvalFunction):
@@ -243,3 +293,9 @@ class EvalPercentile(EvalFunction):
         column = context.dframe[self.value.value]
         field = self.value.field(row)
         return percentileofscore(column, field)
+
+    def get_children(self):
+        return []
+
+    def dependent_columns(self, schema):
+        return [self.value.value]

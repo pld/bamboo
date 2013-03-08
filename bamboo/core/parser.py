@@ -9,6 +9,7 @@ from bamboo.core.operations import EvalAndOp, EvalCaseOp, EvalComparisonOp,\
     EvalConstant, EvalExpOp, EvalDate, EvalInOp, EvalMapOp, EvalMultOp,\
     EvalNotOp, EvalOrOp, EvalPercentile, EvalPlusOp, EvalSignOp, EvalString
 
+from bamboo.lib.utils import print_time as pt
 
 class ParseError(Exception):
     """For errors while parsing formulas."""
@@ -19,12 +20,21 @@ class ParserContext(object):
     """Context to be passed into parser."""
 
     dependent_columns = set()
+    dframe = None
     schema = None
 
-    def __init__(self, dataset=None):
-        if dataset:
-            self.dframe = dataset.dframe()
-            self.schema = dataset.schema
+    def __init__(self, dframe, schema):
+        #if dataset:
+        pt("start building dataset dframe")
+        # XXX why do we need to get the dframe now?
+        # XXX cant we just get the columns we want later?
+        #self.dframe = dataset.dframe()
+        self.dframe = dframe
+        pt("done building dataset dframe")
+        pt("start building dataset schema")
+        # XXX we can always get this from dataset
+        self.schema = schema
+        pt("done building dataset schema")
 
 
 class Parser(object):
@@ -56,10 +66,18 @@ class Parser(object):
     reserved_words = aggregation_names + function_names + operator_names +\
         special_names
 
-    def __init__(self, dataset=None):
+    def __init__(self):
         """Create parser and set context."""
-        self.context = ParserContext(dataset)
+        pt(">>> entering core.parser")
+        #pt("get dataset parser content")
+        #self.context = ParserContext(dataset)
+        #self.dataset = dataset
+        pt("build bnf")
         self._build_bnf()
+        pt("done building bnf")
+
+    def set_context(self, dframe, schema):
+        self.context = ParserContext(dframe, schema)
 
     def store_aggregation(self, _, __, tokens):
         """Cached a parsed aggregation."""
@@ -199,7 +217,7 @@ class Parser(object):
         # top level bnf
         self.bnf = agg_expr
 
-    def parse_formula(self, input_str):
+    def parse_formula(self, input_str, schema):
         """Parse formula and return evaluation function.
 
         Parse `input_str` into an aggregation name and functions.
@@ -261,11 +279,13 @@ class Parser(object):
         """
 
         # reset dependent columns before parsing
-        self.context.dependent_columns = set()
+        #self.context.dependent_columns = set()
 
         try:
+            pt('parsing formula')
             self.parsed_expr = self.bnf.parseString(
                 input_str, parseAll=True)[0]
+            pt('finished parsing formula, parsed_expr=%s' % self.parsed_expr)
         except ParseException, err:
             raise ParseError('Parse Failure for string "%s": %s' % (input_str,
                              err))
@@ -276,11 +296,17 @@ class Parser(object):
             for column_function in self.column_functions:
                 functions.append(partial(column_function.eval))
         else:
+            pt('adding expr to function list')
             functions.append(partial(self.parsed_expr.eval))
+        pt(functions)
 
-        return functions
+        #self.context.dependent_columns = self.context.dependent_columns.union(self.get_dependent_columns())
+        dependent_columns = set(self._get_dependent_columns(self.parsed_expr, schema, []))
+        pt("dependent columns after it ws called %s" % dependent_columns)
 
-    def validate_formula(self, formula, row):
+        return functions, dependent_columns
+
+    def validate_formula(self, formula, schema):
         """Validate the *formula* on an example *row* of data.
 
         Rebuild the BNF then parse the `formula` given the sample `row`.
@@ -294,20 +320,34 @@ class Parser(object):
         self.aggregation = None
 
         # check valid formula
-        functions = self.parse_formula(formula)
+        functions, dependent_columns = self.parse_formula(formula, schema)
 
-        if not self.context.schema:
+        if schema is None:
             raise ParseError(
                 'No schema for dataset, please add data or wait for it to '
                 'finish processing')
-
-        try:
-            for function in functions:
-                function(row, self.context)
-        except KeyError, err:
-            raise ParseError('Missing column reference: %s' % err)
+        for column in dependent_columns:
+            if column not in schema.keys():
+                raise ParseError('Missing column reference: %s' % column)
+        # XXX hack!
+#        try:
+#            for function in functions:
+#                function(row, self.context)
+#        except KeyError, err:
+#            raise ParseError('Missing column reference: %s' % err)
 
         return self.aggregation
+
+    def _get_dependent_columns(self, parsed_expr, schema, result):
+        pt('node: %s, value: %s, result: %s' % (type(parsed_expr), parsed_expr.value, result))
+        pt('type(schema): %s' % type(schema))
+        pt('children: %s' % parsed_expr.get_children())
+        dc = parsed_expr.dependent_columns(schema)
+        pt('dependent_columns: %s' % dc)
+        result.extend(dc)
+        for child in parsed_expr.get_children():
+            self._get_dependent_columns(child, schema, result)
+        return result
 
     def _build_caseless_or_expression(self, strings):
         literals = [

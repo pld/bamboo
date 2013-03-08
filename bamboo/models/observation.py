@@ -2,6 +2,7 @@ from bamboo.core.frame import DATASET_OBSERVATION_ID
 from bamboo.lib.async import call_async
 from bamboo.lib.datetools import parse_timestamp_query
 from bamboo.models.abstract_model import AbstractModel
+from bamboo.lib.utils import print_time as pt
 
 
 class Observation(AbstractModel):
@@ -63,6 +64,7 @@ class Observation(AbstractModel):
         :param dataset: The dataset to store the dframe in.
         """
         # build schema for the dataset after having read it from file.
+        pt("entering observation.save")
         if not dataset.schema:
             dataset.build_schema(dframe)
 

@@ -17,7 +17,7 @@ class TestCalculator(TestBase):
             self.get_data('good_eats_with_calculations.csv'))
         self.dataset.save_observations(dframe)
         self.group = None
-        self.parser = Parser(self.dataset)
+        self.parser = Parser()
         self.places = 5
 
     def _equal_msg(self, calculated, stored, formula):
@@ -43,7 +43,7 @@ class TestCalculator(TestBase):
 
         for idx, formula in enumerate(self.calculations):
             name = 'test-%s' % idx
-            self.parser.validate_formula(formula, row)
+            self.parser.validate_formula(formula, self.dataset.schema)
 
             calculator = Calculator(self.dataset)
 

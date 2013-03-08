@@ -56,6 +56,7 @@ class TestAbstractDatasets(TestBase):
         self._check_dframe_is_subset(dframe2, dframe1)
 
     def _check_dframe_is_subset(self, dframe1, dframe2):
+        from pandas import DataFrame
         dframe2_rows = [self._reduce_precision(row) for row in
                         BambooFrame(dframe2).to_jsondict()]
 
@@ -63,7 +64,8 @@ class TestAbstractDatasets(TestBase):
             dframe1_row = self._reduce_precision(series_to_jsondict(row[1]))
             self.assertTrue(dframe1_row in dframe2_rows,
                             'dframe1_row: %s\n\ndframe2_rows: %s' % (
-                                dframe1_row, dframe2_rows))
+                                DataFrame([dframe1_row]),
+                                DataFrame(dframe2_rows)))
 
     def _reduce_precision(self, row):
         for key, value in row.iteritems():

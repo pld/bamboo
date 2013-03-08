@@ -31,6 +31,7 @@ class BambooFrame(DataFrame):
         """Add parent ID column to this DataFrame."""
         column = Series([parent_dataset_id] * len(self))
         column.name = PARENT_DATASET_ID
+        print "parent dataset id is %s" % parent_dataset_id
         return self.__class__(self.join(column))
 
     def decode_mongo_reserved_keys(self):

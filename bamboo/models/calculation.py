@@ -1,4 +1,5 @@
 import traceback
+from datetime import datetime
 
 from celery.task import Task, task
 
@@ -8,6 +9,8 @@ from bamboo.lib.async import call_async
 from bamboo.lib.exceptions import ArgumentError
 from bamboo.lib.schema_builder import make_unique
 from bamboo.models.abstract_model import AbstractModel
+
+from bamboo.lib.utils import print_time as pt
 
 
 class UniqueCalculationError(Exception):
@@ -66,21 +69,36 @@ def calculate_task(calculations, dataset):
     :param calculation: Calculation to run.
     :param dataset: Dataset to run calculation on.
     """
+    print '>>> IN calculate_task'
+    print 'blocking until other calculations are finished'
     # block until other calculations for this dataset are finished
+    # XXX this looks sketchy
     calculations[0].restart_if_has_pending(dataset, calculations[1:])
+    print 'clearing summary stats'
     dataset.clear_summary_stats()
 
+    print 'creating calculator'
+    # XXX loads dframe 1x
     calculator = Calculator(dataset)
+    print 'calculating columns'
+    # XXX loads dframe 2x
     calculator.calculate_columns(calculations)
 
+    print 'looping through calculations'
     for calculation in calculations:
+        print 'calculation: %s' % calculation
+        print 'adding dependencies'
         calculation.add_dependencies(dataset, calculator.dependent_columns())
 
         if calculation.aggregation is not None:
+            print 'have aggregation, get aggregation id'
             aggregated_id = dataset.aggregated_datasets_dict[calculation.group]
+            print 'set aggregation id'
             calculation.set_aggregation_id(aggregated_id)
 
+        print 'setting calculation ready'
         calculation.ready()
+    print '<<< OUT calculate_task'
 
 
 class Calculation(AbstractModel):
@@ -189,7 +207,7 @@ class Calculation(AbstractModel):
             raise ArgumentError(
                 'Calculation "%s" does not exists for dataset' % self.name)
 
-        call_async(delete_task, self, dataset, slug)
+        call_async(delete_task, self, dataset.clear_cache(), slug)
 
     def save(self, dataset, formula, name, group_str=None):
         """Parse, save, and calculate a formula.
@@ -210,11 +228,17 @@ class Calculation(AbstractModel):
 
         :raises: `ParseError` if an invalid formula was supplied.
         """
+        pt(">>> enering calculations.save func in models:")
+        pt("creating calculator object:")
         calculator = Calculator(dataset)
+        pt("done creating calculator object")
 
         # ensure that the formula is parsable
+        pt("validating groups")
         groups = self.split_groups(group_str) if group_str else []
+        pt("validating if it's aggregation")
         aggregation = calculator.validate(formula, groups)
+        pt("finished validating aggregation")
 
         if aggregation:
             # set group if aggregation and group unset
@@ -228,8 +252,11 @@ class Calculation(AbstractModel):
                                                         aggregated_dataset)
 
         else:
+            pt("getting name of calculation")
             name = self._check_name_and_make_unique(name, dataset)
+            pt("name of calculation is %s")
 
+        pt("writing record obj")
         record = {
             DATASET_ID: dataset.dataset_id,
             self.AGGREGATION: aggregation,
@@ -239,13 +266,15 @@ class Calculation(AbstractModel):
             self.STATE: self.STATE_PENDING,
         }
         super(self.__class__, self).save(record)
+        pt("done saving record")
 
+        pt("<<< leaving calculations.save func in models before returning self")
         return self
 
     @classmethod
     def create(cls, dataset, formula, name, group=None):
         calculation = super(cls, cls).create(dataset, formula, name, group)
-        call_async(calculate_task, [calculation], dataset)
+        call_async(calculate_task, [calculation], dataset.clear_cache())
         return calculation
 
     @classmethod
@@ -265,7 +294,7 @@ class Calculation(AbstractModel):
 
         calculations = [cls().save(dataset, formula, name, group)
                         for formula, name, group in calculations]
-        call_async(calculate_task, calculations, dataset)
+        call_async(calculate_task, calculations, dataset.clear_cache())
 
     @classmethod
     def find_one(cls, dataset_id, name, group=None):

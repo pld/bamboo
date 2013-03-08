@@ -60,7 +60,7 @@ class Aggregator(object):
 
         # get dframe only including rows from this parent
         dframe = child_dataset.dframe(
-            keep_parent_ids=True).only_rows_for_parent_id(parent_dataset_id)
+            keep_parent_ids=True, reload=True).only_rows_for_parent_id(parent_dataset_id)
 
         # remove rows in child from parent
         child_dataset.remove_parent_observations(parent_dataset_id)
