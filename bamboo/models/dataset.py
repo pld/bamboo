@@ -580,7 +580,6 @@ class Dataset(AbstractModel, ImportableDataset):
         return self
 
     def encode_dframe_columns(self, dframe):
-        import ipdb; ipdb.set_trace()
         encoded_columns_map = self.schema.rename_map_for_dframe(dframe)
         dframe = dframe.rename(columns=encoded_columns_map)
         dframe[DATASET_OBSERVATION_ID] = self.dataset_observation_id
