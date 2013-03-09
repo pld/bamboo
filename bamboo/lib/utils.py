@@ -28,7 +28,7 @@ def is_float_nan(num):
     return isinstance(num, float) and isnan(num)
 
 global_count_dict = {}
-def print_time(string, count_list=None, memory=True):
+def print_time(string, count_list=None, memory=False):
     # keep a dict in here of counts:
     # e.g. {'cache_hits': 4, 'db_fetches': 5}
     # memory_prfiler as an option to print out memory_usage
