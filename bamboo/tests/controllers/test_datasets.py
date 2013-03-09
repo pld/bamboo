@@ -269,13 +269,13 @@ class TestDatasets(TestAbstractDatasets):
         for row in results:
             self.assertTrue('index' in row.keys())
 
-
     def test_info(self):
         dataset_id = self._post_file()
         results = json.loads(self.controller.info(dataset_id))
         expected_keys = [Dataset.ID, Dataset.LABEL, Dataset.DESCRIPTION,
                          Dataset.LICENSE, Dataset.ATTRIBUTION,
-                         Dataset.CREATED_AT, Dataset.PARENT_IDS, Dataset.UPDATED_AT,
+                         Dataset.CREATED_AT, Dataset.PARENT_IDS,
+                         Dataset.UPDATED_AT,
                          Dataset.SCHEMA, Dataset.NUM_ROWS, Dataset.NUM_COLUMNS,
                          Dataset.STATE]
 
@@ -304,8 +304,8 @@ class TestDatasets(TestAbstractDatasets):
         self.assertTrue(Dataset.SCHEMA in results.keys())
 
         schema = results[Dataset.SCHEMA]
-        cardinalities = pickle.load(
-            open(self._fixture_path_prefix('good_eats_cardinalities.pkl'), 'rb'))
+        cardinalities = pickle.load(open(
+            self._fixture_path_prefix('good_eats_cardinalities.pkl'), 'rb'))
 
         for key, column in schema.items():
             self.assertTrue(CARDINALITY in column.keys())

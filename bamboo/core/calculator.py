@@ -7,6 +7,7 @@ from bamboo.core.aggregator import Aggregator
 from bamboo.core.frame import BambooFrame, NonUniqueJoinError
 from bamboo.core.parser import ParseError, Parser
 from bamboo.lib.mongo import MONGO_RESERVED_KEYS
+from bamboo.lib.query_args import QueryArgs
 from bamboo.lib.schema_builder import make_unique
 
 
@@ -32,7 +33,7 @@ class Calculator(object):
 
         :returns: The aggregation (or None) for the formula.
         """
-        dframe = self.dataset.dframe(limit=1)
+        dframe = self.dataset.dframe(QueryArgs(limit=1))
         row = dframe.irow(0) if len(dframe) else {}
 
         aggregation = self.parser.validate_formula(formula, row)

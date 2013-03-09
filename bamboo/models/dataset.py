@@ -12,6 +12,7 @@ from bamboo.core.summary import summarize
 from bamboo.lib.async import call_async
 from bamboo.lib.exceptions import ArgumentError
 from bamboo.lib.io import ImportableDataset
+from bamboo.lib.query_args import QueryArgs
 from bamboo.lib.schema_builder import Schema
 from bamboo.models.abstract_model import AbstractModel
 from bamboo.models.calculation import Calculation
@@ -173,34 +174,23 @@ class Dataset(AbstractModel, ImportableDataset):
 
         return self.find_one(_id) if _id else None
 
-    def dframe(self, query=None, select=None, distinct=None,
-               keep_parent_ids=False, limit=0, order_by=None, padded=False,
-               index=False):
+    def dframe(self, query_args=QueryArgs(), keep_parent_ids=False,
+               padded=False, index=False):
         """Fetch the dframe for this dataset.
 
-        :param select: An optional select to limit the fields in the dframe.
-        :param distinct: Return distinct entries for this field.
+        :param query_args: An optional QueryArgs to hold the query arguments.
         :param keep_parent_ids: Do not remove parent IDs from the dframe,
             default False.
-        :param limit: Limit on the number of rows in the returned dframe.
-        :param order_by: Sort resulting rows according to a column value and
-            sign indicating ascending or descending.
-
-        Example of `order_by`:
-
-          - ``order_by='mycolumn'``
-          - ``order_by='-mycolumn'``
+        :param index: Return the index with dframe, default False.
 
         :returns: Return BambooFrame with contents based on query parameters
             passed to MongoDB. BambooFrame will not have parent ids if
             `keep_parent_ids` is False.
         """
-        observations = self.observations(
-            query=query, select=select, limit=limit, order_by=order_by,
-            distinct=distinct, as_cursor=True)
+        observations = self.observations(query_args, as_cursor=True)
 
         dframe = self.__batch_read_dframe_from_cursor(
-            observations, distinct, limit)
+            observations, query_args.distinct, query_args.limit)
 
         dframe.decode_mongo_reserved_keys()
 
@@ -226,21 +216,16 @@ class Dataset(AbstractModel, ImportableDataset):
 
         return dframe
 
-    def count(self, query=None, limit=0, distinct=None):
+    def count(self, query_args=QueryArgs()):
         """Return the count of rows matching query in dataset.
 
-        :param query: The query to search for.
-        :type query: Dictionary or None, default None.
-        :param limit: The maximum number of rows to count.
-        :type limit: Integer, default 0.
-        :param distinct: A distinct restriction.
-        :type distinct: Dictionary or None, default None.
+        :param query_args: An optional QueryArgs to hold the query arguments.
         """
-        observations = self.observations(
-            query=query, limit=limit, distinct=distinct, as_cursor=True)
+        obs = self.observations(query_args, as_cursor=True)
 
-        count = len(observations) if distinct else observations.count()
+        count = len(obs) if query_args.distinct else obs.count()
 
+        limit = query_args.limit
         if limit > 0 and count > limit:
             count = limit
 
@@ -332,7 +317,8 @@ class Dataset(AbstractModel, ImportableDataset):
     @classmethod
     def find(cls, dataset_id):
         """Return datasets for `dataset_id`."""
-        return super(cls, cls).find({DATASET_ID: dataset_id})
+        query_args = QueryArgs(query={DATASET_ID: dataset_id})
+        return super(cls, cls).find(query_args)
 
     def update(self, record):
         """Update dataset `dataset` with `record`."""
@@ -380,8 +366,9 @@ class Dataset(AbstractModel, ImportableDataset):
                            if key in self.updatable_keys}
             self.update(update_dict)
 
-        parent_ids = self.observations(select={PARENT_DATASET_ID: 1},
-                                distinct=PARENT_DATASET_ID)
+        query_args = QueryArgs(select={PARENT_DATASET_ID: 1},
+                               distinct=PARENT_DATASET_ID)
+        parent_ids = self.observations(query_args)
 
         return {
             self.ID: self.dataset_id,
@@ -398,24 +385,19 @@ class Dataset(AbstractModel, ImportableDataset):
             self.PARENT_IDS: parent_ids,
         }
 
-    def observations(self, query=None, select=None, limit=0, order_by=None,
-                     distinct=None, as_cursor=False):
+    def observations(self, query_args=QueryArgs(), as_cursor=False):
         """Return observations for this dataset.
 
-        :param query: Optional query for MongoDB to limit rows returned.
-        :param select: Optional select for MongoDB to limit columns.
-        :param limit: If greater than 0, limit number of observations returned
-            to this maximum.
-        :param order_by: Order the returned observations.
+        :param query_args: An optional QueryArgs to hold the query arguments.
+        :param as_cursor: Return the observations as a cursor.
         """
-        if distinct:
+        if query_args.distinct:
             as_cursor = True
 
-        observations = Observation.find(self, query, select, limit=limit,
-                                        order_by=order_by, as_cursor=as_cursor)
+        observations = Observation.find(self, query_args, as_cursor=as_cursor)
 
-        if distinct:
-            observations = observations.distinct(distinct)
+        if query_args.distinct:
+            observations = observations.distinct(query_args.distinct)
 
         return observations
 
@@ -601,7 +583,8 @@ class Dataset(AbstractModel, ImportableDataset):
         :param how: How to aggregate in the resample.
         :returns: A BambooFrame of the resampled DataFrame for this dataset.
         """
-        dframe = self.dframe(query=query).set_index(date_column)
+        query_args = QueryArgs(query=query)
+        dframe = self.dframe(query_args).set_index(date_column)
         resampled = dframe.resample(interval, how=how)
         return BambooFrame(resampled.reset_index())
 
