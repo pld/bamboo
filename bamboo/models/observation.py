@@ -51,7 +51,26 @@ class Observation(AbstractModel):
             as_cursor=as_cursor)
 
     @classmethod
-    def save(self, dframe, dataset):
+    def update(cls, dframe, dataset):
+        dataset.build_schema(dframe)
+        print 'new schema: %s' % dataset.schema
+
+        # must have MONGO_RERVED_KEY_id as index     
+        if not DATASET_OBSERVATION_ID in dframe.columns:
+            cls.batch_update(dataset.encode_dframe_columns(dframe).reset_index())
+        else:
+            cls.batch_update(dframe.reset_index())
+
+        # add metadata to dataset, discount ID column
+        dataset.update({
+            dataset.NUM_ROWS: len(dframe),
+            dataset.STATE: cls.STATE_READY,
+        })
+        # TODO make summary update-friendly
+        #dataset.summarize(dframe)
+
+    @classmethod
+    def save(cls, dframe, dataset):
         """Save data in `dframe` with the `dataset`.
 
         Encode `dframe` for MongoDB, and add fields to identify it with the
@@ -69,13 +88,13 @@ class Observation(AbstractModel):
             dataset.build_schema(dframe)
 
         if not DATASET_OBSERVATION_ID in dframe.columns:
-            self.batch_save(dataset.encode_dframe_columns(dframe))
+            cls.batch_save(dataset.encode_dframe_columns(dframe))
         else:
-            self.batch_save(dframe)
+            cls.batch_save(dframe)
 
         # add metadata to dataset, discount ID column
         dataset.update({
             dataset.NUM_ROWS: len(dframe),
-            dataset.STATE: self.STATE_READY,
+            dataset.STATE: cls.STATE_READY,
         })
         dataset.summarize(dframe)

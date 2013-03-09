@@ -5,7 +5,7 @@ from pandas import DataFrame, Series
 from bamboo.lib.datetools import recognize_dates, recognize_dates_from_schema
 from bamboo.lib.jsontools import series_to_jsondict
 from bamboo.lib.mongo import dump_mongo_json, mongo_prefix_reserved_key,\
-    MONGO_RESERVED_KEYS
+    MONGO_RESERVED_KEYS, MONGO_RESERVED_KEY_PREFIX
 
 
 # reserved bamboo keys
@@ -34,16 +34,24 @@ class BambooFrame(DataFrame):
         print "parent dataset id is %s" % parent_dataset_id
         return self.__class__(self.join(column))
 
-    def decode_mongo_reserved_keys(self):
+    def decode_mongo_reserved_keys(self, keep_mongo_keys=False):
         """Decode MongoDB reserved keys in this DataFrame."""
         reserved_keys = self._column_intersect(MONGO_RESERVED_KEYS)
         rename_dict = {}
 
+        print 'keep_mongo_keys: %s' % keep_mongo_keys
+        print 'reserved_keys: %s' % reserved_keys
         for key in reserved_keys:
-            del self[key]
-            prefixed_key = mongo_prefix_reserved_key(key)
-            if prefixed_key in self.columns:
-                rename_dict[prefixed_key] = key
+            if keep_mongo_keys:
+                replacement_key = MONGO_RESERVED_KEY_PREFIX + key
+                self._swap_column_names(key, replacement_key)
+                print 'swapping %s and %s' % (key, replacement_key)
+            else:
+                del self[key]
+                prefixed_key = mongo_prefix_reserved_key(key)
+                if prefixed_key in self.columns:
+                    print 'renaming: %s -> %s' % (prefixed_key, key)
+                    rename_dict[prefixed_key] = key
 
         if rename_dict:
             self.rename(columns={prefixed_key: key}, inplace=True)
@@ -95,6 +103,12 @@ class BambooFrame(DataFrame):
     def _column_intersect(self, _list):
         """Return the intersection of `_list` and this DataFrame's columns."""
         return list(set(_list).intersection(set(self.columns.tolist())))
+
+    def _swap_column_names(self, column_1, column_2):
+        tmp_col = MONGO_RESERVED_KEY_PREFIX + '_tmp'
+        self.rename(columns={column_1: tmp_col}, inplace=True)
+        self.rename(columns={column_2: column_1}, inplace=True)
+        self.rename(columns={tmp_col: column_2}, inplace=True)
 
     def join_dataset(self, other, on):
         """Left join an `other` dataset.

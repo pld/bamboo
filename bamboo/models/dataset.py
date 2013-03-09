@@ -179,7 +179,7 @@ class Dataset(AbstractModel, ImportableDataset):
 
     def dframe(self, query=None, select=None, distinct=None,
                keep_parent_ids=False, limit=0, order_by=None, padded=False,
-               reload=False):
+               reload=False, keep_mongo_keys=False):
         """Fetch the dframe for this dataset.
 
         :param select: An optional select to limit the fields in the dframe.
@@ -223,7 +223,8 @@ class Dataset(AbstractModel, ImportableDataset):
             observations, distinct, limit)
 
         pt("decoding mongo reserved keys")
-        dframe.decode_mongo_reserved_keys()
+        pt('keep_mongo_keys before: %s' % keep_mongo_keys)
+        dframe.decode_mongo_reserved_keys(keep_mongo_keys=keep_mongo_keys)
         pt("removing bamboo reserved keys")
         dframe.remove_bamboo_reserved_keys(keep_parent_ids)
 
@@ -497,6 +498,10 @@ class Dataset(AbstractModel, ImportableDataset):
         pt("saving observation")
         return Observation.save(dframe, self)
 
+    def update_observations(self, dframe):
+        pt('updataing observation')
+        return Observation.update(dframe, self)
+
     def replace_observations(self, dframe, overwrite=False,
                              set_num_columns=True):
         """Remove all rows for this dataset and save the rows in `dframe`.
@@ -575,14 +580,11 @@ class Dataset(AbstractModel, ImportableDataset):
         return self
 
     def encode_dframe_columns(self, dframe):
+        import ipdb; ipdb.set_trace()
         encoded_columns_map = self.schema.rename_map_for_dframe(dframe)
-
         dframe = dframe.rename(columns=encoded_columns_map)
-
-        id_column = Series([self.dataset_observation_id] * len(dframe))
-        id_column.name = DATASET_OBSERVATION_ID
-
-        return BambooFrame(dframe.join(id_column))
+        dframe[DATASET_OBSERVATION_ID] = self.dataset_observation_id
+        return BambooFrame(dframe)
 
     def new_agg_dataset(self, dframe, groups):
         agg_dataset = self.create()

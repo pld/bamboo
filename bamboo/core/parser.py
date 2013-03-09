@@ -301,7 +301,8 @@ class Parser(object):
         pt(functions)
 
         #self.context.dependent_columns = self.context.dependent_columns.union(self.get_dependent_columns())
-        dependent_columns = set(self._get_dependent_columns(self.parsed_expr, schema, []))
+        dependent_columns = set(self._get_dependent_columns(self.parsed_expr,
+                    schema, []))
         pt("dependent columns after it ws called %s" % dependent_columns)
 
         return functions, dependent_columns

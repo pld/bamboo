@@ -91,7 +91,6 @@ class Calculator(object):
                 pt('type(columns[0]: %s)' % type(columns[0]))
                 #from celery.contrib import rdb;rdb.set_trace()
                 if new_cols is None:
-                    # TODO still need ids so we can update
                     new_cols = DataFrame(columns[0])
                 else:
                     new_cols = new_cols.join(columns[0])
@@ -99,11 +98,13 @@ class Calculator(object):
                 #from pandas import DataFrame
                 #new_dframe = new_dframe.combine_first(DataFrame([columns[0]]),ignore_index=True)
                 pt("finished new_dframe join: %s" % new_cols)
-        # TODO update rows instead of replace observations
+
+        # TODO update instead of replace observations
+        pt("dataset update_observation")
+        self.dataset.update_observations(new_cols)
+        pt("finished update_onservation")
 #        if len(new_dframe.columns) > len(self.dataset.dframe().columns):
-#            pt("dataset replace_observation")
 #            self.dataset.replace_observations(new_dframe)
-#            pt("finished replace_onservation")
 #
         # propagate calculation to any merged child datasets
         for merged_dataset in self.dataset.merged_datasets:
@@ -216,21 +217,21 @@ class Calculator(object):
 
         # make select from dependent_columns
         if dframe is None and dependent_columns:
-            dframe = self.dataset.dframe(select={col: 1 for col in
-                dependent_columns})
+            dframe = self.dataset.dframe(select={col: 1 for col in dependent_columns}, keep_mongo_keys=True).set_index('MONGO_RESERVED_KEY_id')
         elif dframe is None:
             # constant column, use dummy
-            dframe = DataFrame({'dummy': [0] * length})
+            # TODO fix this
+            dframe = self.dataset.dframe(select={'_id': 1},
+                    keep_mongo_keys=True).set_index('MONGO_RESERVED_KEY_id')
+            dframe['dummy'] = 0
+            print 'dframe: %s' % dframe
+        pt('got selected dframe with columns: %s' % dframe.columns)
 
         # set context for parser
         self.parser.set_context(dframe, self.dataset.schema)
 
         columns = []
 
-        if dframe is not None:
-            pt('calculating on dframe with columns: %s' % dframe.columns)
-        else:
-            pt('calculating on empty dframe (no dependencies)')
         for function in functions:
             column = dframe.apply(
                 function, axis=1, args=(self.parser.context, ))

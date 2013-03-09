@@ -17,7 +17,7 @@ class TestCalculations(TestCalculator):
 #            'gps',
 #
 #            # arithmetic
-#            'amount + gps_alt',
+            'amount + gps_alt',
 #            'amount - gps_alt',
 #            'amount + 5',
 #            'amount - gps_alt + 2.5',
@@ -68,12 +68,14 @@ class TestCalculations(TestCalculator):
 
     def _test_calculation_results(self, name, formula):
             unslug_name = name
-            self.assertTrue(unslug_name in self.column_labels_to_slugs.keys(), '%s not in %s' % (unslug_name, self.column_labels_to_slugs))
+            self.assertTrue(unslug_name in self.column_labels_to_slugs.keys(),
+                    '%s not in %s' % (unslug_name,
+                        self.column_labels_to_slugs.keys()))
             name = self.column_labels_to_slugs[unslug_name]
 
             # test that updated dataframe persisted
             self.dframe = self.dataset.dframe()
-            self.assertTrue(name in self.dframe.columns)
+            self.assertTrue(name in self.dframe.columns, '%s not in %s' % (name, self.dframe.columns))
 
             # test new number of columns
             self.added_num_cols += 1
