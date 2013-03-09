@@ -1,6 +1,7 @@
 from bamboo.core.frame import BambooFrame, DATASET_OBSERVATION_ID, INDEX
 from bamboo.lib.async import call_async
 from bamboo.lib.datetools import parse_timestamp_query
+from bamboo.lib.query_args import QueryArgs
 from bamboo.models.abstract_model import AbstractModel
 
 
@@ -29,32 +30,27 @@ class Observation(AbstractModel):
         super(cls, cls()).delete(query)
 
     @classmethod
-    def find(cls, dataset, query=None, select=None, limit=0, order_by=None,
-             as_cursor=False):
+    def find(cls, dataset, query_args=QueryArgs(), as_cursor=False):
         """Return observation rows matching parameters.
 
         :param dataset: Dataset to return rows for.
-        :param query: Optional query to restrict matching rows to.
-        :param select: Optional select to limit returned values.
-        :param limit: Limit on the number of returned rows.
-        :param order_by: Order parameter for rows.
+        :param query_args: An optional QueryArgs to hold the query arguments.
 
         :raises: `JSONError` if the query could not be parsed.
 
         :returns: A list of dictionaries matching the passed in `query` and
             other parameters.
         """
-        if query is not None:
-            if dataset.schema:
-                query = parse_timestamp_query(query, dataset.schema)
-        else:
-            query = {}
+        query = query_args.query
+
+        if dataset.schema:
+            query = parse_timestamp_query(query, dataset.schema)
 
         query[DATASET_OBSERVATION_ID] = dataset.dataset_observation_id
+        query_args.query = query
 
         return super(cls, cls).find(
-            query, select, as_dict=True, limit=limit, order_by=order_by,
-            as_cursor=as_cursor)
+            query_args, as_dict=True, as_cursor=as_cursor)
 
     @classmethod
     def find_one(cls, dataset, index):

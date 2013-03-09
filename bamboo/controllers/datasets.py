@@ -7,6 +7,7 @@ from bamboo.core.summary import ColumnTypeError
 from bamboo.lib.exceptions import ArgumentError
 from bamboo.lib.jsontools import safe_json_loads
 from bamboo.lib.utils import parse_int
+from bamboo.lib.query_args import QueryArgs
 from bamboo.models.dataset import Dataset
 from bamboo.models.observation import Observation
 
@@ -79,7 +80,7 @@ class Datasets(AbstractController):
 
         return self._safe_get_and_call(dataset_id, action)
 
-    def summary(self, dataset_id, query=None, select=None,
+    def summary(self, dataset_id, query={}, select=None,
                 group=None, limit=0, order_by=None, callback=False):
         """Return a summary of the dataset ID given the passed parameters.
 
@@ -119,8 +120,10 @@ class Datasets(AbstractController):
             if select:
                 select.update(dict(zip(groups, [1] * len(groups))))
 
-            dframe = dataset.dframe(query=query, select=select, limit=limit,
-                                    order_by=order_by)
+            query_args = QueryArgs(
+                query=query, select=select, limit=limit, order_by=order_by)
+            dframe = dataset.dframe(query_args)
+
             return dataset.summarize(dframe, groups=groups,
                                      no_cache=query or select)
 
@@ -173,13 +176,14 @@ class Datasets(AbstractController):
             query = self.__parse_query(query)
             select = self.__parse_select(select)
 
+            query_args = QueryArgs(
+                query=query, select=select, distinct=distinct,
+                limit=limit, order_by=order_by)
+
             if count:
-                return dataset.count(query=query, distinct=distinct,
-                                     limit=limit)
+                return dataset.count(query_args)
             else:
-                dframe = dataset.dframe(
-                    query=query, select=select, distinct=distinct,
-                    limit=limit, order_by=order_by, index=index)
+                dframe = dataset.dframe(query_args, index=index)
 
                 if distinct:
                     return sorted(dframe[0].tolist())
@@ -364,13 +368,12 @@ class Datasets(AbstractController):
             dataset_id, action, exceptions=(KeyError, NonUniqueJoinError))
 
     def resample(self, dataset_id, date_column, interval, how='mean',
-                 query=None, format=None):
+                 query={}, format=None):
         """Resample a dataset."""
         content_type = self.__content_type_for_format(format)
 
         def action(dataset, query=query):
-            if query:
-                query = safe_json_loads(query)
+            query = self.__parse_query(query)
 
             dframe = dataset.resample(date_column, interval, how, query=query)
             return self.__dataframe_as_content_type(content_type, dframe)
@@ -486,7 +489,4 @@ class Datasets(AbstractController):
         return select
 
     def __parse_query(self, query):
-        if query:
-            query = safe_json_loads(query, error_title='string')
-
-        return query
+        return safe_json_loads(query, error_title='string') if query else {}

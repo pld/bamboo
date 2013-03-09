@@ -6,6 +6,7 @@ from bamboo.core.calculator import Calculator
 from bamboo.core.frame import DATASET_ID
 from bamboo.lib.async import call_async
 from bamboo.lib.exceptions import ArgumentError
+from bamboo.lib.query_args import QueryArgs
 from bamboo.lib.schema_builder import make_unique
 from bamboo.models.abstract_model import AbstractModel
 
@@ -286,8 +287,9 @@ class Calculation(AbstractModel):
 
     @classmethod
     def find(cls, dataset):
-        return super(cls, cls).find({DATASET_ID: dataset.dataset_id},
-                                    order_by='name')
+        query_args = QueryArgs(query={DATASET_ID: dataset.dataset_id},
+                               order_by='name')
+        return super(cls, cls).find(query_args)
 
     def restart_if_has_pending(self, dataset, current_calcs=[]):
         current_names = sorted([self.name] + [c.name for c in current_calcs])
