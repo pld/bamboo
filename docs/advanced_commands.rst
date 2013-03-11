@@ -153,6 +153,7 @@ Dataset queries may take the following optional parameters:
 - ``format``: Format of output data, 'json' or 'csv'
 - ``callback``: A JSONP callback function to wrap the result in.
 - ``index``: Boolean, if true also return the index.  Default false.
+- ``count``: Boolean, if true returns only the number of results.  Default false.
 
 Export data using the format parameter
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
