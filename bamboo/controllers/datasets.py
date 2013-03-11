@@ -422,7 +422,7 @@ class Datasets(AbstractController):
         :param index: The index to delete in the dataset.
         """
         def action(dataset):
-            Observation.delete(dataset, index)
+            Observation.delete(dataset, int(index))
 
             return {
                 self.SUCCESS: 'Deleted row with index "%s".' % index,
@@ -437,7 +437,12 @@ class Datasets(AbstractController):
         :param index: The index of the row to fetch.
         """
         def action(dataset):
-            return Observation.find_one(dataset, index).clean_record
+            try:
+                return Observation.find_one(dataset, int(index)).clean_record
+            except AttributeError:
+                return self._dump_or_error(obj=None,
+                                           error_message="No Row exist "
+                                                         "at index %s" % index)
 
         return self._safe_get_and_call(dataset_id, action)
 
@@ -455,7 +460,7 @@ class Datasets(AbstractController):
         """
         def action(dataset, data=data):
             data = safe_json_loads(data)
-            Observation.update(dataset, index, data)
+            Observation.update(dataset, int(index), data)
 
             return {
                 self.SUCCESS: 'Updated row with index "%s".' % index,
