@@ -11,7 +11,7 @@ def minint():
     return -maxint - 1
 
 
-def parse_int(value, default):
+def parse_int(value, default=None):
     return _parse_type(int, value, default)
 
 
