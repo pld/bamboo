@@ -436,6 +436,17 @@ class Dataset(AbstractModel, ImportableDataset):
             {'_id': self.record['_id']},
             {'$push': {self.PENDING_UPDATES: update_id}})
 
+    def delete_observation(self, index):
+        """Delete observation at index.
+
+        :params index: The index of an observation to delete.
+        """
+        Observation.delete(self, index)
+
+        dframe = self.dframe()
+        self.update({self.NUM_ROWS: len(dframe)})
+        self.build_schema(dframe, overwrite=True)
+
     def save_observations(self, dframe):
         """Save rows in `dframe` for this dataset.
 
