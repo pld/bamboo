@@ -422,7 +422,7 @@ class Datasets(AbstractController):
         :param index: The index to delete in the dataset.
         """
         def action(dataset):
-            Observation.delete(dataset, int(index))
+            dataset.delete_observation(index)
 
             return {
                 self.SUCCESS: 'Deleted row with index "%s".' % index,
