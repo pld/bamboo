@@ -442,7 +442,7 @@ class Datasets(AbstractController):
             if row:
                 return row.clean_record
 
-        error_message = "No Row exist at index %s" % index
+        error_message = "No row exists at index %s" % index
         return self._safe_get_and_call(dataset_id, action, error=error_message)
 
     def row_update(self, dataset_id, index, data):

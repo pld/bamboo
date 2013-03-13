@@ -19,6 +19,25 @@ class TestDatasetsEdits(TestAbstractDatasets):
         self.assertTrue(isinstance(result, dict))
         self.assertEqual(9.0, result['amount'])
 
+        result = json.loads(self.controller.row_show(dataset_id, "0"))
+
+        self.assertTrue(isinstance(result, dict))
+        self.assertEqual(9.0, result['amount'])
+
+    def test_show_row_nonexistent_index(self):
+        dataset_id = self._post_file()
+        result = json.loads(self.controller.row_show(dataset_id, "90"))
+
+        self.assertTrue(isinstance(result, dict))
+        self.assertTrue(Datasets.ERROR in result)
+
+    def test_show_row_bad_index(self):
+        dataset_id = self._post_file()
+        result = json.loads(self.controller.row_show(dataset_id, "A"))
+
+        self.assertTrue(isinstance(result, dict))
+        self.assertTrue(Datasets.ERROR in result)
+
     def test_delete_row(self):
         dataset_id = self._post_file()
         index = 0
