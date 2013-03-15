@@ -9,7 +9,7 @@ class Database(object):
     """Container for the MongoDB client."""
 
     # MongoDB client default host and port
-    _client = MongoClient('localhost', 27017, w=1, j=True)
+    _client = MongoClient('localhost', 27017, w=1, j=False)
     _db = None
 
     @classmethod

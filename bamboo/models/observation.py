@@ -53,21 +53,23 @@ class Observation(AbstractModel):
     @classmethod
     def update(cls, dframe, dataset):
         dataset.build_schema(dframe)
-        print 'new schema: %s' % dataset.schema
 
-        # must have MONGO_RERVED_KEY_id as index     
+        print 'starting batch update'
+        # must have MONGO_RESERVED_KEY_id as index     
         if not DATASET_OBSERVATION_ID in dframe.columns:
             cls.batch_update(dataset.encode_dframe_columns(dframe).reset_index())
         else:
             cls.batch_update(dframe.reset_index())
+        print 'ended batch update, updating dataset record'
 
         # add metadata to dataset, discount ID column
         dataset.update({
             dataset.NUM_ROWS: len(dframe),
             dataset.STATE: cls.STATE_READY,
         })
+        print 'summarizing new dataset'
         # TODO make summary update-friendly
-        #dataset.summarize(dframe)
+        dataset.summarize(dframe, update=True)
 
     @classmethod
     def save(cls, dframe, dataset):

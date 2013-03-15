@@ -344,7 +344,7 @@ class Dataset(AbstractModel, ImportableDataset):
         """Delete this dataset."""
         call_async(delete_task, self.clear_cache(), countdown=countdown)
 
-    def summarize(self, dframe, groups=[], no_cache=False):
+    def summarize(self, dframe, groups=[], no_cache=False, update=False):
         """Build and return a summary of the data in this dataset.
 
         Return a summary of dframe grouped by `groups`, or the overall
@@ -360,9 +360,14 @@ class Dataset(AbstractModel, ImportableDataset):
         """
         pt("dataset.summarize commences")
         # XXX why is this here?
+        print 'reloading dataset, has stats: %s' %\
+            self.record.get(self.STATS)
         self.reload()
+        print 'dataset reloaded, has stats: %s' %\
+            self.record.get(self.STATS)
 
-        return summarize(self, dframe, groups, no_cache)
+        print 'calling core.summary.summarize()'
+        return summarize(self, dframe, groups, no_cache, update=update)
 
     @classmethod
     def create(cls, dataset_id=None):

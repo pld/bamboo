@@ -75,7 +75,8 @@ def calculate_task(calculations, dataset):
     # XXX this looks sketchy
     calculations[0].restart_if_has_pending(dataset, calculations[1:])
     print 'clearing summary stats'
-    dataset.clear_summary_stats()
+    # XXX don't want to clear, maybe just disable?
+    #dataset.clear_summary_stats()
 
     print 'creating calculator'
     # XXX loads dframe 1x

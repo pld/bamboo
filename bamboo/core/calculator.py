@@ -97,7 +97,6 @@ class Calculator(object):
                 #new_dframe = new_dframe.join(columns[0])
                 #from pandas import DataFrame
                 #new_dframe = new_dframe.combine_first(DataFrame([columns[0]]),ignore_index=True)
-                pt("finished new_dframe join: %s" % new_cols)
 
         # TODO update instead of replace observations
         pt("dataset update_observation")
@@ -224,7 +223,6 @@ class Calculator(object):
             dframe = self.dataset.dframe(select={'_id': 1},
                     keep_mongo_keys=True).set_index('MONGO_RESERVED_KEY_id')
             dframe['dummy'] = 0
-            print 'dframe: %s' % dframe
         pt('got selected dframe with columns: %s' % dframe.columns)
 
         # set context for parser
