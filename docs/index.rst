@@ -60,7 +60,7 @@ Usage
 
     url = 'http://formhub.org/mberg/forms/good_eats/data.csv'
     dataset = bm.Dataset.create()
-    dataset.import_from_url(url)
+    dataset.import_from_url(url, na_values=['n/a'])
     dataset.schema
 
     >>> {u'_gps_altitude': {u'cardinality': 14, u'label': u'_gps_altitude', ...
