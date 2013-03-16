@@ -76,6 +76,12 @@ class TestDatasetsTsFunctions(TestAbstractDatasets):
 
     def test_resample_with_query(self):
         expected_length = 15
+        date_column, results = self.__build_resample_result()
+
+        self.assertEqual(expected_length, len(results))
+
+    def test_resample_with_query(self):
+        expected_length = 15
         query = '{"food_type": "lunch"}'
         date_column, results = self.__build_resample_result(query)
 
