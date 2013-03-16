@@ -1,11 +1,11 @@
 import imp
-from distutils.core import setup
+from setuptools import setup
 
 imp.load_source('bamboo_version', 'bamboo/lib/version.py')
 from bamboo_version import VERSION_NUMBER
 
 setup(
-    name='bamboo-data',
+    name='bamboo-server',
     version=VERSION_NUMBER,
     author='Modi Research Group',
     author_email='info@modilabs.org',

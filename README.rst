@@ -1,5 +1,5 @@
-`bamboo <http://bamboo.io>`_
-============================
+bamboo
+======
 
 .. image:: https://secure.travis-ci.org/modilabs/bamboo.png?branch=master
     :target: http://travis-ci.org/modilabs/bamboo
@@ -24,7 +24,7 @@ Dependencies
 * mongodb
 
 for numpy, pandas, and scipy:
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 on Arch Linux: ``# pacman -S blas lapack gcc-fortran``
 
@@ -38,9 +38,9 @@ Installation
 
 .. code-block:: sh
 
-    $ pip install bamboo-data
+    $ pip install bamboo-server
 
-Python pip package for `bamboo <http://pypi.python.org/pypi/bamboo-data/0.5.4.1>`_.
+Python pip package for `bamboo <http://pypi.python.org/pypi/bamboo-server>`_.
 
 Usage
 ^^^^^
@@ -135,7 +135,8 @@ and other developers.
 Projects using *bamboo*
 -----------------------
 
-* `formhub <http://formhub.org>`_ - Mobile Data Collection made easy
+* `bamboo.io <http://bamboo.io>`_ - The bamboo.io web service API
+* `formhub <https://formhub.org>`_ - Mobile Data Collection made easy
 * `AFSIS <http://www.africasoils.net/>`_ - Africa Soil Information Service
 
 Is your project using bamboo? `Let us know <https://groups.google.com/forum/#!forum/bamboo-dev>`_!
