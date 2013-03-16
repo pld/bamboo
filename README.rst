@@ -13,6 +13,9 @@ a REST web interface and through Python.
 (e.g. student teacher ratio) and aggregations (e.g. average number of students
 per district) from datasets. These are updated as new data is received.
 
+.. image:: https://farm4.staticflickr.com/3363/3419345800_2c6c4133d3_z.jpg?zz=1
+   :align: center
+
 *bamboo* is `open source <https://github.com/modilabs/bamboo>`_ software released
 under the 3-clause BSD license, which is also known as the "Modified BSD
 License".
@@ -74,6 +77,7 @@ Usage
     mothly_amounts.plot()
 
 .. image:: https://raw.github.com/modilabs/bamboo/master/docs/images/amount.png
+   :align: center
 
 Installation
 ------------
