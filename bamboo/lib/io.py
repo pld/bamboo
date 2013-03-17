@@ -95,7 +95,7 @@ class ImportableDataset(object):
 
         return self
 
-    def import_from_json(self, json_file, na_values=[]):
+    def import_from_json(self, json_file):
         """Impor data from a JSON file.
 
         :param json_file: JSON file to import.
@@ -103,7 +103,7 @@ class ImportableDataset(object):
         content = json_file.file.read()
 
         call_async(import_dataset, self,
-                   partial(json_file_reader, content, na_values=na_values))
+                   partial(json_file_reader, content))
 
         return self
 
