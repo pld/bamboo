@@ -142,6 +142,10 @@ the combined efforts of
 
 * Peter Lubell-Doughtie
 * Mark Johnston
+* Renaud Gaudin
+* Myf Ma
+* Ukang'a Dickson
+* Larry Weya
 
 and other developers.
 
