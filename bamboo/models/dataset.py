@@ -478,7 +478,7 @@ class Dataset(AbstractModel, ImportableDataset):
         :param columns: List of columns to remove from this dataset.
         """
         dframe = self.dframe(keep_parent_ids=True)
-        self.replace_observations(dframe.drop(columns, axis=1))
+        self.replace_observations(dframe.drop(columns, axis=1), overwrite=True)
 
     def place_holder_dframe(self, dframe=None):
         columns = self.schema.keys()

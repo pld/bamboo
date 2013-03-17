@@ -27,20 +27,21 @@ class DependencyError(Exception):
 
 
 @task(ignore_result=True)
-def delete_task(calculation, dataset, slug):
+def delete_task(calculation, dataset):
     """Background task to delete `calculation` and columns in its dataset.
-
-    Args:
 
     :param calculation: Calculation to delete.
     :param dataset: Dataset for this calculation.
-
     """
-    dframe = dataset.dframe(keep_parent_ids=True)
-    del dframe[slug]
-    dataset.replace_observations(dframe, overwrite=True)
+    slug = dataset.schema.labels_to_slugs.get(calculation.name)
+
+    if slug:
+        dframe = dataset.dframe(keep_parent_ids=True)
+        del dframe[slug]
+        dataset.replace_observations(dframe, overwrite=True)
+        dataset.clear_summary_stats(column=slug)
+
     calculation.remove_dependencies()
-    dataset.clear_summary_stats(column=slug)
 
     super(calculation.__class__, calculation).delete({
         DATASET_ID: calculation.dataset_id,
@@ -178,13 +179,7 @@ class Calculation(AbstractModel):
                     'Aggregation with group "%s" does not exist for '
                     'dataset' % self.group)
 
-        slug = dataset.schema.labels_to_slugs.get(self.name)
-
-        if slug is None:
-            raise ArgumentError(
-                'Calculation "%s" does not exists for dataset' % self.name)
-
-        call_async(delete_task, self, dataset, slug)
+        call_async(delete_task, self, dataset)
 
     def save(self, dataset, formula, name, group_str=None):
         """Parse, save, and calculate a formula.

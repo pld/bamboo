@@ -195,6 +195,20 @@ class TestCalculations(TestBase):
         dataset = Dataset.find_one(self.dataset_id)
         self.assertTrue(self.name not in dataset.schema.labels_to_slugs)
 
+    def test_delete_calculation_not_in_dataset(self):
+        self.__post_formula()
+
+        # Remove column from dataset
+        dataset = Dataset.find_one(self.dataset_id)
+        dataset.drop_columns([self.name])
+
+        result = json.loads(self.controller.delete(self.dataset_id, self.name))
+
+        self.assertTrue(AbstractController.SUCCESS in result)
+
+        dataset = Dataset.find_one(self.dataset_id)
+        self.assertTrue(self.name not in dataset.schema.labels_to_slugs)
+
     def test_delete_update_summary(self):
         self.__post_formula()
 
@@ -614,7 +628,6 @@ class TestCalculations(TestBase):
             self.assertTrue('Traceback' in c.error_message)
 
     def test_fail_then_create(self):
-        self.dataset_id = self._post_file()
         response = json.loads(self.__post_formula())
         self.__verify_create(response)
 
