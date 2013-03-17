@@ -72,6 +72,29 @@ filesystem
         "id": "8a3d74711475d8a51c84484fe73f24bd151242ea"
     }
 
+
+Missing Data in *bamboo*
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+NA Values in uploaded data are interpreted using pandas.  The following values
+are by default interpreted as NA:
+
+* missing values,
+* the string 'NA',
+* the stirng 'NaN',
+* the string 'NaT' for datetime columns.
+
+For details see the `pandas docs <http://pandas.pydata.org/pandas-docs/dev/missing_data.html>`_.
+
+You can specify custom values to interpret as NA using the ``na_values``
+parameter.  For example, to interpret the string 'n/a' as missing data, call:
+
+
+.. code-block:: sh
+
+    curl -X POST -d "url=http://formhub.org/mberg/forms/good_eats/data.csv&na_values=['n/a']" http://bamboo.io/datasets
+
+
 Deleting a dataset
 ^^^^^^^^^^^^^^^^^^
 

@@ -35,14 +35,30 @@ Python
 Python Library Usage
 --------------------
 
+Dependencies
+^^^^^^^^^^^^
+
+* python (tested on version 2.7)
+* mongodb
+
+for numpy, pandas, and scipy:
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+On Arch Linux: ``# pacman -S blas lapack gcc-fortran``.
+
+On Debian based: ``# apt-get install gfortran libatlas-base-dev``.
+
+
 Installation
 ^^^^^^^^^^^^
 
 .. code-block:: sh
 
-    $ pip install bamboo-data
+    $ pip install bamboo-server
 
 Python pip package for `bamboo <http://pypi.python.org/pypi/bamboo-data/0.5.4.1>`_.
+
+For creating plots: ``$ pip install matplotlib``.
 
 Usage
 ^^^^^

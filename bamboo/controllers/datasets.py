@@ -219,7 +219,7 @@ class Datasets(AbstractController):
             None, action, exceptions=(MergeError,), error = 'merge failed')
 
     def create(self, url=None, csv_file=None, json_file=None, schema=None,
-               perish=0):
+               na_values=[], perish=0):
         """Create a dataset by URL, CSV or schema file.
 
         If `url` is provided, create a dataset by downloading a CSV from that
@@ -251,6 +251,7 @@ class Datasets(AbstractController):
         :param csv_file: An uploaded CSV file to read from.
         :param json_file: An uploaded JSON file to read from.
         :param schema: A SDF schema file (JSON)
+        :param na_values: A JSON list of values to interpret as missing data.
         :param perish: Number of seconds after which to delete the dataset.
 
         :returns: An error message if `url`, `csv_file`, or `scehma` are not
@@ -271,11 +272,13 @@ class Datasets(AbstractController):
 
                 if schema:
                     dataset.import_schema(schema)
+                if na_values:
+                    na_values = safe_json_loads(na_values)
 
                 if url:
-                    dataset.import_from_url(url)
+                    dataset.import_from_url(url, na_values=na_values)
                 elif csv_file:
-                    dataset.import_from_csv(csv_file)
+                    dataset.import_from_csv(csv_file, na_values=na_values)
                 elif json_file:
                     dataset.import_from_json(json_file)
 

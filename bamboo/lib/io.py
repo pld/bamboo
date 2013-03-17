@@ -69,7 +69,7 @@ class ImportableDataset(object):
 
         return self
 
-    def import_from_csv(self, csv_file):
+    def import_from_csv(self, csv_file, na_values=[]):
         """Import data from a CSV file.
 
         .. note::
@@ -91,11 +91,11 @@ class ImportableDataset(object):
         tmpfile.close()
 
         call_async(import_dataset, self, partial(
-            csv_file_reader, tmpfile.name, delete=True))
+            csv_file_reader, tmpfile.name, na_values=na_values, delete=True))
 
         return self
 
-    def import_from_json(self, json_file):
+    def import_from_json(self, json_file, na_values=[]):
         """Impor data from a JSON file.
 
         :param json_file: JSON file to import.
@@ -103,7 +103,7 @@ class ImportableDataset(object):
         content = json_file.file.read()
 
         call_async(import_dataset, self,
-                   partial(json_file_reader, content))
+                   partial(json_file_reader, content, na_values=na_values))
 
         return self
 
