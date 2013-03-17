@@ -166,7 +166,7 @@ Updates which are subsequently made to either the left hand side or the right
 hand side dataset will be propagated to the joined dataset. Updates to the
 right hand side that make the join column non-unique will be disallowed.
 
-For example supposing the 'food_type' column is in dataset with ID 8a3d7 and
+For example supposing the 'food_type' column is in datasets with IDs 8a3d7 and
 2de98, you can join the two datasets on that column by executing:
 
 .. note::

@@ -165,13 +165,13 @@ To export the data as CSV:
 
 .. code-block:: sh
 
-    curl http://bamboo.io/datasets/8a3d74711475d8a51c84484fe73f24bd151242ea&format=CSV
+    curl http://bamboo.io/datasets/8a3d74711475d8a51c84484fe73f24bd151242ea?format=CSV
 
 To export the data as JSON:
 
 .. code-block:: sh
 
-    curl http://bamboo.io/datasets/8a3d74711475d8a51c84484fe73f24bd151242ea&format=JSON
+    curl http://bamboo.io/datasets/8a3d74711475d8a51c84484fe73f24bd151242ea?format=JSON
 
 Ordering the results of a query
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

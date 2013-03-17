@@ -69,7 +69,7 @@ class ImportableDataset(object):
 
         return self
 
-    def import_from_csv(self, csv_file):
+    def import_from_csv(self, csv_file, na_values=[]):
         """Import data from a CSV file.
 
         .. note::
@@ -91,7 +91,7 @@ class ImportableDataset(object):
         tmpfile.close()
 
         call_async(import_dataset, self, partial(
-            csv_file_reader, tmpfile.name, delete=True))
+            csv_file_reader, tmpfile.name, na_values=na_values, delete=True))
 
         return self
 

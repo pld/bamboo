@@ -93,6 +93,23 @@ class TestDatasets(TestAbstractDatasets):
 
         self._test_summary_built(result)
 
+    def test_create_from_csv_custom_na(self):
+        dframe_length = 4
+        _file_name = 'wp_data.csv'
+        self._file_path = self._file_path.replace(self._file_name, _file_name)
+        result = self.__upload_mocked_file(na_values=json.dumps(['n/a']))
+
+        self.assertTrue(isinstance(result, dict))
+        self.assertTrue(Dataset.ID in result)
+
+        dataset = Dataset.find_one(result[Dataset.ID])
+
+        self.assertEqual(Dataset.STATE_READY, dataset.state)
+        self.assertEqual(dframe_length, len(dataset.dframe()))
+        self.assertTrue(isinstance(dataset.dframe().wp_id[1], float))
+
+        self._test_summary_built(result)
+
     def test_create_from_csv_mixed_col(self):
         dframe_length = 8
         _file_name = 'good_eats_mixed.csv'

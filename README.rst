@@ -28,9 +28,9 @@ Dependencies
 for numpy, pandas, and scipy:
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-on Arch Linux: ``# pacman -S blas lapack gcc-fortran``
+On Arch Linux: ``# pacman -S blas lapack gcc-fortran``.
 
-on Debian based: ``# apt-get install gfortran libatlas-base-dev``
+On Debian based: ``# apt-get install gfortran libatlas-base-dev``.
 
 Using as a Python Libary
 ------------------------
@@ -43,6 +43,8 @@ Installation
     $ pip install bamboo-server
 
 Python pip package for `bamboo <http://pypi.python.org/pypi/bamboo-server>`_.
+
+For creating plots: ``$ pip install matplotlib``.
 
 Usage
 ^^^^^
