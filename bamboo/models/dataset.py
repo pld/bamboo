@@ -557,6 +557,7 @@ class Dataset(AbstractModel, ImportableDataset):
         :returns: A the modified `dframe` as a BambooFrame.
         """
         encoded_columns_map = self.schema.rename_map_for_dframe(dframe)
+
         dframe = dframe.rename(columns=encoded_columns_map)
         dframe[DATASET_OBSERVATION_ID] = self.dataset_observation_id
         return BambooFrame(dframe)
@@ -651,6 +652,7 @@ class Dataset(AbstractModel, ImportableDataset):
         """Read a DataFrame from a MongoDB Cursor in batches."""
         dframes = []
         batch = 0
+        rename_map = None
 
         while True:
             start = batch * self.DB_READ_BATCH_SIZE
@@ -669,7 +671,16 @@ class Dataset(AbstractModel, ImportableDataset):
             if not len(current_observations):
                 break
 
-            dframes.append(BambooFrame(current_observations))
+            dframe = BambooFrame(current_observations)
+
+            if rename_map is None:
+                rename_map = self.schema.decode_numerics_to_slugs(dframe)
+
+            print rename_map
+            print dframe.columns
+            print dframe.rename(rename_map).columns
+
+            dframes.append(dframe.rename(rename_map))
 
             if not distinct:
                 observations.rewind()

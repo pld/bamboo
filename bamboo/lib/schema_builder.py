@@ -127,6 +127,30 @@ class Schema(dict):
                 column, labels_to_slugs, dframe)
         }
 
+    def encode_map_for_dframe(self, dframe):
+        """Return a map from dframe columns to short keywords.
+
+        :param dframe: The DataFrame to produce the map for.
+        """
+        return {
+            column: str(i) for i, column in
+            enumerate(sorted(dframe.columns.tolist()))
+        }
+
+    def decode_numerics_to_slugs(self, dframe):
+        """Return a map from numerics to slugs.
+
+        :param dframe: The DataFrame to produce the map for.
+        """
+        labels_to_slugs = self.labels_to_slugs
+
+        return {
+            str(i): labels_to_slugs[column] for i, column in
+            enumerate(sorted(dframe.columns.tolist())) if\
+                self._resluggable_column(column, labels_to_slugs, dframe)
+        }
+
+
     def set_olap_type(self, column, olap_type):
         """Set the OLAP Type for this `column` of schema.
 

@@ -21,6 +21,7 @@ class AbstractModel(object):
     """
 
     __collection__ = None
+    __collectionname__ = None
 
     # delimiter when passing multiple groups as a string
     GROUP_DELIMITER = ','
