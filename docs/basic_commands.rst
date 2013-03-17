@@ -714,12 +714,12 @@ Retrieve newly calculated column
 Delete a calculation
 ^^^^^^^^^^^^^^^^^^^^
 
-To delete a calculation pass the calculation name in a delete request to
-calculation/[dataset ID]
+To delete a calculation use the format ``datasets/[dataset ID]/calculations/[name]``
+or ``datasets/[dataset ID]/calculations?name=[name]``. For example,
 
 .. code-block:: sh
 
-    curl -X DELETE http://bamboo.io/calculations/8a3d74711475d8a51c84484fe73f24bd151242ea?name=amount_less_than_10
+    curl -X DELETE http://bamboo.io/datasets/8a3d74711475d8a51c84484fe73f24bd151242ea/calculations/amount_less_than_10
 
 **returns:**
 
