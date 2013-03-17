@@ -293,7 +293,7 @@ class Calculation(AbstractModel):
 
     def restart_if_has_pending(self, dataset, current_calcs=[]):
         current_names = sorted([self.name] + [c.name for c in current_calcs])
-        unfinished = [c for c in dataset.calculations() if not c.is_ready]
+        unfinished = [c for c in dataset.calculations() if c.is_pending]
         unfinished_names = [c.name for c in unfinished[:len(current_names)]]
 
         if len(unfinished) and current_names != sorted(unfinished_names):

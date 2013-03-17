@@ -81,6 +81,21 @@ class TestCalculations(TestBase):
 
         return dataset
 
+    def __verify_create(self, response):
+        self.assertTrue(isinstance(response, dict))
+        self.assertTrue(self.controller.SUCCESS in response)
+        self.assertTrue(self.dataset_id in response[self.controller.SUCCESS])
+
+        self.__wait_for_calculation_ready(self.dataset_id, self.name)
+
+        dataset = Dataset.find_one(self.dataset_id)
+
+        self.assertTrue(self.name in dataset.schema.keys())
+
+        dataset = Dataset.find_one(self.dataset_id)
+
+        self.assertEqual(TestAbstractDatasets.NUM_ROWS, len(dataset.dframe()))
+
     def test_show(self):
         self.__post_formula()
         response = self.controller.show(self.dataset_id)
@@ -89,14 +104,7 @@ class TestCalculations(TestBase):
 
     def test_create(self):
         response = json.loads(self.__post_formula())
-
-        self.assertTrue(isinstance(response, dict))
-        self.assertTrue(self.controller.SUCCESS in response)
-        self.assertTrue(self.dataset_id in response[self.controller.SUCCESS])
-
-        dataset = Dataset.find_one(self.dataset_id)
-
-        self.assertEqual(TestAbstractDatasets.NUM_ROWS, len(dataset.dframe()))
+        self.__verify_create(response)
 
     @requires_async
     def test_create_async_not_ready(self):
@@ -146,20 +154,7 @@ class TestCalculations(TestBase):
         self._wait_for_dataset_state(self.dataset_id)
 
         response = json.loads(self.__post_formula())
-
-        self.assertTrue(isinstance(response, dict))
-        self.assertTrue(self.controller.SUCCESS in response)
-        self.assertTrue(self.dataset_id in response[self.controller.SUCCESS])
-
-        self.__wait_for_calculation_ready(self.dataset_id, self.name)
-
-        dataset = Dataset.find_one(self.dataset_id)
-
-        self.assertTrue(self.name in dataset.schema.keys())
-
-        dataset = Dataset.find_one(self.dataset_id)
-
-        self.assertEqual(TestAbstractDatasets.NUM_ROWS, len(dataset.dframe()))
+        self.__verify_create(response)
 
     def test_create_invalid_formula(self):
         dataset_id = self._post_file()
@@ -617,3 +612,17 @@ class TestCalculations(TestBase):
         for c in dataset.calculations():
             self.assertEqual(c.STATE_FAILED, c.state)
             self.assertTrue('Traceback' in c.error_message)
+
+    def test_fail_then_create(self):
+        self.dataset_id = self._post_file()
+        response = json.loads(self.__post_formula())
+        self.__verify_create(response)
+
+        # Overwrite as failed
+        calc = Calculation.find_one(self.dataset_id, self.name)
+        calc.update({calc.STATE: calc.STATE_FAILED})
+
+        # Test we can still add a calculation
+        self.name = 'test2'
+        response = json.loads(self.__post_formula())
+        self.__verify_create(response)
