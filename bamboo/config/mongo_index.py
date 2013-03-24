@@ -9,11 +9,8 @@ def ensure_indexing():
     calculations = db.calculations
     datasets = db.datasets
     observations = db.observations
-    datasets.ensure_index([
-        ("BAMBOO_RESERVED_KEY_dataset_id", ASCENDING),
-        ("BAMBOO_RESERVED_KEY_dataset_observation_id", ASCENDING)])
-    observations.ensure_index([
-        ("BAMBOO_RESERVED_KEY_dataset_observation_id", ASCENDING)])
+    datasets.ensure_index([("BAMBOO_RESERVED_KEY_dataset_id", ASCENDING)])
+    observations.ensure_index([("BAMBOO_RESERVED_KEY_dataset_id", ASCENDING)])
     calculations.ensure_index([("BAMBOO_RESERVED_KEY_dataset_id", ASCENDING)])
 
 

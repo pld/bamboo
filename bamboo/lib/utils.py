@@ -26,8 +26,16 @@ def _parse_type(_type, value, default):
     try:
         return _type(value)
     except ValueError:
-        return default
+        return value if default is None else default
 
 
 def combine_dicts(*dicts):
     return dict(chain(*[_dict.iteritems() for _dict in dicts]))
+
+
+def replace_keys(original, mapping):
+    return original and {mapping.get(k, k): v for k, v in original.iteritems()}
+
+
+def to_list(maybe_list):
+    return maybe_list if isinstance(maybe_list, list) else [maybe_list]

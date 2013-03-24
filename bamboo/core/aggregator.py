@@ -75,7 +75,6 @@ class Aggregator(object):
 
         new_agg_dframe = concat([child_dataset.dframe(), dframe])
         new_agg_dframe = new_agg_dframe.add_parent_column(parent_dataset_id)
-
         child_dataset.replace_observations(new_agg_dframe)
         return child_dataset.dframe()
 

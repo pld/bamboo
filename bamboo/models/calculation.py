@@ -217,6 +217,7 @@ class Calculation(AbstractModel):
                                                          aggregated_dataset)
 
         else:
+            # set group if aggregation and group unset
             name = self.__check_name_and_make_unique(name, dataset)
 
         record = {
@@ -239,6 +240,7 @@ class Calculation(AbstractModel):
 
     @classmethod
     def create_from_list_or_dict(cls, dataset, calculations):
+        # TODO replace with to_list
         if isinstance(calculations, dict):
             calculations = [calculations]
 
@@ -259,7 +261,6 @@ class Calculation(AbstractModel):
                     parsed_calculations.append([
                         c[cls.FORMULA],
                         c[cls.NAME], group])
-
         except KeyError as e:
             raise ArgumentError('Required key %s not found in JSON' % e)
 

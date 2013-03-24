@@ -9,6 +9,7 @@ from bamboo.core.parser import ParseError, Parser
 from bamboo.lib.mongo import MONGO_RESERVED_KEYS
 from bamboo.lib.query_args import QueryArgs
 from bamboo.lib.schema_builder import make_unique
+from bamboo.lib.utils import to_list
 
 
 class Calculator(object):
@@ -391,9 +392,8 @@ class Calculator(object):
         :param agg_dataset: The DataSet to store the aggregation in.
         """
         # parse aggregation and build column arguments
-        aggregator = self.parse_aggregation(formula, name, groups, new_dframe)
-
-        new_agg_dframe = aggregator.update(agg_dataset, self, formula)
+        aggregation = self.parse_aggregation(formula, name, groups, new_dframe)
+        new_agg_dframe = aggregation.update(agg_dataset, self, formula)
 
         # jsondict from new dframe
         new_data = new_agg_dframe.to_jsondict()
@@ -437,9 +437,7 @@ class Calculator(object):
 
     def __slugify_data(self, new_data, labels_to_slugs):
         slugified_data = []
-
-        if not isinstance(new_data, list):
-            new_data = [new_data]
+        new_data = to_list(new_data)
 
         for row in new_data:
             for key, value in row.iteritems():
