@@ -3,6 +3,7 @@ from math import ceil
 from pymongo.errors import AutoReconnect
 
 from bamboo.core.frame import BambooFrame, DATASET_ID, INDEX
+from bamboo.lib.datetools import parse_timestamp_query
 from bamboo.lib.query_args import QueryArgs
 from bamboo.lib.utils import replace_keys
 from bamboo.models.abstract_model import AbstractModel
@@ -32,22 +33,25 @@ class Observation(AbstractModel):
             DATASET_ID: dataset.dataset_id
         })
 
-        super(cls, cls()).delete(cls.encode_query(query, dataset))
+        super(cls, cls()).delete(cls.encode(query, dataset=dataset))
 
     @classmethod
     def encoding(cls, dataset):
-        return super(cls, cls).find_one({
+        record = super(cls, cls).find_one({
             cls.DATASET_ID_ENCODING: dataset.dataset_id
-        }).record[cls.ENCODING]
+        }).record
+        return record[cls.ENCODING] if record else None
 
     @classmethod
-    def encode_query(cls, query, dataset):
-        encoding = cls.encoding(dataset)
-        return replace_keys(query, encoding)
+    def encode(cls, dict_, dataset=None, encoding=None):
+        if dataset:
+            encoding = cls.encoding(dataset)
+        return replace_keys(dict_, encoding) if encoding else dict_
 
     @classmethod
     def decoding(cls, dataset):
-        return {v: k for (k, v) in cls.encoding(dataset).items()}
+        encoding = cls.encoding(dataset)
+        return {v: k for (k, v) in encoding.items()} if encoding else {}
 
     @classmethod
     def find(cls, dataset, query_args=None, as_cursor=False):
@@ -62,14 +66,31 @@ class Observation(AbstractModel):
             other parameters.
         """
         if query_args:
-            query = query_args.query
+            encoding = cls.encoding(dataset)
+
+            query = parse_timestamp_query(query_args.query, dataset.schema)
             query.update({DATASET_ID: dataset.dataset_id})
-            query_args.query = cls.encode_query(query, dataset)
+            query_args.query = cls.encode(query, encoding=encoding)
+
+            order_by = query_args.order_by
+            query_args.order_by = order_by and cls.encode(
+                dict(order_by), encoding=encoding).items()
+
+            select = query_args.select
+            query_args.select = select and cls.encode(
+                select, encoding=encoding)
         else:
             query_args = QueryArgs()
 
-        return super(cls, cls).find(
-            query_args, as_dict=True, as_cursor=as_cursor)
+        distinct = query_args.distinct
+
+        records = super(cls, cls).find(query_args, as_dict=True,
+                                       as_cursor=(as_cursor or distinct))
+
+        if query_args.distinct:
+            records = records.distinct(encoding.get(distinct, distinct))
+
+        return records
 
     @classmethod
     def update_from_dframe(cls, dframe, dataset):

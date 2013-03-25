@@ -200,6 +200,9 @@ class Dataset(AbstractModel, ImportableDataset):
         query_args = query_args or QueryArgs()
         observations = self.observations(query_args, as_cursor=True)
 
+        if query_args.distinct:
+            return BambooFrame(observations)
+
         dframe = self.__batch_read_dframe_from_cursor(
             observations, query_args.distinct, query_args.limit)
 
@@ -406,15 +409,8 @@ class Dataset(AbstractModel, ImportableDataset):
         :param as_cursor: Return the observations as a cursor.
         """
         query_args = query_args or QueryArgs()
-        if query_args.distinct:
-            as_cursor = True
 
-        observations = Observation.find(self, query_args, as_cursor=as_cursor)
-
-        if query_args.distinct:
-            observations = observations.distinct(query_args.distinct)
-
-        return observations
+        return Observation.find(self, query_args, as_cursor=as_cursor)
 
     def calculations(self):
         """Return the calculations for this dataset."""
@@ -661,9 +657,7 @@ class Dataset(AbstractModel, ImportableDataset):
         """Read a DataFrame from a MongoDB Cursor in batches."""
         dframes = []
         batch = 0
-        rename_map = None
         decoding = Observation.decoding(self)
-        import json
 
         while True:
             start = batch * self.DB_READ_BATCH_SIZE
