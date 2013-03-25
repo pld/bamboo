@@ -2,7 +2,6 @@ from bamboo.config.db import Database
 from bamboo.core.frame import BAMBOO_RESERVED_KEYS
 from bamboo.lib.decorators import classproperty
 from bamboo.lib.mongo import dict_for_mongo, remove_mongo_reserved_keys
-from bamboo.lib.utils import replace_keys
 
 
 class AbstractModel(object):
@@ -110,16 +109,18 @@ class AbstractModel(object):
             ]
 
     @classmethod
-    def find_one(cls, query, select=None):
+    def find_one(cls, query, select=None, as_dict=False):
         """Return the first row matching `query` and `select` from MongoDB.
 
         :param query: A query to pass to MongoDB.
         :param select: An optional select to pass to MongoDB.
+        :param as_dict: If true, return dicts and not model instances.
 
         :returns: A model instance of the row returned for this query and
             select.
         """
-        return cls(cls.collection.find_one(query, select))
+        record = cls.collection.find_one(query, select)
+        return record if as_dict else cls(record)
 
     def __init__(self, record=None):
         """Instantiate with data in `record`."""

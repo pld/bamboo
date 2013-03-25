@@ -19,6 +19,7 @@ class Observation(AbstractModel):
     def delete(cls, dataset, index):
         query = {INDEX: index,
                  DATASET_ID: dataset.dataset_id}
+        query = cls.encode(query, dataset=dataset)
 
         super(cls, cls()).delete(query)
 
@@ -32,8 +33,9 @@ class Observation(AbstractModel):
         query.update({
             DATASET_ID: dataset.dataset_id
         })
+        query = cls.encode(query, dataset=dataset)
 
-        super(cls, cls()).delete(cls.encode(query, dataset=dataset))
+        super(cls, cls()).delete(query)
 
     @classmethod
     def encoding(cls, dataset):
@@ -65,11 +67,12 @@ class Observation(AbstractModel):
         :returns: A list of dictionaries matching the passed in `query` and
             other parameters.
         """
-        if query_args:
-            encoding = cls.encoding(dataset)
+        id_query = {DATASET_ID: dataset.dataset_id}
+        encoding = cls.encoding(dataset) or {}
 
+        if query_args:
             query = parse_timestamp_query(query_args.query, dataset.schema)
-            query.update({DATASET_ID: dataset.dataset_id})
+            query.update(id_query)
             query_args.query = cls.encode(query, encoding=encoding)
 
             order_by = query_args.order_by
@@ -81,6 +84,7 @@ class Observation(AbstractModel):
                 select, encoding=encoding)
         else:
             query_args = QueryArgs()
+            query_args.query = cls.encode(id_query, encoding=encoding)
 
         distinct = query_args.distinct
 
@@ -112,7 +116,7 @@ class Observation(AbstractModel):
         dataset.summarize(dframe, update=True)
 
     @classmethod
-    def find_one(cls, dataset, index):
+    def find_one(cls, dataset, index, decode=True):
         """Return row by index.
 
         :param dataset: The dataset to find the row for.
@@ -120,8 +124,11 @@ class Observation(AbstractModel):
         """
         query = {INDEX: index,
                  DATASET_ID: dataset.dataset_id}
+        query = cls.encode(query, dataset=dataset)
+        decoding = cls.decoding(dataset)
+        record = super(cls, cls).find_one(query, as_dict=True)
 
-        return super(cls, cls).find_one(query)
+        return cls(cls.encode(record, encoding=decoding) if decode else record)
 
     @classmethod
     def save(cls, dframe, dataset):
@@ -173,7 +180,8 @@ class Observation(AbstractModel):
         :param dex: The index of the row to update.
         :param record: The dictionary to update the row with.
         """
-        observation = cls.find_one(dataset, index)
+        observation = cls.find_one(dataset, index, decode=False)
+        record = cls.encode(record, dataset=dataset)
         super(cls, observation).update(record)
 
     @classmethod
