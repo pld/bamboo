@@ -23,7 +23,7 @@ class Calculator(object):
         self.dataset = dataset.reload()
         pt("finish reloading dataset")
         pt("begin parsing dataset")
-        self.parser = Parser()
+        self.parser = Parser(self.dataset)
         pt("finish parsing dataset")
 
     def validate(self, formula, groups):
@@ -43,7 +43,8 @@ class Calculator(object):
         #dframe = self.dataset.dframe(limit=1)
         #row = dframe.irow(0) if len(dframe) else {}
 
-        aggregation = self.parser.validate_formula(formula, self.dataset.schema)
+        print 'self.parser.context.dataset: %s' % self.parser.context.dataset
+        aggregation = self.parser.validate_formula(formula)
 
         for group in groups:
             if not group in dframe.columns:
@@ -94,6 +95,7 @@ class Calculator(object):
                     new_cols = DataFrame(columns[0])
                 else:
                     new_cols = new_cols.join(columns[0])
+                print 'NEW COLS: %s' % new_cols
                 #new_dframe = new_dframe.join(columns[0])
                 #from pandas import DataFrame
                 #new_dframe = new_dframe.combine_first(DataFrame([columns[0]]),ignore_index=True)
@@ -209,7 +211,7 @@ class Calculator(object):
         # XXX should this be called create_columns?
         # XXX we may not need dframe in function sig
         # XXX passing in length is sort of weird
-        functions, dependent_columns = self.parser.parse_formula(formula, self.dataset.schema)
+        functions, dependent_columns = self.parser.parse_formula(formula)
 
         pt('formula: %s, dependent_columns: %s' % (formula,
                     dependent_columns))
@@ -225,15 +227,13 @@ class Calculator(object):
             dframe['dummy'] = 0
         pt('got selected dframe with columns: %s' % dframe.columns)
 
-        # set context for parser
-        self.parser.set_context(dframe, self.dataset.schema)
-
         columns = []
 
         for function in functions:
             column = dframe.apply(
                 function, axis=1, args=(self.parser.context, ))
             column.name = make_unique(name, [c.name for c in columns])
+            print 'COLUMN: %s' % column
             columns.append(column)
 
         return columns

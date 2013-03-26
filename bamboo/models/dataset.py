@@ -360,11 +360,11 @@ class Dataset(AbstractModel, ImportableDataset):
         """
         pt("dataset.summarize commences")
         # XXX why is this here?
-        print 'reloading dataset, has stats: %s' %\
-            self.record.get(self.STATS)
+        #print 'reloading dataset, has stats: %s' %\
+        #    self.record.get(self.STATS)
         self.reload()
-        print 'dataset reloaded, has stats: %s' %\
-            self.record.get(self.STATS)
+        #print 'dataset reloaded, has stats: %s' %\
+        #    self.record.get(self.STATS)
 
         print 'calling core.summary.summarize()'
         return summarize(self, dframe, groups, no_cache, update=update)

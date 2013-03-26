@@ -436,7 +436,7 @@ class TestCalculations(TestBase):
             'newest(date_, water_functioning)',
             formula_name))
 
-        print response
+        print 'response: %s' % response
         self.assertTrue(self.controller.SUCCESS in response)
 
         # another with the same name

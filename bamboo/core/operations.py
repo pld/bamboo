@@ -32,7 +32,7 @@ class EvalTerm(object):
     def get_children(self):
         return []
 
-    def dependent_columns(self, schema):
+    def dependent_columns(self, context):
         return []
 
 
@@ -53,9 +53,7 @@ class EvalConstant(EvalTerm):
             return self._parse_field(field, context)
 
     def _parse_field(self, field, context):
-            schema = context.schema
-
-            if schema and schema.is_date_simpletype(self.value):
+            if context.dataset and context.dataset.schema.is_date_simpletype(self.value):
                 field = safe_parse_date_to_unix_time(field)
 
             return field
@@ -63,9 +61,13 @@ class EvalConstant(EvalTerm):
     def field(self, row):
         return row.get(self.value)
 
-    def dependent_columns(self, schema):
-        if self.value in schema.labels_to_slugs.values():
+    def dependent_columns(self, context):
+        print 'DEEPS: %s, %s' % (self.value,
+            context.dataset.schema.labels_to_slugs.values())
+        if self.value in context.dataset.schema.labels_to_slugs.values():
+            print 'returning %s' % [self.value]
             return [self.value]
+        print 'returning %s' % []
         return []
 
 
@@ -273,7 +275,7 @@ class EvalFunction(object):
     def get_children(self):
         return [self.value]
 
-    def dependent_columns(self, schema):
+    def dependent_columns(self, context):
         return []
 
 
@@ -290,12 +292,14 @@ class EvalPercentile(EvalFunction):
 
     def eval(self, row, context):
         # parse date from string
-        column = context.dframe[self.value.value]
+        col = self.value.value
+        select = {col: 1}
+        column = context.dataset.dframe(select=select)[col]
         field = self.value.field(row)
         return percentileofscore(column, field)
 
     def get_children(self):
         return []
 
-    def dependent_columns(self, schema):
+    def dependent_columns(self, context):
         return [self.value.value]

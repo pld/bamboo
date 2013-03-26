@@ -43,7 +43,8 @@ class TestCalculator(TestBase):
 
         for idx, formula in enumerate(self.calculations):
             name = 'test-%s' % idx
-            self.parser.validate_formula(formula, self.dataset.schema)
+            # XXX do we need this validation?
+            #self.parser.validate_formula(formula)
 
             calculator = Calculator(self.dataset)
 
