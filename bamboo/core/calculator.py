@@ -47,7 +47,8 @@ class Calculator(object):
         aggregation = self.parser.validate_formula(formula)
 
         for group in groups:
-            if not group in dframe.columns:
+            #if not group in dframe.columns:
+            if not group in self.parser.context.dataset.schema.keys():
                 raise ParseError(
                     'Group %s not in dataset columns.' % group)
 
@@ -80,10 +81,12 @@ class Calculator(object):
         for c in calculations:
 
             if c.aggregation:
+                print 'AGGREGATION'
                 aggregation = self.parse_aggregation(
                     c.formula, c.name, c.groups_as_list)
                 aggregation.save()
             else:
+                print 'CALCULATION'
                 pt("parse_column")
                 columns = self.parse_columns(c.formula, c.name,
                         length=self.dataset.num_columns)
@@ -99,10 +102,10 @@ class Calculator(object):
                 #new_dframe = new_dframe.join(columns[0])
                 #from pandas import DataFrame
                 #new_dframe = new_dframe.combine_first(DataFrame([columns[0]]),ignore_index=True)
+                # TODO update instead of replace observations
+                pt("dataset update_observation")
+                self.dataset.update_observations(new_cols)
 
-        # TODO update instead of replace observations
-        pt("dataset update_observation")
-        self.dataset.update_observations(new_cols)
         pt("finished update_onservation")
 #        if len(new_dframe.columns) > len(self.dataset.dframe().columns):
 #            self.dataset.replace_observations(new_dframe)
@@ -113,6 +116,7 @@ class Calculator(object):
             merged_calculator.propagate_column(self.dataset)
 
     def dependent_columns(self):
+        # XXX do we want this? calculator is for many formulas...
         pt('dependent_columns = %s' % self.parser.context.dependent_columns)
         return self.parser.context.dependent_columns
 
@@ -164,6 +168,7 @@ class Calculator(object):
         :param parent_dataset_id: If passed add ID as parent ID to column,
             default is None.
         """
+        print 'ZOMG!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!'
         #self._ensure_dframe()
         self._ensure_ready(update_id)
 
@@ -176,6 +181,7 @@ class Calculator(object):
 
         new_dframe = new_dframe_raw.recognize_dates_from_schema(
             self.dataset.schema)
+        print 'new_dframe: %s' % new_dframe
 
         new_dframe, aggregations = self._add_calcs_and_find_aggregations(
             new_dframe, labels_to_slugs)
@@ -201,12 +207,13 @@ class Calculator(object):
         self.dataset.update_complete(update_id)
 
     def parse_aggregation(self, formula, name, groups, dframe=None):
-        columns = self.parse_columns(formula, name, dframe)
-
+        # TODO this should work with index eventually
+        columns = self.parse_columns(formula, name, dframe, no_index=True)
+        # TODO make this dframe call use select
         return Aggregator(self.dataset, self.dataset.dframe(), groups,
                           self.parser.aggregation, name, columns)
 
-    def parse_columns(self, formula, name, dframe=None, length=None):
+    def parse_columns(self, formula, name, dframe=None, length=None, no_index=False):
         """Parse formula into function and variables."""
         # XXX should this be called create_columns?
         # XXX we may not need dframe in function sig
@@ -230,9 +237,10 @@ class Calculator(object):
         columns = []
 
         for function in functions:
-            column = dframe.apply(
-                function, axis=1, args=(self.parser.context, ))
+            column = dframe.apply(function, axis=1, args=(self.parser.context,))
             column.name = make_unique(name, [c.name for c in columns])
+            if no_index:
+                column = column.reset_index(drop=True)
             print 'COLUMN: %s' % column
             columns.append(column)
 
@@ -278,7 +286,7 @@ class Calculator(object):
             if calculation.aggregation is not None:
                 aggregations.append(calculation)
             else:
-                function = self.parser.parse_formula(calculation.formula)
+                function, dependent_columns = self.parser.parse_formula(calculation.formula)
                 new_column = new_dframe.apply(function[0], axis=1,
                                               args=(self.parser.context, ))
                 potential_name = calculation.name

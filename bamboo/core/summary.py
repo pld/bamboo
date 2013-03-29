@@ -87,7 +87,7 @@ def summarize(dataset, dframe, groups, no_cache, update=False):
         if not no_cache:
             if update:
                 #adding the new group_stats back to the old stat
-                original_group_stats = stats[group_str]
+                original_group_stats = stats.get(group_str, {})
                 original_group_stats.update(group_stats)
                 group_stats = original_group_stats
 

@@ -52,6 +52,7 @@ class Observation(AbstractModel):
 
     @classmethod
     def update(cls, dframe, dataset):
+        print 'dataset.build_schema(dframe) on dframe: %s' % dframe
         dataset.build_schema(dframe)
 
         print 'starting batch update'

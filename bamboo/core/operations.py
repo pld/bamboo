@@ -39,15 +39,19 @@ class EvalTerm(object):
 class EvalConstant(EvalTerm):
     """Class to evaluate a parsed constant or variable."""
 
+    def _cast_to_float(self, value):
+        return np.float64(value)
+
     def eval(self, row, context):
         try:
-            return np.float64(self.value)
+            return self._cast_to_float(self.value)
         except ValueError:
             # it may be a variable
             field = self.field(row)
-            if field:
-                # it is a variable, save as dependency
-                context.dependent_columns.add(self.value)
+            # XXX do we need this anymore?
+            #if field:
+                # it is a variable, save as dependency# 
+                #context.dependent_columns.add(self.value)
 
             # test is date and parse as date
             return self._parse_field(field, context)
@@ -64,11 +68,12 @@ class EvalConstant(EvalTerm):
     def dependent_columns(self, context):
         print 'DEEPS: %s, %s' % (self.value,
             context.dataset.schema.labels_to_slugs.values())
-        if self.value in context.dataset.schema.labels_to_slugs.values():
-            print 'returning %s' % [self.value]
+        # if value is not number or date, add as a column
+        try:
+            self._cast_to_float(self.value)
+            return []
+        except ValueError:
             return [self.value]
-        print 'returning %s' % []
-        return []
 
 
 class EvalString(EvalTerm):

@@ -278,29 +278,34 @@ class Parser(object):
         """
 
         # reset dependent columns before parsing
-        #self.context.dependent_columns = set()
+        self.context.dependent_columns = set()
 
         try:
             pt('parsing formula')
             self.parsed_expr = self.bnf.parseString(
                 input_str, parseAll=True)[0]
-            pt('finished parsing formula, parsed_expr=%s' % self.parsed_expr)
+            pt('finished parsing formula, parsed_expr=%s (%s)' % (self.parsed_expr,
+                type(self.parsed_expr)))
         except ParseException, err:
             raise ParseError('Parse Failure for string "%s": %s' % (input_str,
                              err))
 
         functions = []
+        dependent_columns = set()
 
         if self.aggregation:
+            print 'self.aggregation = %s' % self.aggregation
+            print 'self.column_functions = %s' % self.column_functions
             for column_function in self.column_functions:
                 functions.append(partial(column_function.eval))
+                dependent_columns = dependent_columns.union(self._get_dependent_columns(column_function))
         else:
             pt('adding expr to function list')
             functions.append(partial(self.parsed_expr.eval))
-        pt(functions)
+            dependent_columns = self._get_dependent_columns(self.parsed_expr)
+        print 'functions: %s' % [f.func for f in functions]
 
-        #self.context.dependent_columns = self.context.dependent_columns.union(self.get_dependent_columns())
-        dependent_columns = self._get_dependent_columns(self.parsed_expr)
+        self.context.dependent_columns = dependent_columns
         pt("dependent columns after it ws called %s" % dependent_columns)
 
         return functions, dependent_columns
