@@ -2,7 +2,7 @@ import uuid
 from time import gmtime, strftime
 
 from celery.task import task
-from pandas import concat, rolling_window
+from pandas import concat, rolling_window, Series
 
 from bamboo.core.calculator import Calculator
 from bamboo.core.frame import BambooFrame, BAMBOO_RESERVED_KEY_PREFIX,\

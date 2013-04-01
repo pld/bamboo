@@ -1,7 +1,3 @@
-from bamboo.lib.datetools import parse_timestamp_query
-from bamboo.lib.utils import replace_keys
-
-
 class QueryArgs(object):
     def __init__(self, query=None, select=None, distinct=None, limit=0,
                  order_by=None):
@@ -27,7 +23,7 @@ class QueryArgs(object):
 
     def __nonzero__(self):
         return bool(self.query or self.select or self.distinct or self.limit
-                    or self.order_by_value)
+                    or self.order_by)
 
     def __parse_order_by(self, order_by):
         if order_by:
