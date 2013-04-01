@@ -10,8 +10,6 @@ from bamboo.core.parser import ParseError, Parser
 from bamboo.lib.mongo import MONGO_RESERVED_KEYS
 from bamboo.lib.schema_builder import make_unique
 
-from bamboo.lib.utils import print_time as pt
-
 
 class Calculator(object):
     """Perform and store calculations and recalculations on update."""
@@ -19,12 +17,8 @@ class Calculator(object):
     dframe = None
 
     def __init__(self, dataset):
-        pt("begin reloading dataset")
         self.dataset = dataset.reload()
-        pt("finish reloading dataset")
-        pt("begin parsing dataset")
         self.parser = Parser(self.dataset)
-        pt("finish parsing dataset")
 
     def validate(self, formula, groups):
         """Validate `formula` and `groups` for calculator's dataset.
@@ -39,15 +33,9 @@ class Calculator(object):
 
         :returns: The aggregation (or None) for the formula.
         """
-        # XXX super hack!
-        #dframe = self.dataset.dframe(limit=1)
-        #row = dframe.irow(0) if len(dframe) else {}
-
-        print 'self.parser.context.dataset: %s' % self.parser.context.dataset
         aggregation = self.parser.validate_formula(formula)
 
         for group in groups:
-            #if not group in dframe.columns:
             if not group in self.parser.context.dataset.schema.keys():
                 raise ParseError(
                     'Group %s not in dataset columns.' % group)
@@ -71,53 +59,31 @@ class Calculator(object):
 
         :param calculations: A list of calculations.
         """
-        pt("ensuring dframe")
-        #self._ensure_dframe()
-        pt("new_dframe dframe")
-        #new_dframe = self.dataset.dframe()
         new_cols = None
-        print 'finished loading new_dframe'
 
         for c in calculations:
 
             if c.aggregation:
-                print 'AGGREGATION'
                 aggregator = self.parse_aggregation(
                     c.formula, c.name, c.groups_as_list)
                 aggregator.save()
             else:
-                print 'CALCULATION'
-                pt("parse_column")
                 columns = self.parse_columns(c.formula, c.name,
                         length=self.dataset.num_columns)
-                pt("finished parse_column")
-                pt("new_dframe join")
-                pt('type(columns[0]: %s)' % type(columns[0]))
-                #from celery.contrib import rdb;rdb.set_trace()
                 if new_cols is None:
                     new_cols = DataFrame(columns[0])
                 else:
                     new_cols = new_cols.join(columns[0])
-                print 'NEW COLS: %s' % new_cols
-                #new_dframe = new_dframe.join(columns[0])
-                #from pandas import DataFrame
-                #new_dframe = new_dframe.combine_first(DataFrame([columns[0]]),ignore_index=True)
+
                 # TODO update instead of replace observations
-                pt("dataset update_observation")
                 self.dataset.update_observations(new_cols)
 
-        pt("finished update_onservation")
-#        if len(new_dframe.columns) > len(self.dataset.dframe().columns):
-#            self.dataset.replace_observations(new_dframe)
-#
         # propagate calculation to any merged child datasets
         for merged_dataset in self.dataset.merged_datasets:
             merged_calculator = Calculator(merged_dataset)
             merged_calculator.propagate_column(self.dataset)
 
     def dependent_columns(self):
-        # XXX do we want this? calculator is for many formulas...
-        pt('dependent_columns = %s' % self.parser.context.dependent_columns)
         return self.parser.context.dependent_columns
 
     def propagate_column(self, parent_dataset):
@@ -168,8 +134,6 @@ class Calculator(object):
         :param parent_dataset_id: If passed add ID as parent ID to column,
             default is None.
         """
-        print 'ZOMG!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!'
-        #self._ensure_dframe()
         self._ensure_ready(update_id)
 
         labels_to_slugs = self.dataset.schema.labels_to_slugs
@@ -181,7 +145,6 @@ class Calculator(object):
 
         new_dframe = new_dframe_raw.recognize_dates_from_schema(
             self.dataset.schema)
-        print 'new_dframe: %s' % new_dframe
 
         new_dframe, aggregations = self._add_calcs_and_find_aggregations(
             new_dframe, labels_to_slugs)
@@ -211,37 +174,32 @@ class Calculator(object):
     def parse_aggregation(self, formula, name, groups, dframe=None):
         # TODO this should work with index eventually
         columns = self.parse_columns(formula, name, dframe, no_index=True)
+        functions, dependent_columns = self.parser.parse_formula(formula)
+
         # get dframe with only necessary columns
         # or dummy column (needed for count aggregation)
-        functions, dependent_columns = self.parser.parse_formula(formula)
         select = {}
         select.update({group: 1 for group in groups})
         select.update({col: 1 for col in dependent_columns})
+
         dframe = self.dataset.dframe(select=select) if select \
             else self.dataset.dframe(select={'_id': 1}, keep_mongo_keys=True)
+
         return Aggregator(self.dataset, dframe, groups,
                           self.parser.aggregation, name, columns)
 
     def parse_columns(self, formula, name, dframe=None, length=None, no_index=False):
         """Parse formula into function and variables."""
-        # XXX should this be called create_columns?
-        # XXX we may not need dframe in function sig
-        # XXX passing in length is sort of weird
         functions, dependent_columns = self.parser.parse_formula(formula)
-
-        pt('formula: %s, dependent_columns: %s' % (formula,
-                    dependent_columns))
 
         # make select from dependent_columns
         if dframe is None and dependent_columns:
             dframe = self.dataset.dframe(select={col: 1 for col in dependent_columns}, keep_mongo_keys=True).set_index('MONGO_RESERVED_KEY_id')
         elif dframe is None:
             # constant column, use dummy
-            # TODO fix this
             dframe = self.dataset.dframe(select={'_id': 1},
                     keep_mongo_keys=True).set_index('MONGO_RESERVED_KEY_id')
             dframe['dummy'] = 0
-        pt('got selected dframe with columns: %s' % dframe.columns)
 
         columns = []
 
@@ -250,7 +208,6 @@ class Calculator(object):
             column.name = make_unique(name, [c.name for c in columns])
             if no_index:
                 column = column.reset_index(drop=True)
-            print 'COLUMN: %s' % column
             columns.append(column)
 
         return columns
@@ -274,11 +231,6 @@ class Calculator(object):
                     raise NonUniqueJoinError(
                         'Cannot update. This is the right hand join and the'
                         'column "%s" will become non-unique.' % on)
-
-#    def _ensure_dframe(self):
-#        """Ensure `dframe` for the calculator's dataset is defined."""
-#        if self.dframe is None:
-#            self.dframe = self.dataset.dframe()
 
     def _ensure_ready(self, update_id):
         # dataset must not be pending

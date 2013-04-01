@@ -2,7 +2,6 @@ from bamboo.core.frame import DATASET_OBSERVATION_ID
 from bamboo.lib.async import call_async
 from bamboo.lib.datetools import parse_timestamp_query
 from bamboo.models.abstract_model import AbstractModel
-from bamboo.lib.utils import print_time as pt
 
 
 class Observation(AbstractModel):
@@ -52,23 +51,19 @@ class Observation(AbstractModel):
 
     @classmethod
     def update(cls, dframe, dataset):
-        print 'dataset.build_schema(dframe) on dframe: %s' % dframe
         dataset.build_schema(dframe)
 
-        print 'starting batch update'
         # must have MONGO_RESERVED_KEY_id as index     
         if not DATASET_OBSERVATION_ID in dframe.columns:
             cls.batch_update(dataset.encode_dframe_columns(dframe).reset_index())
         else:
             cls.batch_update(dframe.reset_index())
-        print 'ended batch update, updating dataset record'
 
         # add metadata to dataset, discount ID column
         dataset.update({
             dataset.NUM_ROWS: len(dframe),
             dataset.STATE: cls.STATE_READY,
         })
-        print 'summarizing new dataset'
         # TODO make summary update-friendly
         dataset.summarize(dframe, update=True)
 
@@ -86,7 +81,6 @@ class Observation(AbstractModel):
         :param dataset: The dataset to store the dframe in.
         """
         # build schema for the dataset after having read it from file.
-        pt("entering observation.save")
         if not dataset.schema:
             dataset.build_schema(dframe)
 

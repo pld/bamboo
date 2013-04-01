@@ -255,8 +255,6 @@ class Datasets(AbstractController):
             the dataset will not be fully loaded until its state is set to
             ready.
         """
-        from bamboo.lib.utils import print_time as pt
-        pt('fuck my nuts')
         result = None
         error = 'url, csv_file or schema required'
 

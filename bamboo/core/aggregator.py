@@ -39,7 +39,6 @@ class Aggregator(object):
         the aggregation in this new aggregated dataset.
 
         """
-        print 'aggregator.save, self.columns: %s' % self.columns
         new_dframe = BambooFrame(self.aggregation.eval(self.columns))
         new_dframe = new_dframe.add_parent_column(self.dataset.dataset_id)
 

@@ -9,7 +9,6 @@ from bamboo.core.operations import EvalAndOp, EvalCaseOp, EvalComparisonOp,\
     EvalConstant, EvalExpOp, EvalDate, EvalInOp, EvalMapOp, EvalMultOp,\
     EvalNotOp, EvalOrOp, EvalPercentile, EvalPlusOp, EvalSignOp, EvalString
 
-from bamboo.lib.utils import print_time as pt
 
 class ParseError(Exception):
     """For errors while parsing formulas."""
@@ -23,17 +22,6 @@ class ParserContext(object):
 
     def __init__(self, dataset=None):
         self.dataset = dataset
-        #if dataset:
-        #pt("start building dataset dframe")
-        # XXX why do we need to get the dframe now?
-        # XXX cant we just get the columns we want later?
-        #self.dframe = dataset.dframe()
-        #self.dframe = dframe
-        #pt("done building dataset dframe")
-        #pt("start building dataset schema")
-        # XXX we can always get this from dataset
-        #self.schema = schema
-        #pt("done building dataset schema")
 
 
 class Parser(object):
@@ -67,16 +55,9 @@ class Parser(object):
 
     def __init__(self, dataset=None):
         """Create parser and set context."""
-        pt(">>> entering core.parser")
-        #pt("get dataset parser content")
         self.context = ParserContext(dataset)
         #self.dataset = dataset
-        pt("build bnf")
         self._build_bnf()
-        pt("done building bnf")
-
-#    def set_context(self, dframe, schema):
-#        self.context = ParserContext(dframe, schema)
 
     def store_aggregation(self, _, __, tokens):
         """Cached a parsed aggregation."""
@@ -281,11 +262,8 @@ class Parser(object):
         self.context.dependent_columns = set()
 
         try:
-            pt('parsing formula')
             self.parsed_expr = self.bnf.parseString(
                 input_str, parseAll=True)[0]
-            pt('finished parsing formula, parsed_expr=%s (%s)' % (self.parsed_expr,
-                type(self.parsed_expr)))
         except ParseException, err:
             raise ParseError('Parse Failure for string "%s": %s' % (input_str,
                              err))
@@ -294,19 +272,14 @@ class Parser(object):
         dependent_columns = set()
 
         if self.aggregation:
-            print 'self.aggregation = %s' % self.aggregation
-            print 'self.column_functions = %s' % self.column_functions
             for column_function in self.column_functions:
                 functions.append(partial(column_function.eval))
                 dependent_columns = dependent_columns.union(self._get_dependent_columns(column_function))
         else:
-            pt('adding expr to function list')
             functions.append(partial(self.parsed_expr.eval))
             dependent_columns = self._get_dependent_columns(self.parsed_expr)
-        print 'functions: %s' % [f.func for f in functions]
 
         self.context.dependent_columns = dependent_columns
-        pt("dependent columns after it ws called %s" % dependent_columns)
 
         return functions, dependent_columns
 
@@ -333,28 +306,15 @@ class Parser(object):
         for column in dependent_columns:
             if column not in self.context.dataset.schema.keys():
                 raise ParseError('Missing column reference: %s' % column)
-        # XXX hack!
-#        try:
-#            for function in functions:
-#                function(row, self.context)
-#        except KeyError, err:
-#            raise ParseError('Missing column reference: %s' % err)
 
         return self.aggregation
 
     def _get_dependent_columns(self, parsed_expr):
-        print 'getting _depend'
         result = []
         if not hasattr(self, 'context'):
             return result
         def find_dependent_columns(parsed_expr, result):
-            #print 'parsed_expr: %s' % parsed_expr
-            #pt('node: %s, value: %s, result: %s' % (type(parsed_expr), parsed_expr.value, result))
-            #pt('type(schema): %s' % type(schema))
-            #pt('children: %s' % parsed_expr.get_children())
-            print 'SELF = %s' % parsed_expr.value
             dependent_columns = parsed_expr.dependent_columns(self.context)
-            pt('dependent_columns: %s' % dependent_columns)
             result.extend(dependent_columns)
             for child in parsed_expr.get_children():
                 find_dependent_columns(child, result)

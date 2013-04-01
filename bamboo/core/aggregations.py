@@ -175,13 +175,9 @@ class ArgMaxAggregation(Aggregation):
     def group(self):
         """For when aggregation is called with a group parameter."""
         self.column = self.column.apply(lambda value: parse_float(value))
-        print 'group, self.column: %s' % self.column
-        print 'group, self.groups: %s' % self.groups
-        print 'group, self.dframe: %s' % self.dframe
         group_dframe = self.dframe[self.groups].join(self.column)
         indices = group_dframe.reset_index().set_index(
             self.groups + [self.name])
-        print 'group, indices: %s' % indices
 
         def max_index_for_row(row):
             groups = row[self.groups]
@@ -225,7 +221,6 @@ class NewestAggregation(Aggregation):
 
     def group(self):
         argmax_agg = ArgMaxAggregation(self.name, self.groups, self.dframe)
-        print 'group, self.dframe: %s' % self.dframe
         argmax_df = argmax_agg.eval(self.columns)
         indices = argmax_df.pop(self.name)
 

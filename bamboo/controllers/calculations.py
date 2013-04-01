@@ -68,7 +68,6 @@ class Calculations(AbstractController):
             string if the dataset could not be found, the formula could not be
             parsed, or the group was invalid.
         """
-        print ">>> entering Calculations.create in controller"
         def action(dataset):
             if json_file:
                 calculations = safe_json_loads(json_file.file.read())
@@ -83,7 +82,6 @@ class Calculations(AbstractController):
                 success_message = 'created calculation: %s for dataset: %s' % (
                     name, dataset_id)
 
-            print "<<< leaving Calculations.create in controller"
 
             return {self.SUCCESS: success_message}
 

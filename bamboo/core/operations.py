@@ -66,8 +66,6 @@ class EvalConstant(EvalTerm):
         return row.get(self.value)
 
     def dependent_columns(self, context):
-        print 'DEEPS: %s, %s' % (self.value,
-            context.dataset.schema.labels_to_slugs.values())
         # if value is not number or date, add as a column
         try:
             self._cast_to_float(self.value)

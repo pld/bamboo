@@ -31,7 +31,6 @@ class BambooFrame(DataFrame):
         """Add parent ID column to this DataFrame."""
         column = Series([parent_dataset_id] * len(self))
         column.name = PARENT_DATASET_ID
-        print "parent dataset id is %s" % parent_dataset_id
         return self.__class__(self.join(column))
 
     def decode_mongo_reserved_keys(self, keep_mongo_keys=False):
@@ -39,18 +38,14 @@ class BambooFrame(DataFrame):
         reserved_keys = self._column_intersect(MONGO_RESERVED_KEYS)
         rename_dict = {}
 
-        print 'keep_mongo_keys: %s' % keep_mongo_keys
-        print 'reserved_keys: %s' % reserved_keys
         for key in reserved_keys:
             if keep_mongo_keys:
                 replacement_key = MONGO_RESERVED_KEY_PREFIX + key
                 self._swap_column_names(key, replacement_key)
-                print 'swapping %s and %s' % (key, replacement_key)
             else:
                 del self[key]
                 prefixed_key = mongo_prefix_reserved_key(key)
                 if prefixed_key in self.columns:
-                    print 'renaming: %s -> %s' % (prefixed_key, key)
                     rename_dict[prefixed_key] = key
 
         if rename_dict:

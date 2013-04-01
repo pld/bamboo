@@ -337,12 +337,8 @@ class TestCalculations(TestBase):
         }
 
         for formula_name, valid in formula_names_to_valid.items():
-            print '-' * 80
-            print '%s - %s' % (formula_name, valid)
-            print '-' * 80
             dataset_id = self._post_file('water_points.csv')
             dframe_before = Dataset.find_one(dataset_id).dframe()
-            print 'dframe_before: %s' % dframe_before
 
             # a calculation
             response = json.loads(self.controller.create(
@@ -374,7 +370,6 @@ class TestCalculations(TestBase):
             self.assertTrue(self.controller.SUCCESS in response)
 
             dframe_after = dataset.dframe()
-            print 'dframe_after: %s' % dframe_after
 
             # Does not change data
             self.assertEqual(len(dframe_before), len(dframe_after))
@@ -402,7 +397,6 @@ class TestCalculations(TestBase):
             self.assertTrue(Dataset.ID in result.keys())
             dataset = Dataset.find_one(dataset_id)
             dframe_after_update = dataset.dframe()
-            print 'dframe_after_update: %s' % dframe_after_update
             self.assertEqual(len(dframe_after) + 1, len(dframe_after_update))
 
     def test_cannot_create_aggregations_with_duplicate_names(self):
@@ -436,7 +430,6 @@ class TestCalculations(TestBase):
             'newest(date_, water_functioning)',
             formula_name))
 
-        print 'response: %s' % response
         self.assertTrue(self.controller.SUCCESS in response)
 
         # another with the same name
