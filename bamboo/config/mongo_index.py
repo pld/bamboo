@@ -1,3 +1,9 @@
+#!/usr/bin/env python
+
+import os
+import sys
+sys.path.append(os.getcwd())
+
 from pymongo import ASCENDING
 
 from bamboo.config.db import Database
@@ -9,9 +15,9 @@ def ensure_indexing():
     calculations = db.calculations
     datasets = db.datasets
     observations = db.observations
-    datasets.ensure_index([("BAMBOO_RESERVED_KEY_dataset_id", ASCENDING)])
-    observations.ensure_index([("BAMBOO_RESERVED_KEY_dataset_id", ASCENDING)])
-    calculations.ensure_index([("BAMBOO_RESERVED_KEY_dataset_id", ASCENDING)])
+    datasets.ensure_index([("BRK_dataset_id", ASCENDING)])
+    observations.ensure_index([("0", ASCENDING)])
+    calculations.ensure_index([("BRK_dataset_id", ASCENDING)])
 
 
 if __name__ == "__main__":
