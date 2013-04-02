@@ -194,10 +194,8 @@ class Dataset(AbstractModel, ImportableDataset):
             passed to MongoDB. BambooFrame will not have parent ids if
             `keep_parent_ids` is False.
         """
-        cacheable = True
         # bypass cache if we need specific version
-        if query_args or keep_parent_ids or padded:
-            cacheable = False
+        cacheable = not (query_args or keep_parent_ids or padded)
 
         # use cached copy if we have already fetched it
         if cacheable and not reload and self._dframe is not None:
