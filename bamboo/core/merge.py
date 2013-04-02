@@ -2,7 +2,6 @@ from celery.task import task
 from pandas import concat
 
 from bamboo.core.frame import BambooFrame
-from bamboo.lib.io import import_dataset
 from bamboo.lib.async import call_async
 from bamboo.models.dataset import Dataset
 
@@ -31,10 +30,6 @@ def merge_dataset_ids(dataset_ids, mapping):
             'merge requires 2 datasets (found %s)' % len(datasets))
 
     new_dataset = Dataset.create()
-
-    # XXX not sure if we need to do this...
-    for dataset in datasets:
-        dataset.clear_cache()
 
     call_async(__merge_datasets_task, new_dataset, datasets, mapping)
 

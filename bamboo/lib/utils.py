@@ -1,5 +1,8 @@
+from itertools import chain
 from math import isnan
 from sys import maxint
+
+import numpy as np
 
 
 def is_float_nan(num):
@@ -16,11 +19,15 @@ def parse_int(value, default=None):
 
 
 def parse_float(value, default=None):
-    return _parse_type(float, value, default)
+    return _parse_type(np.float64, value, default)
 
 
 def _parse_type(_type, value, default):
     try:
         return _type(value)
     except ValueError:
-        return value if default is None else default
+        return default
+
+
+def combine_dicts(*dicts):
+    return dict(chain(*[_dict.iteritems() for _dict in dicts]))

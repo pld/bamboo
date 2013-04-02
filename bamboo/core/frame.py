@@ -95,10 +95,6 @@ class BambooFrame(DataFrame):
         self.to_csv(buffer, encoding='utf-8', index=False)
         return buffer.getvalue()
 
-    def __column_intersect(self, _list):
-        """Return the intersection of `_list` and this DataFrame's columns."""
-        return list(set(_list).intersection(set(self.columns.tolist())))
-
     def __swap_column_names(self, column_1, column_2):
         tmp_col = MONGO_RESERVED_KEY_PREFIX + '_tmp'
         self.rename(columns={column_1: tmp_col}, inplace=True)

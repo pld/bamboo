@@ -1,5 +1,4 @@
 from collections import defaultdict
-from datetime import datetime
 
 from celery.task import task
 from pandas import concat, DataFrame
@@ -76,7 +75,6 @@ class Calculator(object):
                 else:
                     new_cols = new_cols.join(columns[0])
 
-                # TODO update instead of replace observations
                 self.dataset.update_observations(new_cols)
 
         # propagate calculation to any merged child datasets

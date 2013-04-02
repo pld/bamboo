@@ -299,10 +299,11 @@ class Parser(object):
         # check valid formula
         functions, dependent_columns = self.parse_formula(formula)
 
-        if not self.context.dataset or not self.context.dataset.schema:
+        if not self.context.dataset.schema:
             raise ParseError(
                 'No schema for dataset, please add data or wait for it to '
                 'finish processing')
+
         for column in dependent_columns:
             if column not in self.context.dataset.schema.keys():
                 raise ParseError('Missing column reference: %s' % column)
