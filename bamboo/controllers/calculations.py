@@ -82,7 +82,6 @@ class Calculations(AbstractController):
                 success_message = 'created calculation: %s for dataset: %s' % (
                     name, dataset_id)
 
-
             return {self.SUCCESS: success_message}
 
         return self._safe_get_and_call(

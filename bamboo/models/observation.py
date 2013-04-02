@@ -58,7 +58,8 @@ class Observation(AbstractModel):
 
         # must have MONGO_RESERVED_KEY_id as index
         if not DATASET_OBSERVATION_ID in dframe.columns:
-            cls.batch_update(dataset.encode_dframe_columns(dframe).reset_index())
+            cls.batch_update(dataset.encode_dframe_columns(
+                dframe).reset_index())
         else:
             cls.batch_update(dframe.reset_index())
 

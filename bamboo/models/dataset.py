@@ -230,7 +230,6 @@ class Dataset(AbstractModel, ImportableDataset):
             else:
                 dframe = self.place_holder_dframe()
 
-
         if cacheable:
             self._dframe = dframe
 

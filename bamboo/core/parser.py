@@ -273,7 +273,8 @@ class Parser(object):
         if self.aggregation:
             for column_function in self.column_functions:
                 functions.append(partial(column_function.eval))
-                dependent_columns = dependent_columns.union(self._get_dependent_columns(column_function))
+                dependent_columns = dependent_columns.union(
+                    self._get_dependent_columns(column_function))
         else:
             functions.append(partial(self.parsed_expr.eval))
             dependent_columns = self._get_dependent_columns(self.parsed_expr)
@@ -312,12 +313,14 @@ class Parser(object):
         result = []
         if not hasattr(self, 'context'):
             return result
+
         def find_dependent_columns(parsed_expr, result):
             dependent_columns = parsed_expr.dependent_columns(self.context)
             result.extend(dependent_columns)
             for child in parsed_expr.get_children():
                 find_dependent_columns(child, result)
             return result
+
         return set(find_dependent_columns(parsed_expr, result))
 
     def __build_caseless_or_expression(self, strings):

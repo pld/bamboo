@@ -36,5 +36,5 @@ class QueryArgs(object):
         self.order_by_value = order_by
 
     def __nonzero__(self):
-        return bool(self.query or self.select or self.distinct or self.limit \
-            or self.order_by_value)
+        return bool(self.query or self.select or self.distinct or self.limit
+                    or self.order_by_value)

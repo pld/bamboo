@@ -54,7 +54,8 @@ class EvalConstant(EvalTerm):
             return self.__parse_field(field, context)
 
     def __parse_field(self, field, context):
-            if context.dataset and context.dataset.schema.is_date_simpletype(self.value):
+            if context.dataset and context.dataset.schema.is_date_simpletype(
+                    self.value):
                 field = safe_parse_date_to_unix_time(field)
 
             return field
