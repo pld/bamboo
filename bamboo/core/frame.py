@@ -43,7 +43,9 @@ class BambooFrame(DataFrame):
         for key in reserved_keys:
             if keep_mongo_keys:
                 replacement_key = MONGO_RESERVED_KEY_PREFIX + key
-                self.__swap_column_names(key, replacement_key)
+                self.rename(
+                    columns={key: replacement_key, replacement_key: key},
+                    inplace=True)
             else:
                 del self[key]
                 prefixed_key = mongo_prefix_reserved_key(key)
@@ -94,12 +96,6 @@ class BambooFrame(DataFrame):
         buffer = StringIO()
         self.to_csv(buffer, encoding='utf-8', index=False)
         return buffer.getvalue()
-
-    def __swap_column_names(self, column_1, column_2):
-        tmp_col = MONGO_RESERVED_KEY_PREFIX + '_tmp'
-        self.rename(columns={column_1: tmp_col}, inplace=True)
-        self.rename(columns={column_2: column_1}, inplace=True)
-        self.rename(columns={tmp_col: column_2}, inplace=True)
 
     def join_dataset(self, other, on):
         """Left join an `other` dataset.
