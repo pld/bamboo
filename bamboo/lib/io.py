@@ -34,21 +34,22 @@ def import_dataset(dataset, file_reader, delete=False):
             dataset.delete(countdown=86400)
 
 
-def csv_file_reader(name, delete=False):
+def csv_file_reader(name, na_values=[], delete=False):
     try:
-        return BambooFrame(
-            pd.read_csv(name, encoding='utf-8')).recognize_dates()
+        return BambooFrame(pd.read_csv(
+            name, encoding='utf-8', na_values=na_values)).recognize_dates()
+            #pd.read_csv(name, encoding='utf-8')).recognize_dates()
     finally:
         if delete:
             os.unlink(name)
 
 
 def json_file_reader(content):
-    return pd.DataFrame(json.loads(content))
+    return BambooFrame(json.loads(content)).recognize_dates()
 
 
 class ImportableDataset(object):
-    def import_from_url(self, url, allow_local_file=False):
+    def import_from_url(self, url, na_values=[], allow_local_file=False):
         """Load a URL, read from a CSV, add data to dataset.
 
         :param url: URL to load file from.
@@ -63,11 +64,12 @@ class ImportableDataset(object):
             raise IOError
 
         call_async(
-            import_dataset, self, partial(csv_file_reader, url))
+            import_dataset, self, partial(
+                csv_file_reader, url, na_values=na_values))
 
         return self
 
-    def import_from_csv(self, csv_file):
+    def import_from_csv(self, csv_file, na_values=[]):
         """Import data from a CSV file.
 
         .. note::
@@ -89,7 +91,7 @@ class ImportableDataset(object):
         tmpfile.close()
 
         call_async(import_dataset, self, partial(
-            csv_file_reader, tmpfile.name, delete=True))
+            csv_file_reader, tmpfile.name, na_values=na_values, delete=True))
 
         return self
 

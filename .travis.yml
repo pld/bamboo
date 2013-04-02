@@ -2,17 +2,20 @@ language: python
 python:
   - "2.7"
 virtualenv:
-      system_site_packages: true
+  system_site_packages: true
 before_install:
-  - sudo apt-get install -qq python-numpy gfortran libatlas-base-dev
+  - sudo apt-get install -qq gfortran libatlas-base-dev python-numpy python-scipy
 install:
   - pip install -r requirements.pip --use-mirrors
-  - pip install -r requirements-test.pip --use-mirrors
+  - pip install -qr requirements-test.pip --use-mirrors
+  - pip freeze # list our pip library versions
 script:
+  - sudo rmdir /dev/shm
+  - sudo ln -Tsf /{run,dev}/shm
   - ./celeryd/celeryd start
-  - cd bamboo
+  - pushd bamboo
   - nosetests
-  - cd ..
+  - popd
   - ./celeryd/celeryd stop
 services:
   - mongodb

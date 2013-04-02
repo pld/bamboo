@@ -11,134 +11,6 @@ Advanced Commands
 
     [*SIC*] all spelling errors in the example dataset.
 
-Updating your data
-------------------
-
-You can add single or multiple row updates to a dataset via JSON data in a PUT
-request to the dataset id. The row(s) should be key-value pairs where the key
-is the column name. In the example that we have been using here, the dataset
-could be updated with a JSON dictionary like this:
-
-.. code-block:: javascript
-
-    {
-        "rating": "delectible",
-        "amount": 2,
-        "food_type": "streat_sweets"
-    }
-
-N/A values will be added when the dictionary does not supply a value for a
-given column.
-
-
-.. code-block:: sh
-
-    curl -X PUT -d 'update={"rating":"delectible","amount":2,"food_type":"streat_sweets"}' http://bamboo.io/datasets/8a3d74711475d8a51c84484fe73f24bd151242ea
-
-**returns:**
-
-.. code-block:: javascript
-
-    {"id": "8a3d74711475d8a51c84484fe73f24bd151242ea"}
-
-Merging multiple Datasets
--------------------------
-
-To row-wise merge 2 or more datasets into a new dataset use the _merge_ command
-. For example, to merge two datasets with IDs 8123 and 9123, use the following
-command. This will return the ID of the new merged dataset.  The merge occurs
-in the background.  When the dataset status is set to "ready" you can be sure
-the data has been merged.
-
-.. code-block:: sh
-
-    curl -X POST -d "datasets=[8123, 9123]" http://bamboo.io/datasets/merge
-
-**returns:**
-
-.. code-block:: javascript
-
-    {"id": "8a3d74711475d8a51c84484fe73f24bd151242ea"}
-
-Merge with a column mapping
-^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-Merge takes an optional *mapping* parameter, which maps columns in the original
-dataset to columns in the new merged dataset.
-
-For example, a JSON mapping of:
-
-.. code-block:: javascript
-
-    {
-        "8123": {"foodtype": "food_type"},
-        "9123": {"foodType": "food_type"}
-    }
-
-will map the "foodtype" column from dataset ID 8123 and the "foodType" column
-from dataset 9123 to a canonical "food_type" column in the merged dataset.
-
-.. code-block:: sh
-
-    curl -X POST -d "datasets=[8123,9123]&mapping={\"8123\":{\"foodtype\":\"food_type\"},"9123":{\"foodType\":\"food_type\"}}" http://bamboo.io/datasets/merge
-
-**returns:**
-
-.. code-block:: javascript
-
-    {"id": "8a3d74711475d8a51c84484fe73f24bd151242ea"}
-
-Joining multiple Datasets
--------------------------
-
-You can perform column joins between multiple datasets.  The column that is
-joined on must be unique in the right hand side dataset and must exist in both
-datasets. The left hand side dataset ID is specified in the URL, and the right
-hand side is passed as the *other_dataset_id* parameter.
-
-If the join succeeds the ID of the new dataset is returned as JSON. If the join
-fails an error message is returned, also as JSON.
-
-Updates which are subsequently made to either the left hand side or the right
-hand side dataset will be propagated to the joined dataset. Updates to the
-right hand side that make the join column non-unique will be disallowed.
-
-For example supposing the 'food_type' column is in dataset with ID 8123 and
-9123, you can join the two datasets on that column by executing:
-
-.. note::
-
-    * You can not join datasets which have overlapping columns.
-    * After you have joined two datasets you can not update the right hand
-      (``other_dataset_id``) with data that will make its ``on`` column
-      non-unique.
-    * Updates to the left hand side (``dataset_id``) will be merged with right
-      hand side columns if the update matches an existing ``on`` column,
-      otherwise if will have NaN for the other columns.
-
-.. code-block:: sh
-
-    curl -X POST -d "dataset_id=8123&other_dataset_id=9123&on=food_type" http://bamboo.io/datasets/join
-
-**returns:**
-
-.. code-block:: javascript
-
-    {"id": "8a3d74711475d8a51c84484fe73f24bd151242ea"}
-
-Joining on different columns
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-To join column ``A`` in the left hand side dataset with column ``B`` in the
-right hand side dataset, set the ``on`` parameter to ``A,B``.
-
-Continuing the above example, suppose dataset 8123 has a "food_type" column
-but 9123 has a "foodtype" column, use the command:
-
-.. code-block:: sh
-
-    curl -X POST -d "dataset_id=8123&other_dataset_id=9123&on=food_type,foodtype" http://bamboo.io/datasets/join
-
 Creating a Dataset from a Schema
 --------------------------------
 
@@ -173,13 +45,13 @@ following command:
 
 .. code-block:: sh
 
-    curl -X POST -F schema=@/home/modilabs/good_eats.schema.json csv_file=@/home/modilabs/good_eats.csv http://bamboo.io/datasets
+    curl -X POST -F schema=@/home/modilabs/good_eats.schema.json -F csv_file=@/home/modilabs/good_eats.csv http://bamboo.io/datasets
 
 And similarly for a JSON file:
 
 .. code-block:: sh
 
-    curl -X POST -F schema=@/home/modilabs/good_eats.schema.json json_file=@/home/modilabs/good_eats.json http://bamboo.io/datasets
+    curl -X POST -F schema=@/home/modilabs/good_eats.schema.json -F json_file=@/home/modilabs/good_eats.json http://bamboo.io/datasets
 
 **returns:**
 
@@ -227,6 +99,24 @@ you can create a dataset from this json file using:
         "formula": "gps_latitude > 0"
     }
 
+Replicating a Calculation Across Groups
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+To create the same calculation with multiple groups you may include a
+``groups`` key in your JSON file with the value as a list of groups to create
+the calculation for.
+
+The ``groups`` key can also be set to a string, in which case bamboo will
+create a single calculation with the value as the group.
+
+For example, below the second to third calculation is created with the group
+*risk_factor*, and the fourth with the single multi-group *risk_factor* and
+*food_type*.  The final calculation is create twice, once for the group
+*risk_factor*, and once for the group *food_type*.
+
+.. literalinclude:: ../bamboo/tests/fixtures/good_eats_group.calculations.json
+   :language: javascript
+
 Create a "perishable" dataset
 -----------------------------
 
@@ -254,14 +144,16 @@ Additional dataset query parameters
 
 Dataset queries may take the following optional parameters:
 
-* *select*: This is a required argument, it can be 'all' or a
-    MongoDB JSON query
-* *distinct*: A field to return distinct results for.
-* *query*: If passed restrict results to rows matching this query.
-* *limit*: If passed limit the rows to this number.
-* *order_by*: If passed order the result using this column.
-* *format*: Format of output data, 'json' or 'csv'
-* *callback*: A JSONP callback function to wrap the result in.
+- ``select``: This is a required argument, it can be 'all' or a
+   MongoDB JSON query
+- ``distinct``: A field to return distinct results for.
+- ``query``: If passed restrict results to rows matching this query.
+- ``limit``: If passed limit the rows to this number.
+- ``order_by``: If passed order the result using this column.
+- ``format``: Format of output data, 'json' or 'csv'
+- ``callback``: A JSONP callback function to wrap the result in.
+- ``index``: Boolean, if true also return the index.  Default false.
+- ``count``: Boolean, if true returns only the number of results.  Default false.
 
 Export data using the format parameter
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -273,13 +165,13 @@ To export the data as CSV:
 
 .. code-block:: sh
 
-    curl http://bamboo.io/datasets/8a3d74711475d8a51c84484fe73f24bd151242ea&format=CSV
+    curl http://bamboo.io/datasets/8a3d74711475d8a51c84484fe73f24bd151242ea?format=CSV
 
 To export the data as JSON:
 
 .. code-block:: sh
 
-    curl http://bamboo.io/datasets/8a3d74711475d8a51c84484fe73f24bd151242ea&format=JSON
+    curl http://bamboo.io/datasets/8a3d74711475d8a51c84484fe73f24bd151242ea?format=JSON
 
 Ordering the results of a query
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -366,6 +258,28 @@ also return the update dataset info.
         "state": "ready"
     }
 
+Setting the OLAP Type
+^^^^^^^^^^^^^^^^^^^^^
+
+By default columns with numeric data are treated as measures and return summary
+statistics.  However, if your numeric data represents indentifiers it may be
+semantically dimensional.  You can use set OLAP Type to treat numeric data
+dimensionally.
+
+Any numeric column can be converted to a dimension and back.  Dimension columns
+cannot be modified.  For example, to convert the numeric column ``amount`` to a
+dimension:
+
+.. code-block:: sh
+
+    curl -X PUT -d "column=amount&olap_type=dimension" http://bamboo.io/datasets/8a3d74711475d8a51c84484fe73f24bd151242ea/set_olap_type
+
+**returns:**
+
+.. code-block:: javascript
+
+    {"success": "set OLAP Type for column 'amount' to 'dimension'}
+
 
 Timeseries operations on a dataset
 ----------------------------------
@@ -383,15 +297,20 @@ function can be passed as parameters to bamboo.
 The parameters are
 
 * ``date_column``: The date column to resample on.
-* ``interval``: A code for the interval to use, any pandas codes are accepted, e.g. 'D' for daily, 'W' for weekly, 'M' for monthly.
-* ``how``: (Optional) How to calculate the grouped samples.  The default is 'mean'.
+* ``interval``: A code for the interval to use, any pandas codes are accepted,
+    e.g. 'D' for daily, 'W' for weekly, 'M' for monthly.
+* ``how``: (Optional) How to calculate the grouped samples.  The default is
+    'mean'.
+* ``query``: (Optional) A MongoDB query to restrict the dataset, only data
+    matching the query will be resampled.
+* ``format``: (Optional) Set to 'csv' to return a CSV of the resampled data.
 
 For example, to resample a dataset at monthly intervals by mean use the
 following command:
 
 .. code-block:: sh
 
-    curl -X PUT -d "date_column=submit_date&interval=M&how=mean" http://bamboo.io/datasets/8a3d74711475d8a51c84484fe73f24bd151242ea/resample
+    curl http://bamboo.io/datasets/8a3d74711475d8a51c84484fe73f24bd151242ea/resample?date_column=submit_date&interval=M&how=mean
 
 **returns:**
 
@@ -468,7 +387,7 @@ following command:
 
 .. code-block:: sh
 
-    curl -X PUT -d "win_type=boxcar&window=3" http://bamboo.io/datasets/8a3d74711475d8a51c84484fe73f24bd151242ea/rolling
+    curl http://bamboo.io/datasets/8a3d74711475d8a51c84484fe73f24bd151242ea/rolling?win_type=boxcar&window=3
 
 **returns:**
 
@@ -483,7 +402,7 @@ following command:
             'gps_alt': 'null',
             '_id': 'null',
             'gps_precision': 'null'
-        }, 
+        },
         {
             'gps_longitude': 'null',
             '_percentage_complete': 'null',
@@ -492,7 +411,7 @@ following command:
             'gps_alt': 'null',
             '_id': 'null',
             'gps_precision': 'null'
-        }, 
+        },
         {
             'gps_longitude': 28.97413979283333,
             '_percentage_complete': 'null',
@@ -505,6 +424,6 @@ following command:
     ]
 
 .. note::
-    
+
     The first ``window - 1`` rows will be null, because not enough
     data will have been seen to calculate rolling statistics for those rows.

@@ -48,31 +48,31 @@ class TestDatasetsUpdateWithAggs(TestAbstractDatasetsUpdate):
     def test_setup_datasets(self):
         self._verify_dataset(
             self.dataset1_id,
-            'updates_with_aggs/originals/dataset1.p')
+            'updates_with_aggs/originals/dataset1.pkl')
         self._verify_dataset(
             self.dataset2_id,
-            'updates_with_aggs/originals/dataset2.p')
+            'updates_with_aggs/originals/dataset2.pkl')
         self._verify_dataset(
             self.linked_dataset1_id,
-            'updates_with_aggs/originals/linked_dataset1.p')
+            'updates_with_aggs/originals/linked_dataset1.pkl')
         self._verify_dataset(
             self.merged_dataset1_id,
-            'updates_with_aggs/originals/merged_dataset1.p')
+            'updates_with_aggs/originals/merged_dataset1.pkl')
         self._verify_dataset(
             self.merged_dataset2_id,
-            'updates_with_aggs/originals/merged_dataset2.p')
+            'updates_with_aggs/originals/merged_dataset2.pkl')
 
     def test_datasets_update(self):
         self._put_row_updates(self.dataset2_id)
         self._verify_dataset(
             self.dataset2_id,
-            'updates_with_aggs/update/dataset2.p')
+            'updates_with_aggs/update/dataset2.pkl')
         self._verify_dataset(
             self.merged_dataset1_id,
-            'updates_with_aggs/update/merged_dataset1.p')
+            'updates_with_aggs/update/merged_dataset1.pkl')
         self._verify_dataset(
             self.linked_dataset1_id,
-            'updates_with_aggs/update/linked_dataset1.p')
+            'updates_with_aggs/update/linked_dataset1.pkl')
         self._verify_dataset(
             self.merged_dataset2_id,
-            'updates_with_aggs/update/merged_dataset2.p')
+            'updates_with_aggs/update/merged_dataset2.pkl')

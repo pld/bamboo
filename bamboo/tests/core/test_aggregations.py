@@ -32,10 +32,10 @@ class TestAggregations(TestCalculator):
     GROUP_TO_RESULTS = {
         'food_type':
         pickle.load(
-            open('tests/fixtures/good_eats_agg_group_food_type.p', 'rb')),
+            open('tests/fixtures/good_eats_agg_group_food_type.pkl', 'rb')),
         'food_type,rating':
         pickle.load(
-            open('tests/fixtures/good_eats_agg_group_food_type_rating.p',
+            open('tests/fixtures/good_eats_agg_group_food_type_rating.pkl',
                  'rb')),
     }
 

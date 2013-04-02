@@ -7,9 +7,9 @@ from urllib2 import URLError
 from mock import patch
 import simplejson as json
 
-from bamboo.controllers.abstract_controller import AbstractController
 from bamboo.controllers.datasets import Datasets
-from bamboo.lib.schema_builder import CARDINALITY, DATETIME, SIMPLETYPE
+from bamboo.lib.schema_builder import CARDINALITY, DATETIME, OLAP_TYPE,\
+    SIMPLETYPE
 from bamboo.models.dataset import Dataset
 from bamboo.tests.controllers.test_abstract_datasets import\
     TestAbstractDatasets
@@ -24,7 +24,7 @@ class TestDatasets(TestAbstractDatasets):
         self._file_uri = self._local_fixture_prefix(self._file_name)
         self.url = 'http://formhub.org/mberg/forms/good_eats/data.csv'
 
-    def _test_get_with_query_or_select(
+    def __test_get_with_query_or_select(
             self, query='{}', select=None, distinct=None, num_results=None,
             result_keys=None):
         dataset_id = self._post_file()
@@ -42,13 +42,13 @@ class TestDatasets(TestAbstractDatasets):
         if query != '{}':
             self.assertEqual(len(results), num_results)
 
-    def _upload_mocked_file(self, **kwargs):
+    def __upload_mocked_file(self, **kwargs):
         mock_uploaded_file = self._file_mock(self._file_path)
 
         return json.loads(self.controller.create(
             csv_file=mock_uploaded_file, **kwargs))
 
-    def _wait_for_dataset(self, dataset_id):
+    def __wait_for_dataset(self, dataset_id):
         while True:
             results = json.loads(self.controller.show(dataset_id))
             if len(results):
@@ -60,9 +60,13 @@ class TestDatasets(TestAbstractDatasets):
         return results
 
     def test_create_from_csv(self):
-        result = self._upload_mocked_file()
+        result = self.__upload_mocked_file()
         self.assertTrue(isinstance(result, dict))
         self.assertTrue(Dataset.ID in result)
+
+        # test parse type as date correctly
+        dframe = Dataset.find_one(result[Dataset.ID]).dframe()
+        self.assertTrue(isinstance(dframe.submit_date[0], datetime))
 
         results = self._test_summary_built(result)
         self._test_summary_no_group(results)
@@ -73,7 +77,7 @@ class TestDatasets(TestAbstractDatasets):
 
         _file_name = 'unicode.csv'
         self._file_path = self._file_path.replace(self._file_name, _file_name)
-        result = self._upload_mocked_file()
+        result = self.__upload_mocked_file()
 
         self.assertTrue(isinstance(result, dict))
         self.assertTrue(Dataset.ID in result)
@@ -89,11 +93,28 @@ class TestDatasets(TestAbstractDatasets):
 
         self._test_summary_built(result)
 
+    def test_create_from_csv_custom_na(self):
+        dframe_length = 4
+        _file_name = 'wp_data.csv'
+        self._file_path = self._file_path.replace(self._file_name, _file_name)
+        result = self.__upload_mocked_file(na_values=json.dumps(['n/a']))
+
+        self.assertTrue(isinstance(result, dict))
+        self.assertTrue(Dataset.ID in result)
+
+        dataset = Dataset.find_one(result[Dataset.ID])
+
+        self.assertEqual(Dataset.STATE_READY, dataset.state)
+        self.assertEqual(dframe_length, len(dataset.dframe()))
+        self.assertTrue(isinstance(dataset.dframe().wp_id[1], float))
+
+        self._test_summary_built(result)
+
     def test_create_from_csv_mixed_col(self):
         dframe_length = 8
         _file_name = 'good_eats_mixed.csv'
         self._file_path = self._file_path.replace(self._file_name, _file_name)
-        result = self._upload_mocked_file()
+        result = self.__upload_mocked_file()
 
         self.assertTrue(isinstance(result, dict))
         self.assertTrue(Dataset.ID in result)
@@ -110,7 +131,7 @@ class TestDatasets(TestAbstractDatasets):
         as nan, a float value."""
         _file_name = 'good_eats_nan_float.csv'
         self._file_path = self._file_path.replace(self._file_name, _file_name)
-        result = self._upload_mocked_file()
+        result = self.__upload_mocked_file()
 
         self.assertTrue(isinstance(result, dict))
         self.assertTrue(Dataset.ID in result)
@@ -119,7 +140,7 @@ class TestDatasets(TestAbstractDatasets):
         self._test_summary_no_group(results)
         results = json.loads(self.controller.info(self.dataset_id))
         simpletypes = pickle.load(
-            open(self._fixture_path_prefix('good_eats_simpletypes.p'), 'rb'))
+            open(self._fixture_path_prefix('good_eats_simpletypes.pkl'), 'rb'))
 
         for column_name, column_schema in results[Dataset.SCHEMA].items():
             self.assertEqual(
@@ -194,6 +215,10 @@ class TestDatasets(TestAbstractDatasets):
         self.assertTrue(isinstance(result, dict))
         self.assertTrue(Dataset.ID in result)
 
+        # test parse type as date correctly
+        dframe = Dataset.find_one(result[Dataset.ID]).dframe()
+        self.assertTrue(isinstance(dframe.submit_date[0], datetime))
+
         results = self._test_summary_built(result)
         self._test_summary_no_group(results)
 
@@ -206,7 +231,7 @@ class TestDatasets(TestAbstractDatasets):
         self.assertTrue(isinstance(result, dict))
         self.assertTrue(Dataset.ID in result)
 
-        self._wait_for_dataset(result[Dataset.ID])
+        self.__wait_for_dataset(result[Dataset.ID])
 
         results = self._test_summary_built(result)
         self._test_summary_no_group(results)
@@ -238,7 +263,7 @@ class TestDatasets(TestAbstractDatasets):
     def test_show_async(self):
         dataset_id = self._post_file()
 
-        results = self._wait_for_dataset(dataset_id)
+        results = self.__wait_for_dataset(dataset_id)
 
         self.assertTrue(isinstance(results, list))
         self.assertTrue(isinstance(results[0], dict))
@@ -254,17 +279,39 @@ class TestDatasets(TestAbstractDatasets):
         self.assertTrue(isinstance(results[0], dict))
         self.assertEqual(len(results), self.NUM_ROWS)
 
+    def test_show_index(self):
+        dataset_id = self._post_file()
+        results = json.loads(self.controller.show(dataset_id, index=True))
+
+        for row in results:
+            self.assertTrue('index' in row.keys())
+
     def test_info(self):
         dataset_id = self._post_file()
         results = json.loads(self.controller.info(dataset_id))
+        expected_keys = [Dataset.ID, Dataset.LABEL, Dataset.DESCRIPTION,
+                         Dataset.LICENSE, Dataset.ATTRIBUTION,
+                         Dataset.CREATED_AT, Dataset.PARENT_IDS,
+                         Dataset.UPDATED_AT,
+                         Dataset.SCHEMA, Dataset.NUM_ROWS, Dataset.NUM_COLUMNS,
+                         Dataset.STATE]
 
         self.assertTrue(isinstance(results, dict))
-        self.assertTrue(Dataset.SCHEMA in results.keys())
-        self.assertTrue(Dataset.NUM_ROWS in results.keys())
+
+        for key in expected_keys:
+            self.assertTrue(key in results.keys())
+
         self.assertEqual(results[Dataset.NUM_ROWS], self.NUM_ROWS)
-        self.assertTrue(Dataset.NUM_COLUMNS in results.keys())
         self.assertEqual(results[Dataset.NUM_COLUMNS], self.NUM_COLS)
         self.assertEqual(results[Dataset.STATE], Dataset.STATE_READY)
+        self.assertEqual(results[Dataset.PARENT_IDS], [])
+
+    def test_info_parent_ids(self):
+        self.dataset_id = self._post_file()
+        self._post_calculations(self.default_formulae + ['sum(amount)'])
+        agg_id = json.loads(self.controller.aggregations(self.dataset_id))['']
+        results = json.loads(self.controller.info(agg_id))
+        self.assertEqual([self.dataset_id], results[Dataset.PARENT_IDS])
 
     def test_info_cardinality(self):
         dataset_id = self._post_file()
@@ -274,8 +321,8 @@ class TestDatasets(TestAbstractDatasets):
         self.assertTrue(Dataset.SCHEMA in results.keys())
 
         schema = results[Dataset.SCHEMA]
-        cardinalities = pickle.load(
-            open(self._fixture_path_prefix('good_eats_cardinalities.p'), 'rb'))
+        cardinalities = pickle.load(open(
+            self._fixture_path_prefix('good_eats_cardinalities.pkl'), 'rb'))
 
         for key, column in schema.items():
             self.assertTrue(CARDINALITY in column.keys())
@@ -306,13 +353,13 @@ class TestDatasets(TestAbstractDatasets):
         self.assertTrue(Datasets.ERROR in results)
 
     def test_show_with_query(self):
-        self._test_get_with_query_or_select('{"rating": "delectible"}',
-                                            num_results=11)
+        self.__test_get_with_query_or_select('{"rating": "delectible"}',
+                                             num_results=11)
 
     @requires_async
     def test_show_with_query_async(self):
-        self._test_get_with_query_or_select('{"rating": "delectible"}',
-                                            num_results=0)
+        self.__test_get_with_query_or_select('{"rating": "delectible"}',
+                                             num_results=0)
 
     def test_show_with_query_limit_order_by(self):
 
@@ -348,27 +395,27 @@ class TestDatasets(TestAbstractDatasets):
         query = {
             'submit_date': {'$lt': mktime(datetime.now().timetuple())}
         }
-        self._test_get_with_query_or_select(
+        self.__test_get_with_query_or_select(
             query=json.dumps(query),
             num_results=self.NUM_ROWS)
         query = {
             'submit_date': {'$gt': mktime(datetime.now().timetuple())}
         }
-        self._test_get_with_query_or_select(
+        self.__test_get_with_query_or_select(
             query=json.dumps(query),
             num_results=0)
         date = mktime(datetime(2012, 2, 1, 0).timetuple())
         query = {
             'submit_date': {'$gt': date}
         }
-        self._test_get_with_query_or_select(
+        self.__test_get_with_query_or_select(
             query=json.dumps(query),
             num_results=4)
 
     def test_show_with_select(self):
-        self._test_get_with_query_or_select(select='{"rating": 1}',
-                                            num_results=self.NUM_ROWS,
-                                            result_keys=['rating'])
+        self.__test_get_with_query_or_select(select='{"rating": 1}',
+                                             num_results=self.NUM_ROWS,
+                                             result_keys=['rating'])
 
     def test_show_with_distinct(self):
         dataset_id = self._post_file()
@@ -378,10 +425,10 @@ class TestDatasets(TestAbstractDatasets):
         self.assertEqual(['delectible', 'epic_eat'], results)
 
     def test_show_with_select_and_query(self):
-        self._test_get_with_query_or_select('{"rating": "delectible"}',
-                                            '{"rating": 1}',
-                                            num_results=11,
-                                            result_keys=['rating'])
+        self.__test_get_with_query_or_select('{"rating": "delectible"}',
+                                             '{"rating": 1}',
+                                             num_results=11,
+                                             result_keys=['rating'])
 
     def test_aggregations_datasets_empty(self):
         self.dataset_id = self._post_file()
@@ -393,8 +440,7 @@ class TestDatasets(TestAbstractDatasets):
 
     def test_aggregations_datasets(self):
         self.dataset_id = self._post_file()
-        self._post_calculations(
-            formulae=self.default_formulae + ['sum(amount)'])
+        self._post_calculations(self.default_formulae + ['sum(amount)'])
 
         results = self._test_aggregations()
 
@@ -480,9 +526,9 @@ class TestDatasets(TestAbstractDatasets):
         dataset_id = self._post_file()
         result = json.loads(self.controller.delete(dataset_id))
 
-        self.assertTrue(AbstractController.SUCCESS in result)
+        self.assertTrue(Datasets.SUCCESS in result)
         self.assertEqual(
-            result[AbstractController.SUCCESS],
+            result[Datasets.SUCCESS],
             'deleted dataset: %s' % dataset_id)
 
     def test_delete_bad_id(self):
@@ -505,8 +551,8 @@ class TestDatasets(TestAbstractDatasets):
             self.controller.drop_columns(dataset_id, ['food_type']))
 
         self.assertTrue(isinstance(results, dict))
-        self.assertTrue(AbstractController.SUCCESS in results)
-        self.assertTrue('dropped' in results[AbstractController.SUCCESS])
+        self.assertTrue(Datasets.SUCCESS in results)
+        self.assertTrue('dropped' in results[Datasets.SUCCESS])
 
         results = json.loads(self.controller.show(dataset_id))
 
@@ -519,7 +565,7 @@ class TestDatasets(TestAbstractDatasets):
             self.controller.drop_columns('313514', ['food_type']))
 
         self.assertTrue(isinstance(results, dict))
-        self.assertTrue(AbstractController.ERROR in results)
+        self.assertTrue(Datasets.ERROR in results)
 
     def test_drop_columns_non_existent_column(self):
         dataset_id = self._post_file()
@@ -527,7 +573,7 @@ class TestDatasets(TestAbstractDatasets):
             self.controller.drop_columns(dataset_id, ['foo']))
 
         self.assertTrue(isinstance(results, dict))
-        self.assertTrue(AbstractController.ERROR in results)
+        self.assertTrue(Datasets.ERROR in results)
 
     def test_join_datasets(self):
         left_dataset_id = self._post_file()
@@ -537,7 +583,7 @@ class TestDatasets(TestAbstractDatasets):
             left_dataset_id, right_dataset_id, on=on))
 
         self.assertTrue(isinstance(results, dict))
-        self.assertTrue(AbstractController.SUCCESS in results.keys())
+        self.assertTrue(Datasets.SUCCESS in results.keys())
         self.assertTrue(Dataset.ID in results.keys())
 
         joined_dataset_id = results[Dataset.ID]
@@ -563,7 +609,7 @@ class TestDatasets(TestAbstractDatasets):
             left_dataset_id, right_dataset_id, on=on))
 
         self.assertTrue(isinstance(results, dict))
-        self.assertTrue(AbstractController.SUCCESS in results.keys())
+        self.assertTrue(Datasets.SUCCESS in results.keys())
         self.assertTrue(Dataset.ID in results.keys())
 
         joined_dataset_id = results[Dataset.ID]
@@ -586,9 +632,9 @@ class TestDatasets(TestAbstractDatasets):
             left_dataset_id, right_dataset_id, on='food_type'))
 
         self.assertTrue(isinstance(results, dict))
-        self.assertTrue(AbstractController.ERROR in results.keys())
-        self.assertTrue('right' in results[AbstractController.ERROR])
-        self.assertTrue('not unique' in results[AbstractController.ERROR])
+        self.assertTrue(Datasets.ERROR in results.keys())
+        self.assertTrue('right' in results[Datasets.ERROR])
+        self.assertTrue('not unique' in results[Datasets.ERROR])
 
     def test_join_datasets_on_col_not_in_lhs(self):
         left_dataset_id = self._post_file()
@@ -598,8 +644,8 @@ class TestDatasets(TestAbstractDatasets):
             left_dataset_id, right_dataset_id, on=on))
 
         self.assertTrue(isinstance(results, dict))
-        self.assertTrue(AbstractController.ERROR in results.keys())
-        self.assertTrue('left' in results[AbstractController.ERROR])
+        self.assertTrue(Datasets.ERROR in results.keys())
+        self.assertTrue('left' in results[Datasets.ERROR])
 
     def test_join_datasets_on_col_not_in_rhs(self):
         left_dataset_id = self._post_file()
@@ -609,8 +655,8 @@ class TestDatasets(TestAbstractDatasets):
             left_dataset_id, right_dataset_id, on=on))
 
         self.assertTrue(isinstance(results, dict))
-        self.assertTrue(AbstractController.ERROR in results.keys())
-        self.assertTrue('right' in results[AbstractController.ERROR])
+        self.assertTrue(Datasets.ERROR in results.keys())
+        self.assertTrue('right' in results[Datasets.ERROR])
 
     def test_bad_date(self):
         dataset_id = self._post_file('bad_date.csv')
@@ -643,7 +689,7 @@ class TestDatasets(TestAbstractDatasets):
     @requires_async
     def test_perishable_dataset(self):
         perish_after = 2
-        result = self._upload_mocked_file(perish=perish_after)
+        result = self.__upload_mocked_file(perish=perish_after)
         self.assertTrue(isinstance(result, dict))
         self.assertTrue(Dataset.ID in result)
         dataset_id = result[Dataset.ID]
@@ -679,89 +725,6 @@ class TestDatasets(TestAbstractDatasets):
             if kwargs.get(key):
                 self.assertEqual(value, kwargs[key])
 
-    def _build_resample_result(self):
-        dataset_id = self._post_file('good_eats.csv')
-        date_column = 'submit_date'
-        interval = 'W'
-        results = json.loads(self.controller.resample(
-            dataset_id, date_column, interval))
-
-        self.assertTrue(isinstance(results, list))
-
-        return [date_column, results]
-
-    def test_resample_only_shows_numeric(self):
-        date_column, results = self._build_resample_result()
-
-        permitted_keys = [
-            '_id',
-            '_percentage_complete',
-            'gps_alt',
-            'gps_precision',
-            'amount',
-            'gps_latitude',
-            'gps_longitude',
-        ] + [date_column]
-
-        for result in results:
-            for key in result.keys():
-                self.assertTrue(key in permitted_keys)
-
-    def test_resample_interval_correct(self):
-        date_column, results = self._build_resample_result()
-
-        last_date_time = None
-
-        for row in results:
-            new_date_time = row[date_column]['$date']
-
-            if last_date_time:
-                self.assertEqual(604800000, new_date_time - last_date_time)
-
-            last_date_time = new_date_time
-
-    def test_resample_non_date_column(self):
-        dataset_id = self._post_file('good_eats.csv')
-        result = json.loads(self.controller.resample(
-            dataset_id, 'amount', 'W'))
-
-        self.assertTrue(isinstance(result, dict))
-        self.assertTrue(Datasets.ERROR in result)
-        self.assertTrue('DatetimeIndex' in result[Datasets.ERROR])
-
-    def test_resample_bad_interval(self):
-        dataset_id = self._post_file('good_eats.csv')
-        interval = 'BAD'
-        result = json.loads(self.controller.resample(
-            dataset_id, 'submit_date', interval))
-
-        self.assertTrue(isinstance(result, dict))
-        self.assertTrue(Datasets.ERROR in result)
-        self.assertEqual(
-            'Could not evaluate %s' % interval, result[Datasets.ERROR])
-
-    def test_rolling_mean(self):
-        dataset_id = self._post_file('good_eats.csv')
-        window = 3
-        results = json.loads(self.controller.rolling(
-            dataset_id, window))
-
-        for i, row in enumerate(results):
-            if i < window - 1:
-                for value in row.values():
-                    self.assertEqual('null', value)
-            else:
-                self.assertTrue(isinstance(row['amount'], float))
-
-    def test_rolling_bad_type(self):
-        dataset_id = self._post_file('good_eats.csv')
-        results = json.loads(self.controller.rolling(
-            dataset_id, 3, win_type='BAD'))
-
-        self.assertTrue(isinstance(results, dict))
-        self.assertTrue(Datasets.ERROR in results)
-        self.assertEqual('Unknown window type.', results[Datasets.ERROR])
-
     def test_count(self):
         dataset_id = self._post_file()
 
@@ -794,3 +757,54 @@ class TestDatasets(TestAbstractDatasets):
             count=True))
 
         self.assertEqual(results, 11)
+
+    def test_set_olap_type(self):
+        new_olap_type = 'dimension'
+        column = 'amount'
+
+        dataset_id = self._post_file()
+
+        results = json.loads(self.controller.info(dataset_id))
+        expected_schema = results[Dataset.SCHEMA]
+        expected_schema[column][OLAP_TYPE] = new_olap_type
+
+        # set OLAP Type
+        results = json.loads(self.controller.set_olap_type(
+            dataset_id, column, new_olap_type))
+        self.assertTrue(Datasets.SUCCESS in results.keys())
+
+        # Check new schema
+        results = json.loads(self.controller.info(dataset_id))
+        new_schema = results[Dataset.SCHEMA]
+        self.assertEqual(expected_schema, new_schema)
+
+        # set OLAP Type back
+        new_olap_type = 'measure'
+        expected_schema[column][OLAP_TYPE] = new_olap_type
+        results = json.loads(self.controller.set_olap_type(
+            dataset_id, column, new_olap_type))
+        self.assertTrue(Datasets.SUCCESS in results.keys())
+
+        # Check new schema
+        results = json.loads(self.controller.info(dataset_id))
+        new_schema = results[Dataset.SCHEMA]
+        self.assertEqual(expected_schema, new_schema)
+
+    def test_set_olap_type_fails_for_dimension(self):
+        new_olap_type = 'measure'
+        column = 'food_type'
+
+        dataset_id = self._post_file()
+
+        results = json.loads(self.controller.info(dataset_id))
+        expected_schema = results[Dataset.SCHEMA]
+
+        # set OLAP Type
+        results = json.loads(self.controller.set_olap_type(
+            dataset_id, column, new_olap_type))
+        self.assertTrue(Datasets.ERROR in results.keys())
+
+        # Check schema does not change
+        results = json.loads(self.controller.info(dataset_id))
+        new_schema = results[Dataset.SCHEMA]
+        self.assertEqual(expected_schema, new_schema)

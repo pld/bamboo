@@ -31,19 +31,19 @@ class TestDatasetsUpdateWithCalcs(TestAbstractDatasetsUpdate):
     def test_setup_datasets(self):
         self._verify_dataset(
             self.dataset1_id,
-            'updates_with_calcs/originals/dataset1.p')
+            'updates_with_calcs/originals/dataset1.pkl')
         self._verify_dataset(
             self.dataset2_id,
-            'updates_with_calcs/originals/dataset2.p')
+            'updates_with_calcs/originals/dataset2.pkl')
         self._verify_dataset(
             self.linked_dataset1_id,
-            'updates_with_calcs/originals/linked_dataset1.p')
+            'updates_with_calcs/originals/linked_dataset1.pkl')
         self._verify_dataset(
             self.merged_dataset1_id,
-            'updates_with_calcs/originals/merged_dataset1.p')
+            'updates_with_calcs/originals/merged_dataset1.pkl')
         self._verify_dataset(
             self.merged_dataset2_id,
-            'updates_with_calcs/originals/merged_dataset2.p')
+            'updates_with_calcs/originals/merged_dataset2.pkl')
 
     def _add_calculations(self):
         self.calculations.create(self.dataset2_id,
@@ -60,16 +60,16 @@ class TestDatasetsUpdateWithCalcs(TestAbstractDatasetsUpdate):
                                  'double amount')
         self._verify_dataset(
             self.dataset2_id,
-            'updates_with_calcs/calcs/dataset2.p')
+            'updates_with_calcs/calcs/dataset2.pkl')
         self._verify_dataset(
             self.linked_dataset1_id,
-            'updates_with_calcs/calcs/linked_dataset1.p')
+            'updates_with_calcs/calcs/linked_dataset1.pkl')
         self._verify_dataset(
             self.merged_dataset1_id,
-            'updates_with_calcs/calcs/merged_dataset1.p')
+            'updates_with_calcs/calcs/merged_dataset1.pkl')
         self._verify_dataset(
             self.merged_dataset2_id,
-            'updates_with_calcs/calcs/merged_dataset2.p')
+            'updates_with_calcs/calcs/merged_dataset2.pkl')
 
     def test_datasets_add_calculations(self):
         self._add_calculations()

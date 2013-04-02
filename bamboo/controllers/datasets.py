@@ -7,7 +7,9 @@ from bamboo.core.summary import ColumnTypeError
 from bamboo.lib.exceptions import ArgumentError
 from bamboo.lib.jsontools import safe_json_loads
 from bamboo.lib.utils import parse_int
+from bamboo.lib.query_args import QueryArgs
 from bamboo.models.dataset import Dataset
+from bamboo.models.observation import Observation
 
 
 class Datasets(AbstractController):
@@ -78,7 +80,7 @@ class Datasets(AbstractController):
 
         return self._safe_get_and_call(dataset_id, action)
 
-    def summary(self, dataset_id, query=None, select=None,
+    def summary(self, dataset_id, query={}, select=None,
                 group=None, limit=0, order_by=None, callback=False):
         """Return a summary of the dataset ID given the passed parameters.
 
@@ -109,8 +111,8 @@ class Datasets(AbstractController):
                 raise ArgumentError('dataset is not finished importing')
 
             limit = parse_int(limit, 0)
-            query = self._parse_query(query)
-            select = self._parse_select(select, required=True)
+            query = self.__parse_query(query)
+            select = self.__parse_select(select, required=True)
 
             groups = dataset.split_groups(group)
 
@@ -118,8 +120,9 @@ class Datasets(AbstractController):
             if select:
                 select.update(dict(zip(groups, [1] * len(groups))))
 
-            dframe = dataset.dframe(query=query, select=select, limit=limit,
-                                    order_by=order_by)
+            query_args = QueryArgs(
+                query=query, select=select, limit=limit, order_by=order_by)
+            dframe = dataset.dframe(query_args)
 
             return dataset.summarize(dframe, groups=groups,
                                      no_cache=query or select)
@@ -143,7 +146,8 @@ class Datasets(AbstractController):
         return self._safe_get_and_call(dataset_id, action, callback=callback)
 
     def show(self, dataset_id, query=None, select=None, distinct=None, limit=0,
-             order_by=None, format=None, callback=False, count=False):
+             order_by=None, format=None, callback=False, count=False,
+             index=False):
         """ Return rows for `dataset_id`, matching the passed parameters.
 
         Retrieve the dataset by ID then limit that data using the optional
@@ -159,30 +163,32 @@ class Datasets(AbstractController):
         :param format: Format of output data, 'json' or 'csv'
         :param callback: A JSONP callback function to wrap the result in.
         :param count: Return the count for this query.
+        :param index: Include index with data.
 
         :returns: An error message if `dataset_id` does not exist or the JSON
             for query or select is improperly formatted. Otherwise a JSON
             string of the rows matching the parameters.
         """
-        content_type = self._content_type_for_format(format)
+        content_type = self.__content_type_for_format(format)
 
         def action(dataset, limit=limit, query=query, select=select):
             limit = parse_int(limit, 0)
-            query = self._parse_query(query)
-            select = self._parse_select(select)
+            query = self.__parse_query(query)
+            select = self.__parse_select(select)
+
+            query_args = QueryArgs(
+                query=query, select=select, distinct=distinct,
+                limit=limit, order_by=order_by)
 
             if count:
-                return dataset.count(query=query, distinct=distinct,
-                                     limit=limit)
+                return dataset.count(query_args)
             else:
-                dframe = dataset.dframe(
-                    query=query, select=select, distinct=distinct,
-                    limit=limit, order_by=order_by)
+                dframe = dataset.dframe(query_args, index=index)
 
                 if distinct:
                     return sorted(dframe[0].tolist())
 
-            return self._dataframe_as_content_type(content_type, dframe)
+            return self.__dataframe_as_content_type(content_type, dframe)
 
         return self._safe_get_and_call(
             dataset_id, action, callback=callback, content_type=content_type)
@@ -190,7 +196,7 @@ class Datasets(AbstractController):
     def merge(self, dataset_ids, mapping=None):
         """Merge the datasets with the dataset_ids in `datasets`.
 
-        :param dataset: A JSON encoded array of dataset IDs for existing
+        :param dataset_ids: A JSON encoded array of dataset IDs for existing
             datasets.
         :param mapping: An optional mapping from original column names to
             destination names.
@@ -213,7 +219,7 @@ class Datasets(AbstractController):
             None, action, exceptions=(MergeError,), error = 'merge failed')
 
     def create(self, url=None, csv_file=None, json_file=None, schema=None,
-               perish=0):
+               na_values=[], perish=0):
         """Create a dataset by URL, CSV or schema file.
 
         If `url` is provided, create a dataset by downloading a CSV from that
@@ -245,7 +251,8 @@ class Datasets(AbstractController):
         :param csv_file: An uploaded CSV file to read from.
         :param json_file: An uploaded JSON file to read from.
         :param schema: A SDF schema file (JSON)
-        :param perish: Number of seconds after which to dlete the dataset.
+        :param na_values: A JSON list of values to interpret as missing data.
+        :param perish: Number of seconds after which to delete the dataset.
 
         :returns: An error message if `url`, `csv_file`, or `scehma` are not
             provided. An error message if an improperly formatted value raises
@@ -265,11 +272,13 @@ class Datasets(AbstractController):
 
                 if schema:
                     dataset.import_schema(schema)
+                if na_values:
+                    na_values = safe_json_loads(na_values)
 
                 if url:
-                    dataset.import_from_url(url)
+                    dataset.import_from_url(url, na_values=na_values)
                 elif csv_file:
-                    dataset.import_from_csv(csv_file)
+                    dataset.import_from_csv(csv_file, na_values=na_values)
                 elif json_file:
                     dataset.import_from_json(json_file)
 
@@ -284,7 +293,7 @@ class Datasets(AbstractController):
             error = 'could not get a filehandle for: %s' % csv_file
 
         self.set_response_params(result, success_status_code=201)
-        return self.dump_or_error(result, error)
+        return self._dump_or_error(result, error)
 
     def update(self, dataset_id, update):
         """Update the `dataset_id` with the new rows as JSON.
@@ -362,40 +371,115 @@ class Datasets(AbstractController):
             dataset_id, action, exceptions=(KeyError, NonUniqueJoinError))
 
     def resample(self, dataset_id, date_column, interval, how='mean',
-                 format=None):
+                 query={}, format=None):
         """Resample a dataset."""
-        content_type = self._content_type_for_format(format)
+        content_type = self.__content_type_for_format(format)
 
-        def action(dataset):
-            dframe = dataset.resample(date_column, interval, how)
-            return self._dataframe_as_content_type(content_type, dframe)
+        def action(dataset, query=query):
+            query = self.__parse_query(query)
+
+            dframe = dataset.resample(date_column, interval, how, query=query)
+            return self.__dataframe_as_content_type(content_type, dframe)
 
         return self._safe_get_and_call(dataset_id, action,
                                        exceptions=(TypeError,),
                                        content_type=content_type)
 
+    def set_olap_type(self, dataset_id, column, olap_type):
+        """Set the OLAP Type for this `column` of dataset.
+
+        Only columns with an original OLAP Type of 'measure' can be modified.
+        This includes columns with Simple Type integer, float, and datetime.
+
+        :param dataset_id: The ID of the dataset to modify.
+        :param column: The column to set the OLAP Type for.
+        :param olap_type: The OLAP Type to set. Must be 'dimension' or
+            'measure'.
+        """
+
+        def action(dataset):
+            dataset.set_olap_type(column, olap_type)
+
+            return {self.SUCCESS: 'set OLAP Type for column "%s" to "%s".' % (
+                column, olap_type),
+                Dataset.ID: dataset_id}
+
+        return self._safe_get_and_call(dataset_id, action)
+
     def rolling(self, dataset_id, window, win_type='boxcar',
                 format=None):
         """Calculate the rolling window over a dataset."""
-        content_type = self._content_type_for_format(format)
+        content_type = self.__content_type_for_format(format)
 
         def action(dataset):
-            dframe = dataset.rolling(win_type, window)
-            return self._dataframe_as_content_type(content_type, dframe)
+            dframe = dataset.rolling(str(win_type), int(window))
+            return self.__dataframe_as_content_type(content_type, dframe)
 
         return self._safe_get_and_call(dataset_id, action,
                                        content_type=content_type)
 
-    def _dataframe_as_content_type(self, content_type, dframe):
+    def row_delete(self, dataset_id, index):
+        """Delete a row from dataset by index.
+
+        :param dataset_id: The dataset to modify.
+        :param index: The index to delete in the dataset.
+        """
+        def action(dataset):
+            dataset.delete_observation(parse_int(index))
+
+            return {
+                self.SUCCESS: 'Deleted row with index "%s".' % index,
+                Dataset.ID: dataset_id}
+
+        return self._safe_get_and_call(dataset_id, action)
+
+    def row_show(self, dataset_id, index):
+        """Show a row by index.
+
+        :param dataset_id: The dataset to fetch a row from.
+        :param index: The index of the row to fetch.
+        """
+        def action(dataset):
+            row = Observation.find_one(dataset, parse_int(index))
+
+            if row:
+                return row.clean_record
+
+        error_message = "No row exists at index %s" % index
+        return self._safe_get_and_call(dataset_id, action, error=error_message)
+
+    def row_update(self, dataset_id, index, data):
+        """Update a row in dataset by index.
+
+        Update the row in dataset identified by `index` by updating it with the
+        JSON dict `data`.  If there is a column in the DataFrame for which
+        there is not a corresponding key in `data` that column will not be
+        modified.
+
+        :param dataset_id: The dataset to modify.
+        :param index: The index to update.
+        :param data: A JSON dict to update the row with.
+        """
+        def action(dataset, data=data):
+            data = safe_json_loads(data)
+            Observation.update(dataset, int(index), data)
+
+            return {
+                self.SUCCESS: 'Updated row with index "%s".' % index,
+                Dataset.ID: dataset_id}
+
+        return self._safe_get_and_call(dataset_id, action)
+
+    def __dataframe_as_content_type(self, content_type, dframe):
         if content_type == self.CSV:
             return dframe.to_csv_as_string()
         else:
             return dframe.to_jsondict()
 
-    def _content_type_for_format(self, format):
+    def __content_type_for_format(self, format):
         return self.CSV if format == self.CSV else self.JSON
 
-    def _parse_select(self, select, required=False):
+    def __parse_select(self, select, required=False):
         if required and select is None:
             raise ArgumentError('no select')
 
@@ -411,8 +495,5 @@ class Datasets(AbstractController):
 
         return select
 
-    def _parse_query(self, query):
-        if query:
-            query = safe_json_loads(query, error_title='string')
-
-        return query
+    def __parse_query(self, query):
+        return safe_json_loads(query, error_title='string') if query else {}

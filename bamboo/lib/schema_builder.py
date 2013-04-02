@@ -4,6 +4,7 @@ import re
 
 from bamboo.core.frame import BAMBOO_RESERVED_KEYS
 from bamboo.core.parser import Parser
+from bamboo.lib.exceptions import ArgumentError
 from bamboo.lib.mongo import MONGO_RESERVED_KEY_STRS, reserve_encoded
 
 
@@ -44,12 +45,10 @@ SIMPLETYPE_TO_DTYPE = {
     FLOAT: np.float64,
     INTEGER: np.int64,
 }
+SIMPLETYPE_TO_OLAP_TYPE = {
+    v: DTYPE_TO_OLAP_TYPE[k] for (k, v) in DTYPE_TO_SIMPLETYPE.items()}
 
 RE_ENCODED_COLUMN = re.compile(ur'(?u)\W')
-
-
-def is_simpletype(col_schema, simpletype):
-    return col_schema[SIMPLETYPE] == simpletype
 
 
 class Schema(dict):
@@ -69,19 +68,34 @@ class Schema(dict):
     @property
     def numeric_slugs(self):
         return [slug for slug, col_schema in self.items()
-                if is_simpletype(col_schema, FLOAT)]
+                if col_schema[SIMPLETYPE] in [INTEGER, FLOAT]]
 
     def cardinality(self, column):
         if self.is_dimension(column):
             return self[column].get(CARDINALITY)
 
-    def is_date_simpletype(self, column_schema):
-        column_schema = self[column_schema]
-        return is_simpletype(column_schema, DATETIME)
+    def convert_type(self, slug, value):
+        column_schema = self.get(slug)
+        if column_schema:
+            type_func = SIMPLETYPE_TO_DTYPE.get(column_schema[SIMPLETYPE])
+            if type_func:
+                value = type_func(value)
+
+        return value
+
+    def is_date_simpletype(self, column):
+        return self[column][SIMPLETYPE] == DATETIME
 
     def is_dimension(self, column):
         col_schema = self.get(column)
+
         return col_schema and col_schema[OLAP_TYPE] == DIMENSION
+
+    def is_measurable(self, column):
+        col_schema = self.get(column)
+
+        return col_schema and (
+            SIMPLETYPE_TO_OLAP_TYPE[col_schema[SIMPLETYPE]] == MEASURE)
 
     def rebuild(self, dframe, overwrite=False):
         """Rebuild a schema for a dframe.
@@ -107,21 +121,30 @@ class Schema(dict):
         """
         labels_to_slugs = self.labels_to_slugs
 
-        # if column name is not in map assume it is already slugified
-        # (i.e. NOT a label)
         return {
             column: labels_to_slugs[column] for column in
             dframe.columns.tolist() if self._resluggable_column(
                 column, labels_to_slugs, dframe)
         }
 
-    def convert_type(self, slug, value):
-        column_schema = self.get(slug)
-        if column_schema:
-            type_func = SIMPLETYPE_TO_DTYPE.get(column_schema[SIMPLETYPE])
-            if type_func:
-                value = type_func(value)
-        return value
+    def set_olap_type(self, column, olap_type):
+        """Set the OLAP Type for this `column` of schema.
+
+        Only columns with an original OLAP Type of 'measure' can be modified.
+        This includes columns with Simple Type integer, float, and datetime.
+
+        :param column: The column to set the OLAP Type for.
+        :param olap_type: The OLAP Type to set. Must be 'dimension' or
+            'measure'.
+        :raises: `ArgumentError` if trying to set the OLAP Type of an column
+          whose OLAP Type was not originally a 'measure'.
+        """
+        if not self.is_measurable(column):
+            raise ArgumentError(
+                'To set the OLAP Type, column "%s" must be measurable.' %
+                column)
+
+        self[column][OLAP_TYPE] = olap_type
 
     def _resluggable_column(self, column, labels_to_slugs, dframe):
         """Test if column should be slugged.
@@ -139,8 +162,7 @@ class Schema(dict):
         return (column in labels_to_slugs.keys() and (
                 not column in labels_to_slugs.values() or (
                     labels_to_slugs[column] != column and
-                    labels_to_slugs[column] not in dframe.columns
-                )))
+                    labels_to_slugs[column] not in dframe.columns)))
 
 
 def schema_from_dframe(dframe, schema=None):
@@ -168,7 +190,6 @@ def schema_from_dframe(dframe, schema=None):
                         LABEL]
 
     encoded_names = dict(zip(column_names, _slugify_columns(column_names)))
-
     schema = Schema()
 
     for (name, dtype) in dtypes.items():
@@ -240,4 +261,5 @@ def _simpletype_for_data_and_dtype(column, dtype):
 
 def _type_for_data_and_dtypes(type_map, column, dtype_type):
     has_datetime = any([isinstance(field, datetime) for field in column])
+
     return type_map[datetime if has_datetime else dtype_type]

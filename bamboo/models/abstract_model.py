@@ -90,33 +90,19 @@ class AbstractModel(object):
         return model.save(*args)
 
     @classmethod
-    def find(cls, query, select=None, as_dict=False,
-             limit=0, order_by=None, as_cursor=False):
+    def find(cls, query_args, as_dict=False, as_cursor=False):
         """An interface to MongoDB's find functionality.
 
-        :param query: A query to pass to MongoDB.
-        :param select: An optional select statement to pass to MongoDB.
+        :param query_args: An optional QueryArgs to hold the query arguments.
+        :param as_cursor: If true, return the cursor.
         :param as_dict: If true, return dicts and not model instances.
-        :param limit: Limit on the number of rows returned.
-        :param order_by: Sort resulting rows according to a column value and
-            sign indicating ascending or descending.
-
-        Examples of `order_by`:
-
-          - ``order_by='mycolumn'``
-          - ``order_by='-mycolumn'``
 
         :returns: A list of dicts or model instances for each row returned.
         """
-        if order_by:
-            if order_by[0] in ('-', '+'):
-                sort_dir, field = -1 if order_by[0] == '-' else 1, order_by[1:]
-            else:
-                sort_dir, field = 1, order_by
-            order_by = [(field, sort_dir)]
-
-        cursor = cls.collection.find(
-            query, select, sort=order_by, limit=limit)
+        cursor = cls.collection.find(query_args.query,
+                                     query_args.select,
+                                     sort=query_args.order_by,
+                                     limit=query_args.limit)
 
         if as_cursor:
             return cursor
@@ -148,7 +134,7 @@ class AbstractModel(object):
 
         batch_size = cls.DB_SAVE_BATCH_SIZE
 
-        cls._batch_command_wrapper(command, dframe, batch_size)
+        cls.__batch_command_wrapper(command, dframe, batch_size)
 
     @classmethod
     def batch_update(cls, dframe):
@@ -166,22 +152,22 @@ class AbstractModel(object):
 
         batch_size = cls.DB_SAVE_BATCH_SIZE
 
-        cls._batch_command_wrapper(command, dframe, batch_size)
+        cls.__batch_command_wrapper(command, dframe, batch_size)
 
     @classmethod
-    def _batch_command_wrapper(cls, command, dframe, batch_size):
+    def __batch_command_wrapper(cls, command, dframe, batch_size):
         try:
-            cls._batch_command(command, dframe, batch_size)
+            cls.__batch_command(command, dframe, batch_size)
         except AutoReconnect:
             batch_size /= 2
 
             # If batch size drop is less than MIN_BATCH_SIZE, assume the
             # records are too large or there is another error and fail.
             if batch_size >= cls.MIN_BATCH_SIZE:
-                cls._batch_command_wrapper(command, dframe, batch_size)
+                cls.__batch_command_wrapper(command, dframe, batch_size)
 
     @classmethod
-    def _batch_command(cls, command, dframe, batch_size):
+    def __batch_command(cls, command, dframe, batch_size):
         batches = int(ceil(float(len(dframe)) / batch_size))
 
         for batch in xrange(0, batches):

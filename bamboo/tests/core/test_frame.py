@@ -59,11 +59,11 @@ class TestFrame(TestBase):
         for key in BAMBOO_RESERVED_KEYS:
             self.assertFalse(key in self.bframe.columns)
 
-    def test_remove_bamboo_reserved_keys_not_parent(self):
+    def test_remove_bamboo_reserved_keys_exclusion(self):
         self._add_bamboo_reserved_keys()
         for key in BAMBOO_RESERVED_KEYS:
             self.assertTrue(key in self.bframe.columns)
-        self.bframe.remove_bamboo_reserved_keys(True)
+        self.bframe.remove_bamboo_reserved_keys([PARENT_DATASET_ID])
         for key in BAMBOO_RESERVED_KEYS:
             if key == PARENT_DATASET_ID:
                 self.assertTrue(key in self.bframe.columns)

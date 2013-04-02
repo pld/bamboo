@@ -7,6 +7,7 @@ from scipy.stats import percentileofscore
 
 from bamboo.lib.datetools import safe_parse_date_to_unix_time,\
     parse_str_to_unix_time
+from bamboo.lib.query_args import QueryArgs
 
 
 class EvalTerm(object):
@@ -18,11 +19,11 @@ class EvalTerm(object):
 
     def operator_operands(self, tokenlist):
         """Generator to extract operators and operands in pairs."""
-        _it = iter(tokenlist)
+        it = iter(tokenlist)
 
         while 1:
             try:
-                yield (_it.next(), _it.next())
+                yield (it.next(), it.next())
             except StopIteration:
                 break
 
@@ -39,24 +40,20 @@ class EvalTerm(object):
 class EvalConstant(EvalTerm):
     """Class to evaluate a parsed constant or variable."""
 
-    def _cast_to_float(self, value):
+    def __cast_to_float(self, value):
         return np.float64(value)
 
     def eval(self, row, context):
         try:
-            return self._cast_to_float(self.value)
+            return self.__cast_to_float(self.value)
         except ValueError:
             # it may be a variable
             field = self.field(row)
-            # XXX do we need this anymore?
-            #if field:
-                # it is a variable, save as dependency# 
-                #context.dependent_columns.add(self.value)
 
             # test is date and parse as date
-            return self._parse_field(field, context)
+            return self.__parse_field(field, context)
 
-    def _parse_field(self, field, context):
+    def __parse_field(self, field, context):
             if context.dataset and context.dataset.schema.is_date_simpletype(self.value):
                 field = safe_parse_date_to_unix_time(field)
 
@@ -68,7 +65,7 @@ class EvalConstant(EvalTerm):
     def dependent_columns(self, context):
         # if value is not number or date, add as a column
         try:
-            self._cast_to_float(self.value)
+            self.__cast_to_float(self.value)
             return []
         except ValueError:
             return [self.value]
@@ -143,10 +140,9 @@ class EvalExpOp(EvalBinaryArithOp):
 
 
 class EvalComparisonOp(EvalTerm):
-    """Class to evaluate comparison expressions.
-    """
+    """Class to evaluate comparison expressions."""
 
-    opMap = {
+    op_map = {
         "<": lambda a, b: a < b,
         "<=": lambda a, b: a <= b,
         ">": lambda a, b: a > b,
@@ -159,7 +155,7 @@ class EvalComparisonOp(EvalTerm):
         val1 = np.float64(self.value[0].eval(row, context))
 
         for oper, val in self.operator_operands(self.value[1:]):
-            fn = EvalComparisonOp.opMap[oper]
+            fn = EvalComparisonOp.op_map[oper]
             val2 = np.float64(val.eval(row, context))
             if not fn(val1, val2):
                 break
@@ -296,8 +292,8 @@ class EvalPercentile(EvalFunction):
     def eval(self, row, context):
         # parse date from string
         col = self.value.value
-        select = {col: 1}
-        column = context.dataset.dframe(select=select)[col]
+        query_args = QueryArgs(select={col: 1})
+        column = context.dataset.dframe(query_args=query_args)[col]
         field = self.value.field(row)
         return percentileofscore(column, field)
 

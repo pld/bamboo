@@ -1,9 +1,8 @@
-
 from subprocess import check_output
 
 # versioning
 VERSION_MAJOR = 0.5
-VERSION_MINOR = 6
+VERSION_MINOR = 8
 VERSION_NUMBER = '%.1f.%d' % (VERSION_MAJOR, VERSION_MINOR)
 VERSION_DESCRIPTION = 'alpha'
 

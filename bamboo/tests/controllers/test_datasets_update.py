@@ -33,18 +33,18 @@ class TestDatasetsUpdate(TestAbstractDatasetsUpdate):
 
     def test_setup_datasets(self):
         self._verify_dataset(self.dataset1_id,
-                             'updates/originals/dataset1.p')
+                             'updates/originals/dataset1.pkl')
         self._verify_dataset(self.dataset2_id,
-                             'updates/originals/dataset2.p')
+                             'updates/originals/dataset2.pkl')
         self._verify_dataset(
             self.linked_dataset1_id,
-            'updates/originals/linked_dataset1.p')
+            'updates/originals/linked_dataset1.pkl')
         self._verify_dataset(
             self.merged_dataset1_id,
-            'updates/originals/merged_dataset1.p')
+            'updates/originals/merged_dataset1.pkl')
         self._verify_dataset(
             self.merged_dataset2_id,
-            'updates/originals/merged_dataset2.p')
+            'updates/originals/merged_dataset2.pkl')
 
     def _test_update1(self):
         for dataset_id in [self.merged_dataset1_id, self.merged_dataset2_id]:
@@ -54,13 +54,13 @@ class TestDatasetsUpdate(TestAbstractDatasetsUpdate):
                 self.assertTrue(PARENT_DATASET_ID in row.keys())
 
         self._verify_dataset(self.dataset1_id,
-                             'updates/update1/dataset1.p')
+                             'updates/update1/dataset1.pkl')
         self._verify_dataset(
             self.merged_dataset1_id,
-            'updates/update1/merged_dataset1.p')
+            'updates/update1/merged_dataset1.pkl')
         self._verify_dataset(
             self.merged_dataset2_id,
-            'updates/update1/merged_dataset2.p')
+            'updates/update1/merged_dataset2.pkl')
 
     def test_datasets_update1(self):
         self._put_row_updates(self.dataset1_id)
@@ -72,22 +72,22 @@ class TestDatasetsUpdate(TestAbstractDatasetsUpdate):
         self._put_row_updates(self.dataset2_id)
         self._verify_dataset(
             self.merged_dataset1_id,
-            'updates/update2/merged_dataset1.p')
+            'updates/update2/merged_dataset1.pkl')
         self._verify_dataset(
             self.linked_dataset1_id,
-            'updates/update2/linked_dataset1.p')
+            'updates/update2/linked_dataset1.pkl')
         self._verify_dataset(
             self.merged_dataset2_id,
-            'updates/update2/merged_dataset2.p')
+            'updates/update2/merged_dataset2.pkl')
 
     def test_datasets_update_merged(self):
         self._put_row_updates(self.merged_dataset1_id)
         self._verify_dataset(
             self.merged_dataset1_id,
-            'updates/update_merged/merged_dataset1.p')
+            'updates/update_merged/merged_dataset1.pkl')
         self._verify_dataset(
             self.merged_dataset2_id,
-            'updates/update_merged/merged_dataset2.p')
+            'updates/update_merged/merged_dataset2.pkl')
 
     def test_datasets_update_aggregated_dataset(self):
         self._put_row_updates(
@@ -95,17 +95,17 @@ class TestDatasetsUpdate(TestAbstractDatasetsUpdate):
             file_name='updates/update_agg/update.json')
         self._verify_dataset(
             self.linked_dataset1_id,
-            'updates/update_agg/linked_dataset1.p')
+            'updates/update_agg/linked_dataset1.pkl')
         self._verify_dataset(
             self.merged_dataset2_id,
-            'updates/update_agg/merged_dataset2.p')
+            'updates/update_agg/merged_dataset2.pkl')
         self._put_row_updates(self.dataset2_id)
         self._verify_dataset(
             self.dataset2_id,
-            'updates/update_agg2/dataset2.p')
+            'updates/update_agg2/dataset2.pkl')
         self._verify_dataset(
             self.linked_dataset1_id,
-            'updates/update_agg2/linked_dataset1.p')
+            'updates/update_agg2/linked_dataset1.pkl')
         self._verify_dataset(
             self.merged_dataset2_id,
-            'updates/update_agg2/merged_dataset2.p')
+            'updates/update_agg2/merged_dataset2.pkl')

@@ -7,6 +7,7 @@ from bamboo.core.calculator import Calculator
 from bamboo.core.frame import DATASET_ID
 from bamboo.lib.async import call_async
 from bamboo.lib.exceptions import ArgumentError
+from bamboo.lib.query_args import QueryArgs
 from bamboo.lib.schema_builder import make_unique
 from bamboo.models.abstract_model import AbstractModel
 
@@ -27,20 +28,21 @@ class DependencyError(Exception):
 
 
 @task(ignore_result=True)
-def delete_task(calculation, dataset, slug):
+def delete_task(calculation, dataset):
     """Background task to delete `calculation` and columns in its dataset.
-
-    Args:
 
     :param calculation: Calculation to delete.
     :param dataset: Dataset for this calculation.
-
     """
-    dframe = dataset.dframe(keep_parent_ids=True)
-    del dframe[slug]
-    dataset.replace_observations(dframe, overwrite=True)
+    slug = dataset.schema.labels_to_slugs.get(calculation.name)
+
+    if slug:
+        dframe = dataset.dframe(keep_parent_ids=True)
+        del dframe[slug]
+        dataset.replace_observations(dframe, overwrite=True)
+        dataset.clear_summary_stats(column=slug)
+
     calculation.remove_dependencies()
-    dataset.clear_summary_stats(column=slug)
 
     super(calculation.__class__, calculation).delete({
         DATASET_ID: calculation.dataset_id,
@@ -133,17 +135,11 @@ class Calculation(AbstractModel):
         return self.record.get(self.DEPENDENT_CALCULATIONS, [])
 
     def add_dependency(self, name):
-        self._add_and_update_set(self.DEPENDENCIES, self.dependencies, name)
+        self.__add_and_update_set(self.DEPENDENCIES, self.dependencies, name)
 
     def add_dependent_calculation(self, name):
-        self._add_and_update_set(self.DEPENDENT_CALCULATIONS,
-                                 self.dependent_calculations, name)
-
-    def _add_and_update_set(self, link_key, existing, new):
-        new_list = list(set(existing + [new]))
-
-        if new_list != existing:
-            self.update({link_key: new_list})
+        self.__add_and_update_set(self.DEPENDENT_CALCULATIONS,
+                                  self.dependent_calculations, name)
 
     def remove_dependent_calculation(self, name):
         new_dependent_calcs = self.dependent_calculations
@@ -184,13 +180,7 @@ class Calculation(AbstractModel):
                     'Aggregation with group "%s" does not exist for '
                     'dataset' % self.group)
 
-        slug = dataset.schema.labels_to_slugs.get(self.name)
-
-        if slug is None:
-            raise ArgumentError(
-                'Calculation "%s" does not exists for dataset' % self.name)
-
-        call_async(delete_task, self, dataset.clear_cache(), slug)
+        call_async(delete_task, self, dataset)
 
     def save(self, dataset, formula, name, group_str=None):
         """Parse, save, and calculate a formula.
@@ -225,11 +215,11 @@ class Calculation(AbstractModel):
             aggregated_dataset = dataset.aggregated_dataset(groups)
 
             if aggregated_dataset:
-                name = self._check_name_and_make_unique(name,
-                                                        aggregated_dataset)
+                name = self.__check_name_and_make_unique(name,
+                                                         aggregated_dataset)
 
         else:
-            name = self._check_name_and_make_unique(name, dataset)
+            name = self.__check_name_and_make_unique(name, dataset)
 
         record = {
             DATASET_ID: dataset.dataset_id,
@@ -257,15 +247,26 @@ class Calculation(AbstractModel):
         if not len(calculations) or not isinstance(calculations, list):
             raise ArgumentError('Improper format for JSON calculations.')
 
+        parsed_calculations = []
+
         # Pull out args to check JSON format
         try:
-            calculations = [[c[cls.FORMULA], c[cls.NAME], c.get(cls.GROUP)]
-                            for c in calculations]
+            for c in calculations:
+                groups = c.get("groups")
+
+                if not isinstance(groups, list):
+                    groups = [groups]
+
+                for group in groups:
+                    parsed_calculations.append([
+                        c[cls.FORMULA],
+                        c[cls.NAME], group])
+
         except KeyError as e:
             raise ArgumentError('Required key %s not found in JSON' % e)
 
         calculations = [cls().save(dataset, formula, name, group)
-                        for formula, name, group in calculations]
+                        for formula, name, group in parsed_calculations]
         call_async(calculate_task, calculations, dataset.clear_cache())
 
     @classmethod
@@ -282,12 +283,13 @@ class Calculation(AbstractModel):
 
     @classmethod
     def find(cls, dataset):
-        return super(cls, cls).find({DATASET_ID: dataset.dataset_id},
-                                    order_by='name')
+        query_args = QueryArgs(query={DATASET_ID: dataset.dataset_id},
+                               order_by='name')
+        return super(cls, cls).find(query_args)
 
     def restart_if_has_pending(self, dataset, current_calcs=[]):
         current_names = sorted([self.name] + [c.name for c in current_calcs])
-        unfinished = [c for c in dataset.calculations() if not c.is_ready]
+        unfinished = [c for c in dataset.calculations() if c.is_pending]
         unfinished_names = [c.name for c in unfinished[:len(current_names)]]
 
         if len(unfinished) and current_names != sorted(unfinished_names):
@@ -304,7 +306,7 @@ class Calculation(AbstractModel):
                 self.add_dependency(calc.name)
                 calc.add_dependent_calculation(self.name)
 
-    def _check_name_and_make_unique(self, name, dataset):
+    def __check_name_and_make_unique(self, name, dataset):
         """Check that the name is valid and make unique if valid.
 
         :param name: The name to make unique.
@@ -318,3 +320,9 @@ class Calculation(AbstractModel):
             raise UniqueCalculationError(name, current_names)
 
         return make_unique(name, dataset.schema.keys())
+
+    def __add_and_update_set(self, link_key, existing, new):
+        new_list = list(set(existing + [new]))
+
+        if new_list != existing:
+            self.update({link_key: new_list})

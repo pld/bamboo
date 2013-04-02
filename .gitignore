@@ -3,6 +3,7 @@
 *.swp
 *~
 .coverage
+*.egg-info
 .noseids
 *.noseprof
 

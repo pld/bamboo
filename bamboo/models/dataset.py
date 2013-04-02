@@ -7,11 +7,12 @@ from pandas import concat, rolling_window, Series
 
 from bamboo.core.calculator import Calculator
 from bamboo.core.frame import BambooFrame, BAMBOO_RESERVED_KEY_PREFIX,\
-    DATASET_ID, DATASET_OBSERVATION_ID, PARENT_DATASET_ID
+    DATASET_ID, DATASET_OBSERVATION_ID, INDEX, PARENT_DATASET_ID
 from bamboo.core.summary import summarize
 from bamboo.lib.async import call_async
 from bamboo.lib.exceptions import ArgumentError
 from bamboo.lib.io import ImportableDataset
+from bamboo.lib.query_args import QueryArgs
 from bamboo.lib.schema_builder import Schema
 from bamboo.models.abstract_model import AbstractModel
 from bamboo.models.calculation import Calculation
@@ -45,6 +46,7 @@ class Dataset(AbstractModel, ImportableDataset):
     NUM_COLUMNS = 'num_columns'
     NUM_ROWS = 'num_rows'
     MERGED_DATASETS = 'merged_datasets'
+    PARENT_IDS = 'parent_ids'
     PENDING_UPDATES = 'pending_updates'
     SCHEMA = 'schema'
     UPDATED_AT = 'updated_at'
@@ -176,23 +178,17 @@ class Dataset(AbstractModel, ImportableDataset):
 
         return self.find_one(_id) if _id else None
 
-    def dframe(self, query=None, select=None, distinct=None,
-               keep_parent_ids=False, limit=0, order_by=None, padded=False,
-               reload=False, keep_mongo_keys=False):
+    def dframe(self, query_args=QueryArgs(), keep_parent_ids=False,
+               padded=False, index=False, reload=False, keep_mongo_keys=False):
         """Fetch the dframe for this dataset.
 
-        :param select: An optional select to limit the fields in the dframe.
-        :param distinct: Return distinct entries for this field.
+        :param query_args: An optional QueryArgs to hold the query arguments.
         :param keep_parent_ids: Do not remove parent IDs from the dframe,
             default False.
-        :param limit: Limit on the number of rows in the returned dframe.
-        :param order_by: Sort resulting rows according to a column value and
-            sign indicating ascending or descending.
-
-        Example of `order_by`:
-
-          - ``order_by='mycolumn'``
-          - ``order_by='-mycolumn'``
+        :param padded: Used for joining, default False.
+        :param index: Return the index with dframe, default False.
+        :param reload: Force refresh of data, default False.
+        :param keep_mongo_keys: Used for updating documents, default False.
 
         :returns: Return BambooFrame with contents based on query parameters
             passed to MongoDB. BambooFrame will not have parent ids if
@@ -200,23 +196,31 @@ class Dataset(AbstractModel, ImportableDataset):
         """
         cacheable = True
         # bypass cache if we need specific version
-        if query or select or distinct or keep_parent_ids or limit or order_by\
-                or padded:
+        if query_args or keep_parent_ids or padded:
             cacheable = False
 
         # use cached copy if we have already fetched it
         if cacheable and not reload and self._dframe is not None:
             return self._dframe
 
-        observations = self.observations(
-            query=query, select=select, limit=limit, order_by=order_by,
-            distinct=distinct, as_cursor=True)
+        observations = self.observations(query_args, as_cursor=True)
 
-        dframe = self._batch_read_dframe_from_cursor(
-            observations, distinct, limit)
+        dframe = self.__batch_read_dframe_from_cursor(
+            observations, query_args.distinct, query_args.limit)
 
         dframe.decode_mongo_reserved_keys(keep_mongo_keys=keep_mongo_keys)
-        dframe.remove_bamboo_reserved_keys(keep_parent_ids)
+
+        excluded = []
+
+        if keep_parent_ids:
+            excluded.append(PARENT_DATASET_ID)
+        if index:
+            excluded.append(INDEX)
+
+        dframe.remove_bamboo_reserved_keys(excluded)
+
+        if index:
+            dframe = BambooFrame(dframe.rename(columns={INDEX: 'index'}))
 
         if padded:
             if len(dframe.columns):
@@ -232,59 +236,30 @@ class Dataset(AbstractModel, ImportableDataset):
 
         return dframe
 
-    def count(self, query=None, limit=0, distinct=None):
-        observations = self.observations(
-            query=query, limit=limit, distinct=distinct, as_cursor=True)
+    def count(self, query_args=QueryArgs()):
+        """Return the count of rows matching query in dataset.
 
-        count = len(observations) if distinct else observations.count()
+        :param query_args: An optional QueryArgs to hold the query arguments.
+        """
+        obs = self.observations(query_args, as_cursor=True)
 
+        count = len(obs) if query_args.distinct else obs.count()
+
+        limit = query_args.limit
         if limit > 0 and count > limit:
             count = limit
 
         return count
 
-    def _batch_read_dframe_from_cursor(self, observations, distinct, limit):
-        dframes = []
-        batch = 0
-
-        while True:
-            start = batch * self.DB_READ_BATCH_SIZE
-            end = start + self.DB_READ_BATCH_SIZE
-
-            if limit > 0 and end > limit:
-                end = limit
-
-            # if there is a limit and we are done
-            if start >= end:
-                break
-
-            current_observations = [ob for ob in observations[start:end]]
-
-            # if the batches exhausted the data
-            if not len(current_observations):
-                break
-
-            dframes.append(BambooFrame(current_observations))
-
-            if not distinct:
-                observations.rewind()
-
-            batch += 1
-
-        return BambooFrame(concat(dframes) if len(dframes) else [])
-
     def add_joined_dataset(self, new_data):
         """Add the ID of `new_dataset` to the list of joined datasets."""
-        self._add_linked_data(self.JOINED_DATASETS, self.joined_dataset_ids,
-                              new_data)
+        self.__add_linked_data(self.JOINED_DATASETS, self.joined_dataset_ids,
+                               new_data)
 
     def add_merged_dataset(self, mapping, new_dataset):
         """Add the ID of `new_dataset` to the list of merged datasets."""
-        self._add_linked_data(self.MERGED_DATASETS, self.merged_dataset_info,
-                              [mapping, new_dataset.dataset_id])
-
-    def _add_linked_data(self, link_key, existing_data, new_data):
-        self.update({link_key: existing_data + [new_data]})
+        self.__add_linked_data(self.MERGED_DATASETS, self.merged_dataset_info,
+                               [mapping, new_dataset.dataset_id])
 
     def clear_summary_stats(self, group=ALL, column=None):
         """Remove summary stats for `group` and optional `column`."""
@@ -326,7 +301,10 @@ class Dataset(AbstractModel, ImportableDataset):
         return super(self.__class__, self).save(record)
 
     def delete(self, countdown=0):
-        """Delete this dataset."""
+        """Delete this dataset.
+
+        :param countdown: Delete dataset after this number of seconds.
+        """
         call_async(delete_task, self.clear_cache(), countdown=countdown)
 
     def summarize(self, dframe, groups=[], no_cache=False, update=False):
@@ -359,7 +337,8 @@ class Dataset(AbstractModel, ImportableDataset):
     @classmethod
     def find(cls, dataset_id):
         """Return datasets for `dataset_id`."""
-        return super(cls, cls).find({DATASET_ID: dataset_id})
+        query_args = QueryArgs(query={DATASET_ID: dataset_id})
+        return super(cls, cls).find(query_args)
 
     def update(self, record):
         """Update dataset `dataset` with `record`."""
@@ -407,6 +386,10 @@ class Dataset(AbstractModel, ImportableDataset):
                            if key in self.updatable_keys}
             self.update(update_dict)
 
+        query_args = QueryArgs(select={PARENT_DATASET_ID: 1},
+                               distinct=PARENT_DATASET_ID)
+        parent_ids = self.observations(query_args)
+
         return {
             self.ID: self.dataset_id,
             self.LABEL: self.label,
@@ -419,23 +402,22 @@ class Dataset(AbstractModel, ImportableDataset):
             self.NUM_COLUMNS: self.num_columns,
             self.NUM_ROWS: self.num_rows,
             self.STATE: self.state,
+            self.PARENT_IDS: parent_ids,
         }
 
-    def observations(self, query=None, select=None, limit=0, order_by=None,
-                     distinct=None, as_cursor=False):
+    def observations(self, query_args=QueryArgs(), as_cursor=False):
         """Return observations for this dataset.
 
-        :param query: Optional query for MongoDB to limit rows returned.
-        :param select: Optional select for MongoDB to limit columns.
-        :param limit: If greater than 0, limit number of observations returned
-            to this maximum.
-        :param order_by: Order the returned observations.
+        :param query_args: An optional QueryArgs to hold the query arguments.
+        :param as_cursor: Return the observations as a cursor.
         """
-        observations = Observation.find(self, query, select, limit=limit,
-                                        order_by=order_by, as_cursor=as_cursor)
+        if query_args.distinct:
+            as_cursor = True
 
-        if distinct:
-            observations = observations.distinct(distinct)
+        observations = Observation.find(self, query_args, as_cursor=as_cursor)
+
+        if query_args.distinct:
+            observations = observations.distinct(query_args.distinct)
 
         return observations
 
@@ -445,8 +427,6 @@ class Dataset(AbstractModel, ImportableDataset):
 
     def remove_parent_observations(self, parent_id):
         """Remove obervations for this dataset with the passed `parent_id`.
-
-        Args:
 
         :param parent_id: Remove observations with this ID as their parent
             dataset ID.
@@ -460,6 +440,9 @@ class Dataset(AbstractModel, ImportableDataset):
         record = self.record
         update_id = uuid.uuid4().hex
         self.add_pending_update(update_id)
+
+        if not isinstance(new_data, list):
+            new_data = [new_data]
 
         calculator = Calculator(self)
 
@@ -476,18 +459,36 @@ class Dataset(AbstractModel, ImportableDataset):
             {'_id': self.record['_id']},
             {'$push': {self.PENDING_UPDATES: update_id}})
 
+    def delete_observation(self, index):
+        """Delete observation at index.
+
+        :params index: The index of an observation to delete.
+        """
+        Observation.delete(self, index)
+
+        dframe = self.dframe()
+        self.update({self.NUM_ROWS: len(dframe)})
+        self.build_schema(dframe, overwrite=True)
+
     def save_observations(self, dframe):
-        """Save rows in `dframe` for this dataset."""
+        """Save rows in `dframe` for this dataset.
+
+        :param dframe: DataFrame to save rows from.
+        """
         return Observation.save(dframe, self)
 
     def update_observations(self, dframe):
-        return Observation.update(dframe, self)
+        return Observation.update_from_dframe(dframe, self)
 
     def replace_observations(self, dframe, overwrite=False,
                              set_num_columns=True):
         """Remove all rows for this dataset and save the rows in `dframe`.
 
         :param dframe: Replace rows in this dataset with this DataFrame's rows.
+        :param overwrite: If true replace the schema, otherwise update it.
+            Default False.
+        :param set_num_columns: If true update the dataset stored number of
+            columns.  Default True.
 
         :returns: BambooFrame equivalent to the passed in `dframe`.
         """
@@ -503,7 +504,7 @@ class Dataset(AbstractModel, ImportableDataset):
         :param columns: List of columns to remove from this dataset.
         """
         dframe = self.dframe(keep_parent_ids=True)
-        self.replace_observations(dframe.drop(columns, axis=1))
+        self.replace_observations(dframe.drop(columns, axis=1), overwrite=True)
 
     def place_holder_dframe(self, dframe=None):
         columns = self.schema.keys()
@@ -513,7 +514,11 @@ class Dataset(AbstractModel, ImportableDataset):
         return BambooFrame([[''] * len(columns)], columns=columns)
 
     def join(self, other, on):
-        """Join with dataset `other` on the passed columns."""
+        """Join with dataset `other` on the passed columns.
+
+        :param other: The other dataset to join.
+        :param on: The column in this and the `other` dataset to join on.
+        """
         merged_dframe = self.dframe()
 
         if not len(merged_dframe.columns):
@@ -549,12 +554,29 @@ class Dataset(AbstractModel, ImportableDataset):
         return self
 
     def encode_dframe_columns(self, dframe):
+        """Encode the columns in `dframe` to slugs and add ID column.
+
+        The ID column is the dataset_observation_id for this dataset.  This is
+        used to link observations to a specific dataset.
+
+        :param dframe: The DataFame to rename columns in and add an ID column
+            to.
+        :returns: A the modified `dframe` as a BambooFrame.
+        """
         encoded_columns_map = self.schema.rename_map_for_dframe(dframe)
         dframe = dframe.rename(columns=encoded_columns_map)
         dframe[DATASET_OBSERVATION_ID] = self.dataset_observation_id
         return BambooFrame(dframe)
 
     def new_agg_dataset(self, dframe, groups):
+        """Create an aggregated dataset for this dataset.
+
+        Creates and saves a dataset from the given `dframe`.  Then stores this
+        dataset as an aggregated dataset given `groups` for `self`.
+
+        :param dframe: The DataFrame to store in the new aggregated dataset.
+        :param groups: The groups associated with this aggregated dataset.
+        """
         agg_dataset = self.create()
         agg_dataset.save_observations(dframe)
 
@@ -566,6 +588,17 @@ class Dataset(AbstractModel, ImportableDataset):
             self.AGGREGATED_DATASETS: agg_datasets_dict})
 
     def has_pending_updates(self, update_id):
+        """Check if this dataset has pending updates.
+
+        Call the update identfied by `update_id` the current update. A dataset
+        has pending updates if, not including the current update, there are any
+        pending updates and the update at the top of the queue is not the
+        current update.
+
+        :param update_id: An update to exclude when checking for pending
+            updates.
+        :returns: True if there are pending updates, False otherwise.
+        """
         self.reload()
         pending_updates = self.pending_updates
 
@@ -573,21 +606,84 @@ class Dataset(AbstractModel, ImportableDataset):
             set(pending_updates) - set([update_id]))
 
     def update_complete(self, update_id):
+        """Remove `update_id` from this datasets list of pending updates.
+
+        :param update_id: The ID of the completed update.
+        """
         self.collection.update(
             {'_id': self.record['_id']},
             {'$pull': {self.PENDING_UPDATES: update_id}})
 
-    def resample(self, date_column, interval, how):
+    def resample(self, date_column, interval, how, query={}):
         """Resample a dataset given a new time frame.
 
         :param date_column: The date column use as the index for resampling.
         :param interval: The interval code for resampling.
         :param how: How to aggregate in the resample.
+        :returns: A BambooFrame of the resampled DataFrame for this dataset.
         """
-        dframe = self.dframe().set_index(date_column)
+        query_args = QueryArgs(query=query)
+        dframe = self.dframe(query_args).set_index(date_column)
         resampled = dframe.resample(interval, how=how)
         return BambooFrame(resampled.reset_index())
 
     def rolling(self, win_type, window):
+        """Calculate a rolling window over all numeric columns.
+
+        :param win_type: The type of window, see pandas pandas.rolling_window.
+        :param window: The number of observations used for calculating the
+            window.
+        :returns: A BambooFrame of the rolling window calculated for this
+            dataset.
+        """
         dframe = self.dframe()[self.schema.numeric_slugs]
         return BambooFrame(rolling_window(dframe, window, win_type))
+
+    def set_olap_type(self, column, olap_type):
+        """Set the OLAP Type for this `column` of dataset.
+
+        Only columns with an original OLAP Type of 'measure' can be modified.
+        This includes columns with Simple Type integer, float, and datetime.
+
+        :param column: The column to set the OLAP Type for.
+        :param olap_type: The OLAP Type to set. Must be 'dimension' or
+            'measure'.
+        """
+        schema = self.schema
+        schema.set_olap_type(column, olap_type)
+
+        self.set_schema(schema, False)
+
+    def __batch_read_dframe_from_cursor(self, observations, distinct, limit):
+        """Read a DataFrame from a MongoDB Cursor in batches."""
+        dframes = []
+        batch = 0
+
+        while True:
+            start = batch * self.DB_READ_BATCH_SIZE
+            end = start + self.DB_READ_BATCH_SIZE
+
+            if limit > 0 and end > limit:
+                end = limit
+
+            # if there is a limit and we are done
+            if start >= end:
+                break
+
+            current_observations = [ob for ob in observations[start:end]]
+
+            # if the batches exhausted the data
+            if not len(current_observations):
+                break
+
+            dframes.append(BambooFrame(current_observations))
+
+            if not distinct:
+                observations.rewind()
+
+            batch += 1
+
+        return BambooFrame(concat(dframes) if len(dframes) else [])
+
+    def __add_linked_data(self, link_key, existing_data, new_data):
+        self.update({link_key: existing_data + [new_data]})

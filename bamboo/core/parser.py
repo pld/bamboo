@@ -56,15 +56,14 @@ class Parser(object):
     def __init__(self, dataset=None):
         """Create parser and set context."""
         self.context = ParserContext(dataset)
-        #self.dataset = dataset
-        self._build_bnf()
+        self.__build_bnf()
 
     def store_aggregation(self, _, __, tokens):
         """Cached a parsed aggregation."""
         self.aggregation = tokens[0]
         self.column_functions = tokens[1:]
 
-    def _build_bnf(self):
+    def __build_bnf(self):
         """Parse formula to function based on language definition.
 
         Backus-Naur Form of formula language:
@@ -119,7 +118,7 @@ class Parser(object):
         percentile_func = CaselessLiteral('percentile')
 
         # aggregation functions
-        aggregations = self._build_caseless_or_expression(
+        aggregations = self.__build_caseless_or_expression(
             self.aggregation_names)
 
         # literal syntactic
@@ -321,7 +320,7 @@ class Parser(object):
             return result
         return set(find_dependent_columns(parsed_expr, result))
 
-    def _build_caseless_or_expression(self, strings):
+    def __build_caseless_or_expression(self, strings):
         literals = [
             CaselessLiteral(aggregation) for
             aggregation in self.aggregation_names
@@ -346,4 +345,4 @@ class Parser(object):
         self.aggregation, self.aggregation_names, self.function_names,\
             self.operator_names, self.special_names, self.reserved_words,\
             self.special_names, self.context = state
-        self._build_bnf()
+        self.__build_bnf()
