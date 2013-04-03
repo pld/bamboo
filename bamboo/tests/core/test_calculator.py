@@ -17,7 +17,7 @@ class TestCalculator(TestBase):
             self.get_data('good_eats_with_calculations.csv'))
         self.dataset.save_observations(dframe)
         self.group = None
-        self.parser = Parser()
+        self.parser = Parser(self.dataset)
         self.places = 5
 
     def _equal_msg(self, calculated, stored, formula):
@@ -43,8 +43,8 @@ class TestCalculator(TestBase):
 
         for idx, formula in enumerate(self.calculations):
             name = 'test-%s' % idx
-            # XXX do we need this validation?
-            #self.parser.validate_formula(formula)
+
+            self.parser.validate_formula(formula)
 
             calculator = Calculator(self.dataset)
 
