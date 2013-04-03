@@ -70,7 +70,6 @@ def calculate_task(calculations, dataset):
     :param dataset: Dataset to run calculation on.
     """
     # block until other calculations for this dataset are finished
-    # XXX this looks sketchy
     calculations[0].restart_if_has_pending(dataset, calculations[1:])
 
     calculator = Calculator(dataset)
