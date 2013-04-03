@@ -1,5 +1,4 @@
 from bamboo.core.frame import BambooFrame, DATASET_OBSERVATION_ID, INDEX
-from bamboo.lib.async import call_async
 from bamboo.lib.datetools import parse_timestamp_query
 from bamboo.lib.query_args import QueryArgs
 from bamboo.models.abstract_model import AbstractModel
@@ -107,9 +106,6 @@ class Observation(AbstractModel):
             cls.batch_save(dataset.encode_dframe_columns(dframe))
         else:
             cls.batch_save(dframe)
-
-        # XXX do we need this? (merge)
-        dframe.remove_bamboo_reserved_keys()
 
         # add metadata to dataset, discount ID column
         dataset.update({
