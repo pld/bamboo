@@ -1,5 +1,4 @@
 import traceback
-from datetime import datetime
 
 from celery.task import Task, task
 

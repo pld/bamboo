@@ -209,8 +209,6 @@ class TestDatasetsFromSchema(TestAbstractDatasets):
         results = json.loads(self.controller.show(merged_dataset_id))
         self.assertEqual(num_rows, len(results))
 
-        prev_num_cols = len(
-            Dataset.find_one(merged_dataset_id).dframe().columns)
         self.dataset_id = right_dataset_id
         self._put_row_updates(right_dataset_id,
                               file_name='good_eats_aux_update.json')

@@ -219,4 +219,3 @@ class TestDatasetsMerge(TestAbstractDatasets):
         self.assertEqual(original_merge_length + 1, new_merge_length)
         self.assertEqual(new_row['food_type'], new_merge_row['food_type_2'])
         self.assertEqual(new_row['code'], new_merge_row['comments'])
-        merged_dataset = Dataset.find_one(merged_dataset_id)

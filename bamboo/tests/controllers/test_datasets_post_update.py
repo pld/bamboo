@@ -141,8 +141,7 @@ class TestDatasetsPostUpdate(TestAbstractDatasets):
 
         expected_col_schema = dataset.schema[column]
 
-        result = json.loads(self.controller.update(dataset_id=dataset_id,
-                                                   update=update))
+        self.controller.update(dataset_id=dataset_id, update=update)
         dataset = Dataset.find_one(dataset_id)
 
         self.assertEqual(dataset.num_rows, self.NUM_ROWS + 1)

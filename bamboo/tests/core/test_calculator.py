@@ -27,7 +27,6 @@ class TestCalculator(TestBase):
 
     def _test_calculator(self):
         self.dframe = self.dataset.dframe()
-        row = self.dframe.irow(0)
 
         columns = self.dframe.columns.tolist()
         self.start_num_cols = len(columns)
@@ -48,7 +47,6 @@ class TestCalculator(TestBase):
 
             calculator = Calculator(self.dataset)
 
-            groups = self.dataset.split_groups(self.group)
             calculation = Calculation()
             calculation.save(self.dataset, formula, name, self.group)
             calculator.calculate_columns([calculation])

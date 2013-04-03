@@ -416,7 +416,7 @@ class Calculator(object):
         names_to_formulas = {
             calc.name: calc.formula for calc in calculations
         }
-        calculations = set([calc.name for calc in calculations])
+        calculations = set([calculation.name for calculation in calculations])
 
         for group, dataset in self.dataset.aggregated_datasets:
             labels_to_slugs = dataset.schema.labels_to_slugs

@@ -5,7 +5,6 @@ import simplejson as json
 from bamboo.lib.mongo import ILLEGAL_VALUES
 from bamboo.controllers.datasets import Datasets
 from bamboo.core.summary import SUMMARY
-from bamboo.lib.mongo import _encode_for_mongo
 from bamboo.models.dataset import Dataset
 from bamboo.tests.controllers.test_abstract_datasets import\
     TestAbstractDatasets

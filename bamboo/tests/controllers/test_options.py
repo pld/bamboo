@@ -16,12 +16,12 @@ class TestOptions(TestBase):
         self.assertTrue(response == '')
 
     def test_abstract_controller_options(self):
-        response = self.controller.options()
+        self.controller.options()
 
     def test_dataset_controller_options(self):
         controller = Datasets()
-        response = controller.options('dataset_id')
+        controller.options('dataset_id')
 
     def test_calculations_controller_options(self):
         controller = Calculations()
-        response = self.controller.options('dataset_id')
+        controller.options('dataset_id')

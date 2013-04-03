@@ -9,7 +9,6 @@ def requires_async(func):
     @wraps(func)
     def wrapper(*args, **kwargs):
         set_async(True)
-        self = args[0]
         result = func(*args, **kwargs)
         set_async(False)
         return result

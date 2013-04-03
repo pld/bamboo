@@ -1,5 +1,3 @@
-from os import getenv
-
 from pymongo import MongoClient
 
 from bamboo.config import settings

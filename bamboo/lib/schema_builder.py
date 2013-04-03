@@ -204,9 +204,9 @@ def schema_from_dframe(dframe, schema=None):
             try:
                 column_schema[CARDINALITY] = dframe[
                     name].nunique()
-            except AttributeError as e:
+            except AttributeError:
                 pass
-            except TypeError as e:
+            except TypeError:
                 # E.g. dates with and without offset can not be compared and
                 # raise a type error.
                 pass
