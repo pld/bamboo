@@ -12,15 +12,14 @@ class TestParser(TestBase):
         self.parser = Parser(self.dataset)
         self.row = {'amount': 1}
 
-    def _check_func(self, parse_result):
-        functions = parse_result[0]
+    def _parse_and_check_func(self, formula):
+        functions, _ = self.parser.parse_formula(formula)
         for func in functions:
             self.assertEqual(func.func.func_name, 'eval')
         return functions[0]
 
     def test_parse_formula(self):
-        func = self._check_func(
-            self.parser.parse_formula('amount'))
+        func = self._parse_and_check_func('amount')
         self.assertEqual(func(self.row, self.parser.context), 1)
 
     def test_bnf(self):
@@ -28,8 +27,7 @@ class TestParser(TestBase):
         self.assertNotEqual(self.parser.bnf, None)
 
     def test_parse_formula_with_var(self):
-        func = self._check_func(
-            self.parser.parse_formula('amount + 1'))
+        func = self._parse_and_check_func('amount + 1')
         self.assertEqual(func(self.row, self.parser.context), 2)
 
     def test_parse_formula_dependent_columns(self):
