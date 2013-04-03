@@ -70,7 +70,6 @@ def calculate_task(calculations, dataset):
     """
     # block until other calculations for this dataset are finished
     calculations[0].restart_if_has_pending(dataset, calculations[1:])
-    dataset.clear_summary_stats()
 
     calculator = Calculator(dataset)
     calculator.calculate_columns(calculations)
@@ -235,7 +234,7 @@ class Calculation(AbstractModel):
     @classmethod
     def create(cls, dataset, formula, name, group=None):
         calculation = super(cls, cls).create(dataset, formula, name, group)
-        call_async(calculate_task, [calculation], dataset)
+        call_async(calculate_task, [calculation], dataset.clear_cache())
         return calculation
 
     @classmethod
@@ -266,7 +265,7 @@ class Calculation(AbstractModel):
 
         calculations = [cls().save(dataset, formula, name, group)
                         for formula, name, group in parsed_calculations]
-        call_async(calculate_task, calculations, dataset)
+        call_async(calculate_task, calculations, dataset.clear_cache())
 
     @classmethod
     def find_one(cls, dataset_id, name, group=None):

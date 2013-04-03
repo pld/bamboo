@@ -5,7 +5,7 @@ from pandas import DataFrame, Series
 from bamboo.lib.datetools import recognize_dates, recognize_dates_from_schema
 from bamboo.lib.jsontools import series_to_jsondict
 from bamboo.lib.mongo import dump_mongo_json, mongo_prefix_reserved_key,\
-    MONGO_RESERVED_KEYS
+    MONGO_RESERVED_KEYS, MONGO_RESERVED_KEY_PREFIX
 
 
 # reserved bamboo keys
@@ -35,16 +35,22 @@ class BambooFrame(DataFrame):
         column.name = PARENT_DATASET_ID
         return self.__class__(self.join(column))
 
-    def decode_mongo_reserved_keys(self):
+    def decode_mongo_reserved_keys(self, keep_mongo_keys=False):
         """Decode MongoDB reserved keys in this DataFrame."""
         reserved_keys = self.__column_intersect(MONGO_RESERVED_KEYS)
         rename_dict = {}
 
         for key in reserved_keys:
-            del self[key]
-            prefixed_key = mongo_prefix_reserved_key(key)
-            if prefixed_key in self.columns:
-                rename_dict[prefixed_key] = key
+            if keep_mongo_keys:
+                replacement_key = MONGO_RESERVED_KEY_PREFIX + key
+                self.rename(
+                    columns={key: replacement_key, replacement_key: key},
+                    inplace=True)
+            else:
+                del self[key]
+                prefixed_key = mongo_prefix_reserved_key(key)
+                if prefixed_key in self.columns:
+                    rename_dict[prefixed_key] = key
 
         if rename_dict:
             self.rename(columns={prefixed_key: key}, inplace=True)

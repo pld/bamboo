@@ -284,7 +284,7 @@ class Datasets(AbstractController):
 
                 result = {Dataset.ID: dataset.dataset_id}
 
-            perish = parse_int(perish, None)
+            perish = parse_int(perish)
             if perish:
                 dataset.delete(countdown=perish)
         except urllib2.URLError:

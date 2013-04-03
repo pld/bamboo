@@ -63,7 +63,8 @@ class TestAbstractDatasets(TestBase):
             dframe1_row = self._reduce_precision(series_to_jsondict(row[1]))
             self.assertTrue(dframe1_row in dframe2_rows,
                             'dframe1_row: %s\n\ndframe2_rows: %s' % (
-                                dframe1_row, dframe2_rows))
+                                BambooFrame([dframe1_row]),
+                                BambooFrame(dframe2_rows)))
 
     def _reduce_precision(self, row):
         for key, value in row.iteritems():

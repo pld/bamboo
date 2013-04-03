@@ -19,12 +19,9 @@ class ParserContext(object):
     """Context to be passed into parser."""
 
     dependent_columns = set()
-    schema = None
 
     def __init__(self, dataset=None):
-        if dataset:
-            self.dframe = dataset.dframe()
-            self.schema = dataset.schema
+        self.dataset = dataset
 
 
 class Parser(object):
@@ -271,16 +268,22 @@ class Parser(object):
                              err))
 
         functions = []
+        dependent_columns = set()
 
         if self.aggregation:
             for column_function in self.column_functions:
                 functions.append(partial(column_function.eval))
+                dependent_columns = dependent_columns.union(
+                    self._get_dependent_columns(column_function))
         else:
             functions.append(partial(self.parsed_expr.eval))
+            dependent_columns = self._get_dependent_columns(self.parsed_expr)
 
-        return functions
+        self.context.dependent_columns = dependent_columns
 
-    def validate_formula(self, formula, row):
+        return functions, dependent_columns
+
+    def validate_formula(self, formula):
         """Validate the *formula* on an example *row* of data.
 
         Rebuild the BNF then parse the `formula` given the sample `row`.
@@ -294,20 +297,32 @@ class Parser(object):
         self.aggregation = None
 
         # check valid formula
-        functions = self.parse_formula(formula)
+        functions, dependent_columns = self.parse_formula(formula)
 
-        if not self.context.schema:
+        if not self.context.dataset.schema:
             raise ParseError(
                 'No schema for dataset, please add data or wait for it to '
                 'finish processing')
 
-        try:
-            for function in functions:
-                function(row, self.context)
-        except KeyError, err:
-            raise ParseError('Missing column reference: %s' % err)
+        for column in dependent_columns:
+            if column not in self.context.dataset.schema.keys():
+                raise ParseError('Missing column reference: %s' % column)
 
         return self.aggregation
+
+    def _get_dependent_columns(self, parsed_expr):
+        result = []
+        if not hasattr(self, 'context'):
+            return result
+
+        def find_dependent_columns(parsed_expr, result):
+            dependent_columns = parsed_expr.dependent_columns(self.context)
+            result.extend(dependent_columns)
+            for child in parsed_expr.get_children():
+                find_dependent_columns(child, result)
+            return result
+
+        return set(find_dependent_columns(parsed_expr, result))
 
     def __build_caseless_or_expression(self, strings):
         literals = [

@@ -154,7 +154,7 @@ class TestDatasets(TestAbstractDatasets):
 
     def test_create_from_url(self):
         dframe = self.get_data('good_eats.csv')
-        with patch('pandas.read_csv', return_value=dframe) as mock:
+        with patch('pandas.read_csv', return_value=dframe):
             result = json.loads(self.controller.create(url=self.url))
 
         self.assertTrue(isinstance(result, dict))

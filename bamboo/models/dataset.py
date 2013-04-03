@@ -1,16 +1,14 @@
-from math import ceil
 import uuid
 from time import gmtime, strftime
 
 from celery.task import task
-from pandas import concat, rolling_window, Series
+from pandas import concat, rolling_window
 
 from bamboo.core.calculator import Calculator
 from bamboo.core.frame import BambooFrame, BAMBOO_RESERVED_KEY_PREFIX,\
     DATASET_ID, DATASET_OBSERVATION_ID, INDEX, PARENT_DATASET_ID
 from bamboo.core.summary import summarize
 from bamboo.lib.async import call_async
-from bamboo.lib.exceptions import ArgumentError
 from bamboo.lib.io import ImportableDataset
 from bamboo.lib.query_args import QueryArgs
 from bamboo.lib.schema_builder import Schema
@@ -50,6 +48,10 @@ class Dataset(AbstractModel, ImportableDataset):
     PENDING_UPDATES = 'pending_updates'
     SCHEMA = 'schema'
     UPDATED_AT = 'updated_at'
+
+    def __init__(self, record=None):
+        super(Dataset, self).__init__(record)
+        self.__dframe = None
 
     # commonly accessed variables
     @property
@@ -118,7 +120,6 @@ class Dataset(AbstractModel, ImportableDataset):
 
     @property
     def joined_datasets(self):
-        result = []
         # TODO: fetch all datasets in single DB call
         return [
             (direction, self.find_one(other_dataset_id), on,
@@ -175,24 +176,34 @@ class Dataset(AbstractModel, ImportableDataset):
         return self.find_one(_id) if _id else None
 
     def dframe(self, query_args=QueryArgs(), keep_parent_ids=False,
-               padded=False, index=False):
+               padded=False, index=False, reload=False, keep_mongo_keys=False):
         """Fetch the dframe for this dataset.
 
         :param query_args: An optional QueryArgs to hold the query arguments.
         :param keep_parent_ids: Do not remove parent IDs from the dframe,
             default False.
+        :param padded: Used for joining, default False.
         :param index: Return the index with dframe, default False.
+        :param reload: Force refresh of data, default False.
+        :param keep_mongo_keys: Used for updating documents, default False.
 
         :returns: Return BambooFrame with contents based on query parameters
             passed to MongoDB. BambooFrame will not have parent ids if
             `keep_parent_ids` is False.
         """
+        # bypass cache if we need specific version
+        cacheable = not (query_args or keep_parent_ids or padded)
+
+        # use cached copy if we have already fetched it
+        if cacheable and not reload and self.__dframe is not None:
+            return self.__dframe
+
         observations = self.observations(query_args, as_cursor=True)
 
         dframe = self.__batch_read_dframe_from_cursor(
             observations, query_args.distinct, query_args.limit)
 
-        dframe.decode_mongo_reserved_keys()
+        dframe.decode_mongo_reserved_keys(keep_mongo_keys=keep_mongo_keys)
 
         excluded = []
 
@@ -213,6 +224,9 @@ class Dataset(AbstractModel, ImportableDataset):
                 dframe = BambooFrame(dframe.join(place_holder, on=on))
             else:
                 dframe = self.place_holder_dframe()
+
+        if cacheable:
+            self.__dframe = dframe
 
         return dframe
 
@@ -285,15 +299,15 @@ class Dataset(AbstractModel, ImportableDataset):
 
         :param countdown: Delete dataset after this number of seconds.
         """
-        call_async(delete_task, self, countdown=countdown)
+        call_async(delete_task, self.clear_cache(), countdown=countdown)
 
-    def summarize(self, dframe, groups=[], no_cache=False):
+    def summarize(self, dframe, groups=[], no_cache=False, update=False):
         """Build and return a summary of the data in this dataset.
 
         Return a summary of dframe grouped by `groups`, or the overall
         summary if no groups are specified.
 
-        :param dframe: An optional dframe to summarize, if None fetch a dframe
+        :param dframe: dframe to summarize
         :param groups: A list of columns to group on.
         :param no_cache: Do not fetch a cached summary.
 
@@ -303,7 +317,7 @@ class Dataset(AbstractModel, ImportableDataset):
         """
         self.reload()
 
-        return summarize(self, dframe, groups, no_cache)
+        return summarize(self, dframe, groups, no_cache, update=update)
 
     @classmethod
     def create(cls, dataset_id=None):
@@ -412,10 +426,11 @@ class Dataset(AbstractModel, ImportableDataset):
             dataset ID.
         """
         Observation.delete_all(self, {PARENT_DATASET_ID: parent_id})
+        # clear the cached dframe
+        self.__dframe = None
 
     def add_observations(self, new_data):
         """Update `dataset` with `new_data`."""
-        record = self.record
         update_id = uuid.uuid4().hex
         self.add_pending_update(update_id)
 
@@ -428,6 +443,7 @@ class Dataset(AbstractModel, ImportableDataset):
             new_data, self.schema.labels_to_slugs)
         calculator._check_update_is_valid(new_dframe_raw)
 
+        calculator.dataset.clear_cache()
         call_async(calculator.calculate_updates, calculator, new_data,
                    new_dframe_raw=new_dframe_raw, update_id=update_id)
 
@@ -453,6 +469,9 @@ class Dataset(AbstractModel, ImportableDataset):
         :param dframe: DataFrame to save rows from.
         """
         return Observation.save(dframe, self)
+
+    def update_observations(self, dframe):
+        return Observation.update_from_dframe(dframe, self)
 
     def replace_observations(self, dframe, overwrite=False,
                              set_num_columns=True):
@@ -518,7 +537,13 @@ class Dataset(AbstractModel, ImportableDataset):
     def reload(self):
         dataset = Dataset.find_one(self.dataset_id)
         self.record = dataset.record
+        # XXX do we really need to clear the cached dframe?
+        self.clear_cache()
 
+        return self
+
+    def clear_cache(self):
+        self.__dframe = None
         return self
 
     def encode_dframe_columns(self, dframe):
@@ -532,13 +557,9 @@ class Dataset(AbstractModel, ImportableDataset):
         :returns: A the modified `dframe` as a BambooFrame.
         """
         encoded_columns_map = self.schema.rename_map_for_dframe(dframe)
-
         dframe = dframe.rename(columns=encoded_columns_map)
-
-        id_column = Series([self.dataset_observation_id] * len(dframe))
-        id_column.name = DATASET_OBSERVATION_ID
-
-        return BambooFrame(dframe.join(id_column))
+        dframe[DATASET_OBSERVATION_ID] = self.dataset_observation_id
+        return BambooFrame(dframe)
 
     def new_agg_dataset(self, dframe, groups):
         """Create an aggregated dataset for this dataset.

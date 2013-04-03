@@ -137,6 +137,24 @@ class AbstractModel(object):
         cls.__batch_command_wrapper(command, dframe, batch_size)
 
     @classmethod
+    def batch_update(cls, dframe):
+        """Update records in batches to avoid document size maximum setting.
+           dframe must have column with record (object) ids.
+
+        """
+        def command(records):
+            # mongodb has no batch updates (fail)
+            for record in records:
+                spec = {'_id': record['MONGO_RESERVED_KEY_id']}
+                del record['MONGO_RESERVED_KEY_id']
+                doc = {"$set": record}
+                cls.collection.update(spec, doc)
+
+        batch_size = cls.DB_SAVE_BATCH_SIZE
+
+        cls.__batch_command_wrapper(command, dframe, batch_size)
+
+    @classmethod
     def __batch_command_wrapper(cls, command, dframe, batch_size):
         try:
             cls.__batch_command(command, dframe, batch_size)

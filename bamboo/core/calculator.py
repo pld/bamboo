@@ -1,7 +1,7 @@
 from collections import defaultdict
 
 from celery.task import task
-from pandas import concat
+from pandas import concat, DataFrame
 
 from bamboo.core.aggregator import Aggregator
 from bamboo.core.frame import BambooFrame, NonUniqueJoinError
@@ -18,7 +18,7 @@ class Calculator(object):
 
     def __init__(self, dataset):
         self.dataset = dataset.reload()
-        self.parser = Parser(dataset)
+        self.parser = Parser(self.dataset)
 
     def validate(self, formula, groups):
         """Validate `formula` and `groups` for calculator's dataset.
@@ -33,13 +33,10 @@ class Calculator(object):
 
         :returns: The aggregation (or None) for the formula.
         """
-        dframe = self.dataset.dframe(QueryArgs(limit=1))
-        row = dframe.irow(0) if len(dframe) else {}
-
-        aggregation = self.parser.validate_formula(formula, row)
+        aggregation = self.parser.validate_formula(formula)
 
         for group in groups:
-            if not group in dframe.columns:
+            if not group in self.parser.context.dataset.schema.keys():
                 raise ParseError(
                     'Group %s not in dataset columns.' % group)
 
@@ -62,21 +59,23 @@ class Calculator(object):
 
         :param calculations: A list of calculations.
         """
-        self.__ensure_dframe()
-        new_dframe = self.dframe
+        new_cols = None
 
         for c in calculations:
 
             if c.aggregation:
-                aggregation = self.parse_aggregation(
+                aggregator = self.parse_aggregation(
                     c.formula, c.name, c.groups_as_list)
-                aggregation.save()
+                aggregator.save()
             else:
-                columns = self.parse_columns(c.formula, c.name)
-                new_dframe = new_dframe.join(columns[0])
+                columns = self.parse_columns(c.formula, c.name,
+                                             length=self.dataset.num_columns)
+                if new_cols is None:
+                    new_cols = DataFrame(columns[0])
+                else:
+                    new_cols = new_cols.join(columns[0])
 
-        if len(new_dframe.columns) > len(self.dframe.columns):
-            self.dataset.replace_observations(new_dframe)
+                self.dataset.update_observations(new_cols)
 
         # propagate calculation to any merged child datasets
         for merged_dataset in self.dataset.merged_datasets:
@@ -134,7 +133,6 @@ class Calculator(object):
         :param parent_dataset_id: If passed add ID as parent ID to column,
             default is None.
         """
-        self.__ensure_dframe()
         self.__ensure_ready(update_id)
 
         labels_to_slugs = self.dataset.schema.labels_to_slugs
@@ -154,6 +152,8 @@ class Calculator(object):
         if parent_dataset_id:
             new_dframe = new_dframe.add_parent_column(parent_dataset_id)
 
+        # TODO use update to add rows
+        # (don't read the whole thing then overwrite)
         existing_dframe = self.dataset.dframe(keep_parent_ids=True)
 
         # merge the two dframes
@@ -162,7 +162,6 @@ class Calculator(object):
         # update (overwrite) the dataset with the new merged dframe
         self.dataset.replace_observations(
             updated_dframe, set_num_columns=False)
-        self.dframe = self.dataset.dframe()
         self.dataset.clear_summary_stats()
 
         self.__update_aggregate_datasets(aggregations, new_dframe)
@@ -172,24 +171,54 @@ class Calculator(object):
         self.dataset.update_complete(update_id)
 
     def parse_aggregation(self, formula, name, groups, dframe=None):
-        columns = self.parse_columns(formula, name, dframe)
+        # TODO this should work with index eventually
+        columns = self.parse_columns(formula, name, dframe, no_index=True)
+        functions, dependent_columns = self.parser.parse_formula(formula)
 
-        return Aggregator(self.dataset, self.dframe, groups,
+        # get dframe with only necessary columns
+        # or dummy column (needed for count aggregation)
+        select = {}
+        select.update({group: 1 for group in groups})
+        select.update({col: 1 for col in dependent_columns})
+        if select:
+            query_args = QueryArgs(select=select)
+            dframe = self.dataset.dframe(query_args=query_args)
+        else:
+            query_args = QueryArgs(select={'_id': 1})
+            dframe = self.dataset.dframe(query_args=query_args,
+                                         keep_mongo_keys=True)
+
+        return Aggregator(self.dataset, dframe, groups,
                           self.parser.aggregation, name, columns)
 
-    def parse_columns(self, formula, name, dframe=None):
+    def parse_columns(self, formula, name, dframe=None, length=None,
+                      no_index=False):
         """Parse formula into function and variables."""
-        if dframe is None:
-            dframe = self.dataset.dframe()
+        functions, dependent_columns = self.parser.parse_formula(formula)
 
-        functions = self.parser.parse_formula(formula)
+        # make select from dependent_columns
+        if dframe is None and dependent_columns:
+            query_args = QueryArgs(
+                select={col: 1 for col in dependent_columns})
+            dframe = self.dataset.dframe(
+                query_args=query_args,
+                keep_mongo_keys=True).set_index('MONGO_RESERVED_KEY_id')
+        elif dframe is None:
+            # constant column, use dummy
+            query_args = QueryArgs(select={'_id': 1})
+            dframe = self.dataset.dframe(
+                query_args=query_args,
+                keep_mongo_keys=True).set_index('MONGO_RESERVED_KEY_id')
+            dframe['dummy'] = 0
 
         columns = []
 
         for function in functions:
-            column = dframe.apply(
-                function, axis=1, args=(self.parser.context, ))
+            column = dframe.apply(function, axis=1,
+                                  args=(self.parser.context,))
             column.name = make_unique(name, [c.name for c in columns])
+            if no_index:
+                column = column.reset_index(drop=True)
             columns.append(column)
 
         return columns
@@ -204,20 +233,17 @@ class Calculator(object):
         :raises: `NonUniqueJoinError` if update is illegal given joins of
             dataset.
         """
+        # TODO do not call dframe in here
         if any([direction == 'left' for direction, _, on, __ in
                 self.dataset.joined_datasets]):
-            if on in new_dframe_raw.columns and on in self.dframe.columns:
+            if on in new_dframe_raw.columns and \
+                    on in self.dataset.dframe().columns:
                 merged_join_column = concat(
-                    [new_dframe_raw[on], self.dframe[on]])
+                    [new_dframe_raw[on], self.dataset.dframe()[on]])
                 if len(merged_join_column) != merged_join_column.nunique():
                     raise NonUniqueJoinError(
                         'Cannot update. This is the right hand join and the'
                         'column "%s" will become non-unique.' % on)
-
-    def __ensure_dframe(self):
-        """Ensure `dframe` for the calculator's dataset is defined."""
-        if self.dframe is None:
-            self.dframe = self.dataset.dframe()
 
     def __ensure_ready(self, update_id):
         # dataset must not be pending
@@ -234,12 +260,13 @@ class Calculator(object):
             if calculation.aggregation is not None:
                 aggregations.append(calculation)
             else:
-                function = self.parser.parse_formula(calculation.formula)
+                function, dependent_columns = self.parser.parse_formula(
+                    calculation.formula)
                 new_column = new_dframe.apply(function[0], axis=1,
                                               args=(self.parser.context, ))
                 potential_name = calculation.name
 
-                if potential_name not in self.dframe.columns:
+                if potential_name not in self.dataset.dframe().columns:
                     if potential_name in labels_to_slugs:
                         new_column.name = labels_to_slugs[potential_name]
                 else:
@@ -297,12 +324,15 @@ class Calculator(object):
         :type new_data: List.
         :param labels_to_slugs: Map of labels to slugs.
         """
-        self.__ensure_dframe()
+        #if not isinstance(new_data, list):
+        #    new_data = [new_data]
 
         filtered_data = []
-        columns = self.dframe.columns
+        # TODO don't call dframe to get columns
+        dframe = self.dataset.dframe()
+        columns = dframe.columns
         num_columns = len(columns)
-        num_rows = len(self.dframe)
+        num_rows = len(dframe)
         dframe_empty = not num_columns
 
         if dframe_empty:
@@ -361,9 +391,9 @@ class Calculator(object):
         :param agg_dataset: The DataSet to store the aggregation in.
         """
         # parse aggregation and build column arguments
-        aggregation = self.parse_aggregation(formula, name, groups, new_dframe)
+        aggregator = self.parse_aggregation(formula, name, groups, new_dframe)
 
-        new_agg_dframe = aggregation.update(agg_dataset, self, formula)
+        new_agg_dframe = aggregator.update(agg_dataset, self, formula)
 
         # jsondict from new dframe
         new_data = new_agg_dframe.to_jsondict()
@@ -386,7 +416,7 @@ class Calculator(object):
         names_to_formulas = {
             calc.name: calc.formula for calc in calculations
         }
-        calculations = set([calc.name for calc in calculations])
+        calculations = set([calculation.name for calculation in calculations])
 
         for group, dataset in self.dataset.aggregated_datasets:
             labels_to_slugs = dataset.schema.labels_to_slugs

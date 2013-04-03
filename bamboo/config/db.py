@@ -1,5 +1,3 @@
-from os import getenv
-
 from pymongo import MongoClient
 
 from bamboo.config import settings
@@ -9,7 +7,7 @@ class Database(object):
     """Container for the MongoDB client."""
 
     # MongoDB client default host and port
-    __client__ = MongoClient('localhost', 27017, w=1, j=True)
+    __client__ = MongoClient('localhost', 27017, w=1, j=False)
     __db__ = None
 
     @classmethod

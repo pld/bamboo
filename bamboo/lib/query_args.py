@@ -34,3 +34,7 @@ class QueryArgs(object):
         self.distinct = distinct
         self.limit = limit
         self.order_by_value = order_by
+
+    def __nonzero__(self):
+        return bool(self.query or self.select or self.distinct or self.limit
+                    or self.order_by_value)

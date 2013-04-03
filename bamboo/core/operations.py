@@ -7,6 +7,8 @@ from scipy.stats import percentileofscore
 
 from bamboo.lib.datetools import safe_parse_date_to_unix_time,\
     parse_str_to_unix_time
+from bamboo.lib.query_args import QueryArgs
+from bamboo.lib.utils import parse_float
 
 
 class EvalTerm(object):
@@ -29,33 +31,44 @@ class EvalTerm(object):
     def operation(self, oper, result, val):
         return self.operations[oper](result, val)
 
+    def get_children(self):
+        return []
+
+    def dependent_columns(self, context):
+        return []
+
 
 class EvalConstant(EvalTerm):
     """Class to evaluate a parsed constant or variable."""
 
     def eval(self, row, context):
-        try:
-            return np.float64(self.value)
-        except ValueError:
-            # it may be a variable
-            field = self.field(row)
-            if field:
-                # it is a variable, save as dependency
-                context.dependent_columns.add(self.value)
+        value = parse_float(self.value)
+        if value is not None:
+            return value
 
-            # test is date and parse as date
-            return self.__parse_field(field, context)
+        # it may be a variable
+        field = self.field(row)
+
+        # test is date and parse as date
+        return self.__parse_field(field, context)
 
     def __parse_field(self, field, context):
-            schema = context.schema
-
-            if schema and schema.is_date_simpletype(self.value):
+            if context.dataset and context.dataset.schema.is_date_simpletype(
+                    self.value):
                 field = safe_parse_date_to_unix_time(field)
 
             return field
 
     def field(self, row):
         return row.get(self.value)
+
+    def dependent_columns(self, context):
+        value = parse_float(self.value)
+        if value is not None:
+            return []
+
+        # if value is not number or date, add as a column
+        return [self.value]
 
 
 class EvalString(EvalTerm):
@@ -74,6 +87,9 @@ class EvalSignOp(EvalTerm):
     def eval(self, row, context):
         mult = {'+': 1, '-': -1}[self.sign]
         return mult * self.value.eval(row, context)
+
+    def get_children(self):
+        return [self.value]
 
 
 class EvalBinaryArithOp(EvalTerm):
@@ -97,6 +113,12 @@ class EvalBinaryArithOp(EvalTerm):
                 return np.nan
 
         return result
+
+    def get_children(self):
+        children = [self.value[0]]
+        for oper, val in self.operator_operands(self.value[1:]):
+            children.append(val)
+        return children
 
 
 class EvalMultOp(EvalBinaryArithOp):
@@ -143,6 +165,12 @@ class EvalComparisonOp(EvalTerm):
 
         return False
 
+    def get_children(self):
+        children = [self.value[0]]
+        for oper, val in self.operator_operands(self.value[1:]):
+            children.append(val)
+        return children
+
 
 class EvalNotOp(EvalTerm):
     """Class to evaluate not expressions."""
@@ -152,6 +180,9 @@ class EvalNotOp(EvalTerm):
 
     def eval(self, row, context):
         return not self.value.eval(row, context)
+
+    def get_children(self):
+        return [self.value]
 
 
 class EvalBinaryBooleanOp(EvalTerm):
@@ -171,6 +202,12 @@ class EvalBinaryBooleanOp(EvalTerm):
 
         return result
 
+    def get_children(self):
+        children = [self.value[0]]
+        for oper, val in self.operator_operands(self.value[1:]):
+            children.append(val)
+        return children
+
 
 class EvalAndOp(EvalBinaryBooleanOp):
     """Class to distinguish precedence of and expressions."""
@@ -189,24 +226,28 @@ class EvalInOp(EvalTerm):
         val_to_test = str(self.value[0].eval(row, context))
         val_list = []
 
-        # loop through values, skip atom literal
         for val in self.value[1:]:
             val_list.append(val.eval(row, context))
 
         return val_to_test in val_list
+
+    def get_children(self):
+        return [val for val in self.value]
 
 
 class EvalCaseOp(EvalTerm):
     """Class to eval case statements."""
 
     def eval(self, row, context):
-        # skip 'case' literal
         for token in self.value:
             case_result = token.eval(row, context)
             if case_result:
                 return case_result
 
         return np.nan
+
+    def get_children(self):
+        return [val for val in self.value]
 
 
 class EvalMapOp(EvalTerm):
@@ -218,12 +259,26 @@ class EvalMapOp(EvalTerm):
 
         return False
 
+    def get_children(self):
+        # special "default" key returns the next token (value)
+        if self.tokens[0] == 'default':
+            return [self.tokens[1]]
+
+        # otherwise, return the map key and value
+        return self.tokens[0:2]
+
 
 class EvalFunction(object):
     """Class to eval functions."""
 
     def __init__(self, tokens):
         self.value = tokens[0][1]
+
+    def get_children(self):
+        return [self.value]
+
+    def dependent_columns(self, context):
+        return []
 
 
 class EvalDate(EvalFunction):
@@ -239,6 +294,14 @@ class EvalPercentile(EvalFunction):
 
     def eval(self, row, context):
         # parse date from string
-        column = context.dframe[self.value.value]
+        col = self.value.value
+        query_args = QueryArgs(select={col: 1})
+        column = context.dataset.dframe(query_args=query_args)[col]
         field = self.value.field(row)
         return percentileofscore(column, field)
+
+    def get_children(self):
+        return []
+
+    def dependent_columns(self, context):
+        return [self.value.value]

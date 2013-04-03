@@ -1,12 +1,9 @@
 from datetime import datetime
-import re
 
 from pandas import DataFrame
-from pymongo.cursor import Cursor
 
 from bamboo.tests.test_base import TestBase
 from bamboo.models.dataset import Dataset
-from bamboo.models.observation import Observation
 from bamboo.lib.datetools import recognize_dates
 from bamboo.lib.mongo import MONGO_RESERVED_KEY_STRS
 from bamboo.lib.schema_builder import OLAP_TYPE, RE_ENCODED_COLUMN, SIMPLETYPE
@@ -97,7 +94,6 @@ class TestDataset(TestBase):
         dataset = Dataset.create(self.test_dataset_ids['good_eats.csv'])
         dataset.save_observations(
             recognize_dates(self.get_data('good_eats.csv')))
-        records = [x for x in Observation.find(dataset)]
         dframe = dataset.dframe()
 
         self.assertTrue(isinstance(dframe, DataFrame))

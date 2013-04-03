@@ -106,23 +106,23 @@ class TestCalculation(TestBase):
             self.assertTrue('Group' in e.__str__())
 
     def test_find(self):
-        record = self._save_observations_and_calculation()
+        self._save_observations_and_calculation()
         rows = Calculation.find(self.dataset)
         new_record = rows[0].record
         status = new_record.pop(Calculation.STATE)
         self.assertEqual(status, Calculation.STATE_READY)
 
     def test_sets_dependent_calculations(self):
-        record = self._save_observations_and_calculation()
+        self._save_observations_and_calculation()
         self.name = 'test1'
-        record = self._save_calculation('test')
+        self._save_calculation('test')
         calculation = Calculation.find_one(self.dataset.dataset_id, 'test')
         self.assertEqual(calculation.dependent_calculations, ['test1'])
 
     def test_removes_dependent_calculations(self):
-        record = self._save_observations_and_calculation()
+        self._save_observations_and_calculation()
         self.name = 'test1'
-        record = self._save_calculation('test')
+        self._save_calculation('test')
         calculation = Calculation.find_one(self.dataset.dataset_id, 'test')
         self.assertEqual(calculation.dependent_calculations, ['test1'])
         calculation = Calculation.find_one(self.dataset.dataset_id, 'test1')
@@ -131,9 +131,9 @@ class TestCalculation(TestBase):
         self.assertEqual(calculation.dependent_calculations, [])
 
     def test_disallow_delete_dependent_calculation(self):
-        record = self._save_observations_and_calculation()
+        self._save_observations_and_calculation()
         self.name = 'test1'
-        record = self._save_calculation('test')
+        self._save_calculation('test')
         calculation = Calculation.find_one(self.dataset.dataset_id, 'test')
         self.assertEqual(calculation.dependent_calculations, ['test1'])
         calculation = Calculation.find_one(self.dataset.dataset_id, 'test')

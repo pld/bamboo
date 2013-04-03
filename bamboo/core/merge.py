@@ -2,7 +2,6 @@ from celery.task import task
 from pandas import concat
 
 from bamboo.core.frame import BambooFrame
-from bamboo.lib.io import import_dataset
 from bamboo.lib.async import call_async
 from bamboo.models.dataset import Dataset
 

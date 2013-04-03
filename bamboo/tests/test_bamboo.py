@@ -1,5 +1,5 @@
 from bamboo.tests.test_base import TestBase
-from bamboo import bambooapp
+from bamboo import bambooapp  # nopep8
 
 
 class TestBamboo(TestBase):

@@ -243,7 +243,8 @@ class TestCalculations(TestBase):
     def test_delete_aggregation(self):
         self.formula = 'sum(amount)'
         self.name = 'test'
-        response = json.loads(self.__post_formula())
+        json.loads(self.__post_formula())
+
         result = json.loads(
             self.controller.delete(self.dataset_id, self.name, ''))
 
@@ -588,12 +589,14 @@ class TestCalculations(TestBase):
         group = 'wp_id'
         self._wait_for_dataset_state(dataset_id)
 
-        results = json.loads(self.controller.create(dataset_id,
-                             'newest(submit_date,functional)', 'wp_functional',
-                             group=group))
-        results = json.loads(self.controller.create(dataset_id,
-                             'max(submit_date)', 'latest_submit_date',
-                             group=group))
+        self.controller.create(dataset_id,
+                               'newest(submit_date,functional)',
+                               'wp_functional',
+                               group=group)
+        self.controller.create(dataset_id,
+                               'max(submit_date)',
+                               'latest_submit_date',
+                               group=group)
 
         # Update the name to cause has pending to be true and infinite retries.
         # It will fail after 10 retries.
@@ -614,7 +617,6 @@ class TestCalculations(TestBase):
 
         while True:
             dataset = Dataset.find_one(dataset_id)
-            current_num_rows = dataset.num_rows
             calcs_not_pending = [
                 c.state != c.STATE_PENDING for c in dataset.calculations()]
 

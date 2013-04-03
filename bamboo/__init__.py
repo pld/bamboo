@@ -1,8 +1,8 @@
 import os
 import sys
 
-from bamboo.core.frame import *
-from bamboo.lib.async import *
+from bamboo.core.frame import *  # nopep8
+from bamboo.lib.async import *  # nopep8
 
 
 # test settings
@@ -15,4 +15,4 @@ if TESTING:
     os.environ['CELERY_CONFIG_MODULE'] += '_test'
 
 # perform import after env variables are set
-from bamboo.models.dataset import Dataset
+from bamboo.models.dataset import Dataset  # nopep8

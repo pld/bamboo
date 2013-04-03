@@ -74,8 +74,8 @@ class TestDatasetsTsFunctions(TestAbstractDatasets):
         self.assertEqual(
             'Could not evaluate %s' % interval, result[Datasets.ERROR])
 
-    def test_resample_with_query(self):
-        expected_length = 15
+    def test_resample(self):
+        expected_length = 17
         date_column, results = self.__build_resample_result()
 
         self.assertEqual(expected_length, len(results))

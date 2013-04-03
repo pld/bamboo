@@ -29,7 +29,6 @@ class TestFrame(TestBase):
             self.assertEqual(item, value)
 
     def test_decode_mongo_reserved_keys(self):
-        prev_columns = self.bframe.columns
         for col in MONGO_RESERVED_KEYS:
             self.assertTrue(col in self.bframe.columns)
         self.bframe.decode_mongo_reserved_keys()

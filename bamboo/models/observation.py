@@ -1,5 +1,4 @@
 from bamboo.core.frame import BambooFrame, DATASET_OBSERVATION_ID, INDEX
-from bamboo.lib.async import call_async
 from bamboo.lib.datetools import parse_timestamp_query
 from bamboo.lib.query_args import QueryArgs
 from bamboo.models.abstract_model import AbstractModel
@@ -53,6 +52,25 @@ class Observation(AbstractModel):
             query_args, as_dict=True, as_cursor=as_cursor)
 
     @classmethod
+    def update_from_dframe(cls, dframe, dataset):
+        dataset.build_schema(dframe)
+
+        # must have MONGO_RESERVED_KEY_id as index
+        if not DATASET_OBSERVATION_ID in dframe.columns:
+            cls.batch_update(dataset.encode_dframe_columns(
+                dframe).reset_index())
+        else:
+            cls.batch_update(dframe.reset_index())
+
+        # add metadata to dataset, discount ID column
+        dataset.update({
+            dataset.NUM_ROWS: len(dframe),
+            dataset.STATE: cls.STATE_READY,
+        })
+        # TODO make summary update-friendly
+        dataset.summarize(dframe, update=True)
+
+    @classmethod
     def find_one(cls, dataset, index):
         """Return row by index.
 
@@ -88,8 +106,6 @@ class Observation(AbstractModel):
             cls.batch_save(dataset.encode_dframe_columns(dframe))
         else:
             cls.batch_save(dframe)
-
-        dframe.remove_bamboo_reserved_keys()
 
         # add metadata to dataset, discount ID column
         dataset.update({
