@@ -51,7 +51,7 @@ class Dataset(AbstractModel, ImportableDataset):
 
     def __init__(self, record=None):
         super(Dataset, self).__init__(record)
-        self._dframe = None
+        self.__dframe = None
 
     # commonly accessed variables
     @property
@@ -195,8 +195,8 @@ class Dataset(AbstractModel, ImportableDataset):
         cacheable = not (query_args or keep_parent_ids or padded)
 
         # use cached copy if we have already fetched it
-        if cacheable and not reload and self._dframe is not None:
-            return self._dframe
+        if cacheable and not reload and self.__dframe is not None:
+            return self.__dframe
 
         observations = self.observations(query_args, as_cursor=True)
 
@@ -226,7 +226,7 @@ class Dataset(AbstractModel, ImportableDataset):
                 dframe = self.place_holder_dframe()
 
         if cacheable:
-            self._dframe = dframe
+            self.__dframe = dframe
 
         return dframe
 
@@ -427,7 +427,7 @@ class Dataset(AbstractModel, ImportableDataset):
         """
         Observation.delete_all(self, {PARENT_DATASET_ID: parent_id})
         # clear the cached dframe
-        self._dframe = None
+        self.__dframe = None
 
     def add_observations(self, new_data):
         """Update `dataset` with `new_data`."""
@@ -543,7 +543,7 @@ class Dataset(AbstractModel, ImportableDataset):
         return self
 
     def clear_cache(self):
-        self._dframe = None
+        self.__dframe = None
         return self
 
     def encode_dframe_columns(self, dframe):
