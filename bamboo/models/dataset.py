@@ -1,16 +1,14 @@
-from math import ceil
 import uuid
 from time import gmtime, strftime
 
 from celery.task import task
-from pandas import concat, rolling_window, Series
+from pandas import concat, rolling_window
 
 from bamboo.core.calculator import Calculator
 from bamboo.core.frame import BambooFrame, BAMBOO_RESERVED_KEY_PREFIX,\
     DATASET_ID, DATASET_OBSERVATION_ID, INDEX, PARENT_DATASET_ID
 from bamboo.core.summary import summarize
 from bamboo.lib.async import call_async
-from bamboo.lib.exceptions import ArgumentError
 from bamboo.lib.io import ImportableDataset
 from bamboo.lib.query_args import QueryArgs
 from bamboo.lib.schema_builder import Schema
@@ -122,7 +120,6 @@ class Dataset(AbstractModel, ImportableDataset):
 
     @property
     def joined_datasets(self):
-        result = []
         # TODO: fetch all datasets in single DB call
         return [
             (direction, self.find_one(other_dataset_id), on,
@@ -434,7 +431,6 @@ class Dataset(AbstractModel, ImportableDataset):
 
     def add_observations(self, new_data):
         """Update `dataset` with `new_data`."""
-        record = self.record
         update_id = uuid.uuid4().hex
         self.add_pending_update(update_id)
 
