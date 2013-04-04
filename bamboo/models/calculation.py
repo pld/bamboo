@@ -8,6 +8,7 @@ from bamboo.lib.async import call_async
 from bamboo.lib.exceptions import ArgumentError
 from bamboo.lib.query_args import QueryArgs
 from bamboo.lib.schema_builder import make_unique
+from bamboo.lib.utils import to_list
 from bamboo.models.abstract_model import AbstractModel
 
 
@@ -240,9 +241,7 @@ class Calculation(AbstractModel):
 
     @classmethod
     def create_from_list_or_dict(cls, dataset, calculations):
-        # TODO replace with to_list
-        if isinstance(calculations, dict):
-            calculations = [calculations]
+        calculations = to_list(calculations)
 
         if not len(calculations) or not isinstance(calculations, list):
             raise ArgumentError('Improper format for JSON calculations.')

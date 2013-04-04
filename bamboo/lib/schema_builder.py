@@ -50,9 +50,6 @@ SIMPLETYPE_TO_OLAP_TYPE = {
 
 RE_ENCODED_COLUMN = re.compile(ur'(?u)\W')
 
-# Reserve space before this for internal keys
-ENCODE_OFFSET = 1
-
 
 class Schema(dict):
     @classmethod

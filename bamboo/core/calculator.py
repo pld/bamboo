@@ -392,8 +392,8 @@ class Calculator(object):
         :param agg_dataset: The DataSet to store the aggregation in.
         """
         # parse aggregation and build column arguments
-        aggregation = self.parse_aggregation(formula, name, groups, new_dframe)
-        new_agg_dframe = aggregation.update(agg_dataset, self, formula)
+        aggregator = self.parse_aggregation(formula, name, groups, new_dframe)
+        new_agg_dframe = aggregator.update(agg_dataset, self, formula)
 
         # jsondict from new dframe
         new_data = new_agg_dframe.to_jsondict()

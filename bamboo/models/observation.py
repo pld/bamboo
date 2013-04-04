@@ -219,7 +219,7 @@ class Observation(AbstractModel):
         :param dfarme: The DataFrame to update.
         """
         def command(records):
-            # mongodb has no batch updates (fail)
+            # MongoDB has no batch updates
             for record in records:
                 spec = {'_id': record['MONGO_RESERVED_KEY_id']}
                 del record['MONGO_RESERVED_KEY_id']

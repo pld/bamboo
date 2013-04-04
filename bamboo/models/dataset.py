@@ -54,11 +54,6 @@ class Dataset(AbstractModel, ImportableDataset):
         super(Dataset, self).__init__(record)
         self.__dframe = None
 
-    # commonly accessed variables
-    @property
-    def dataset_observation_id(self):
-        return self.record[DATASET_OBSERVATION_ID]
-
     @property
     def dataset_id(self):
         return self.record[DATASET_ID]
@@ -174,8 +169,8 @@ class Dataset(AbstractModel, ImportableDataset):
 
         return self.find_one(_id) if _id else None
 
-    def dframe(self, query_args=None, keep_parent_ids=False,
-               padded=False, index=False, reload_=False, keep_mongo_keys=False):
+    def dframe(self, query_args=None, keep_parent_ids=False, padded=False,
+               index=False, reload_=False, keep_mongo_keys=False):
         """Fetch the dframe for this dataset.
 
         :param query_args: An optional QueryArgs to hold the query arguments.
@@ -183,7 +178,7 @@ class Dataset(AbstractModel, ImportableDataset):
             default False.
         :param padded: Used for joining, default False.
         :param index: Return the index with dframe, default False.
-        :param reload: Force refresh of data, default False.
+        :param reload_: Force refresh of data, default False.
         :param keep_mongo_keys: Used for updating documents, default False.
 
         :returns: Return BambooFrame with contents based on query parameters
@@ -559,6 +554,7 @@ class Dataset(AbstractModel, ImportableDataset):
             to.
         :returns: A the modified `dframe` as a BambooFrame.
         """
+        dframe = self.add_id_column(dframe)
         encoded_columns_map = self.schema.rename_map_for_dframe(dframe)
         dframe = dframe.rename(columns=encoded_columns_map)
 
