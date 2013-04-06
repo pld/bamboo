@@ -2,7 +2,7 @@ import uuid
 from time import gmtime, strftime
 
 from celery.task import task
-from pandas import concat, rolling_window, Series
+from pandas import rolling_window, Series
 
 from bamboo.core.calculator import Calculator
 from bamboo.core.frame import BambooFrame, BAMBOO_RESERVED_KEY_PREFIX,\
@@ -198,8 +198,8 @@ class Dataset(AbstractModel, ImportableDataset):
         if query_args.distinct:
             return BambooFrame(observations)
 
-        dframe = self.__batch_read_dframe_from_cursor(
-            observations, query_args.distinct, query_args.limit)
+        dframe = Observation.batch_read_dframe_from_cursor(
+            self, observations, query_args.distinct, query_args.limit)
 
         dframe.decode_mongo_reserved_keys(keep_mongo_keys=keep_mongo_keys)
 
@@ -648,39 +648,6 @@ class Dataset(AbstractModel, ImportableDataset):
         schema.set_olap_type(column, olap_type)
 
         self.set_schema(schema, False)
-
-    def __batch_read_dframe_from_cursor(self, observations, distinct, limit):
-        """Read a DataFrame from a MongoDB Cursor in batches."""
-        dframes = []
-        batch = 0
-        decoding = Observation.decoding(self)
-
-        while True:
-            start = batch * self.DB_READ_BATCH_SIZE
-            end = start + self.DB_READ_BATCH_SIZE
-
-            if limit > 0 and end > limit:
-                end = limit
-
-            # if there is a limit and we are done
-            if start >= end:
-                break
-
-            current_observations = [
-                replace_keys(ob, decoding) for ob in observations[start:end]]
-
-            # if the batches exhausted the data
-            if not len(current_observations):
-                break
-
-            dframes.append(BambooFrame(current_observations))
-
-            if not distinct:
-                observations.rewind()
-
-            batch += 1
-
-        return BambooFrame(concat(dframes) if len(dframes) else [])
 
     def __add_linked_data(self, link_key, existing_data, new_data):
         self.update({link_key: existing_data + [new_data]})

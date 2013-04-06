@@ -1,12 +1,13 @@
 from math import ceil
 
+from pandas import concat
 from pymongo.errors import AutoReconnect
 
 from bamboo.core.frame import BambooFrame, DATASET_ID, INDEX
 from bamboo.lib.datetools import parse_timestamp_query
 from bamboo.lib.mongo import MONGO_ID, MONGO_RESERVED_KEY_ID
 from bamboo.lib.query_args import QueryArgs
-from bamboo.lib.utils import invert_dict, replace_keys
+from bamboo.lib.utils import combine_dicts, invert_dict, replace_keys
 from bamboo.models.abstract_model import AbstractModel
 
 
@@ -105,7 +106,9 @@ class Observation(AbstractModel):
         if not DATASET_ID in encoded_dframe.columns:
             encoded_dframe = dataset.encode_dframe_columns(encoded_dframe)
 
-        encoding = cls.__batch_update(encoded_dframe)
+        encoding = combine_dicts(cls.__make_encoding(dframe),
+                                 cls.encoding(dataset))
+        cls.__batch_update(encoded_dframe, encoding)
         cls.__store_encoding(dataset, encoding)
         cls.__update_dataset_stats(dframe, dataset)
 
@@ -188,11 +191,13 @@ class Observation(AbstractModel):
             cls.collection.insert(records)
 
         batch_size = cls.DB_SAVE_BATCH_SIZE
+        encoding = cls.__make_encoding(dframe)
 
-        return cls.__batch_command_wrapper(command, dframe, batch_size)
+        return cls.__batch_command_wrapper(
+            command, dframe, encoding, batch_size)
 
     @classmethod
-    def __batch_update(cls, dframe):
+    def __batch_update(cls, dframe, encoding):
         """Update records in batches to avoid document size maximum setting.
 
         DataFrame must have column with record (object) ids.
@@ -207,30 +212,30 @@ class Observation(AbstractModel):
             for record in records:
                 spec = {MONGO_ID: record[mongo_reserved_key_id]}
                 del record[mongo_reserved_key_id]
-                doc = {"$set": record}
+                doc = {'$set': record}
                 cls.collection.update(spec, doc)
 
         batch_size = cls.DB_SAVE_BATCH_SIZE
 
-        return cls.__batch_command_wrapper(command, dframe, batch_size)
+        return cls.__batch_command_wrapper(
+            command, dframe, encoding, batch_size)
 
     @classmethod
-    def __batch_command_wrapper(cls, command, dframe, batch_size):
+    def __batch_command_wrapper(cls, command, dframe, encoding, batch_size):
         try:
-            return cls.__batch_command(command, dframe, batch_size)
+            return cls.__batch_command(command, dframe, encoding, batch_size)
         except AutoReconnect:
             batch_size /= 2
 
             # If batch size drop is less than MIN_BATCH_SIZE, assume the
             # records are too large or there is another error and fail.
             if batch_size >= cls.MIN_BATCH_SIZE:
-                cls.__batch_command_wrapper(command, dframe, batch_size)
+                cls.__batch_command_wrapper(
+                    command, dframe, encoding, batch_size)
 
     @classmethod
-    def __batch_command(cls, command, dframe, batch_size):
+    def __batch_command(cls, command, dframe, encoding, batch_size):
         batches = int(ceil(float(len(dframe)) / batch_size))
-
-        encoding = cls.__make_encoding(dframe)
 
         for batch in xrange(0, batches):
             start = batch * batch_size
@@ -271,3 +276,38 @@ class Observation(AbstractModel):
                   cls.ENCODING: encoding}
         super(cls, cls()).delete({cls.DATASET_ID_ENCODING: dataset.dataset_id})
         super(cls, cls()).save(record)
+
+    @classmethod
+    def batch_read_dframe_from_cursor(cls, dataset, observations, distinct,
+                                      limit):
+        """Read a DataFrame from a MongoDB Cursor in batches."""
+        dframes = []
+        batch = 0
+        decoding = cls.decoding(dataset)
+
+        while True:
+            start = batch * cls.DB_READ_BATCH_SIZE
+            end = start + cls.DB_READ_BATCH_SIZE
+
+            if limit > 0 and end > limit:
+                end = limit
+
+            # if there is a limit and we are done
+            if start >= end:
+                break
+
+            current_observations = [
+                replace_keys(ob, decoding) for ob in observations[start:end]]
+
+            # if the batches exhausted the data
+            if not len(current_observations):
+                break
+
+            dframes.append(BambooFrame(current_observations))
+
+            if not distinct:
+                observations.rewind()
+
+            batch += 1
+
+        return BambooFrame(concat(dframes) if len(dframes) else [])
