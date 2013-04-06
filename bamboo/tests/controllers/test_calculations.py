@@ -89,12 +89,11 @@ class TestCalculations(TestBase):
         self.__wait_for_calculation_ready(self.dataset_id, self.name)
 
         dataset = Dataset.find_one(self.dataset_id)
+        dframe = dataset.dframe()
 
         self.assertTrue(self.name in dataset.schema.keys())
-
-        dataset = Dataset.find_one(self.dataset_id)
-
-        self.assertEqual(TestAbstractDatasets.NUM_ROWS, len(dataset.dframe()))
+        self.assertTrue(self.name in dframe.columns)
+        self.assertEqual(TestAbstractDatasets.NUM_ROWS, len(dframe))
 
     def test_show(self):
         self.__post_formula()
