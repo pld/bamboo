@@ -7,7 +7,7 @@ from bson import json_util
 
 # MongoDB keys
 # TODO clean this up
-MONGO_RESERVED_KEY_PREFIX = 'MRK'
+MONGO_RESERVED_KEY_PREFIX = '##'
 MONGO_ID = '_id'
 MONGO_RESERVED_KEYS = [MONGO_ID]
 MONGO_RESERVED_KEY_ID = MONGO_RESERVED_KEY_PREFIX + '_id'

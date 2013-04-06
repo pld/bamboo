@@ -106,8 +106,10 @@ class Observation(AbstractModel):
         if not DATASET_ID in encoded_dframe.columns:
             encoded_dframe = dataset.encode_dframe_columns(encoded_dframe)
 
-        encoding = combine_dicts(cls.__make_encoding(dframe),
-                                 cls.encoding(dataset))
+        encoding = cls.encoding(dataset)
+        start = sorted(map(int, encoding.values()))[-1] + 1
+        combine_dicts(cls.__make_encoding(dframe, start), encoding)
+
         cls.__batch_update(encoded_dframe, encoding)
         cls.__store_encoding(dataset, encoding)
         dataset.update_stats(dframe, update=True)
@@ -243,9 +245,9 @@ class Observation(AbstractModel):
             command(records, encoding)
 
     @classmethod
-    def __make_encoding(cls, dframe):
+    def __make_encoding(cls, dframe, start=0):
         columns = [DATASET_ID] + sorted(dframe.columns - [DATASET_ID])
-        return {v: str(i) for (i, v) in enumerate(columns)}
+        return {v: str(start + i) for (i, v) in enumerate(columns)}
 
     @classmethod
     def __encode_records(cls, dframe, encoding):
