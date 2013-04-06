@@ -552,7 +552,7 @@ class Dataset(AbstractModel, ImportableDataset):
 
         :param dframe: The DataFame to rename columns in and add an ID column
             to.
-        :returns: A the modified `dframe` as a BambooFrame.
+        :returns: A modified `dframe` as a BambooFrame.
         """
         dframe = self.add_id_column(dframe)
         encoded_columns_map = self.schema.rename_map_for_dframe(dframe)

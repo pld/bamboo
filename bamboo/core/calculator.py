@@ -6,7 +6,7 @@ from pandas import concat, DataFrame
 from bamboo.core.aggregator import Aggregator
 from bamboo.core.frame import BambooFrame, NonUniqueJoinError
 from bamboo.core.parser import ParseError, Parser
-from bamboo.lib.mongo import MONGO_RESERVED_KEYS
+from bamboo.lib.mongo import MONGO_RESERVED_KEY_ID, MONGO_RESERVED_KEYS
 from bamboo.lib.query_args import QueryArgs
 from bamboo.lib.schema_builder import make_unique
 from bamboo.lib.utils import to_list
@@ -203,13 +203,13 @@ class Calculator(object):
                 select={col: 1 for col in dependent_columns})
             dframe = self.dataset.dframe(
                 query_args=query_args,
-                keep_mongo_keys=True).set_index('MONGO_RESERVED_KEY_id')
+                keep_mongo_keys=True).set_index(MONGO_RESERVED_KEY_ID)
         elif dframe is None:
             # constant column, use dummy
             query_args = QueryArgs(select={'_id': 1})
             dframe = self.dataset.dframe(
                 query_args=query_args,
-                keep_mongo_keys=True).set_index('MONGO_RESERVED_KEY_id')
+                keep_mongo_keys=True).set_index(MONGO_RESERVED_KEY_ID)
             dframe['dummy'] = 0
 
         columns = []

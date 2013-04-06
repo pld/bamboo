@@ -4,8 +4,9 @@ from pymongo.errors import AutoReconnect
 
 from bamboo.core.frame import BambooFrame, DATASET_ID, INDEX
 from bamboo.lib.datetools import parse_timestamp_query
+from bamboo.lib.mongo import MONGO_ID, MONGO_RESERVED_KEY_ID
 from bamboo.lib.query_args import QueryArgs
-from bamboo.lib.utils import replace_keys
+from bamboo.lib.utils import invert_dict, replace_keys
 from bamboo.models.abstract_model import AbstractModel
 
 
@@ -52,8 +53,7 @@ class Observation(AbstractModel):
 
     @classmethod
     def decoding(cls, dataset):
-        encoding = cls.encoding(dataset)
-        return {v: k for (k, v) in encoding.items()} if encoding else {}
+        return invert_dict(cls.encoding(dataset))
 
     @classmethod
     def find(cls, dataset, query_args=None, as_cursor=False):
@@ -100,20 +100,14 @@ class Observation(AbstractModel):
     def update_from_dframe(cls, dframe, dataset):
         dataset.build_schema(dframe)
 
-        # must have MONGO_RESERVED_KEY_id as index
-        if not DATASET_ID in dframe.columns:
-            cls.__batch_update(
-                dataset.encode_dframe_columns(dframe).reset_index())
-        else:
-            cls.__batch_update(dframe.reset_index())
+        encoded_dframe = dframe.reset_index()
 
-        # add metadata to dataset, discount ID column
-        dataset.update({
-            dataset.NUM_ROWS: len(dframe),
-            dataset.STATE: cls.STATE_READY,
-        })
-        # TODO make summary update-friendly
-        dataset.summarize(dframe, update=True)
+        if not DATASET_ID in encoded_dframe.columns:
+            encoded_dframe = dataset.encode_dframe_columns(encoded_dframe)
+
+        cls.__batch_update(encoded_dframe)
+
+        cls.__update_dataset_stats(dframe, dataset)
 
     @classmethod
     def find_one(cls, dataset, index, decode=True):
@@ -147,27 +141,20 @@ class Observation(AbstractModel):
         if not dataset.schema:
             dataset.build_schema(dframe)
 
-        dframe = cls.__add_index_to_dframe(dframe)
+        # Add indx and encode columns.
+        encoded_dframe = dataset.encode_dframe_columns(
+            cls.__add_index_to_dframe(dframe))
 
-        # Encode Columns
-        dframe = dataset.encode_dframe_columns(dframe)
 
-        if not DATASET_ID in dframe.columns:
-            # This dframe has not been saved before, add an ID column.
-            dframe = dataset.add_id_column(dframe)
+        encoding = cls.__batch_save(encoded_dframe)
 
-        encoding = cls.__batch_save(dframe)
+        # Store newly encoded columns.
         record = {cls.DATASET_ID_ENCODING: dataset.dataset_id,
                   cls.ENCODING: encoding}
         super(cls, cls()).delete({cls.DATASET_ID_ENCODING: dataset.dataset_id})
         super(cls, cls()).save(record)
 
-        # add metadata to dataset, discount ID column
-        dataset.update({
-            dataset.NUM_ROWS: len(dframe),
-            dataset.STATE: cls.STATE_READY,
-        })
-        dataset.summarize(dframe)
+        cls.__update_dataset_stats(dframe, dataset)
 
     @classmethod
     def update(cls, dataset, index, record):
@@ -203,7 +190,7 @@ class Observation(AbstractModel):
 
         :param dframe: A DataFrame to save in the current model.
         """
-        def command(records):
+        def command(records, current_dframe):
             cls.collection.insert(records)
 
         batch_size = cls.DB_SAVE_BATCH_SIZE
@@ -218,11 +205,14 @@ class Observation(AbstractModel):
 
         :param dfarme: The DataFrame to update.
         """
-        def command(records):
-            # MongoDB has no batch updates
+        def command(records, encoding):
+            # Encode the reserved key to access the row ID.
+            mongo_reserved_key_id = encoding[MONGO_RESERVED_KEY_ID]
+
+            # MongoDB has no batch updates.
             for record in records:
-                spec = {'_id': record['MONGO_RESERVED_KEY_id']}
-                del record['MONGO_RESERVED_KEY_id']
+                spec = {MONGO_ID: record[mongo_reserved_key_id]}
+                del record[mongo_reserved_key_id]
                 doc = {"$set": record}
                 cls.collection.update(spec, doc)
 
@@ -246,14 +236,32 @@ class Observation(AbstractModel):
     def __batch_command(cls, command, dframe, batch_size):
         batches = int(ceil(float(len(dframe)) / batch_size))
 
-        columns = [DATASET_ID] + sorted(dframe.columns - [DATASET_ID])
-        encoding = {v: str(i) for (i, v) in enumerate(columns)}
+        encoding = cls.__make_encoding(dframe)
 
         for batch in xrange(0, batches):
             start = batch * batch_size
             end = start + batch_size
-            records = [replace_keys(row.to_dict(), encoding) for (_, row)
-                       in dframe[start:end].iterrows()]
-            command(records)
+            current_dframe = dframe[start:end]
+            records = cls.__encode_records(current_dframe, encoding)
+            command(records, encoding)
 
         return encoding
+
+    @classmethod
+    def __make_encoding(cls, dframe):
+        columns = [DATASET_ID] + sorted(dframe.columns - [DATASET_ID])
+        return {v: str(i) for (i, v) in enumerate(columns)}
+
+    @classmethod
+    def __encode_records(cls, dframe, encoding):
+        return [replace_keys(row.to_dict(), encoding) for (_, row)
+                in dframe.iterrows()]
+
+    @classmethod
+    def __update_dataset_stats(cls, dframe, dataset):
+        # add metadata to dataset, discount ID column
+        dataset.update({
+            dataset.NUM_ROWS: len(dframe),
+            dataset.STATE: cls.STATE_READY,
+        })
+        dataset.summarize(dframe)
