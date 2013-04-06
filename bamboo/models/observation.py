@@ -148,8 +148,8 @@ class Observation(AbstractModel):
         encoded_dframe = dataset.encode_dframe_columns(
             cls.__add_index_to_dframe(dframe))
 
-
-        encoding = cls.__batch_save(encoded_dframe)
+        encoding = cls.__make_encoding(encoded_dframe)
+        cls.__batch_save(encoded_dframe, encoding)
         cls.__store_encoding(dataset, encoding)
         dataset.update_stats(dframe)
 
@@ -182,19 +182,17 @@ class Observation(AbstractModel):
         return BambooFrame(dframe)
 
     @classmethod
-    def __batch_save(cls, dframe):
+    def __batch_save(cls, dframe, encoding):
         """Save records in batches to avoid document size maximum setting.
 
         :param dframe: A DataFrame to save in the current model.
         """
-        def command(records, current_dframe):
+        def command(records, encoding):
             cls.collection.insert(records)
 
         batch_size = cls.DB_SAVE_BATCH_SIZE
-        encoding = cls.__make_encoding(dframe)
 
-        return cls.__batch_command_wrapper(
-            command, dframe, encoding, batch_size)
+        cls.__batch_command_wrapper(command, dframe, encoding, batch_size)
 
     @classmethod
     def __batch_update(cls, dframe, encoding):
@@ -206,7 +204,8 @@ class Observation(AbstractModel):
         """
         def command(records, encoding):
             # Encode the reserved key to access the row ID.
-            mongo_reserved_key_id = encoding[MONGO_RESERVED_KEY_ID]
+            mongo_reserved_key_id = encoding.get(
+                MONGO_RESERVED_KEY_ID, MONGO_RESERVED_KEY_ID)
 
             # MongoDB has no batch updates.
             for record in records:
@@ -217,13 +216,12 @@ class Observation(AbstractModel):
 
         batch_size = cls.DB_SAVE_BATCH_SIZE
 
-        return cls.__batch_command_wrapper(
-            command, dframe, encoding, batch_size)
+        cls.__batch_command_wrapper(command, dframe, encoding, batch_size)
 
     @classmethod
     def __batch_command_wrapper(cls, command, dframe, encoding, batch_size):
         try:
-            return cls.__batch_command(command, dframe, encoding, batch_size)
+            cls.__batch_command(command, dframe, encoding, batch_size)
         except AutoReconnect:
             batch_size /= 2
 
@@ -243,8 +241,6 @@ class Observation(AbstractModel):
             current_dframe = dframe[start:end]
             records = cls.__encode_records(current_dframe, encoding)
             command(records, encoding)
-
-        return encoding
 
     @classmethod
     def __make_encoding(cls, dframe):

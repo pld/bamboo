@@ -9,7 +9,7 @@ from bamboo.lib.mongo import dump_mongo_json, mongo_prefix_reserved_key,\
 
 
 # reserved bamboo keys
-BAMBOO_RESERVED_KEY_PREFIX = 'BRK'
+BAMBOO_RESERVED_KEY_PREFIX = '^^'
 DATASET_ID = BAMBOO_RESERVED_KEY_PREFIX + 'dataset_id'
 INDEX = BAMBOO_RESERVED_KEY_PREFIX + 'index'
 PARENT_DATASET_ID = BAMBOO_RESERVED_KEY_PREFIX + 'parent_dataset_id'
