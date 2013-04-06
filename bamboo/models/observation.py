@@ -105,8 +105,8 @@ class Observation(AbstractModel):
         if not DATASET_ID in encoded_dframe.columns:
             encoded_dframe = dataset.encode_dframe_columns(encoded_dframe)
 
-        cls.__batch_update(encoded_dframe)
-
+        encoding = cls.__batch_update(encoded_dframe)
+        cls.__store_encoding(dataset, encoding)
         cls.__update_dataset_stats(dframe, dataset)
 
     @classmethod
@@ -147,13 +147,7 @@ class Observation(AbstractModel):
 
 
         encoding = cls.__batch_save(encoded_dframe)
-
-        # Store newly encoded columns.
-        record = {cls.DATASET_ID_ENCODING: dataset.dataset_id,
-                  cls.ENCODING: encoding}
-        super(cls, cls()).delete({cls.DATASET_ID_ENCODING: dataset.dataset_id})
-        super(cls, cls()).save(record)
-
+        cls.__store_encoding(dataset, encoding)
         cls.__update_dataset_stats(dframe, dataset)
 
     @classmethod
@@ -218,7 +212,7 @@ class Observation(AbstractModel):
 
         batch_size = cls.DB_SAVE_BATCH_SIZE
 
-        cls.__batch_command_wrapper(command, dframe, batch_size)
+        return cls.__batch_command_wrapper(command, dframe, batch_size)
 
     @classmethod
     def __batch_command_wrapper(cls, command, dframe, batch_size):
@@ -265,3 +259,15 @@ class Observation(AbstractModel):
             dataset.STATE: cls.STATE_READY,
         })
         dataset.summarize(dframe)
+
+    @classmethod
+    def __store_encoding(cls, dataset, encoding):
+        """Store encoded columns with dataset.
+
+        :param dataset: The dataset to store the encoding with.
+        :param encoding: The encoding for dataset.
+        """
+        record = {cls.DATASET_ID_ENCODING: dataset.dataset_id,
+                  cls.ENCODING: encoding}
+        super(cls, cls()).delete({cls.DATASET_ID_ENCODING: dataset.dataset_id})
+        super(cls, cls()).save(record)
