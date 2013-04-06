@@ -110,7 +110,7 @@ class Observation(AbstractModel):
                                  cls.encoding(dataset))
         cls.__batch_update(encoded_dframe, encoding)
         cls.__store_encoding(dataset, encoding)
-        cls.__update_dataset_stats(dframe, dataset)
+        dataset.update_stats(dframe, update=True)
 
     @classmethod
     def find_one(cls, dataset, index, decode=True):
@@ -151,7 +151,7 @@ class Observation(AbstractModel):
 
         encoding = cls.__batch_save(encoded_dframe)
         cls.__store_encoding(dataset, encoding)
-        cls.__update_dataset_stats(dframe, dataset)
+        dataset.update_stats(dframe)
 
     @classmethod
     def update(cls, dataset, index, record):
@@ -255,15 +255,6 @@ class Observation(AbstractModel):
     def __encode_records(cls, dframe, encoding):
         return [replace_keys(row.to_dict(), encoding) for (_, row)
                 in dframe.iterrows()]
-
-    @classmethod
-    def __update_dataset_stats(cls, dframe, dataset):
-        # add metadata to dataset, discount ID column
-        dataset.update({
-            dataset.NUM_ROWS: len(dframe),
-            dataset.STATE: cls.STATE_READY,
-        })
-        dataset.summarize(dframe)
 
     @classmethod
     def __store_encoding(cls, dataset, encoding):

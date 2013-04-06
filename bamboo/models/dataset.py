@@ -609,6 +609,18 @@ class Dataset(AbstractModel, ImportableDataset):
             {'_id': self.record['_id']},
             {'$pull': {self.PENDING_UPDATES: update_id}})
 
+    def update_stats(self, dframe, update=False):
+        """Update store statistics for this dataset.
+
+         :param dframe: Use this DataFrame for summary statistics.
+         :param update: Update or replace summary statistics, default False.
+        """
+        self.update({
+            self.NUM_ROWS: len(dframe),
+            self.STATE: self.STATE_READY,
+        })
+        self.summarize(dframe, update=update)
+
     def resample(self, date_column, interval, how, query=None):
         """Resample a dataset given a new time frame.
 

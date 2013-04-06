@@ -177,7 +177,8 @@ class TestCalculations(TestBase):
 
         # stats should have new column for calculation
         dataset = Dataset.find_one(self.dataset_id)
-        self.assertTrue(self.name in dataset.stats.get(Dataset.ALL).keys())
+        stats = dataset.stats.get(Dataset.ALL)
+        self.assertTrue(self.name in stats.keys())
 
     def test_delete_nonexistent_calculation(self):
         dataset_id = self._post_file()
