@@ -8,6 +8,7 @@ from pymongo import ASCENDING
 
 from bamboo.config.db import Database
 from bamboo.core.frame import DATASET_ID
+from bamboo.models.observation import Observation
 
 
 def ensure_indexing():
@@ -19,6 +20,7 @@ def ensure_indexing():
     datasets.ensure_index([(DATASET_ID, ASCENDING)])
     # The encoded dataset_id will be set to '0'.
     observations.ensure_index([("0", ASCENDING)])
+    observations.ensure_index([(Observation.ENCODING_DATASET_ID, ASCENDING)])
     calculations.ensure_index([(DATASET_ID, ASCENDING)])
 
 
