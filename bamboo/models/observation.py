@@ -15,7 +15,6 @@ class Observation(AbstractModel):
 
     __collectionname__ = 'observations'
     ENCODING = 'encoding'
-    DATASET_ID_ENCODING = DATASET_ID + ENCODING
 
     @classmethod
     def delete(cls, dataset, index):
@@ -42,7 +41,7 @@ class Observation(AbstractModel):
     @classmethod
     def encoding(cls, dataset):
         record = super(cls, cls).find_one({
-            cls.DATASET_ID_ENCODING: dataset.dataset_id
+            cls.DATASET_ID: dataset.dataset_id
         }).record
         return record[cls.ENCODING] if record else None
 
@@ -262,9 +261,9 @@ class Observation(AbstractModel):
         :param dataset: The dataset to store the encoding with.
         :param encoding: The encoding for dataset.
         """
-        record = {cls.DATASET_ID_ENCODING: dataset.dataset_id,
+        record = {cls.DATASET_ID: dataset.dataset_id,
                   cls.ENCODING: encoding}
-        super(cls, cls()).delete({cls.DATASET_ID_ENCODING: dataset.dataset_id})
+        super(cls, cls()).delete({cls.DATASET_ID: dataset.dataset_id})
         super(cls, cls()).save(record)
 
     @classmethod
