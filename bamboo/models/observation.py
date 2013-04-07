@@ -246,6 +246,7 @@ class Observation(AbstractModel):
 
     @classmethod
     def __make_encoding(cls, dframe, start=0):
+        # Ensure that DATASET_ID is first so that we can guarantee an index.
         columns = [DATASET_ID] + sorted(dframe.columns - [DATASET_ID])
         return {v: str(start + i) for (i, v) in enumerate(columns)}
 
