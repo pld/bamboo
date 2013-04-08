@@ -9,7 +9,7 @@ from bamboo.core.parser import ParseError, Parser
 from bamboo.lib.mongo import MONGO_RESERVED_KEY_ID, MONGO_RESERVED_KEYS
 from bamboo.lib.query_args import QueryArgs
 from bamboo.lib.schema_builder import make_unique
-from bamboo.lib.utils import to_list
+from bamboo.lib.utils import combine_dicts, to_list
 
 
 class Calculator(object):
@@ -178,9 +178,8 @@ class Calculator(object):
 
         # get dframe with only necessary columns
         # or dummy column (needed for count aggregation)
-        select = {}
-        select.update({group: 1 for group in groups})
-        select.update({col: 1 for col in dependent_columns})
+        select = combine_dicts({group: 1 for group in groups},
+                               {col: 1 for col in dependent_columns})
         if select:
             query_args = QueryArgs(select=select)
             dframe = self.dataset.dframe(query_args=query_args)
@@ -198,19 +197,17 @@ class Calculator(object):
         functions, dependent_columns = self.parser.parse_formula(formula)
 
         # make select from dependent_columns
-        if dframe is None and dependent_columns:
-            query_args = QueryArgs(
-                select={col: 1 for col in dependent_columns})
+        if dframe is None:
+            select = {col: 1 for col in dependent_columns} if\
+                dependent_columns else {'_id': 1}
+
             dframe = self.dataset.dframe(
-                query_args=query_args,
+                query_args=QueryArgs(select=select),
                 keep_mongo_keys=True).set_index(MONGO_RESERVED_KEY_ID)
-        elif dframe is None:
-            # constant column, use dummy
-            query_args = QueryArgs(select={'_id': 1})
-            dframe = self.dataset.dframe(
-                query_args=query_args,
-                keep_mongo_keys=True).set_index(MONGO_RESERVED_KEY_ID)
-            dframe['dummy'] = 0
+
+            if not dependent_columns:
+                # constant column, use dummy
+                dframe['dummy'] = 0
 
         columns = []
 
@@ -234,10 +231,11 @@ class Calculator(object):
         :raises: `NonUniqueJoinError` if update is illegal given joins of
             dataset.
         """
-        # TODO do not call dframe in here
+        # TODO clean this up
         if any([direction == 'left' for direction, _, on, __ in
                 self.dataset.joined_datasets]):
-            if on in new_dframe_raw.columns and \
+            # TODO do not call dframe in here
+            if on in new_dframe_raw.columns and\
                     on in self.dataset.dframe().columns:
                 merged_join_column = concat(
                     [new_dframe_raw[on], self.dataset.dframe()[on]])
