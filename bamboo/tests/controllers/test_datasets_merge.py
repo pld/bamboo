@@ -69,9 +69,9 @@ class TestDatasetsMerge(TestAbstractDatasets):
 
         dframe1 = datasets[0].dframe()
         merged_dataset = Dataset.find_one(result[Dataset.ID])
-        merged_rows = merged_dataset.observations()
+        merged_dframe = merged_dataset.dframe(keep_parent_ids=True)
 
-        for row in merged_rows:
+        for _, row in merged_dframe.iterrows():
             self.assertTrue(PARENT_DATASET_ID in row.keys())
 
         merged_dframe = merged_dataset.dframe()
@@ -125,9 +125,9 @@ class TestDatasetsMerge(TestAbstractDatasets):
 
         dframe1 = datasets[0].dframe()
         merged_dataset = Dataset.find_one(merged_id)
-        merged_rows = merged_dataset.observations()
+        merged_dframe = merged_dataset.dframe(keep_parent_ids=True)
 
-        for row in merged_rows:
+        for _, row in merged_dframe.iterrows():
             self.assertTrue(PARENT_DATASET_ID in row.keys())
 
         merged_dframe = merged_dataset.dframe()

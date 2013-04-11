@@ -1,6 +1,5 @@
-# var for bamboo server
-
-HOST="http://bamboo.io"
+# the dev server
+HOST='http://54.225.70.200'
 WAIT_TIME=15
 
 while getopts l opt
@@ -38,22 +37,16 @@ echo -e "\nRetrieve data for School Zone RWIKA"
 RET=$(curl -#g $HOST/datasets/$ID?query='{"school_zone":"RWIKA"}')
 echo $RET
 
-sleep $WAIT_TIME
-
 echo -e "\nCalculate summary statistics for School Zone RWIKA"
 # using slug for "School Zone", which is "school_zone"
 RET=$(curl -#g $HOST/datasets/$ID/summary?query='{"school_zone":"RWIKA"}'\&select=all)
 echo $RET
-
-sleep $WAIT_TIME
 
 echo -e "\nCalculate summary statistics with a grouping (truncated to 1000 characters)"
 echo -e "Group by District showing only PRIVATE schools"
 # using slug for "Public or Private", which is "public_or_private"
 RET=$(curl -#g $HOST/datasets/$ID/summary?query='{"public_or_private":"PRIVATE"}'\&select=all\&group=district)
 echo $RET | cut -c -1000
-
-sleep $WAIT_TIME
 
 echo -e "\nStore calculation named small_schools with formula acreage<10"
 RET=$(curl -#X POST -d "name=small_schools&formula=acreage<10" $HOST/calculations/$ID)
@@ -70,7 +63,7 @@ sleep $WAIT_TIME
 echo -e "\nStore calculation named male_female_teacher_ratio with formula:"
 echo -e "(tsc_male_teachers+local_authority_male_teachers+pta_board_of_governors_male_teacher+other_male_teachers)/(tsc_female_teachers+local_authority_female_teachers+pta_board_of_governors_female_teacher+other_female_teachers)"
 echo -e "plus signs must by URI encoded for curl to process them correctly."
-RET=$(curl -#X POST -d "name=male_female_teacher_ratio&formula=(tsc_male_teachers%2Blocal_authority_male_teachers%2Bpta_board_of_governors_male_teacher%2Bother_male_teachers)/(tsc_female_teachers%2Blocal_authority_female_teachers%2Bpta_board_of_governors_female_teacher%2Bother_female_teachers)'" $HOST/calculations/$ID)
+RET=$(curl -#X POST -d "name=male_female_teacher_ratio&formula=(tsc_male_teachers%2Blocal_authority_male_teachers%2Bpta_board_of_governors_male_teacher%2Bother_male_teachers)/(tsc_female_teachers%2Blocal_authority_female_teachers%2Bpta_board_of_governors_female_teacher%2Bother_female_teachers)" $HOST/calculations/$ID)
 echo $RET
 
 sleep $WAIT_TIME

@@ -333,6 +333,7 @@ class SumAggregation(Aggregation):
     def reduce(self, dframe, columns):
         self.columns = columns
         self.column = columns[0]
+        dframe = dframe.reset_index()
         dframe[self.name] += self.agg()[self.name]
 
         return dframe

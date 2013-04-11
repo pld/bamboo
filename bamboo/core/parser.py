@@ -274,10 +274,10 @@ class Parser(object):
             for column_function in self.column_functions:
                 functions.append(partial(column_function.eval))
                 dependent_columns = dependent_columns.union(
-                    self._get_dependent_columns(column_function))
+                    self.__get_dependent_columns(column_function))
         else:
             functions.append(partial(self.parsed_expr.eval))
-            dependent_columns = self._get_dependent_columns(self.parsed_expr)
+            dependent_columns = self.__get_dependent_columns(self.parsed_expr)
 
         self.context.dependent_columns = dependent_columns
 
@@ -310,7 +310,7 @@ class Parser(object):
 
         return self.aggregation
 
-    def _get_dependent_columns(self, parsed_expr):
+    def __get_dependent_columns(self, parsed_expr):
         result = []
         if not hasattr(self, 'context'):
             return result
@@ -318,8 +318,10 @@ class Parser(object):
         def find_dependent_columns(parsed_expr, result):
             dependent_columns = parsed_expr.dependent_columns(self.context)
             result.extend(dependent_columns)
+
             for child in parsed_expr.get_children():
                 find_dependent_columns(child, result)
+
             return result
 
         return set(find_dependent_columns(parsed_expr, result))

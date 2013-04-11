@@ -49,8 +49,8 @@ class TestDatasetsUpdate(TestAbstractDatasetsUpdate):
     def _test_update1(self):
         for dataset_id in [self.merged_dataset1_id, self.merged_dataset2_id]:
             merged_dataset = Dataset.find_one(dataset_id)
-            merged_rows = merged_dataset.observations()
-            for row in merged_rows:
+            merged_dframe = merged_dataset.dframe(keep_parent_ids=True)
+            for _, row in merged_dframe.iterrows():
                 self.assertTrue(PARENT_DATASET_ID in row.keys())
 
         self._verify_dataset(self.dataset1_id,

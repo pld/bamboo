@@ -61,7 +61,7 @@ class Aggregator(object):
         # get dframe only including rows from this parent
         dframe = child_dataset.dframe(
             keep_parent_ids=True,
-            reload=True).only_rows_for_parent_id(parent_dataset_id)
+            reload_=True).only_rows_for_parent_id(parent_dataset_id)
 
         # remove rows in child from parent
         child_dataset.remove_parent_observations(parent_dataset_id)
@@ -75,8 +75,8 @@ class Aggregator(object):
 
         new_agg_dframe = concat([child_dataset.dframe(), dframe])
         new_agg_dframe = new_agg_dframe.add_parent_column(parent_dataset_id)
-
         child_dataset.replace_observations(new_agg_dframe)
+
         return child_dataset.dframe()
 
     def __dframe_from_calculator(self, calculator, formula, dframe):

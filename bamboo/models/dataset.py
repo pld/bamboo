@@ -2,16 +2,17 @@ import uuid
 from time import gmtime, strftime
 
 from celery.task import task
-from pandas import concat, rolling_window
+from pandas import rolling_window, Series
 
 from bamboo.core.calculator import Calculator
 from bamboo.core.frame import BambooFrame, BAMBOO_RESERVED_KEY_PREFIX,\
-    DATASET_ID, DATASET_OBSERVATION_ID, INDEX, PARENT_DATASET_ID
+    DATASET_ID, INDEX, PARENT_DATASET_ID
 from bamboo.core.summary import summarize
 from bamboo.lib.async import call_async
 from bamboo.lib.io import ImportableDataset
 from bamboo.lib.query_args import QueryArgs
 from bamboo.lib.schema_builder import Schema
+from bamboo.lib.utils import replace_keys, to_list
 from bamboo.models.abstract_model import AbstractModel
 from bamboo.models.calculation import Calculation
 from bamboo.models.observation import Observation
@@ -52,11 +53,6 @@ class Dataset(AbstractModel, ImportableDataset):
     def __init__(self, record=None):
         super(Dataset, self).__init__(record)
         self.__dframe = None
-
-    # commonly accessed variables
-    @property
-    def dataset_observation_id(self):
-        return self.record[DATASET_OBSERVATION_ID]
 
     @property
     def dataset_id(self):
@@ -168,15 +164,13 @@ class Dataset(AbstractModel, ImportableDataset):
         return self.schema.cardinality(col)
 
     def aggregated_dataset(self, groups):
-        if not isinstance(groups, list):
-            groups = [groups]
-
+        groups = to_list(groups)
         _id = self.aggregated_datasets_dict.get(self.join_groups(groups))
 
         return self.find_one(_id) if _id else None
 
-    def dframe(self, query_args=QueryArgs(), keep_parent_ids=False,
-               padded=False, index=False, reload=False, keep_mongo_keys=False):
+    def dframe(self, query_args=None, keep_parent_ids=False, padded=False,
+               index=False, reload_=False, keep_mongo_keys=False):
         """Fetch the dframe for this dataset.
 
         :param query_args: An optional QueryArgs to hold the query arguments.
@@ -184,7 +178,7 @@ class Dataset(AbstractModel, ImportableDataset):
             default False.
         :param padded: Used for joining, default False.
         :param index: Return the index with dframe, default False.
-        :param reload: Force refresh of data, default False.
+        :param reload_: Force refresh of data, default False.
         :param keep_mongo_keys: Used for updating documents, default False.
 
         :returns: Return BambooFrame with contents based on query parameters
@@ -195,13 +189,17 @@ class Dataset(AbstractModel, ImportableDataset):
         cacheable = not (query_args or keep_parent_ids or padded)
 
         # use cached copy if we have already fetched it
-        if cacheable and not reload and self.__dframe is not None:
+        if cacheable and not reload_ and self.__dframe is not None:
             return self.__dframe
 
+        query_args = query_args or QueryArgs()
         observations = self.observations(query_args, as_cursor=True)
 
-        dframe = self.__batch_read_dframe_from_cursor(
-            observations, query_args.distinct, query_args.limit)
+        if query_args.distinct:
+            return BambooFrame(observations)
+
+        dframe = Observation.batch_read_dframe_from_cursor(
+            self, observations, query_args.distinct, query_args.limit)
 
         dframe.decode_mongo_reserved_keys(keep_mongo_keys=keep_mongo_keys)
 
@@ -230,11 +228,12 @@ class Dataset(AbstractModel, ImportableDataset):
 
         return dframe
 
-    def count(self, query_args=QueryArgs()):
+    def count(self, query_args=None):
         """Return the count of rows matching query in dataset.
 
         :param query_args: An optional QueryArgs to hold the query arguments.
         """
+        query_args = query_args or QueryArgs()
         obs = self.observations(query_args, as_cursor=True)
 
         count = len(obs) if query_args.distinct else obs.count()
@@ -285,7 +284,6 @@ class Dataset(AbstractModel, ImportableDataset):
 
         record = {
             DATASET_ID: dataset_id,
-            DATASET_OBSERVATION_ID: uuid.uuid4().hex,
             self.AGGREGATED_DATASETS: {},
             self.CREATED_AT: strftime("%Y-%m-%d %H:%M:%S", gmtime()),
             self.STATE: self.STATE_PENDING,
@@ -399,21 +397,15 @@ class Dataset(AbstractModel, ImportableDataset):
             self.PARENT_IDS: parent_ids,
         }
 
-    def observations(self, query_args=QueryArgs(), as_cursor=False):
+    def observations(self, query_args=None, as_cursor=False):
         """Return observations for this dataset.
 
         :param query_args: An optional QueryArgs to hold the query arguments.
         :param as_cursor: Return the observations as a cursor.
         """
-        if query_args.distinct:
-            as_cursor = True
+        query_args = query_args or QueryArgs()
 
-        observations = Observation.find(self, query_args, as_cursor=as_cursor)
-
-        if query_args.distinct:
-            observations = observations.distinct(query_args.distinct)
-
-        return observations
+        return Observation.find(self, query_args, as_cursor=as_cursor)
 
     def calculations(self):
         """Return the calculations for this dataset."""
@@ -434,8 +426,7 @@ class Dataset(AbstractModel, ImportableDataset):
         update_id = uuid.uuid4().hex
         self.add_pending_update(update_id)
 
-        if not isinstance(new_data, list):
-            new_data = [new_data]
+        new_data = to_list(new_data)
 
         calculator = Calculator(self)
 
@@ -544,21 +535,29 @@ class Dataset(AbstractModel, ImportableDataset):
 
     def clear_cache(self):
         self.__dframe = None
+
         return self
+
+    def add_id_column(self, dframe):
+        id_column = Series([self.dataset_id] * len(dframe))
+        id_column.name = DATASET_ID
+
+        return BambooFrame(dframe.join(id_column))
 
     def encode_dframe_columns(self, dframe):
         """Encode the columns in `dframe` to slugs and add ID column.
 
-        The ID column is the dataset_observation_id for this dataset.  This is
+        The ID column is the dataset_id for this dataset.  This is
         used to link observations to a specific dataset.
 
         :param dframe: The DataFame to rename columns in and add an ID column
             to.
-        :returns: A the modified `dframe` as a BambooFrame.
+        :returns: A modified `dframe` as a BambooFrame.
         """
+        dframe = self.add_id_column(dframe)
         encoded_columns_map = self.schema.rename_map_for_dframe(dframe)
         dframe = dframe.rename(columns=encoded_columns_map)
-        dframe[DATASET_OBSERVATION_ID] = self.dataset_observation_id
+
         return BambooFrame(dframe)
 
     def new_agg_dataset(self, dframe, groups):
@@ -569,6 +568,7 @@ class Dataset(AbstractModel, ImportableDataset):
 
         :param dframe: The DataFrame to store in the new aggregated dataset.
         :param groups: The groups associated with this aggregated dataset.
+        :returns: The newly created aggregated dataset.
         """
         agg_dataset = self.create()
         agg_dataset.save_observations(dframe)
@@ -579,6 +579,8 @@ class Dataset(AbstractModel, ImportableDataset):
         agg_datasets_dict[group_str] = agg_dataset.dataset_id
         self.update({
             self.AGGREGATED_DATASETS: agg_datasets_dict})
+
+        return agg_dataset
 
     def has_pending_updates(self, update_id):
         """Check if this dataset has pending updates.
@@ -607,7 +609,19 @@ class Dataset(AbstractModel, ImportableDataset):
             {'_id': self.record['_id']},
             {'$pull': {self.PENDING_UPDATES: update_id}})
 
-    def resample(self, date_column, interval, how, query={}):
+    def update_stats(self, dframe, update=False):
+        """Update store statistics for this dataset.
+
+         :param dframe: Use this DataFrame for summary statistics.
+         :param update: Update or replace summary statistics, default False.
+        """
+        self.update({
+            self.NUM_ROWS: len(dframe),
+            self.STATE: self.STATE_READY,
+        })
+        self.summarize(dframe, update=update)
+
+    def resample(self, date_column, interval, how, query=None):
         """Resample a dataset given a new time frame.
 
         :param date_column: The date column use as the index for resampling.
@@ -646,37 +660,6 @@ class Dataset(AbstractModel, ImportableDataset):
         schema.set_olap_type(column, olap_type)
 
         self.set_schema(schema, False)
-
-    def __batch_read_dframe_from_cursor(self, observations, distinct, limit):
-        """Read a DataFrame from a MongoDB Cursor in batches."""
-        dframes = []
-        batch = 0
-
-        while True:
-            start = batch * self.DB_READ_BATCH_SIZE
-            end = start + self.DB_READ_BATCH_SIZE
-
-            if limit > 0 and end > limit:
-                end = limit
-
-            # if there is a limit and we are done
-            if start >= end:
-                break
-
-            current_observations = [ob for ob in observations[start:end]]
-
-            # if the batches exhausted the data
-            if not len(current_observations):
-                break
-
-            dframes.append(BambooFrame(current_observations))
-
-            if not distinct:
-                observations.rewind()
-
-            batch += 1
-
-        return BambooFrame(concat(dframes) if len(dframes) else [])
 
     def __add_linked_data(self, link_key, existing_data, new_data):
         self.update({link_key: existing_data + [new_data]})

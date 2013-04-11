@@ -51,14 +51,18 @@ class TestObservation(TestBase):
         query_args = QueryArgs(select={"rating": 1})
         rows = Observation.find(self.dataset, query_args)
         self.assertTrue(isinstance(rows, list))
-        self.assertEquals(sorted(rows[0].keys()), ['_id', 'rating'])
+        row = Observation.encode(
+            rows[0], encoding=Observation.decoding(self.dataset))
+        self.assertEquals(sorted(row.keys()), ['_id', 'rating'])
 
     def test_find_with_select_and_query(self):
         self._save_observations()
         self.query_args.select = {"rating": 1}
         rows = Observation.find(self.dataset, self.query_args)
         self.assertTrue(isinstance(rows, list))
-        self.assertEquals(sorted(rows[0].keys()), ['_id', 'rating'])
+        row = Observation.encode(
+            rows[0], encoding=Observation.decoding(self.dataset))
+        self.assertEquals(sorted(row.keys()), ['_id', 'rating'])
 
     def test_delete(self):
         self._save_observations()

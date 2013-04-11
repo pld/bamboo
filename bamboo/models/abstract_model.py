@@ -1,7 +1,3 @@
-from math import ceil
-
-from pymongo.errors import AutoReconnect
-
 from bamboo.config.db import Database
 from bamboo.core.frame import BAMBOO_RESERVED_KEYS
 from bamboo.lib.decorators import classproperty
@@ -21,6 +17,7 @@ class AbstractModel(object):
     """
 
     __collection__ = None
+    __collectionname__ = None
 
     # delimiter when passing multiple groups as a string
     GROUP_DELIMITER = ','
@@ -112,70 +109,18 @@ class AbstractModel(object):
             ]
 
     @classmethod
-    def find_one(cls, query, select=None):
+    def find_one(cls, query, select=None, as_dict=False):
         """Return the first row matching `query` and `select` from MongoDB.
 
         :param query: A query to pass to MongoDB.
         :param select: An optional select to pass to MongoDB.
+        :param as_dict: If true, return dicts and not model instances.
 
         :returns: A model instance of the row returned for this query and
             select.
         """
-        return cls(cls.collection.find_one(query, select))
-
-    @classmethod
-    def batch_save(cls, dframe):
-        """Save records in batches to avoid document size maximum setting.
-
-        :param dframe: A DataFrame to save in the current model.
-        """
-        def command(records):
-            cls.collection.insert(records)
-
-        batch_size = cls.DB_SAVE_BATCH_SIZE
-
-        cls.__batch_command_wrapper(command, dframe, batch_size)
-
-    @classmethod
-    def batch_update(cls, dframe):
-        """Update records in batches to avoid document size maximum setting.
-           dframe must have column with record (object) ids.
-
-        """
-        def command(records):
-            # mongodb has no batch updates (fail)
-            for record in records:
-                spec = {'_id': record['MONGO_RESERVED_KEY_id']}
-                del record['MONGO_RESERVED_KEY_id']
-                doc = {"$set": record}
-                cls.collection.update(spec, doc)
-
-        batch_size = cls.DB_SAVE_BATCH_SIZE
-
-        cls.__batch_command_wrapper(command, dframe, batch_size)
-
-    @classmethod
-    def __batch_command_wrapper(cls, command, dframe, batch_size):
-        try:
-            cls.__batch_command(command, dframe, batch_size)
-        except AutoReconnect:
-            batch_size /= 2
-
-            # If batch size drop is less than MIN_BATCH_SIZE, assume the
-            # records are too large or there is another error and fail.
-            if batch_size >= cls.MIN_BATCH_SIZE:
-                cls.__batch_command_wrapper(command, dframe, batch_size)
-
-    @classmethod
-    def __batch_command(cls, command, dframe, batch_size):
-        batches = int(ceil(float(len(dframe)) / batch_size))
-
-        for batch in xrange(0, batches):
-            start = batch * batch_size
-            end = start + batch_size
-            records = [
-                row.to_dict() for (_, row) in dframe[start:end].iterrows()]
-            command(records)
+        record = cls.collection.find_one(query, select)
+        return record if as_dict else cls(record)
 
     def __init__(self, record=None):
         """Instantiate with data in `record`."""
