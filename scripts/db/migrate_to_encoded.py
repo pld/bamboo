@@ -1,10 +1,9 @@
 import argparse
 
-from pybamboo.connection import Connection
 from pybamboo.dataset import Dataset
 
 
-DEV_BAMBOO_URL = 'http://dev.bamboo.io/'
+BAMBOO_DEV_URL = 'http://dev.bamboo.io/'
 
 
 if __name__ == "__main__":
@@ -14,11 +13,9 @@ if __name__ == "__main__":
 
 
 def main():
-    dataset_url = "http://bamboo.io/datasets/%s.csv" % args.dataset
+    dataset_url = "%sdatasets/%s.csv" % (BAMBOO_DEV_URL, args.dataset)
 
-    dev_connect = Connection(url=DEV_BAMBOO_URL)
-
-    dataset = Dataset(url=dataset_url, connection=dev_connect)
+    dataset = Dataset(url=dataset_url)
     print dataset.id
 
 
