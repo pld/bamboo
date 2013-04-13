@@ -13,6 +13,10 @@ a REST web interface and through Python.
 (e.g. student teacher ratio) and aggregations (e.g. average number of students
 per district) from datasets. These are updated as new data is received.
 
+*bamboo* uses `pandas <http://pandas.pydata.org/>`_ for data analysis,
+`pyparsing <http://pyparsing.wikispaces.com/>`_ to read formulas, and `mongodb
+<http://www.mongodb.org/>`_ to serialize data.
+
 .. image:: https://farm4.staticflickr.com/3363/3419345800_2c6c4133d3_z.jpg?zz=1
 
 *bamboo* is `open source <https://github.com/modilabs/bamboo>`_ software released
