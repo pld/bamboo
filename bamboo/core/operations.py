@@ -232,7 +232,7 @@ class EvalInOp(EvalTerm):
         return val_to_test in val_list
 
     def get_children(self):
-        return [val for val in self.value]
+        return self.value
 
 
 class EvalCaseOp(EvalTerm):
@@ -247,7 +247,7 @@ class EvalCaseOp(EvalTerm):
         return np.nan
 
     def get_children(self):
-        return [val for val in self.value]
+        return self.value
 
 
 class EvalMapOp(EvalTerm):
