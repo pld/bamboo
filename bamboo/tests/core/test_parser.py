@@ -20,7 +20,7 @@ class TestParser(TestBase):
 
     def test_parse_formula(self):
         func = self._parse_and_check_func('amount')
-        self.assertEqual(func(self.row, self.parser.context), 1)
+        self.assertEqual(func(self.row, self.parser.dataset), 1)
 
     def test_bnf(self):
         self.parser._Parser__build_bnf()
@@ -28,7 +28,7 @@ class TestParser(TestBase):
 
     def test_parse_formula_with_var(self):
         func = self._parse_and_check_func('amount + 1')
-        self.assertEqual(func(self.row, self.parser.context), 2)
+        self.assertEqual(func(self.row, self.parser.dataset), 2)
 
     def test_parse_formula_dependent_columns(self):
         test_formulae = {
