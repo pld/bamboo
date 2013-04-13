@@ -43,14 +43,14 @@ class EvalTerm(object):
     def get_children(self):
         return []
 
-    def dependent_columns(self, context):
+    def dependent_columns(self, dataset):
         return []
 
 
 class EvalConstant(EvalTerm):
     """Class to evaluate a parsed constant or variable."""
 
-    def eval(self, row, context):
+    def eval(self, row, dataset):
         value = parse_float(self.value)
         if value is not None:
             return value
@@ -59,10 +59,10 @@ class EvalConstant(EvalTerm):
         field = self.field(row)
 
         # test is date and parse as date
-        return self.__parse_field(field, context)
+        return self.__parse_field(field, dataset)
 
-    def __parse_field(self, field, context):
-            if context.dataset and context.dataset.schema.is_date_simpletype(
+    def __parse_field(self, field, dataset):
+            if dataset and dataset.schema.is_date_simpletype(
                     self.value):
                 field = safe_parse_date_to_unix_time(field)
 
@@ -71,7 +71,7 @@ class EvalConstant(EvalTerm):
     def field(self, row):
         return row.get(self.value)
 
-    def dependent_columns(self, context):
+    def dependent_columns(self, dataset):
         value = parse_float(self.value)
         if value is not None:
             return []
@@ -83,7 +83,7 @@ class EvalConstant(EvalTerm):
 class EvalString(EvalTerm):
     """Class to evaluate a parsed string."""
 
-    def eval(self, row, context):
+    def eval(self, row, dataset):
         return self.value
 
 
@@ -93,9 +93,9 @@ class EvalSignOp(EvalTerm):
     def __init__(self, tokens):
         self.sign, self.value = tokens[0]
 
-    def eval(self, row, context):
+    def eval(self, row, dataset):
         mult = {'+': 1, '-': -1}[self.sign]
-        return mult * self.value.eval(row, context)
+        return mult * self.value.eval(row, dataset)
 
     def get_children(self):
         return [self.value]
@@ -112,11 +112,11 @@ class EvalBinaryArithOp(EvalTerm):
         '^': operator.__pow__,
     }
 
-    def eval(self, row, context):
-        result = np.float64(self.value[0].eval(row, context))
+    def eval(self, row, dataset):
+        result = np.float64(self.value[0].eval(row, dataset))
 
         for oper, val in self.operator_operands(self.value[1:]):
-            val = np.float64(val.eval(row, context))
+            val = np.float64(val.eval(row, dataset))
             result = self.operation(oper, result, val)
             if np.isinf(result):
                 return np.nan
@@ -157,12 +157,12 @@ class EvalComparisonOp(EvalTerm):
         "==": lambda a, b: a == b,
     }
 
-    def eval(self, row, context):
-        val1 = np.float64(self.value[0].eval(row, context))
+    def eval(self, row, dataset):
+        val1 = np.float64(self.value[0].eval(row, dataset))
 
         for oper, val in self.operator_operands(self.value[1:]):
             fn = EvalComparisonOp.op_map[oper]
-            val2 = np.float64(val.eval(row, context))
+            val2 = np.float64(val.eval(row, dataset))
             if not fn(val1, val2):
                 break
             val1 = val2
@@ -181,8 +181,8 @@ class EvalNotOp(EvalTerm):
     def __init__(self, tokens):
         self.value = tokens[0][1]
 
-    def eval(self, row, context):
-        return not self.value.eval(row, context)
+    def eval(self, row, dataset):
+        return not self.value.eval(row, dataset)
 
     def get_children(self):
         return [self.value]
@@ -196,11 +196,11 @@ class EvalBinaryBooleanOp(EvalTerm):
         'or': lambda p, q: p or q,
     }
 
-    def eval(self, row, context):
-        result = np.bool_(self.value[0].eval(row, context))
+    def eval(self, row, dataset):
+        result = np.bool_(self.value[0].eval(row, dataset))
 
         for oper, val in self.operator_operands(self.value[1:]):
-            val = np.bool_(val.eval(row, context))
+            val = np.bool_(val.eval(row, dataset))
             result = self.operation(oper, result, val)
 
         return result
@@ -222,12 +222,12 @@ class EvalOrOp(EvalBinaryBooleanOp):
 class EvalInOp(EvalTerm):
     """Class to eval in expressions."""
 
-    def eval(self, row, context):
-        val_to_test = str(self.value[0].eval(row, context))
+    def eval(self, row, dataset):
+        val_to_test = str(self.value[0].eval(row, dataset))
         val_list = []
 
         for val in self.value[1:]:
-            val_list.append(val.eval(row, context))
+            val_list.append(val.eval(row, dataset))
 
         return val_to_test in val_list
 
@@ -238,9 +238,9 @@ class EvalInOp(EvalTerm):
 class EvalCaseOp(EvalTerm):
     """Class to eval case statements."""
 
-    def eval(self, row, context):
+    def eval(self, row, dataset):
         for token in self.value:
-            case_result = token.eval(row, context)
+            case_result = token.eval(row, dataset)
             if case_result:
                 return case_result
 
@@ -253,9 +253,9 @@ class EvalCaseOp(EvalTerm):
 class EvalMapOp(EvalTerm):
     """Class to eval map statements."""
 
-    def eval(self, row, context):
-        if self.tokens[0] == 'default' or self.tokens[0].eval(row, context):
-            return self.tokens[1].eval(row, context)
+    def eval(self, row, dataset):
+        if self.tokens[0] == 'default' or self.tokens[0].eval(row, dataset):
+            return self.tokens[1].eval(row, dataset)
 
         return False
 
@@ -277,31 +277,31 @@ class EvalFunction(object):
     def get_children(self):
         return [self.value]
 
-    def dependent_columns(self, context):
+    def dependent_columns(self, dataset):
         return []
 
 
 class EvalDate(EvalFunction):
     """Class to evaluate date expressions."""
 
-    def eval(self, row, context):
+    def eval(self, row, dataset):
         # parse date from string
-        return parse_str_to_unix_time(self.value.eval(row, context))
+        return parse_str_to_unix_time(self.value.eval(row, dataset))
 
 
 class EvalPercentile(EvalFunction):
     """Class to evaluate percentile expressions."""
 
-    def eval(self, row, context):
+    def eval(self, row, dataset):
         # parse date from string
         col = self.value.value
         query_args = QueryArgs(select={col: 1})
-        column = context.dataset.dframe(query_args=query_args)[col]
+        column = dataset.dframe(query_args=query_args)[col]
         field = self.value.field(row)
         return percentileofscore(column, field)
 
     def get_children(self):
         return []
 
-    def dependent_columns(self, context):
+    def dependent_columns(self, dataset):
         return [self.value.value]

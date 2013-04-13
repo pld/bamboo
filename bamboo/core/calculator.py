@@ -37,7 +37,7 @@ class Calculator(object):
         aggregation = self.parser.validate_formula(formula)
 
         for group in groups:
-            if not group in self.parser.context.dataset.schema.keys():
+            if not group in self.parser.dataset.schema.keys():
                 raise ParseError(
                     'Group %s not in dataset columns.' % group)
 
@@ -82,9 +82,6 @@ class Calculator(object):
         for merged_dataset in self.dataset.merged_datasets:
             merged_calculator = Calculator(merged_dataset)
             merged_calculator.propagate_column(self.dataset)
-
-    def dependent_columns(self):
-        return self.parser.context.dependent_columns
 
     def propagate_column(self, parent_dataset):
         """Propagate columns in `parent_dataset` to this dataset.
@@ -174,12 +171,12 @@ class Calculator(object):
     def parse_aggregation(self, formula, name, groups, dframe=None):
         # TODO this should work with index eventually
         columns = self.parse_columns(formula, name, dframe, no_index=True)
-        functions, dependent_columns = self.parser.parse_formula(formula)
+        functions, self.dependent_columns = self.parser.parse_formula(formula)
 
         # get dframe with only necessary columns
         # or dummy column (needed for count aggregation)
         select = combine_dicts({group: 1 for group in groups},
-                               {col: 1 for col in dependent_columns})
+                               {col: 1 for col in self.dependent_columns})
         if select:
             query_args = QueryArgs(select=select)
             dframe = self.dataset.dframe(query_args=query_args)
@@ -194,18 +191,18 @@ class Calculator(object):
     def parse_columns(self, formula, name, dframe=None, length=None,
                       no_index=False):
         """Parse formula into function and variables."""
-        functions, dependent_columns = self.parser.parse_formula(formula)
+        functions, self.dependent_columns = self.parser.parse_formula(formula)
 
         # make select from dependent_columns
         if dframe is None:
-            select = {col: 1 for col in dependent_columns} if\
-                dependent_columns else {'_id': 1}
+            select = {col: 1 for col in self.dependent_columns} if\
+                self.dependent_columns else {'_id': 1}
 
             dframe = self.dataset.dframe(
                 query_args=QueryArgs(select=select),
                 keep_mongo_keys=True).set_index(MONGO_RESERVED_KEY_ID)
 
-            if not dependent_columns:
+            if not self.dependent_columns:
                 # constant column, use dummy
                 dframe['dummy'] = 0
 
@@ -213,7 +210,7 @@ class Calculator(object):
 
         for function in functions:
             column = dframe.apply(function, axis=1,
-                                  args=(self.parser.context,))
+                                  args=(self.parser.dataset,))
             column.name = make_unique(name, [c.name for c in columns])
             if no_index:
                 column = column.reset_index(drop=True)
@@ -259,10 +256,10 @@ class Calculator(object):
             if calculation.aggregation is not None:
                 aggregations.append(calculation)
             else:
-                function, dependent_columns = self.parser.parse_formula(
+                function, self.dependent_columns = self.parser.parse_formula(
                     calculation.formula)
                 new_column = new_dframe.apply(function[0], axis=1,
-                                              args=(self.parser.context, ))
+                                              args=(self.parser.dataset, ))
                 potential_name = calculation.name
 
                 if potential_name not in self.dataset.dframe().columns:
