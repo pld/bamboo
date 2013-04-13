@@ -23,6 +23,7 @@ def delete_task(dataset):
     """Background task to delete dataset and its associated observations."""
     Observation.delete_all(dataset)
     super(dataset.__class__, dataset).delete({DATASET_ID: dataset.dataset_id})
+    Observation.delete_encoding(dataset)
 
 
 class Dataset(AbstractModel, ImportableDataset):

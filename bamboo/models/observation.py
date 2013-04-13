@@ -19,6 +19,11 @@ class Observation(AbstractModel):
 
     @classmethod
     def delete(cls, dataset, index):
+        """Delete observation at index for dataset.
+
+        :param dataset: The dataset to delete the observation from.
+        :param index: The index of the observation to delete.
+        """
         query = {INDEX: index,
                  DATASET_ID: dataset.dataset_id}
         query = cls.encode(query, dataset=dataset)
@@ -36,6 +41,12 @@ class Observation(AbstractModel):
             DATASET_ID: dataset.dataset_id
         })
         query = cls.encode(query, dataset=dataset)
+
+        super(cls, cls()).delete(query)
+
+    @classmethod
+    def delete_encoding(cls, dataset):
+        query = {cls.ENCODING_DATASET_ID: dataset.dataset_id}
 
         super(cls, cls()).delete(query)
 
