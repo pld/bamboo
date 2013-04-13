@@ -11,6 +11,15 @@ from bamboo.lib.query_args import QueryArgs
 from bamboo.lib.utils import parse_float
 
 
+def extract_binary_children(parent):
+    children = [parent.value[0]]
+
+    for oper, val in parent.operator_operands(parent.value[1:]):
+        children.append(val)
+
+    return children
+
+
 class EvalTerm(object):
     """Base class for evaluation."""
 
@@ -115,10 +124,7 @@ class EvalBinaryArithOp(EvalTerm):
         return result
 
     def get_children(self):
-        children = [self.value[0]]
-        for oper, val in self.operator_operands(self.value[1:]):
-            children.append(val)
-        return children
+        return extract_binary_children(self)
 
 
 class EvalMultOp(EvalBinaryArithOp):
@@ -166,10 +172,7 @@ class EvalComparisonOp(EvalTerm):
         return False
 
     def get_children(self):
-        children = [self.value[0]]
-        for oper, val in self.operator_operands(self.value[1:]):
-            children.append(val)
-        return children
+        return extract_binary_children(self)
 
 
 class EvalNotOp(EvalTerm):
@@ -203,10 +206,7 @@ class EvalBinaryBooleanOp(EvalTerm):
         return result
 
     def get_children(self):
-        children = [self.value[0]]
-        for oper, val in self.operator_operands(self.value[1:]):
-            children.append(val)
-        return children
+        return extract_binary_children(self)
 
 
 class EvalAndOp(EvalBinaryBooleanOp):
