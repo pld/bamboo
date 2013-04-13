@@ -12,7 +12,7 @@ from bamboo.lib.async import call_async
 from bamboo.lib.io import ImportableDataset
 from bamboo.lib.query_args import QueryArgs
 from bamboo.lib.schema_builder import Schema
-from bamboo.lib.utils import replace_keys, to_list
+from bamboo.lib.utils import to_list
 from bamboo.models.abstract_model import AbstractModel
 from bamboo.models.calculation import Calculation
 from bamboo.models.observation import Observation
@@ -660,6 +660,9 @@ class Dataset(AbstractModel, ImportableDataset):
         schema.set_olap_type(column, olap_type)
 
         self.set_schema(schema, False)
+
+        # Build summary for new type.
+        self.summarize(self.dframe(), update=True)
 
     def __add_linked_data(self, link_key, existing_data, new_data):
         self.update({link_key: existing_data + [new_data]})

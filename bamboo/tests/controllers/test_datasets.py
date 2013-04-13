@@ -778,6 +778,12 @@ class TestDatasets(TestAbstractDatasets):
         new_schema = results[Dataset.SCHEMA]
         self.assertEqual(expected_schema, new_schema)
 
+        # Check summary
+        results = json.loads(self.controller.summary(
+            dataset_id, select=self.controller.SELECT_ALL_FOR_SUMMARY))
+        summary = results[column]['summary']
+        self.assertFalse('count' in summary.keys())
+
         # set OLAP Type back
         new_olap_type = 'measure'
         expected_schema[column][OLAP_TYPE] = new_olap_type
@@ -789,6 +795,12 @@ class TestDatasets(TestAbstractDatasets):
         results = json.loads(self.controller.info(dataset_id))
         new_schema = results[Dataset.SCHEMA]
         self.assertEqual(expected_schema, new_schema)
+
+        # Check summary
+        results = json.loads(self.controller.summary(
+            dataset_id, select=self.controller.SELECT_ALL_FOR_SUMMARY))
+        summary = results[column]['summary']
+        self.assertTrue('count' in summary.keys())
 
     def test_set_olap_type_fails_for_dimension(self):
         new_olap_type = 'measure'

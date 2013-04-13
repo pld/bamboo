@@ -1,5 +1,3 @@
-import numpy as np
-
 from bamboo.lib.jsontools import series_to_jsondict
 from bamboo.lib.mongo import dict_from_mongo, dict_for_mongo
 from bamboo.lib.utils import combine_dicts
@@ -14,7 +12,7 @@ class ColumnTypeError(Exception):
     pass
 
 
-def summarize_series(dtype, data):
+def summarize_series(is_factor, data):
     """Call summary function dependent on dtype type.
 
     :param dtype: The dtype of the column to be summarized.
@@ -22,12 +20,7 @@ def summarize_series(dtype, data):
 
     :returns: The appropriate summarization for the type of `dtype`.
     """
-    return {
-        np.object_: data.value_counts(),
-        np.bool_: data.value_counts(),
-        np.float64: data.describe(),
-        np.int64: data.describe(),
-    }.get(dtype.type, None)
+    return data.value_counts() if is_factor else data.describe()
 
 
 def summarizable(dframe, col, groups, dataset):
@@ -50,13 +43,12 @@ def summarizable(dframe, col, groups, dataset):
     return not col in groups
 
 
-def summarize_df(dframe, groups=[], dataset=None):
+def summarize_df(dframe, dataset, groups=[]):
     """Calculate summary statistics."""
-    dtypes = dframe.dtypes
-
     return {
         col: {
-            SUMMARY: series_to_jsondict(summarize_series(dtypes[col], data))
+            SUMMARY: series_to_jsondict(
+                summarize_series(dataset.is_factor(col), data))
         } for col, data in dframe.iteritems() if summarizable(
             dframe, col, groups, dataset)
     }
@@ -65,14 +57,14 @@ def summarize_df(dframe, groups=[], dataset=None):
 def summarize_with_groups(dframe, groups, dataset):
     """Calculate summary statistics for group."""
     return series_to_jsondict(
-        dframe.groupby(groups).apply(summarize_df, groups, dataset))
+        dframe.groupby(groups).apply(summarize_df, dataset, groups))
 
 
 def summarize(dataset, dframe, groups, no_cache, update=False):
     """Raises a ColumnTypeError if grouping on a non-dimensional column."""
     # do not allow group by numeric types
     for group in groups:
-        if not dataset.schema.is_dimension(group):
+        if not dataset.is_factor(group):
             raise ColumnTypeError("group: '%s' is not a dimension." % group)
 
     group_str = dataset.join_groups(groups) or dataset.ALL
@@ -83,7 +75,7 @@ def summarize(dataset, dframe, groups, no_cache, update=False):
 
     if no_cache or not group_stats or update:
         group_stats = summarize_with_groups(dframe, groups, dataset) if\
-            groups else summarize_df(dframe, dataset=dataset)
+            groups else summarize_df(dframe, dataset)
 
         if not no_cache:
             if update:
