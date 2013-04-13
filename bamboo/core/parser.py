@@ -15,15 +15,6 @@ class ParseError(Exception):
     pass
 
 
-class ParserContext(object):
-    """Context to be passed into parser."""
-
-    dependent_columns = set()
-
-    def __init__(self, dataset=None):
-        self.dataset = dataset
-
-
 class Parser(object):
     """Class for parsing and evaluating formula.
 
@@ -45,6 +36,7 @@ class Parser(object):
     aggregation_names = AGGREGATIONS.keys()
     bnf = None
     column_functions = None
+    dataset = None
     function_names = ['date', 'percentile', 'years']
     operator_names = ['and', 'or', 'not', 'in']
     parsed_expr = None
@@ -54,8 +46,11 @@ class Parser(object):
         special_names
 
     def __init__(self, dataset=None):
-        """Create parser and set context."""
-        self.context = ParserContext(dataset)
+        """Create parser and set dataset.
+
+        :params dataset: The dataset this parser will operate with.
+        """
+        self.dataset = dataset
         self.__build_bnf()
 
     def store_aggregation(self, _, __, tokens):
@@ -250,16 +245,11 @@ class Parser(object):
         - transformations: row-wise column based aggregations
             - ``percentile(amount)``
 
-        :param dataset: The dataset to base context on, default is None.
         :param input_str: The string to parse.
 
         :returns: A tuple with the name of the aggregation in the formula, if
             any and a list of functions built from the input string.
         """
-
-        # reset dependent columns before parsing
-        self.context.dependent_columns = set()
-
         try:
             self.parsed_expr = self.bnf.parseString(
                 input_str, parseAll=True)[0]
@@ -279,8 +269,6 @@ class Parser(object):
             functions.append(partial(self.parsed_expr.eval))
             dependent_columns = self.__get_dependent_columns(self.parsed_expr)
 
-        self.context.dependent_columns = dependent_columns
-
         return functions, dependent_columns
 
     def validate_formula(self, formula):
@@ -299,24 +287,25 @@ class Parser(object):
         # check valid formula
         functions, dependent_columns = self.parse_formula(formula)
 
-        if not self.context.dataset.schema:
+        if not self.dataset.schema:
             raise ParseError(
                 'No schema for dataset, please add data or wait for it to '
                 'finish processing')
 
         for column in dependent_columns:
-            if column not in self.context.dataset.schema.keys():
+            if column not in self.dataset.schema.keys():
                 raise ParseError('Missing column reference: %s' % column)
 
         return self.aggregation
 
     def __get_dependent_columns(self, parsed_expr):
         result = []
-        if not hasattr(self, 'context'):
+
+        if self.dataset is None:
             return result
 
         def find_dependent_columns(parsed_expr, result):
-            dependent_columns = parsed_expr.dependent_columns(self.context)
+            dependent_columns = parsed_expr.dependent_columns(self.dataset)
             result.extend(dependent_columns)
 
             for child in parsed_expr.get_children():
@@ -343,12 +332,12 @@ class Parser(object):
             self.special_names,
             self.reserved_words,
             self.special_names,
-            self.context,
+            self.dataset,
         ]
 
     def __setstate__(self, state):
         """Set internal variables from pickled state."""
         self.aggregation, self.aggregation_names, self.function_names,\
             self.operator_names, self.special_names, self.reserved_words,\
-            self.special_names, self.context = state
+            self.special_names, self.dataset = state
         self.__build_bnf()
