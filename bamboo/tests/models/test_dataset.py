@@ -4,6 +4,7 @@ from pandas import DataFrame
 
 from bamboo.tests.test_base import TestBase
 from bamboo.models.dataset import Dataset
+from bamboo.models.observation import Observation
 from bamboo.lib.datetools import recognize_dates
 from bamboo.lib.mongo import MONGO_RESERVED_KEY_STRS
 from bamboo.lib.schema_builder import OLAP_TYPE, RE_ENCODED_COLUMN, SIMPLETYPE
@@ -15,6 +16,7 @@ class TestDataset(TestBase):
         for dataset_name in self.TEST_DATASETS:
             dataset = Dataset().save(self.test_dataset_ids[dataset_name])
             record = dataset.record
+
             self.assertTrue(isinstance(record, dict))
             self.assertTrue('_id' in record.keys())
 
@@ -23,6 +25,7 @@ class TestDataset(TestBase):
             dataset = Dataset.create(self.test_dataset_ids[dataset_name])
             record = dataset.record
             rows = Dataset.find(self.test_dataset_ids[dataset_name])
+
             self.assertEqual(record, rows[0].record)
             self.assertEqual(record, Dataset.find_one(
                              self.test_dataset_ids[dataset_name]).record)
@@ -30,6 +33,7 @@ class TestDataset(TestBase):
     def test_create(self):
         for dataset_name in self.TEST_DATASETS:
             dataset = Dataset.create(self.test_dataset_ids[dataset_name])
+
             self.assertTrue(isinstance(dataset, Dataset))
 
     def test_delete(self):
@@ -39,7 +43,9 @@ class TestDataset(TestBase):
             self.assertNotEqual(records, [])
             dataset.delete()
             records = Dataset.find(self.test_dataset_ids[dataset_name])
+
             self.assertEqual(records, [])
+            self.assertEqual(Observation.encoding(dataset), None)
 
     def test_update(self):
         for dataset_name in self.TEST_DATASETS:
@@ -47,6 +53,7 @@ class TestDataset(TestBase):
             self.assertFalse('field' in dataset.record)
             dataset.update({'field': {'key': 'value'}})
             dataset = Dataset.find_one(self.test_dataset_ids[dataset_name])
+
             self.assertTrue('field' in dataset.record)
             self.assertEqual(dataset.record['field'], {'key': 'value'})
 
