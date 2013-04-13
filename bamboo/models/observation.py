@@ -136,8 +136,7 @@ class Observation(AbstractModel):
         Encode `dframe` for MongoDB, and add fields to identify it with the
         passed in `dataset`. All column names in `dframe` are converted to
         slugs using the dataset's schema.  The dataset is update to store the
-        size of the stored data. A background task to cache a summary of the
-        dataset is launched.
+        size of the stored data.
 
         :param dframe: The DataFrame (or BambooFrame) to store.
         :param dataset: The dataset to store the dframe in.
