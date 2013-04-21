@@ -658,6 +658,18 @@ class TestDatasets(TestAbstractDatasets):
         self.assertTrue(Datasets.ERROR in results.keys())
         self.assertTrue('right' in results[Datasets.ERROR])
 
+    def test_join_datasets_overlap(self):
+        left_dataset_id = self._post_file('good_eats_aux_join.csv')
+        right_dataset_id = self._post_file('good_eats_aux_join.csv')
+        on = 'also_food_type'
+
+        results = json.loads(self.controller.join(
+            left_dataset_id, right_dataset_id, on=on))
+
+        self.assertTrue(isinstance(results, dict))
+        self.assertTrue(Datasets.ERROR in results.keys())
+        print results
+
     def test_bad_date(self):
         dataset_id = self._post_file('bad_date.csv')
         dataset = Dataset.find_one(dataset_id)
