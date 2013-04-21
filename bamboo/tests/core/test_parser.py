@@ -1,6 +1,9 @@
 from bamboo.core.parser import ParseError, Parser
+from bamboo.lib.utils import combine_dicts
 from bamboo.models.dataset import Dataset
 from bamboo.tests.test_base import TestBase
+from bamboo.tests.core.test_aggregations import AGG_CALCS_TO_DEPS
+from bamboo.tests.core.test_calculations import CALCS_TO_DEPS
 
 
 class TestParser(TestBase):
@@ -31,15 +34,11 @@ class TestParser(TestBase):
         self.assertEqual(func(self.row, self.parser.dataset), 2)
 
     def test_parse_formula_dependent_columns(self):
-        test_formulae = {
-            '1': set([]),
-            'amount + 1': set(['amount']),
-            'amount + gps_alt': set(['amount', 'gps_alt']),
-            # TODO add aggregations?
-        }
-        for formula, column_list in test_formulae.iteritems():
+        formulas_to_deps = combine_dicts(AGG_CALCS_TO_DEPS, CALCS_TO_DEPS)
+
+        for formula, column_list in formulas_to_deps.iteritems():
             functions, dependent_columns = self.parser.parse_formula(formula)
-            self.assertEqual(column_list, dependent_columns)
+            self.assertEqual(set(column_list), dependent_columns)
 
     def test_parse_formula_bad_formula(self):
         bad_formulas = [
