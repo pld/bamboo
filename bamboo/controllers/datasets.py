@@ -1,7 +1,7 @@
 import urllib2
 
 from bamboo.controllers.abstract_controller import AbstractController
-from bamboo.core.frame import NonUniqueJoinError
+from bamboo.core.frame import NonUniqueJoinError, OverlapJoinError
 from bamboo.core.merge import merge_dataset_ids, MergeError
 from bamboo.core.summary import ColumnTypeError
 from bamboo.lib.exceptions import ArgumentError
@@ -372,7 +372,8 @@ class Datasets(AbstractController):
                 }
 
         return self._safe_get_and_call(
-            dataset_id, action, exceptions=(KeyError, NonUniqueJoinError))
+            dataset_id, action, exceptions=(KeyError, NonUniqueJoinError,
+                                            OverlapJoinError))
 
     def resample(self, dataset_id, date_column, interval, how='mean',
                  query={}, format=None):
