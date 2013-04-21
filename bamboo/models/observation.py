@@ -125,9 +125,6 @@ class Observation(AbstractModel):
             encoded_dframe = dataset.encode_dframe_columns(encoded_dframe)
 
         encoding = cls.encoding(dataset)
-        # TODO remove the 2 below lines
-        start = sorted(map(int, encoding.values()))[-1] + 1
-        combine_dicts(cls.__make_encoding(dframe, start), encoding)
 
         cls.__batch_update(encoded_dframe, encoding)
         cls.__store_encoding(dataset, encoding)
