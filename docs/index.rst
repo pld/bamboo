@@ -21,14 +21,11 @@ BSD License".
 .. image:: https://secure.travis-ci.org/modilabs/bamboo.png?branch=master
   :target: http://travis-ci.org/modilabs/bamboo
 
-Example Usage
--------------
-
-Bamboo powers this interactive map of the Egyptian election
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Powered by Bamboo: An Interactive map of the Egyptian election
+--------------------------------------------------------------
 
 .. image:: https://raw.github.com/modilabs/bamboo/master/docs/images/egypt-2012.png
-
+   :width: 800
 
 Libraries that connect to *bamboo*
 ----------------------------------
