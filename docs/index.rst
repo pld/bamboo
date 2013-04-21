@@ -14,14 +14,21 @@ per district) from datasets. These are updated as new data is received.
 `pyparsing <http://pyparsing.wikispaces.com/>`_ to read formulas, and `mongodb
 <http://www.mongodb.org/>`_ to serialize data.
 
-.. image:: https://farm4.staticflickr.com/3363/3419345800_2c6c4133d3_z.jpg?zz=1
-
 *bamboo* is `open source <https://github.com/modilabs/bamboo>`_ software
 released under the 3-clause BSD license, which is also known as the "Modified
 BSD License".
 
 .. image:: https://secure.travis-ci.org/modilabs/bamboo.png?branch=master
   :target: http://travis-ci.org/modilabs/bamboo
+
+Example Usage
+-------------
+
+Bamboo powers this interactive map of the Egyptian election
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. image:: https://raw.github.com/modilabs/bamboo/master/docs/images/egypt-2012.png
+
 
 Libraries that connect to *bamboo*
 ----------------------------------
