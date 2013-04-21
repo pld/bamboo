@@ -24,6 +24,10 @@ class NonUniqueJoinError(Exception):
     pass
 
 
+class OverlapJoinError(Exception):
+    pass
+
+
 class BambooFrame(DataFrame):
     """Add bamboo related functionality to DataFrame class."""
 
@@ -122,6 +126,12 @@ class BambooFrame(DataFrame):
         if len(right_dframe.index) != len(right_dframe.index.unique()):
             raise NonUniqueJoinError('The join column "%s" of the right hand s'
                                      'ide dataset is not unique' % on_rhs)
+
+        shared_columns = self.columns.intersection(right_dframe.columns)
+
+        if len(shared_columns):
+            raise OverlapJoinError('The following columns overlap: %s' %
+                                   shared_columns.tolist())
 
         return self.__class__(self.join(right_dframe, on=on_lhs))
 
