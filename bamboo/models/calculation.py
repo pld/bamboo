@@ -37,9 +37,7 @@ def delete_task(calculation, dataset):
     slug = dataset.schema.labels_to_slugs.get(calculation.name)
 
     if slug:
-        dframe = dataset.dframe(keep_parent_ids=True)
-        del dframe[slug]
-        dataset.replace_observations(dframe, overwrite=True)
+        dataset.delete_column(slug)
         dataset.clear_summary_stats(column=slug)
 
     calculation.remove_dependencies()

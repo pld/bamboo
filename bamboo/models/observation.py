@@ -45,6 +45,13 @@ class Observation(AbstractModel):
         super(cls, cls()).delete(query)
 
     @classmethod
+    def delete_column(cls, dataset, column):
+        """Delete a column from the dataset."""
+        cls.collection.update(
+            {cls.ENCODING_DATASET_ID: dataset.dataset_id},
+            {'$unset': {column: 1}})
+
+    @classmethod
     def delete_encoding(cls, dataset):
         query = {cls.ENCODING_DATASET_ID: dataset.dataset_id}
 
@@ -118,8 +125,6 @@ class Observation(AbstractModel):
             encoded_dframe = dataset.encode_dframe_columns(encoded_dframe)
 
         encoding = cls.encoding(dataset)
-        start = sorted(map(int, encoding.values()))[-1] + 1
-        combine_dicts(cls.__make_encoding(dframe, start), encoding)
 
         cls.__batch_update(encoded_dframe, encoding)
         cls.__store_encoding(dataset, encoding)
@@ -226,9 +231,8 @@ class Observation(AbstractModel):
                 doc = {'$set': record}
                 cls.collection.update(spec, doc)
 
-        batch_size = cls.DB_SAVE_BATCH_SIZE
-
-        cls.__batch_command_wrapper(command, dframe, encoding, batch_size)
+        cls.__batch_command_wrapper(command, dframe, encoding,
+                                    cls.DB_SAVE_BATCH_SIZE)
 
     @classmethod
     def __batch_command_wrapper(cls, command, dframe, encoding, batch_size):

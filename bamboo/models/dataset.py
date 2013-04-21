@@ -455,6 +455,16 @@ class Dataset(AbstractModel, ImportableDataset):
         self.update({self.NUM_ROWS: len(dframe)})
         self.build_schema(dframe, overwrite=True)
 
+    def delete_column(self, column):
+        """Delete column `column` from this dataset.
+
+        :param column: The column to delete.
+        """
+        Observation.delete_column(self, column)
+        new_schema = self.schema
+        del new_schema[column]
+        self.set_schema(new_schema, set_num_columns=True)
+
     def save_observations(self, dframe):
         """Save rows in `dframe` for this dataset.
 
