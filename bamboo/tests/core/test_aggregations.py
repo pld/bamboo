@@ -6,6 +6,28 @@ import numpy as np
 from bamboo.tests.core.test_calculator import TestCalculator
 
 
+AGG_CALCS_TO_DEPS = {
+    'pearson(gps_latitude, amount)': ['gps_latitude', 'amount'],
+    'var(amount)': ['amount'],
+    'std(amount)': ['amount'],
+    'max(amount)': ['amount'],
+    'mean(amount)': ['amount'],
+    'median(amount)': ['amount'],
+    'min(amount)': ['amount'],
+    'sum(amount)': ['amount'],
+    'sum(gps_latitude)': ['gps_latitude'],
+    'ratio(amount, gps_latitude)': ['amount', 'gps_latitude'],
+    'sum(risk_factor in ["low_risk"])': ['risk_factor'],
+    'ratio(risk_factor in ["low_risk"], risk_factor in ["low_risk",'
+    ' "medium_risk"])': ['risk_factor'],
+    'ratio(risk_factor in ["low_risk"], 1)': ['risk_factor'],
+    'count(risk_factor in ["low_risk"])': ['risk_factor'],
+    'count()': [],
+    'argmax(submit_date)': ['submit_date'],
+    'newest(submit_date, amount)': ['amount', 'submit_date'],
+}
+
+
 class TestAggregations(TestCalculator):
 
     AGGREGATION_RESULTS = {
@@ -41,26 +63,7 @@ class TestAggregations(TestCalculator):
 
     def setUp(self):
         TestCalculator.setUp(self)
-        self.calculations = [
-            'pearson(gps_latitude, amount)',
-            'var(amount)',
-            'std(amount)',
-            'max(amount)',
-            'mean(amount)',
-            'median(amount)',
-            'min(amount)',
-            'sum(amount)',
-            'sum(gps_latitude)',
-            'ratio(amount, gps_latitude)',
-            'sum(risk_factor in ["low_risk"])',
-            'ratio(risk_factor in ["low_risk"], risk_factor in ["low_risk",'
-            ' "medium_risk"])',
-            'ratio(risk_factor in ["low_risk"], 1)',
-            'count(risk_factor in ["low_risk"])',
-            'count()',
-            'argmax(submit_date)',
-            'newest(submit_date, amount)',
-        ]
+        self.calculations = AGG_CALCS_TO_DEPS.keys()
         self.expected_length = defaultdict(int)
         self.groups_list = None
 
