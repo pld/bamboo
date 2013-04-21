@@ -250,6 +250,9 @@ class Parser(object):
         :returns: A tuple with the name of the aggregation in the formula, if
             any and a list of functions built from the input string.
         """
+        # reset cached aggregation
+        self.aggregation = None
+
         try:
             self.parsed_expr = self.bnf.parseString(
                 input_str, parseAll=True)[0]
