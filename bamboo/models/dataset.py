@@ -77,6 +77,10 @@ class Dataset(AbstractModel, ImportableDataset):
         return Schema.safe_init(schema_dict)
 
     @property
+    def columns(self):
+        return self.schema.keys()
+
+    @property
     def labels(self):
         return [column[self.LABEL] for column in self.schema.values()]
 
@@ -154,6 +158,11 @@ class Dataset(AbstractModel, ImportableDataset):
     @property
     def updatable_keys(self):
         return [self.LABEL, self.DESCRIPTION, self.LICENSE, self.ATTRIBUTION]
+
+    @property
+    def on_columns_for_rhs_of_joins(self):
+        return [on for direction, _, on, __ in
+                self.joined_datasets if direction == 'left']
 
     def _linked_datasets(self, ids):
         return [self.find_one(_id) for _id in ids]
