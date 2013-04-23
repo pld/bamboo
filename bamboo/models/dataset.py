@@ -140,7 +140,7 @@ class Dataset(AbstractModel, ImportableDataset):
 
     @property
     def merged_datasets(self):
-        return self._linked_datasets(self.merged_dataset_ids)
+        return self.__linked_datasets(self.merged_dataset_ids)
 
     @property
     def merged_datasets_with_map(self):
@@ -148,7 +148,7 @@ class Dataset(AbstractModel, ImportableDataset):
 
         if len(results):
             mappings, ids = zip(*results)
-            results = zip(mappings, self._linked_datasets(ids))
+            results = zip(mappings, self.__linked_datasets(ids))
 
         return results
 
@@ -169,7 +169,7 @@ class Dataset(AbstractModel, ImportableDataset):
     def __is_cached(self):
         return self.__dframe is not None
 
-    def _linked_datasets(self, ids):
+    def __linked_datasets(self, ids):
         return [self.find_one(_id) for _id in ids]
 
     def is_factor(self, col):
