@@ -4,8 +4,7 @@ from pandas import DataFrame, Series
 
 from bamboo.lib.datetools import recognize_dates, recognize_dates_from_schema
 from bamboo.lib.jsontools import series_to_jsondict
-from bamboo.lib.mongo import dump_mongo_json, mongo_prefix_reserved_key,\
-    MONGO_RESERVED_KEYS, MONGO_RESERVED_KEY_PREFIX
+from bamboo.lib.mongo import dump_mongo_json, MONGO_ID, MONGO_ID_ENCODED
 
 
 # reserved bamboo keys
@@ -13,11 +12,15 @@ BAMBOO_RESERVED_KEY_PREFIX = '^^'
 DATASET_ID = BAMBOO_RESERVED_KEY_PREFIX + 'dataset_id'
 INDEX = BAMBOO_RESERVED_KEY_PREFIX + 'index'
 PARENT_DATASET_ID = BAMBOO_RESERVED_KEY_PREFIX + 'parent_dataset_id'
+
 BAMBOO_RESERVED_KEYS = [
     DATASET_ID,
     INDEX,
     PARENT_DATASET_ID,
 ]
+
+# all the reserved keys
+RESERVED_KEYS = BAMBOO_RESERVED_KEYS + [MONGO_ID_ENCODED]
 
 
 class NonUniqueJoinError(Exception):
@@ -39,23 +42,21 @@ class BambooFrame(DataFrame):
 
     def decode_mongo_reserved_keys(self, keep_mongo_keys=False):
         """Decode MongoDB reserved keys in this DataFrame."""
-        reserved_keys = self.__column_intersect(MONGO_RESERVED_KEYS)
         rename_dict = {}
 
-        for key in reserved_keys:
+        if MONGO_ID in self.columns:
             if keep_mongo_keys:
-                replacement_key = MONGO_RESERVED_KEY_PREFIX + key
                 self.rename(
-                    columns={key: replacement_key, replacement_key: key},
+                    columns={MONGO_ID: MONGO_ID_ENCODED,
+                             MONGO_ID_ENCODED: MONGO_ID},
                     inplace=True)
             else:
-                del self[key]
-                prefixed_key = mongo_prefix_reserved_key(key)
-                if prefixed_key in self.columns:
-                    rename_dict[prefixed_key] = key
+                del self[MONGO_ID]
+                if MONGO_ID_ENCODED in self.columns:
+                    rename_dict[MONGO_ID_ENCODED] = MONGO_ID
 
         if rename_dict:
-            self.rename(columns={prefixed_key: key}, inplace=True)
+            self.rename(columns={MONGO_ID_ENCODED: MONGO_ID}, inplace=True)
 
     def recognize_dates(self):
         return recognize_dates(self)

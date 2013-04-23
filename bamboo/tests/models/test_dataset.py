@@ -6,7 +6,7 @@ from bamboo.tests.test_base import TestBase
 from bamboo.models.dataset import Dataset
 from bamboo.models.observation import Observation
 from bamboo.lib.datetools import recognize_dates
-from bamboo.lib.mongo import MONGO_RESERVED_KEY_STRS
+from bamboo.lib.mongo import MONGO_ID_ENCODED
 from bamboo.lib.schema_builder import OLAP_TYPE, RE_ENCODED_COLUMN, SIMPLETYPE
 
 
@@ -92,7 +92,7 @@ class TestDataset(TestBase):
                 df_columns.remove(column_attributes[Dataset.LABEL])
 
                 # check not reserved key
-                self.assertFalse(column_name in MONGO_RESERVED_KEY_STRS)
+                self.assertFalse(column_name == MONGO_ID_ENCODED)
 
             # ensure all columns in df_columns have store columns
             self.assertTrue(len(df_columns) == 0)
@@ -107,9 +107,10 @@ class TestDataset(TestBase):
         self.assertTrue(all(self.get_data('good_eats.csv').reindex(
                         columns=dframe.columns).eq(dframe)))
         columns = dframe.columns
+
         # ensure no reserved keys
-        for key in MONGO_RESERVED_KEY_STRS:
-            self.assertFalse(key in columns)
+        self.assertFalse(MONGO_ID_ENCODED in columns)
+
         # ensure date is converted
         self.assertTrue(isinstance(dframe.submit_date[0], datetime))
 

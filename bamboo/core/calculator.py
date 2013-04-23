@@ -6,7 +6,7 @@ from pandas import concat, DataFrame
 from bamboo.core.aggregator import Aggregator
 from bamboo.core.frame import BambooFrame, NonUniqueJoinError
 from bamboo.core.parser import ParseError, Parser
-from bamboo.lib.mongo import MONGO_RESERVED_KEY_ID, MONGO_RESERVED_KEYS
+from bamboo.lib.mongo import MONGO_ID, MONGO_ID_ENCODED
 from bamboo.lib.query_args import QueryArgs
 from bamboo.lib.schema_builder import make_unique
 from bamboo.lib.utils import combine_dicts, to_list
@@ -200,7 +200,7 @@ class Calculator(object):
 
             dframe = self.dataset.dframe(
                 query_args=QueryArgs(select=select),
-                keep_mongo_keys=True).set_index(MONGO_RESERVED_KEY_ID)
+                keep_mongo_keys=True).set_index(MONGO_ID_ENCODED)
 
             if not self.dependent_columns:
                 # constant column, use dummy
@@ -338,7 +338,7 @@ class Calculator(object):
             filtered_row = dict()
             for col, val in row.iteritems():
                 # special case for reserved keys (e.g. _id)
-                if col in MONGO_RESERVED_KEYS:
+                if col == MONGO_ID:
                     if (not num_columns or col in columns) and\
                             col not in filtered_row.keys():
                         filtered_row[col] = val
@@ -436,7 +436,7 @@ class Calculator(object):
 
         for row in new_data:
             for key, value in row.iteritems():
-                if labels_to_slugs.get(key) and key not in MONGO_RESERVED_KEYS:
+                if labels_to_slugs.get(key) and key != MONGO_ID:
                     del row[key]
                     row[labels_to_slugs[key]] = value
 
