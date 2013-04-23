@@ -7,7 +7,7 @@ from bamboo.core.frame import BambooFrame, DATASET_ID, INDEX
 from bamboo.lib.datetools import parse_timestamp_query
 from bamboo.lib.mongo import MONGO_ID, MONGO_RESERVED_KEY_ID
 from bamboo.lib.query_args import QueryArgs
-from bamboo.lib.utils import combine_dicts, invert_dict, replace_keys
+from bamboo.lib.utils import invert_dict, replace_keys
 from bamboo.models.abstract_model import AbstractModel
 
 
