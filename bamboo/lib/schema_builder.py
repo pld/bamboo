@@ -2,10 +2,10 @@ from datetime import datetime
 import numpy as np
 import re
 
-from bamboo.core.frame import BAMBOO_RESERVED_KEYS
+from bamboo.core.frame import RESERVED_KEYS
 from bamboo.core.parser import Parser
 from bamboo.lib.exceptions import ArgumentError
-from bamboo.lib.mongo import MONGO_RESERVED_KEY_STRS, reserve_encoded
+from bamboo.lib.mongo import reserve_encoded
 
 
 CARDINALITY = 'cardinality'
@@ -177,11 +177,10 @@ def schema_from_dframe(dframe, schema=None):
 
     column_names = list()
     names_to_labels = dict()
-    reserved_keys = MONGO_RESERVED_KEY_STRS + BAMBOO_RESERVED_KEYS
 
     # use existing labels for existing columns
     for name in dtypes.keys():
-        if name not in reserved_keys:
+        if name not in RESERVED_KEYS:
             column_names.append(name)
             if schema:
                 schema_for_name = schema.get(name)
@@ -193,7 +192,7 @@ def schema_from_dframe(dframe, schema=None):
     schema = Schema()
 
     for (name, dtype) in dtypes.items():
-        if name not in BAMBOO_RESERVED_KEYS:
+        if name not in RESERVED_KEYS:
             column_schema = {
                 LABEL: names_to_labels.get(name, name),
                 OLAP_TYPE: _olap_type_for_data_and_dtype(

@@ -356,6 +356,11 @@ class TestDatasets(TestAbstractDatasets):
         self.__test_get_with_query_or_select('{"rating": "delectible"}',
                                              num_results=11)
 
+    def test_show_with_or_query(self):
+        self.__test_get_with_query_or_select(
+            '{"$or": [{"food_type": "lunch"}, {"food_type": "deserts"}]}',
+            num_results=9)
+
     @requires_async
     def test_show_with_query_async(self):
         self.__test_get_with_query_or_select('{"rating": "delectible"}',
@@ -668,7 +673,6 @@ class TestDatasets(TestAbstractDatasets):
 
         self.assertTrue(isinstance(results, dict))
         self.assertTrue(Datasets.ERROR in results.keys())
-        print results
 
     def test_bad_date(self):
         dataset_id = self._post_file('bad_date.csv')

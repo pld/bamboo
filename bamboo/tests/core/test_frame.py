@@ -5,7 +5,7 @@ from pandas import Series
 from bamboo.core.frame import BAMBOO_RESERVED_KEYS, BambooFrame,\
     PARENT_DATASET_ID
 from bamboo.lib.schema_builder import DATETIME, SIMPLETYPE, Schema
-from bamboo.lib.mongo import MONGO_RESERVED_KEYS
+from bamboo.lib.mongo import MONGO_ID
 from bamboo.tests.test_base import TestBase
 
 
@@ -29,11 +29,9 @@ class TestFrame(TestBase):
             self.assertEqual(item, value)
 
     def test_decode_mongo_reserved_keys(self):
-        for col in MONGO_RESERVED_KEYS:
-            self.assertTrue(col in self.bframe.columns)
+        self.assertTrue(MONGO_ID in self.bframe.columns)
         self.bframe.decode_mongo_reserved_keys()
-        for col in MONGO_RESERVED_KEYS:
-            self.assertFalse(col in self.bframe.columns)
+        self.assertFalse(MONGO_ID in self.bframe.columns)
 
     def test_recognize_dates(self):
         bframe_with_dates = self.bframe.recognize_dates()

@@ -5,13 +5,10 @@ import re
 from bson import json_util
 
 
-# MongoDB keys
-# TODO clean this up
+# _id is reserved by MongoDB
 MONGO_RESERVED_KEY_PREFIX = '##'
 MONGO_ID = '_id'
-MONGO_RESERVED_KEYS = [MONGO_ID]
-MONGO_RESERVED_KEY_ID = MONGO_RESERVED_KEY_PREFIX + '_id'
-MONGO_RESERVED_KEY_STRS = [MONGO_RESERVED_KEY_ID]
+MONGO_ID_ENCODED = MONGO_RESERVED_KEY_PREFIX + '_id'
 
 ILLEGAL_VALUES = ['$', '.']
 REPLACEMENT_VALUES = [b64encode(value) for value in ILLEGAL_VALUES]
@@ -37,7 +34,7 @@ def dump_mongo_json(obj):
 def remove_mongo_reserved_keys(_dict):
     """Remove any keys reserved for MongoDB from `_dict`.
 
-    Check for `MONGO_RESERVED_KEYS` in stored dictionary.  If found replace
+    Check for `MONGO_ID` in stored dictionary.  If found replace
     with unprefixed, if not found remove reserved key from dictionary.
 
     Args:
@@ -46,26 +43,18 @@ def remove_mongo_reserved_keys(_dict):
 
     :returns: Dictionary with reserved keys removed.
     """
-    for key in MONGO_RESERVED_KEYS:
-        prefixed_key = mongo_prefix_reserved_key(key)
-        if _dict.get(prefixed_key):
-            _dict[key] = _dict.pop(prefixed_key)
-        else:
-            # remove mongo reserved keys
-            del _dict[key]
+    if _dict.get(MONGO_ID_ENCODED):
+        _dict[MONGO_ID] = _dict.pop(MONGO_ID_ENCODED)
+    else:
+        # remove mongo reserved keys
+        del _dict[MONGO_ID]
 
     return _dict
 
 
-def mongo_prefix_reserved_key(key, prefix=MONGO_RESERVED_KEY_PREFIX):
-    """Prefix reserved key."""
-    return '%s%s' % (prefix, key)
-
-
 def reserve_encoded(string):
     """Return encoding prefixed string."""
-    return mongo_prefix_reserved_key(string) if\
-        string in MONGO_RESERVED_KEYS else string
+    return MONGO_ID_ENCODED if string == MONGO_ID else string
 
 
 def dict_from_mongo(_dict):

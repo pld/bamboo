@@ -3,8 +3,7 @@ from time import sleep
 from pandas import concat
 import simplejson as json
 
-from bamboo.core.frame import BAMBOO_RESERVED_KEYS, PARENT_DATASET_ID
-from bamboo.lib.mongo import MONGO_RESERVED_KEY_STRS
+from bamboo.core.frame import PARENT_DATASET_ID, RESERVED_KEYS
 from bamboo.models.dataset import Dataset
 from bamboo.tests.controllers.test_abstract_datasets import\
     TestAbstractDatasets
@@ -170,7 +169,7 @@ class TestDatasetsMerge(TestAbstractDatasets):
         response = json.loads(self.controller.show(result[Dataset.ID]))
         row_keys = sum([row.keys() for row in response], [])
 
-        for reserved_key in BAMBOO_RESERVED_KEYS + MONGO_RESERVED_KEY_STRS:
+        for reserved_key in RESERVED_KEYS:
             self.assertFalse(reserved_key in row_keys)
 
     def test_merge_with_map(self):

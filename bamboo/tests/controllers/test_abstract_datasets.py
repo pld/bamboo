@@ -5,7 +5,7 @@ from bamboo.controllers.datasets import Datasets
 from bamboo.core.frame import BambooFrame
 from bamboo.core.summary import SUMMARY
 from bamboo.lib.jsontools import series_to_jsondict
-from bamboo.lib.mongo import MONGO_RESERVED_KEYS
+from bamboo.lib.mongo import MONGO_ID
 from bamboo.models.dataset import Dataset
 from bamboo.tests.test_base import TestBase
 
@@ -124,7 +124,7 @@ class TestAbstractDatasets(TestBase):
 
         columns = [col for col in
                    self.get_data(self._file_name).columns.tolist()
-                   if not col in MONGO_RESERVED_KEYS + group]
+                   if not col in [MONGO_ID] + group]
 
         dataset = Dataset.find_one(dataset_id)
         labels_to_slugs = dataset.schema.labels_to_slugs

@@ -38,7 +38,11 @@ def invert_dict(dict_):
 
 
 def replace_keys(original, mapping):
-    return original and {mapping.get(k, k): v for k, v in original.iteritems()}
+    return original and {
+        mapping.get(k, k): {
+            dict: lambda: replace_keys(v, mapping),
+            list: lambda: [replace_keys(vi, mapping) for vi in v]
+        }.get(type(v), lambda: v)() for k, v in original.iteritems()}
 
 
 def to_list(maybe_list):

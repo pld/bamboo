@@ -1,5 +1,5 @@
 from bamboo.core.frame import INDEX
-from bamboo.lib.mongo import dump_mongo_json, MONGO_ID, MONGO_RESERVED_KEY_ID
+from bamboo.lib.mongo import dump_mongo_json, MONGO_ID, MONGO_ID_ENCODED
 from bamboo.lib.query_args import QueryArgs
 from bamboo.models.dataset import Dataset
 from bamboo.models.observation import Observation
@@ -34,7 +34,7 @@ class TestObservation(TestBase):
 
         for column in self.dataset.dframe().columns:
             if column == MONGO_ID:
-                column = MONGO_RESERVED_KEY_ID
+                column = MONGO_ID_ENCODED
 
             self.assertTrue(column in encoding.keys())
 

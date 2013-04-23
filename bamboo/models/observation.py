@@ -5,9 +5,9 @@ from pymongo.errors import AutoReconnect
 
 from bamboo.core.frame import BambooFrame, DATASET_ID, INDEX
 from bamboo.lib.datetools import parse_timestamp_query
-from bamboo.lib.mongo import MONGO_ID, MONGO_RESERVED_KEY_ID
+from bamboo.lib.mongo import MONGO_ID, MONGO_ID_ENCODED
 from bamboo.lib.query_args import QueryArgs
-from bamboo.lib.utils import combine_dicts, invert_dict, replace_keys
+from bamboo.lib.utils import invert_dict, replace_keys
 from bamboo.models.abstract_model import AbstractModel
 
 
@@ -222,7 +222,7 @@ class Observation(AbstractModel):
         def command(records, encoding):
             # Encode the reserved key to access the row ID.
             mongo_reserved_key_id = encoding.get(
-                MONGO_RESERVED_KEY_ID, MONGO_RESERVED_KEY_ID)
+                MONGO_ID_ENCODED, MONGO_ID_ENCODED)
 
             # MongoDB has no batch updates.
             for record in records:
