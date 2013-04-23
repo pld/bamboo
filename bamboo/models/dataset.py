@@ -78,7 +78,8 @@ class Dataset(AbstractModel, ImportableDataset):
 
     @property
     def columns(self):
-        return self.schema.keys()
+        return (self.dframe() if self.__is_cached else
+                self.dframe(query_args=QueryArgs(limit=1))).columns
 
     @property
     def labels(self):
@@ -164,6 +165,10 @@ class Dataset(AbstractModel, ImportableDataset):
         return [on for direction, _, on, __ in
                 self.joined_datasets if direction == 'left']
 
+    @property
+    def __is_cached(self):
+        return self.__dframe is not None
+
     def _linked_datasets(self, ids):
         return [self.find_one(_id) for _id in ids]
 
@@ -199,7 +204,7 @@ class Dataset(AbstractModel, ImportableDataset):
         cacheable = not (query_args or keep_parent_ids or padded)
 
         # use cached copy if we have already fetched it
-        if cacheable and not reload_ and self.__dframe is not None:
+        if cacheable and not reload_ and self.__is_cached:
             return self.__dframe
 
         query_args = query_args or QueryArgs()
