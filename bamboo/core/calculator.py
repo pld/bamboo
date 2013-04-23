@@ -15,8 +15,6 @@ from bamboo.lib.utils import combine_dicts, to_list
 class Calculator(object):
     """Perform and store calculations and recalculations on update."""
 
-    dframe = None
-
     def __init__(self, dataset):
         self.dataset = dataset.reload()
         self.parser = Parser(self.dataset)
@@ -228,14 +226,12 @@ class Calculator(object):
         :raises: `NonUniqueJoinError` if update is illegal given joins of
             dataset.
         """
-        # TODO clean this up
-        if any([direction == 'left' for direction, _, on, __ in
-                self.dataset.joined_datasets]):
-            # TODO do not call dframe in here
-            if on in new_dframe_raw.columns and\
-                    on in self.dataset.dframe().columns:
-                merged_join_column = concat(
-                    [new_dframe_raw[on], self.dataset.dframe()[on]])
+        for on in self.dataset.on_columns_for_rhs_of_joins:
+            if on in new_dframe_raw.columns and on in self.dataset.columns:
+                query_args = QueryArgs(select={on: 1})
+                dframe = self.dataset.dframe(query_args=query_args)
+                merged_join_column = concat([new_dframe_raw[on], dframe[on]])
+
                 if len(merged_join_column) != merged_join_column.nunique():
                     raise NonUniqueJoinError(
                         'Cannot update. This is the right hand join and the'

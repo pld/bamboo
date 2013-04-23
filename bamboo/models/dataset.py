@@ -77,6 +77,11 @@ class Dataset(AbstractModel, ImportableDataset):
         return Schema.safe_init(schema_dict)
 
     @property
+    def columns(self):
+        return (self.dframe() if self.__is_cached else
+                self.dframe(query_args=QueryArgs(limit=1))).columns
+
+    @property
     def labels(self):
         return [column[self.LABEL] for column in self.schema.values()]
 
@@ -135,7 +140,7 @@ class Dataset(AbstractModel, ImportableDataset):
 
     @property
     def merged_datasets(self):
-        return self._linked_datasets(self.merged_dataset_ids)
+        return self.__linked_datasets(self.merged_dataset_ids)
 
     @property
     def merged_datasets_with_map(self):
@@ -143,7 +148,7 @@ class Dataset(AbstractModel, ImportableDataset):
 
         if len(results):
             mappings, ids = zip(*results)
-            results = zip(mappings, self._linked_datasets(ids))
+            results = zip(mappings, self.__linked_datasets(ids))
 
         return results
 
@@ -155,7 +160,16 @@ class Dataset(AbstractModel, ImportableDataset):
     def updatable_keys(self):
         return [self.LABEL, self.DESCRIPTION, self.LICENSE, self.ATTRIBUTION]
 
-    def _linked_datasets(self, ids):
+    @property
+    def on_columns_for_rhs_of_joins(self):
+        return [on for direction, _, on, __ in
+                self.joined_datasets if direction == 'left']
+
+    @property
+    def __is_cached(self):
+        return self.__dframe is not None
+
+    def __linked_datasets(self, ids):
         return [self.find_one(_id) for _id in ids]
 
     def is_factor(self, col):
@@ -190,7 +204,7 @@ class Dataset(AbstractModel, ImportableDataset):
         cacheable = not (query_args or keep_parent_ids or padded)
 
         # use cached copy if we have already fetched it
-        if cacheable and not reload_ and self.__dframe is not None:
+        if cacheable and not reload_ and self.__is_cached:
             return self.__dframe
 
         query_args = query_args or QueryArgs()
