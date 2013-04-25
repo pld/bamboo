@@ -1,4 +1,5 @@
 from base64 import b64encode
+from numpy import datetime64
 import simplejson as json
 import re
 
@@ -85,7 +86,8 @@ def dict_for_mongo(_dict):
         elif isinstance(value, dict):
             _dict[key] = dict_for_mongo(value)
         else:
-            _dict[key] = value
+            # TODO make this generic.
+            _dict[key] = str(value) if isinstance(value, datetime64) else value
 
     return _dict
 
