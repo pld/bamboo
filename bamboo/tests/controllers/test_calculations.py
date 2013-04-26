@@ -94,6 +94,8 @@ class TestCalculations(TestBase):
         self.assertTrue(self.name in dataset.schema.keys())
         self.assertTrue(self.name in dframe.columns)
         self.assertEqual(TestAbstractDatasets.NUM_ROWS, len(dframe))
+        self.assertEqual(TestAbstractDatasets.NUM_ROWS,
+                         dataset.info()[Dataset.NUM_ROWS])
 
     def test_show(self):
         self.__post_formula()
