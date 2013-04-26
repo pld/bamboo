@@ -123,6 +123,7 @@ class Dataset(AbstractModel, ImportableDataset):
     @property
     def joined_datasets(self):
         # TODO: fetch all datasets in single DB call
+        # (let Dataset.find take a list of IDs)
         return [
             (direction, self.find_one(other_dataset_id), on,
              self.find_one(joined_dataset_id))
@@ -563,6 +564,7 @@ class Dataset(AbstractModel, ImportableDataset):
         dataset = Dataset.find_one(self.dataset_id)
         self.record = dataset.record
         # TODO do we really need to clear the cached dframe?
+        # (do tests pass if we comment the below line?)
         self.clear_cache()
 
         return self
