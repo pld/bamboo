@@ -71,7 +71,8 @@ class TestCalculations(TestBase):
 
         self.assertTrue(isinstance(response, dict))
         self.assertTrue(self.controller.SUCCESS in response)
-        self.assertTrue(self.dataset_id in response[self.controller.SUCCESS])
+        self.assertTrue(Dataset.ID in response)
+        self.assertTrue(self.dataset_id in response[Dataset.ID])
 
         self.assertEqual(
             ex_len, len(json.loads(self.controller.show(self.dataset_id))))
@@ -84,7 +85,8 @@ class TestCalculations(TestBase):
     def __verify_create(self, response):
         self.assertTrue(isinstance(response, dict))
         self.assertTrue(self.controller.SUCCESS in response)
-        self.assertTrue(self.dataset_id in response[self.controller.SUCCESS])
+        self.assertTrue(Dataset.ID in response)
+        self.assertEqual(response[Dataset.ID], self.dataset_id)
 
         self.__wait_for_calculation_ready(self.dataset_id, self.name)
 
@@ -131,7 +133,8 @@ class TestCalculations(TestBase):
 
         self.assertTrue(isinstance(response, dict))
         self.assertTrue(self.controller.SUCCESS in response)
-        self.assertTrue(self.dataset_id in response[self.controller.SUCCESS])
+        self.assertTrue(Dataset.ID in response)
+        self.assertEqual(response[Dataset.ID], self.dataset_id)
 
         response = json.loads(self.controller.show(self.dataset_id))[0]
 
@@ -234,7 +237,8 @@ class TestCalculations(TestBase):
 
         self.assertTrue(isinstance(response, dict))
         self.assertTrue(self.controller.SUCCESS in response)
-        self.assertTrue(self.dataset_id in response[self.controller.SUCCESS])
+        self.assertTrue(Dataset.ID in response)
+        self.assertEqual(response[Dataset.ID], self.dataset_id)
 
         dataset = Dataset.find_one(self.dataset_id)
 
@@ -332,7 +336,8 @@ class TestCalculations(TestBase):
 
         self.assertTrue(isinstance(response, dict))
         self.assertTrue(self.controller.SUCCESS in response)
-        self.assertTrue(self.dataset_id in response[self.controller.SUCCESS])
+        self.assertTrue(Dataset.ID in response)
+        self.assertEqual(response[Dataset.ID], self.dataset_id)
 
         dataset = Dataset.find_one(self.dataset_id)
         slug = dataset.schema.labels_to_slugs[name]
@@ -340,7 +345,8 @@ class TestCalculations(TestBase):
 
         self.assertTrue(isinstance(response, dict))
         self.assertTrue(self.controller.SUCCESS in response)
-        self.assertTrue(self.dataset_id in response[self.controller.SUCCESS])
+        self.assertTrue(Dataset.ID in response)
+        self.assertTrue(self.dataset_id in response[Dataset.ID])
 
     def test_create_with_duplicate_names(self):
         formula_names_to_valid = {

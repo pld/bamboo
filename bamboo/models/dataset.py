@@ -553,7 +553,7 @@ class Dataset(AbstractModel, ImportableDataset):
     def reload(self):
         dataset = Dataset.find_one(self.dataset_id)
         self.record = dataset.record
-        # XXX do we really need to clear the cached dframe?
+        # TODO do we really need to clear the cached dframe?
         self.clear_cache()
 
         return self
