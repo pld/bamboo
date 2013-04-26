@@ -146,6 +146,21 @@ class Observation(AbstractModel):
         return cls(cls.encode(record, encoding=decoding) if decode else record)
 
     @classmethod
+    def append(cls, dframe, dataset):
+        """Append an additional dframe to an existing dataset.
+
+        :params dframe: The DataFrame to append.
+        :params dataset: The DataSet to add `dframe` to.
+        """
+        encoded_dframe = dataset.encode_dframe_columns(
+            cls.__add_index_to_dframe(dframe))
+
+        encoding = cls.encoding(dataset)
+        cls.__batch_save(encoded_dframe, encoding)
+        dataset.clear_summary_stats()
+        dataset.update_stats_for_append(dframe)
+
+    @classmethod
     def save(cls, dframe, dataset):
         """Save data in `dframe` with the `dataset`.
 
@@ -161,7 +176,7 @@ class Observation(AbstractModel):
         if not dataset.schema:
             dataset.build_schema(dframe)
 
-        # Add indx and encode columns.
+        # Add index and encode columns.
         encoded_dframe = dataset.encode_dframe_columns(
             cls.__add_index_to_dframe(dframe))
 

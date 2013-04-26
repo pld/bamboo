@@ -269,18 +269,27 @@ class Dataset(AbstractModel, ImportableDataset):
         self.__add_linked_data(self.MERGED_DATASETS, self.merged_dataset_info,
                                [mapping, new_dataset.dataset_id])
 
-    def clear_summary_stats(self, group=ALL, column=None):
-        """Remove summary stats for `group` and optional `column`."""
+    def clear_summary_stats(self, group=None, column=None):
+        """Remove summary stats for `group` and optional `column`.
+
+        By default will remove all stats.
+
+        :param group: The group to remove stats for, default None.
+        :param column: The column to remove stats for, default None.
+        """
         stats = self.stats
 
         if stats:
             if column:
-                stats_for_field = stats.get(group)
+                stats_for_field = stats.get(group or self.ALL)
 
                 if stats_for_field:
                     stats_for_field.pop(column, None)
-            else:
+            elif group:
                 stats.pop(group, None)
+            else:
+                stats = {}
+
             self.update({self.STATS: stats})
 
     def save(self, dataset_id=None):
@@ -645,6 +654,19 @@ class Dataset(AbstractModel, ImportableDataset):
             self.STATE: self.STATE_READY,
         })
         self.summarize(dframe, update=update)
+
+    def update_stats_for_append(self, dframe):
+        """Update stats assuming `dframe` was appended.
+
+        :param dframe: The dframe to add stats for.
+        """
+        self.update({
+            self.NUM_ROWS: self.num_rows + len(dframe)})
+
+        schema = self.schema
+        schema.add(dframe)
+
+        self.set_schema(schema, False)
 
     def resample(self, date_column, interval, how, query=None):
         """Resample a dataset given a new time frame.

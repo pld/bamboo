@@ -149,7 +149,7 @@ class Calculator(object):
             new_dframe = new_dframe.add_parent_column(parent_dataset_id)
 
         # TODO use update to add rows
-        # (don't read the whole thing then overwrite)
+        # (try using the Observation.append method)
         existing_dframe = self.dataset.dframe(keep_parent_ids=True)
 
         # merge the two dframes

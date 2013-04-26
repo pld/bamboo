@@ -3,7 +3,6 @@ from bamboo.tests.test_base import TestBase
 
 
 class TestDatetools(TestBase):
-
     def setUp(self):
         TestBase.setUp(self)
         self.dframe = self.get_data('soil_samples.csv')
