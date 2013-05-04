@@ -15,11 +15,11 @@ class TestAbstractDatasetsUpdate(TestAbstractDatasets):
 
             d -> dataset
             m -> merged
-            l -> linked
+            a -> aggregated
 
             d1   d2
              \  /  \
-              m1    l1
+              m1    a1
                 \  /
                  m2
 

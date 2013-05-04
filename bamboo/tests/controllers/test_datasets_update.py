@@ -13,14 +13,14 @@ class TestDatasetsUpdate(TestAbstractDatasetsUpdate):
         TestAbstractDatasetsUpdate.setUp(self)
         self._create_original_datasets()
 
-        # create linked datasets
+        # create aggregated datasets
         self.calculations = Calculations()
         self.name1 = 'sum of amount'
         self.formula1 = 'sum(amount)'
         self.calculations.create(self.dataset2_id, self.formula1, self.name1)
         result = json.loads(
             self.controller.aggregations(self.dataset2_id))
-        self.linked_dataset1_id = result['']
+        self.aggregated_dataset1_id = result['']
 
         # create merged datasets
         result = json.loads(self.controller.merge(dataset_ids=json.dumps(
@@ -28,7 +28,7 @@ class TestDatasetsUpdate(TestAbstractDatasetsUpdate):
         self.merged_dataset1_id = result[Dataset.ID]
 
         result = json.loads(self.controller.merge(dataset_ids=json.dumps(
-            [self.merged_dataset1_id, self.linked_dataset1_id])))
+            [self.merged_dataset1_id, self.aggregated_dataset1_id])))
         self.merged_dataset2_id = result[Dataset.ID]
 
     def test_setup_datasets(self):
@@ -37,7 +37,7 @@ class TestDatasetsUpdate(TestAbstractDatasetsUpdate):
         self._verify_dataset(self.dataset2_id,
                              'updates/originals/dataset2.pkl')
         self._verify_dataset(
-            self.linked_dataset1_id,
+            self.aggregated_dataset1_id,
             'updates/originals/linked_dataset1.pkl')
         self._verify_dataset(
             self.merged_dataset1_id,
@@ -74,7 +74,7 @@ class TestDatasetsUpdate(TestAbstractDatasetsUpdate):
             self.merged_dataset1_id,
             'updates/update2/merged_dataset1.pkl')
         self._verify_dataset(
-            self.linked_dataset1_id,
+            self.aggregated_dataset1_id,
             'updates/update2/linked_dataset1.pkl')
         self._verify_dataset(
             self.merged_dataset2_id,
@@ -91,10 +91,10 @@ class TestDatasetsUpdate(TestAbstractDatasetsUpdate):
 
     def test_datasets_update_aggregated_dataset(self):
         self._put_row_updates(
-            dataset_id=self.linked_dataset1_id,
+            dataset_id=self.aggregated_dataset1_id,
             file_name='updates/update_agg/update.json')
         self._verify_dataset(
-            self.linked_dataset1_id,
+            self.aggregated_dataset1_id,
             'updates/update_agg/linked_dataset1.pkl')
         self._verify_dataset(
             self.merged_dataset2_id,
@@ -104,7 +104,7 @@ class TestDatasetsUpdate(TestAbstractDatasetsUpdate):
             self.dataset2_id,
             'updates/update_agg2/dataset2.pkl')
         self._verify_dataset(
-            self.linked_dataset1_id,
+            self.aggregated_dataset1_id,
             'updates/update_agg2/linked_dataset1.pkl')
         self._verify_dataset(
             self.merged_dataset2_id,
