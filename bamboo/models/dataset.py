@@ -79,8 +79,11 @@ class Dataset(AbstractModel, ImportableDataset):
 
     @property
     def columns(self):
+        # TODO: get columns from schema
+        # NOTE: getting columns within limit is invalid because not all rows
+        # will be full rank.
         return (self.dframe() if self.__is_cached else
-                self.dframe(query_args=QueryArgs(limit=1))).columns
+                self.dframe()).columns
 
     @property
     def labels(self):
@@ -459,8 +462,8 @@ class Dataset(AbstractModel, ImportableDataset):
         new_dframe_raw = calculator.dframe_from_update(
             new_data, self.schema.labels_to_slugs)
         calculator._check_update_is_valid(new_dframe_raw)
-
         calculator.dataset.clear_cache()
+
         call_async(calculator.calculate_updates, calculator, new_data,
                    new_dframe_raw=new_dframe_raw, update_id=update_id)
 
@@ -510,7 +513,11 @@ class Dataset(AbstractModel, ImportableDataset):
     def append_observations(self, dframe):
         Observation.append(dframe, self)
         self.update({self.NUM_ROWS: self.num_rows + len(dframe)})
-        self.build_schema(self.dframe(), set_num_columns=False)
+
+        # to update cardinalities here we need to refetch the full DataFrame.
+        dframe = self.dframe(keep_parent_ids=True)
+        self.build_schema(dframe)
+        self.update_stats(dframe)
 
     def replace_observations(self, dframe, overwrite=False,
                              set_num_columns=True):

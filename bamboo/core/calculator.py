@@ -264,8 +264,8 @@ class Calculator(object):
         # update the merged datasets with new_dframe
         for mapping, merged_dataset in self.dataset.merged_datasets_with_map:
             merged_calculator = Calculator(merged_dataset)
-
             slugified_data = self.__remapped_data(mapping, slugified_data)
+
             merged_calculator.calculate_updates(
                 merged_calculator,
                 slugified_data,
@@ -377,9 +377,9 @@ class Calculator(object):
             # remove rows in child from this merged dataset
             merged_dataset.remove_parent_observations(
                 agg_dataset.dataset_id)
-
-            # calculate updates on the child
             merged_calculator = Calculator(merged_dataset)
+
+            # calculate updates for the child
             merged_calculator.calculate_updates(
                 merged_calculator, new_data,
                 parent_dataset_id=agg_dataset.dataset_id)
