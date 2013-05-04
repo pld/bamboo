@@ -501,8 +501,8 @@ class Dataset(AbstractModel, ImportableDataset):
         """
         return Observation.save(dframe, self)
 
-    def update_observations(self, dframe):
-        return Observation.update_from_dframe(dframe, self)
+    def append_observations(self, dframe):
+        Observation.append(dframe, self)
 
     def replace_observations(self, dframe, overwrite=False,
                              set_num_columns=True):
@@ -521,6 +521,9 @@ class Dataset(AbstractModel, ImportableDataset):
         Observation.delete_all(self)
 
         return self.save_observations(dframe)
+
+    def update_observations(self, dframe):
+        return Observation.update_from_dframe(dframe, self)
 
     def place_holder_dframe(self, dframe=None):
         columns = self.schema.keys()
