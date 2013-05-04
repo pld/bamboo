@@ -175,13 +175,10 @@ class Calculator(object):
         # so there is at least one column, e.g. for the count aggregation
         select = combine_dicts({group: 1 for group in groups},
                                {col: 1 for col in self.dependent_columns})
-        if select:
-            query_args = QueryArgs(select=select)
-            dframe = self.dataset.dframe(query_args=query_args)
-        else:
-            query_args = QueryArgs(select={'_id': 1})
-            dframe = self.dataset.dframe(query_args=query_args,
-                                         keep_mongo_keys=True)
+
+        query_args = QueryArgs(select=select or {MONGO_ID: 1})
+        dframe = self.dataset.dframe(query_args=query_args,
+                                     keep_mongo_keys=not select)
 
         return Aggregator(self.dataset, dframe, groups,
                           self.parser.aggregation, name, columns)
@@ -193,8 +190,7 @@ class Calculator(object):
 
         # make select from dependent_columns
         if dframe is None:
-            select = {col: 1 for col in self.dependent_columns} if\
-                self.dependent_columns else {'_id': 1}
+            select = {col: 1 for col in self.dependent_columns or [MONGO_ID]}
 
             dframe = self.dataset.dframe(
                 query_args=QueryArgs(select=select),
@@ -210,8 +206,10 @@ class Calculator(object):
             column = dframe.apply(function, axis=1,
                                   args=(self.parser.dataset,))
             column.name = make_unique(name, [c.name for c in columns])
+
             if no_index:
                 column = column.reset_index(drop=True)
+
             columns.append(column)
 
         return columns
