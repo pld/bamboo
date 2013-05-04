@@ -45,11 +45,16 @@ class Observation(AbstractModel):
         super(cls, cls()).delete(query)
 
     @classmethod
-    def delete_column(cls, dataset, column):
+    def delete_columns(cls, dataset, columns):
         """Delete a column from the dataset."""
-        cls.collection.update(
-            {cls.ENCODING_DATASET_ID: dataset.dataset_id},
-            {'$unset': {column: 1}})
+        encoding = cls.encoding(dataset)
+
+        cls.unset({cls.ENCODING_DATASET_ID: dataset.dataset_id},
+                  {"%s.%s" % (cls.ENCODING, c): 1 for c in columns})
+
+        cls.unset(
+            cls.encode({DATASET_ID: dataset.dataset_id}, encoding=encoding),
+            cls.encode({c: 1 for c in columns}, encoding=encoding))
 
     @classmethod
     def delete_encoding(cls, dataset):

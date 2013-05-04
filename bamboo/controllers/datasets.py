@@ -330,7 +330,7 @@ class Datasets(AbstractController):
             success message.
         """
         def action(dataset):
-            dataset.drop_columns(columns)
+            dataset.delete_columns(columns)
 
             return {self.SUCCESS: 'dropped columns: %s' % columns,
                     Dataset.ID: dataset.dataset_id}

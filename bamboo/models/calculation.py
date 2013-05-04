@@ -37,7 +37,7 @@ def delete_task(calculation, dataset):
     slug = dataset.schema.labels_to_slugs.get(calculation.name)
 
     if slug:
-        dataset.delete_column(slug)
+        dataset.delete_columns(slug)
         dataset.clear_summary_stats(column=slug)
 
     calculation.remove_dependencies()

@@ -479,14 +479,19 @@ class Dataset(AbstractModel, ImportableDataset):
         self.update({self.NUM_ROWS: len(dframe)})
         self.build_schema(dframe, overwrite=True)
 
-    def delete_column(self, column):
+    def delete_columns(self, columns):
         """Delete column `column` from this dataset.
 
         :param column: The column to delete.
         """
-        Observation.delete_column(self, column)
+        columns = to_list(columns)
+
+        Observation.delete_columns(self, columns)
         new_schema = self.schema
-        del new_schema[column]
+
+        for c in columns:
+            del new_schema[c]
+
         self.set_schema(new_schema, set_num_columns=True)
 
     def save_observations(self, dframe):
@@ -516,14 +521,6 @@ class Dataset(AbstractModel, ImportableDataset):
         Observation.delete_all(self)
 
         return self.save_observations(dframe)
-
-    def drop_columns(self, columns):
-        """Remove columns from this dataset's observations.
-
-        :param columns: List of columns to remove from this dataset.
-        """
-        dframe = self.dframe(keep_parent_ids=True)
-        self.replace_observations(dframe.drop(columns, axis=1), overwrite=True)
 
     def place_holder_dframe(self, dframe=None):
         columns = self.schema.keys()
