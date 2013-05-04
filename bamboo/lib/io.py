@@ -9,6 +9,7 @@ import pandas as pd
 
 from bamboo.core.frame import BambooFrame
 from bamboo.lib.async import call_async
+from bamboo.lib.schema_builder import filter_schema
 
 
 @task(ignore_result=True)
@@ -118,7 +119,7 @@ class ImportableDataset(object):
         except AttributeError:
             schema = json.loads(schema)
 
-        self.set_schema(schema)
+        self.set_schema(filter_schema(schema))
         self.ready()
 
         return self
