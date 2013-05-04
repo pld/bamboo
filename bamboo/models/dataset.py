@@ -510,8 +510,7 @@ class Dataset(AbstractModel, ImportableDataset):
     def append_observations(self, dframe):
         Observation.append(dframe, self)
         self.update({self.NUM_ROWS: self.num_rows + len(dframe)})
-        self.build_schema(self.dframe(), overwrite=True,
-                          set_num_columns=False)
+        self.build_schema(self.dframe(), set_num_columns=False)
 
     def replace_observations(self, dframe, overwrite=False,
                              set_num_columns=True):
