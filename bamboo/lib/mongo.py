@@ -78,7 +78,7 @@ def dict_for_mongo(_dict):
     for key, value in _dict.items():
         if _is_invalid_for_mongo(key):
             del _dict[key]
-            key = _encode_for_mongo(key)
+            key = key_for_mongo(key)
 
         if isinstance(value, list):
             _dict[key] = [dict_for_mongo(obj) if isinstance(obj, dict) else obj
@@ -86,18 +86,12 @@ def dict_for_mongo(_dict):
         elif isinstance(value, dict):
             _dict[key] = dict_for_mongo(value)
         else:
-            # TODO make this generic.
-            _dict[key] = str(value) if isinstance(value, datetime64) else value
+            _dict[key] = value_for_mongo(value)
 
     return _dict
 
 
-def _decode_from_mongo(key):
-    return reduce(lambda s, expr: expr[0].sub(expr[1], s),
-                  RE_LEGAL_MAP, key)
-
-
-def _encode_for_mongo(key):
+def key_for_mongo(key):
     """Encode illegal MongoDB characters in string.
 
     Base64 encode any characters in a string that cannot be MongoDB keys. This
@@ -111,6 +105,24 @@ def _encode_for_mongo(key):
     """
     return reduce(lambda s, expr: expr[0].sub(expr[1], s),
                   RE_ILLEGAL_MAP, key)
+
+
+def value_for_mongo(value):
+    """Ensure value is a format acceptable for a MongoDB value.
+
+    :param value: The value to encode.
+
+    :returns: The encoded value.
+    """
+    if isinstance(value, datetime64):
+        value = str(value)
+
+    return value
+
+
+def _decode_from_mongo(key):
+    return reduce(lambda s, expr: expr[0].sub(expr[1], s),
+                  RE_LEGAL_MAP, key)
 
 
 def _is_invalid_for_mongo(key):

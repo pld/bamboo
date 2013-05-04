@@ -123,6 +123,7 @@ class Dataset(AbstractModel, ImportableDataset):
     @property
     def joined_datasets(self):
         # TODO: fetch all datasets in single DB call
+        # (let Dataset.find take a list of IDs)
         return [
             (direction, self.find_one(other_dataset_id), on,
              self.find_one(joined_dataset_id))
@@ -269,18 +270,27 @@ class Dataset(AbstractModel, ImportableDataset):
         self.__add_linked_data(self.MERGED_DATASETS, self.merged_dataset_info,
                                [mapping, new_dataset.dataset_id])
 
-    def clear_summary_stats(self, group=ALL, column=None):
-        """Remove summary stats for `group` and optional `column`."""
+    def clear_summary_stats(self, group=None, column=None):
+        """Remove summary stats for `group` and optional `column`.
+
+        By default will remove all stats.
+
+        :param group: The group to remove stats for, default None.
+        :param column: The column to remove stats for, default None.
+        """
         stats = self.stats
 
         if stats:
             if column:
-                stats_for_field = stats.get(group)
+                stats_for_field = stats.get(group or self.ALL)
 
                 if stats_for_field:
                     stats_for_field.pop(column, None)
-            else:
+            elif group:
                 stats.pop(group, None)
+            else:
+                stats = {}
+
             self.update({self.STATS: stats})
 
     def save(self, dataset_id=None):
@@ -553,7 +563,8 @@ class Dataset(AbstractModel, ImportableDataset):
     def reload(self):
         dataset = Dataset.find_one(self.dataset_id)
         self.record = dataset.record
-        # XXX do we really need to clear the cached dframe?
+        # TODO do we really need to clear the cached dframe?
+        # (do tests pass if we comment the below line?)
         self.clear_cache()
 
         return self
@@ -564,10 +575,13 @@ class Dataset(AbstractModel, ImportableDataset):
         return self
 
     def add_id_column(self, dframe):
-        id_column = Series([self.dataset_id] * len(dframe))
-        id_column.name = DATASET_ID
+        if not DATASET_ID in dframe.columns:
+            id_column = Series([self.dataset_id] * len(dframe))
+            id_column.name = DATASET_ID
 
-        return BambooFrame(dframe.join(id_column))
+            dframe = dframe.join(id_column)
+
+        return BambooFrame(dframe)
 
     def encode_dframe_columns(self, dframe):
         """Encode the columns in `dframe` to slugs and add ID column.
@@ -645,6 +659,19 @@ class Dataset(AbstractModel, ImportableDataset):
             self.STATE: self.STATE_READY,
         })
         self.summarize(dframe, update=update)
+
+    def update_stats_for_append(self, dframe):
+        """Update stats assuming `dframe` was appended.
+
+        :param dframe: The dframe to add stats for.
+        """
+        self.update({
+            self.NUM_ROWS: self.num_rows + len(dframe)})
+
+        schema = self.schema
+        schema.add(dframe)
+
+        self.set_schema(schema, False)
 
     def resample(self, date_column, interval, how, query=None):
         """Resample a dataset given a new time frame.

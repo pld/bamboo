@@ -120,9 +120,7 @@ class Observation(AbstractModel):
         dataset.build_schema(dframe)
 
         encoded_dframe = dframe.reset_index()
-
-        if not DATASET_ID in encoded_dframe.columns:
-            encoded_dframe = dataset.encode_dframe_columns(encoded_dframe)
+        encoded_dframe = dataset.encode_dframe_columns(encoded_dframe)
 
         encoding = cls.encoding(dataset)
 
@@ -146,6 +144,20 @@ class Observation(AbstractModel):
         return cls(cls.encode(record, encoding=decoding) if decode else record)
 
     @classmethod
+    def append(cls, dframe, dataset):
+        """Append an additional dframe to an existing dataset.
+
+        :params dframe: The DataFrame to append.
+        :params dataset: The DataSet to add `dframe` to.
+        """
+        encoded_dframe = dataset.encode_dframe_columns(dframe.add_index())
+
+        encoding = cls.encoding(dataset)
+        cls.__batch_save(encoded_dframe, encoding)
+        dataset.clear_summary_stats()
+        dataset.update_stats_for_append(dframe)
+
+    @classmethod
     def save(cls, dframe, dataset):
         """Save data in `dframe` with the `dataset`.
 
@@ -161,9 +173,9 @@ class Observation(AbstractModel):
         if not dataset.schema:
             dataset.build_schema(dframe)
 
-        # Add indx and encode columns.
-        encoded_dframe = dataset.encode_dframe_columns(
-            cls.__add_index_to_dframe(dframe))
+        # Add index and encode columns.
+        dframe = BambooFrame(dframe)
+        encoded_dframe = dataset.encode_dframe_columns(dframe.add_index())
 
         encoding = cls.__make_encoding(encoded_dframe)
         cls.__batch_save(encoded_dframe, encoding)
@@ -184,19 +196,6 @@ class Observation(AbstractModel):
         observation = cls.find_one(dataset, index, decode=False)
         record = cls.encode(record, dataset=dataset)
         super(cls, observation).update(record)
-
-    @classmethod
-    def __add_index_to_dframe(self, dframe):
-        if not INDEX in dframe.columns:
-            # No index, create index for this dframe.
-
-            if not 'index' in dframe.columns:
-                # Custom index not supplied, use pandas default index.
-                dframe = dframe.reset_index()
-
-            dframe.rename(columns={'index': INDEX}, inplace=True)
-
-        return BambooFrame(dframe)
 
     @classmethod
     def __batch_save(cls, dframe, encoding):

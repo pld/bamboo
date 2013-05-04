@@ -45,7 +45,8 @@ class Datasets(AbstractController):
         """
         def action(dataset):
             dataset.delete()
-            return {self.SUCCESS: 'deleted dataset: %s' % dataset_id}
+            return {self.SUCCESS: 'deleted dataset',
+                    Dataset.ID: dataset_id}
 
         return self._safe_get_and_call(dataset_id, action)
 
@@ -331,8 +332,8 @@ class Datasets(AbstractController):
         def action(dataset):
             dataset.drop_columns(columns)
 
-            return {self.SUCCESS: 'in dataset %s dropped columns: %s' %
-                    (dataset.dataset_id, columns)}
+            return {self.SUCCESS: 'dropped columns: %s' % columns,
+                    Dataset.ID: dataset.dataset_id}
 
         return self._safe_get_and_call(dataset_id, action)
 
@@ -357,7 +358,7 @@ class Datasets(AbstractController):
         :param on: A column to join on, this column must be unique in the other
           dataset.
 
-        :returns: Success and merged dataset ID or error message.
+        :returns: Success and the new merged dataset ID or error message.
         """
         def action(dataset):
             other_dataset = Dataset.find_one(other_dataset_id)
@@ -377,7 +378,23 @@ class Datasets(AbstractController):
 
     def resample(self, dataset_id, date_column, interval, how='mean',
                  query={}, format=None):
-        """Resample a dataset."""
+        """Resample a dataset.
+
+        Resample a dataset based on the given interval and date column.
+
+        :param dataset_id: The ID of the dataset to resample.
+        :param date_column: This column determins the dates that are used in
+            resampling.
+        :param interval: The interval to use in resampling, any interval valid
+            for the pandas resample function is accepted.
+        :type interval: String
+        :param how: The method of interpolation to use, any method valid for
+            the pandas resampling function is accepted.
+        :param query: A query to restrict the data which is resampled.
+        :param format: The format of the returned DataFrame.
+
+        :returns: A resampled DataFrame.
+        """
         content_type = self.__content_type_for_format(format)
 
         def action(dataset, query=query):
@@ -400,6 +417,8 @@ class Datasets(AbstractController):
         :param column: The column to set the OLAP Type for.
         :param olap_type: The OLAP Type to set. Must be 'dimension' or
             'measure'.
+
+        :returns: A success or error message.
         """
 
         def action(dataset):
@@ -413,7 +432,20 @@ class Datasets(AbstractController):
 
     def rolling(self, dataset_id, window, win_type='boxcar',
                 format=None):
-        """Calculate the rolling window over a dataset."""
+        """Calculate the rolling window over a dataset.
+
+        Calculate a rolling aggregation over the dataset.
+
+        :param dataset_id: The dataset to calculate a rolling aggregation for.
+        :param window: The number of observations to include in each window of
+            aggregation.
+        :type window: Numeric
+        :param win_type: The method of aggegating data in the window, default
+            'boxcar'.  See pandas docs for details.
+        :param format: The format of the returned DtaFrame.
+
+        :returns: A DataFrame of aggregated rolling data.
+        """
         content_type = self.__content_type_for_format(format)
 
         def action(dataset):
@@ -428,6 +460,8 @@ class Datasets(AbstractController):
 
         :param dataset_id: The dataset to modify.
         :param index: The index to delete in the dataset.
+
+        :returns: Success or error message.
         """
         def action(dataset):
             dataset.delete_observation(parse_int(index))
@@ -443,6 +477,8 @@ class Datasets(AbstractController):
 
         :param dataset_id: The dataset to fetch a row from.
         :param index: The index of the row to fetch.
+
+        :returns: The requested row.
         """
         def action(dataset):
             row = Observation.find_one(dataset, parse_int(index))
@@ -464,6 +500,8 @@ class Datasets(AbstractController):
         :param dataset_id: The dataset to modify.
         :param index: The index to update.
         :param data: A JSON dict to update the row with.
+
+        :returns: Success or error message.
         """
         def action(dataset, data=data):
             data = safe_json_loads(data)
@@ -475,14 +513,14 @@ class Datasets(AbstractController):
 
         return self._safe_get_and_call(dataset_id, action)
 
+    def __content_type_for_format(self, format):
+        return self.CSV if format == self.CSV else self.JSON
+
     def __dataframe_as_content_type(self, content_type, dframe):
         if content_type == self.CSV:
             return dframe.to_csv_as_string()
         else:
             return dframe.to_jsondict()
-
-    def __content_type_for_format(self, format):
-        return self.CSV if format == self.CSV else self.JSON
 
     def __parse_select(self, select, required=False):
         if required and select is None:

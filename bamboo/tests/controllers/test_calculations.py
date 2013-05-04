@@ -71,7 +71,7 @@ class TestCalculations(TestBase):
 
         self.assertTrue(isinstance(response, dict))
         self.assertTrue(self.controller.SUCCESS in response)
-        self.assertTrue(self.dataset_id in response[self.controller.SUCCESS])
+        self.assertTrue(self.dataset_id in response[Dataset.ID])
 
         self.assertEqual(
             ex_len, len(json.loads(self.controller.show(self.dataset_id))))
@@ -84,7 +84,7 @@ class TestCalculations(TestBase):
     def __verify_create(self, response):
         self.assertTrue(isinstance(response, dict))
         self.assertTrue(self.controller.SUCCESS in response)
-        self.assertTrue(self.dataset_id in response[self.controller.SUCCESS])
+        self.assertEqual(response[Dataset.ID], self.dataset_id)
 
         self.__wait_for_calculation_ready(self.dataset_id, self.name)
 
@@ -94,6 +94,8 @@ class TestCalculations(TestBase):
         self.assertTrue(self.name in dataset.schema.keys())
         self.assertTrue(self.name in dframe.columns)
         self.assertEqual(TestAbstractDatasets.NUM_ROWS, len(dframe))
+        self.assertEqual(TestAbstractDatasets.NUM_ROWS,
+                         dataset.info()[Dataset.NUM_ROWS])
 
     def test_show(self):
         self.__post_formula()
@@ -131,7 +133,7 @@ class TestCalculations(TestBase):
 
         self.assertTrue(isinstance(response, dict))
         self.assertTrue(self.controller.SUCCESS in response)
-        self.assertTrue(self.dataset_id in response[self.controller.SUCCESS])
+        self.assertEqual(response[Dataset.ID], self.dataset_id)
 
         response = json.loads(self.controller.show(self.dataset_id))[0]
 
@@ -234,7 +236,7 @@ class TestCalculations(TestBase):
 
         self.assertTrue(isinstance(response, dict))
         self.assertTrue(self.controller.SUCCESS in response)
-        self.assertTrue(self.dataset_id in response[self.controller.SUCCESS])
+        self.assertEqual(response[Dataset.ID], self.dataset_id)
 
         dataset = Dataset.find_one(self.dataset_id)
 
@@ -332,7 +334,7 @@ class TestCalculations(TestBase):
 
         self.assertTrue(isinstance(response, dict))
         self.assertTrue(self.controller.SUCCESS in response)
-        self.assertTrue(self.dataset_id in response[self.controller.SUCCESS])
+        self.assertEqual(response[Dataset.ID], self.dataset_id)
 
         dataset = Dataset.find_one(self.dataset_id)
         slug = dataset.schema.labels_to_slugs[name]
@@ -340,7 +342,7 @@ class TestCalculations(TestBase):
 
         self.assertTrue(isinstance(response, dict))
         self.assertTrue(self.controller.SUCCESS in response)
-        self.assertTrue(self.dataset_id in response[self.controller.SUCCESS])
+        self.assertTrue(self.dataset_id in response[Dataset.ID])
 
     def test_create_with_duplicate_names(self):
         formula_names_to_valid = {
@@ -409,7 +411,7 @@ class TestCalculations(TestBase):
                 'water_source_type': 'borehole',
             }
             result = self.__post_update(dataset_id, update)
-            self.assertTrue(Dataset.ID in result.keys())
+            self.assertTrue(Dataset.ID in result)
             dataset = Dataset.find_one(dataset_id)
             dframe_after_update = dataset.dframe()
             self.assertEqual(len(dframe_after) + 1, len(dframe_after_update))
@@ -432,7 +434,6 @@ class TestCalculations(TestBase):
             'newest(date_, water_functioning)',
             formula_name))
 
-        self.assertTrue(self.controller.ERROR in response)
         self.assertTrue(formula_name in response[self.controller.ERROR])
 
     def test_can_create_aggregations_with_duplicate_as_slug_names(self):
@@ -476,7 +477,7 @@ class TestCalculations(TestBase):
         dataset = Dataset.find_one(dataset_id)
         previous_num_rows = dataset.num_rows
 
-        self.assertTrue(self.controller.SUCCESS in results.keys())
+        self.assertTrue(self.controller.SUCCESS in results)
         self.assertFalse(dataset.aggregated_dataset('') is None)
 
         update = {
@@ -530,7 +531,7 @@ class TestCalculations(TestBase):
             results = json.loads(self.controller.create(
                 dataset_id, formula, name, group=group))
 
-            self.assertTrue(self.controller.SUCCESS in results.keys())
+            self.assertTrue(self.controller.SUCCESS in results)
 
         dataset = Dataset.find_one(dataset_id)
         previous_num_rows = dataset.num_rows

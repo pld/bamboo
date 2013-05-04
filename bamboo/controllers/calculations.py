@@ -4,6 +4,7 @@ from bamboo.lib.exceptions import ArgumentError
 from bamboo.lib.jsontools import safe_json_loads
 from bamboo.models.calculation import Calculation, UniqueCalculationError,\
     DependencyError
+from bamboo.models.dataset import Dataset
 
 
 class Calculations(AbstractController):
@@ -37,11 +38,12 @@ class Calculations(AbstractController):
         """
         def action(dataset):
             calculation = Calculation.find_one(dataset.dataset_id, name, group)
+
             if calculation:
                 calculation.delete(dataset)
-                message = 'deleted calculation: \'%s\' for dataset: %s' % (
-                    name, dataset.dataset_id)
-                return {self.SUCCESS: message}
+
+                return {self.SUCCESS: 'deleted calculation: \'%s\'' % name,
+                        Dataset.ID: dataset.dataset_id}
 
         return self._safe_get_and_call(
             dataset_id, action, exceptions=(DependencyError,),
@@ -72,17 +74,16 @@ class Calculations(AbstractController):
             if json_file:
                 calculations = safe_json_loads(json_file.file.read())
                 Calculation.create_from_list_or_dict(dataset, calculations)
-                success_message = ('created calculations from JSON for dataset'
-                                   ':%s' % dataset_id)
+                success_message = 'created calculations from JSON'
             elif formula is None or name is None:
                 raise ArgumentError('Must provide both formula and name argume'
                                     'nts, or json_file argument')
             else:
                 Calculation.create(dataset, formula, name, group)
-                success_message = 'created calculation: %s for dataset: %s' % (
-                    name, dataset_id)
+                success_message = 'created calculation: %s'
 
-            return {self.SUCCESS: success_message}
+            return {self.SUCCESS: success_message,
+                    Dataset.ID: dataset_id}
 
         return self._safe_get_and_call(
             dataset_id, action,

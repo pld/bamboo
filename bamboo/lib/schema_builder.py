@@ -97,6 +97,22 @@ class Schema(dict):
         return col_schema and (
             SIMPLETYPE_TO_OLAP_TYPE[col_schema[SIMPLETYPE]] == MEASURE)
 
+    def add(self, dframe):
+        """Update schema cardinalities.
+
+        Assuming dframe has columns a subset of the current schema add the
+        cardinalities of dframe to the current schema cardinalities.
+
+        :param dframe: The dframe cardinalities to add to the schema.
+        """
+        new_schema = schema_from_dframe(dframe, self)
+
+        for column, column_schema in new_schema:
+            card = column_schema[CARDINALITY]
+
+            if card and card > 0:
+                self[column][CARDINALITY] += card
+
     def rebuild(self, dframe, overwrite=False):
         """Rebuild a schema for a dframe.
 
@@ -200,6 +216,7 @@ def schema_from_dframe(dframe, schema=None):
                 SIMPLETYPE: _simpletype_for_data_and_dtype(
                     dframe[name], dtype),
             }
+
             try:
                 column_schema[CARDINALITY] = dframe[
                     name].nunique()
@@ -209,6 +226,7 @@ def schema_from_dframe(dframe, schema=None):
                 # E.g. dates with and without offset can not be compared and
                 # raise a type error.
                 pass
+
             schema[encoded_names[name]] = column_schema
 
     return schema

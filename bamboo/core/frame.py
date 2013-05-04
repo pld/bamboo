@@ -34,6 +34,19 @@ class OverlapJoinError(Exception):
 class BambooFrame(DataFrame):
     """Add bamboo related functionality to DataFrame class."""
 
+    def add_index(self):
+        """Add an encoded index to this DataFrame."""
+        if not INDEX in self.columns:
+            # No index, create index for this dframe.
+
+            if not 'index' in self.columns:
+                # Custom index not supplied, use pandas default index.
+                self = self.reset_index()
+
+            self.rename(columns={'index': INDEX}, inplace=True)
+
+        return BambooFrame(self)
+
     def add_parent_column(self, parent_dataset_id):
         """Add parent ID column to this DataFrame."""
         column = Series([parent_dataset_id] * len(self), index=self.index)

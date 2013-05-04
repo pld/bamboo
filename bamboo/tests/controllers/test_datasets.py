@@ -532,9 +532,8 @@ class TestDatasets(TestAbstractDatasets):
         result = json.loads(self.controller.delete(dataset_id))
 
         self.assertTrue(Datasets.SUCCESS in result)
-        self.assertEqual(
-            result[Datasets.SUCCESS],
-            'deleted dataset: %s' % dataset_id)
+        self.assertEqual(result[Datasets.SUCCESS], 'deleted dataset')
+        self.assertEqual(result[Dataset.ID], dataset_id)
 
     def test_delete_bad_id(self):
         for dataset_name in self.TEST_DATASETS:
