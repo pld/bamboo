@@ -9,6 +9,7 @@ from bamboo.core.frame import BambooFrame, BAMBOO_RESERVED_KEY_PREFIX,\
     DATASET_ID, INDEX, PARENT_DATASET_ID
 from bamboo.core.summary import summarize
 from bamboo.lib.async import call_async
+from bamboo.lib.exceptions import ArgumentError
 from bamboo.lib.io import ImportableDataset
 from bamboo.lib.query_args import QueryArgs
 from bamboo.lib.schema_builder import Schema
@@ -484,7 +485,10 @@ class Dataset(AbstractModel, ImportableDataset):
 
         :param column: The column to delete.
         """
-        columns = to_list(columns)
+        columns = set(self.schema.keys()).intersection(set(to_list(columns)))
+
+        if not len(columns):
+            raise ArgumentError("Columns: %s not in dataset.")
 
         Observation.delete_columns(self, columns)
         new_schema = self.schema
@@ -493,6 +497,8 @@ class Dataset(AbstractModel, ImportableDataset):
             del new_schema[c]
 
         self.set_schema(new_schema, set_num_columns=True)
+
+        return columns
 
     def save_observations(self, dframe):
         """Save rows in `dframe` for this dataset.
@@ -582,7 +588,7 @@ class Dataset(AbstractModel, ImportableDataset):
 
         return BambooFrame(dframe)
 
-    def encode_dframe_columns(self, dframe):
+    def encode_dframe(self, dframe, add_index=True):
         """Encode the columns in `dframe` to slugs and add ID column.
 
         The ID column is the dataset_id for this dataset.  This is
@@ -590,8 +596,12 @@ class Dataset(AbstractModel, ImportableDataset):
 
         :param dframe: The DataFame to rename columns in and add an ID column
             to.
+        :param add_index: Add index to the DataFrame, default True.
         :returns: A modified `dframe` as a BambooFrame.
         """
+        if add_index:
+            dframe = BambooFrame(dframe).add_index()
+
         dframe = self.add_id_column(dframe)
         encoded_columns_map = self.schema.rename_map_for_dframe(dframe)
         dframe = dframe.rename(columns=encoded_columns_map)
@@ -664,8 +674,7 @@ class Dataset(AbstractModel, ImportableDataset):
 
         :param dframe: The dframe to add stats for.
         """
-        self.update({
-            self.NUM_ROWS: self.num_rows + len(dframe)})
+        self.update({self.NUM_ROWS: self.num_rows + len(dframe)})
 
         schema = self.schema
         schema.add(dframe)

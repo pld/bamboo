@@ -330,9 +330,9 @@ class Datasets(AbstractController):
             success message.
         """
         def action(dataset):
-            dataset.delete_columns(columns)
+            deleted = dataset.delete_columns(columns)
 
-            return {self.SUCCESS: 'dropped columns: %s' % columns,
+            return {self.SUCCESS: 'dropped columns: %s' % deleted,
                     Dataset.ID: dataset.dataset_id}
 
         return self._safe_get_and_call(dataset_id, action)

@@ -63,10 +63,16 @@ class Observation(AbstractModel):
         super(cls, cls()).delete(query)
 
     @classmethod
-    def encoding(cls, dataset):
+    def encoding(cls, dataset, encoded_dframe=None):
         record = super(cls, cls).find_one({
             cls.ENCODING_DATASET_ID: dataset.dataset_id
         }).record
+
+        if record is None and encoded_dframe is not None:
+            encoding = cls.__make_encoding(encoded_dframe)
+            cls.__store_encoding(dataset, encoding)
+            return cls.encoding(dataset)
+
         return record[cls.ENCODING] if record else None
 
     @classmethod
@@ -125,7 +131,7 @@ class Observation(AbstractModel):
         dataset.build_schema(dframe)
 
         encoded_dframe = dframe.reset_index()
-        encoded_dframe = dataset.encode_dframe_columns(encoded_dframe)
+        encoded_dframe = dataset.encode_dframe(encoded_dframe, add_index=False)
 
         encoding = cls.encoding(dataset)
 
@@ -155,9 +161,9 @@ class Observation(AbstractModel):
         :params dframe: The DataFrame to append.
         :params dataset: The DataSet to add `dframe` to.
         """
-        encoded_dframe = dataset.encode_dframe_columns(dframe.add_index())
+        encoded_dframe = dataset.encode_dframe(dframe)
+        encoding = cls.encoding(dataset, encoded_dframe)
 
-        encoding = cls.encoding(dataset)
         cls.__batch_save(encoded_dframe, encoding)
         dataset.clear_summary_stats()
         dataset.update_stats_for_append(dframe)
@@ -179,12 +185,10 @@ class Observation(AbstractModel):
             dataset.build_schema(dframe)
 
         # Add index and encode columns.
-        dframe = BambooFrame(dframe)
-        encoded_dframe = dataset.encode_dframe_columns(dframe.add_index())
+        encoded_dframe = dataset.encode_dframe(dframe)
 
-        encoding = cls.__make_encoding(encoded_dframe)
+        encoding = cls.encoding(dataset, encoded_dframe)
         cls.__batch_save(encoded_dframe, encoding)
-        cls.__store_encoding(dataset, encoding)
         dataset.update_stats(dframe)
 
     @classmethod
