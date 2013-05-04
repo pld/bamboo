@@ -166,7 +166,6 @@ class Observation(AbstractModel):
 
         cls.__batch_save(encoded_dframe, encoding)
         dataset.clear_summary_stats()
-        dataset.update_stats_for_append(dframe)
 
     @classmethod
     def save(cls, dframe, dataset):

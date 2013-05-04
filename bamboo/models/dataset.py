@@ -509,6 +509,9 @@ class Dataset(AbstractModel, ImportableDataset):
 
     def append_observations(self, dframe):
         Observation.append(dframe, self)
+        self.update({self.NUM_ROWS: self.num_rows + len(dframe)})
+        self.build_schema(self.dframe(), overwrite=True,
+                          set_num_columns=False)
 
     def replace_observations(self, dframe, overwrite=False,
                              set_num_columns=True):
@@ -668,18 +671,6 @@ class Dataset(AbstractModel, ImportableDataset):
             self.STATE: self.STATE_READY,
         })
         self.summarize(dframe, update=update)
-
-    def update_stats_for_append(self, dframe):
-        """Update stats assuming `dframe` was appended.
-
-        :param dframe: The dframe to add stats for.
-        """
-        self.update({self.NUM_ROWS: self.num_rows + len(dframe)})
-
-        schema = self.schema
-        schema.add(dframe)
-
-        self.set_schema(schema, False)
 
     def resample(self, date_column, interval, how, query=None):
         """Resample a dataset given a new time frame.
