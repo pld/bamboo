@@ -9,6 +9,7 @@ from bamboo.core.frame import BambooFrame, BAMBOO_RESERVED_KEY_PREFIX,\
     DATASET_ID, INDEX, PARENT_DATASET_ID
 from bamboo.core.summary import summarize
 from bamboo.lib.async import call_async
+from bamboo.lib.exceptions import ArgumentError
 from bamboo.lib.io import ImportableDataset
 from bamboo.lib.query_args import QueryArgs
 from bamboo.lib.schema_builder import Schema
@@ -479,15 +480,25 @@ class Dataset(AbstractModel, ImportableDataset):
         self.update({self.NUM_ROWS: len(dframe)})
         self.build_schema(dframe, overwrite=True)
 
-    def delete_column(self, column):
+    def delete_columns(self, columns):
         """Delete column `column` from this dataset.
 
         :param column: The column to delete.
         """
-        Observation.delete_column(self, column)
+        columns = set(self.schema.keys()).intersection(set(to_list(columns)))
+
+        if not len(columns):
+            raise ArgumentError("Columns: %s not in dataset.")
+
+        Observation.delete_columns(self, columns)
         new_schema = self.schema
-        del new_schema[column]
+
+        for c in columns:
+            del new_schema[c]
+
         self.set_schema(new_schema, set_num_columns=True)
+
+        return columns
 
     def save_observations(self, dframe):
         """Save rows in `dframe` for this dataset.
@@ -496,8 +507,8 @@ class Dataset(AbstractModel, ImportableDataset):
         """
         return Observation.save(dframe, self)
 
-    def update_observations(self, dframe):
-        return Observation.update_from_dframe(dframe, self)
+    def append_observations(self, dframe):
+        Observation.append(dframe, self)
 
     def replace_observations(self, dframe, overwrite=False,
                              set_num_columns=True):
@@ -517,13 +528,8 @@ class Dataset(AbstractModel, ImportableDataset):
 
         return self.save_observations(dframe)
 
-    def drop_columns(self, columns):
-        """Remove columns from this dataset's observations.
-
-        :param columns: List of columns to remove from this dataset.
-        """
-        dframe = self.dframe(keep_parent_ids=True)
-        self.replace_observations(dframe.drop(columns, axis=1), overwrite=True)
+    def update_observations(self, dframe):
+        return Observation.update_from_dframe(dframe, self)
 
     def place_holder_dframe(self, dframe=None):
         columns = self.schema.keys()
@@ -582,7 +588,7 @@ class Dataset(AbstractModel, ImportableDataset):
 
         return BambooFrame(dframe)
 
-    def encode_dframe_columns(self, dframe):
+    def encode_dframe(self, dframe, add_index=True):
         """Encode the columns in `dframe` to slugs and add ID column.
 
         The ID column is the dataset_id for this dataset.  This is
@@ -590,8 +596,12 @@ class Dataset(AbstractModel, ImportableDataset):
 
         :param dframe: The DataFame to rename columns in and add an ID column
             to.
+        :param add_index: Add index to the DataFrame, default True.
         :returns: A modified `dframe` as a BambooFrame.
         """
+        if add_index:
+            dframe = BambooFrame(dframe).add_index()
+
         dframe = self.add_id_column(dframe)
         encoded_columns_map = self.schema.rename_map_for_dframe(dframe)
         dframe = dframe.rename(columns=encoded_columns_map)
@@ -664,8 +674,7 @@ class Dataset(AbstractModel, ImportableDataset):
 
         :param dframe: The dframe to add stats for.
         """
-        self.update({
-            self.NUM_ROWS: self.num_rows + len(dframe)})
+        self.update({self.NUM_ROWS: self.num_rows + len(dframe)})
 
         schema = self.schema
         schema.add(dframe)

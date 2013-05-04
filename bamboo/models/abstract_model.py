@@ -122,6 +122,15 @@ class AbstractModel(object):
         record = cls.collection.find_one(query, select)
         return record if as_dict else cls(record)
 
+    @classmethod
+    def unset(cls, query, unset_query):
+        """Call unset with the spec `query` the unset document `unset_query`.
+
+        :param query: The spec restrict updates to.
+        :param unset_query: The query to pass to unset.
+        """
+        cls.collection.update(query, {"$unset": unset_query}, multi=True)
+
     def __init__(self, record=None):
         """Instantiate with data in `record`."""
         self.record = record
