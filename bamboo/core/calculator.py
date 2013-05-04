@@ -148,16 +148,7 @@ class Calculator(object):
         if parent_dataset_id:
             new_dframe = new_dframe.add_parent_column(parent_dataset_id)
 
-        # TODO use update to add rows
-        # (try using the Observation.append method)
-        existing_dframe = self.dataset.dframe(keep_parent_ids=True)
-
-        # merge the two dframes
-        updated_dframe = concat([existing_dframe, new_dframe])
-
-        # update (overwrite) the dataset with the new merged dframe
-        self.dataset.replace_observations(
-            updated_dframe, set_num_columns=False)
+        self.dataset.append_observations(new_dframe)
         self.dataset.clear_summary_stats()
 
         self.__update_aggregate_datasets(aggregations, new_dframe)
@@ -273,8 +264,8 @@ class Calculator(object):
         # update the merged datasets with new_dframe
         for mapping, merged_dataset in self.dataset.merged_datasets_with_map:
             merged_calculator = Calculator(merged_dataset)
-
             slugified_data = self.__remapped_data(mapping, slugified_data)
+
             merged_calculator.calculate_updates(
                 merged_calculator,
                 slugified_data,
@@ -386,9 +377,9 @@ class Calculator(object):
             # remove rows in child from this merged dataset
             merged_dataset.remove_parent_observations(
                 agg_dataset.dataset_id)
-
-            # calculate updates on the child
             merged_calculator = Calculator(merged_dataset)
+
+            # calculate updates for the child
             merged_calculator.calculate_updates(
                 merged_calculator, new_data,
                 parent_dataset_id=agg_dataset.dataset_id)

@@ -71,6 +71,7 @@ class Observation(AbstractModel):
         if record is None and encoded_dframe is not None:
             encoding = cls.__make_encoding(encoded_dframe)
             cls.__store_encoding(dataset, encoding)
+
             return cls.encoding(dataset)
 
         return record[cls.ENCODING] if record else None
@@ -166,7 +167,6 @@ class Observation(AbstractModel):
 
         cls.__batch_save(encoded_dframe, encoding)
         dataset.clear_summary_stats()
-        dataset.update_stats_for_append(dframe)
 
     @classmethod
     def save(cls, dframe, dataset):
