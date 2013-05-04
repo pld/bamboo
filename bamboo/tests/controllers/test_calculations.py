@@ -202,7 +202,7 @@ class TestCalculations(TestBase):
 
         # Remove column from dataset
         dataset = Dataset.find_one(self.dataset_id)
-        dataset.drop_columns([self.name])
+        dataset.delete_columns([self.name])
 
         result = json.loads(self.controller.delete(self.dataset_id, self.name))
 
