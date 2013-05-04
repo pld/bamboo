@@ -561,10 +561,9 @@ class Dataset(AbstractModel, ImportableDataset):
         return merged_dataset
 
     def reload(self):
+        """Reload the dataset from DB and clear any cache."""
         dataset = Dataset.find_one(self.dataset_id)
         self.record = dataset.record
-        # TODO do we really need to clear the cached dframe?
-        # (do tests pass if we comment the below line?)
         self.clear_cache()
 
         return self

@@ -314,15 +314,10 @@ class Calculator(object):
         :type new_data: List.
         :param labels_to_slugs: Map of labels to slugs.
         """
-        #if not isinstance(new_data, list):
-        #    new_data = [new_data]
-
         filtered_data = []
-        # TODO don't call dframe to get columns
-        dframe = self.dataset.dframe()
-        columns = dframe.columns
+        columns = self.dataset.columns
         num_columns = len(columns)
-        num_rows = len(dframe)
+        num_rows = self.dataset.num_rows
         dframe_empty = not num_columns
 
         if dframe_empty:
