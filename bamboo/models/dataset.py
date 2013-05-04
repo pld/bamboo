@@ -575,10 +575,13 @@ class Dataset(AbstractModel, ImportableDataset):
         return self
 
     def add_id_column(self, dframe):
-        id_column = Series([self.dataset_id] * len(dframe))
-        id_column.name = DATASET_ID
+        if not DATASET_ID in dframe.columns:
+            id_column = Series([self.dataset_id] * len(dframe))
+            id_column.name = DATASET_ID
 
-        return BambooFrame(dframe.join(id_column))
+            dframe = dframe.join(id_column)
+
+        return BambooFrame(dframe)
 
     def encode_dframe_columns(self, dframe):
         """Encode the columns in `dframe` to slugs and add ID column.

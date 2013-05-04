@@ -38,7 +38,6 @@ def csv_file_reader(name, na_values=[], delete=False):
     try:
         return BambooFrame(pd.read_csv(
             name, encoding='utf-8', na_values=na_values)).recognize_dates()
-            #pd.read_csv(name, encoding='utf-8')).recognize_dates()
     finally:
         if delete:
             os.unlink(name)

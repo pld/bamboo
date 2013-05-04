@@ -171,8 +171,8 @@ class Calculator(object):
         columns = self.parse_columns(formula, name, dframe, no_index=True)
         functions, self.dependent_columns = self.parser.parse_formula(formula)
 
-        # get dframe with only necessary columns
-        # or dummy column (needed for count aggregation)
+        # get dframe with only necessary columns or _id column
+        # so there is at least one column, e.g. for the count aggregation
         select = combine_dicts({group: 1 for group in groups},
                                {col: 1 for col in self.dependent_columns})
         if select:

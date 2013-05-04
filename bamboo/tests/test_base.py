@@ -25,7 +25,6 @@ class TestBase(unittest.TestCase):
         'unicode.csv',
     ]
 
-    test_data = {}
     test_dataset_ids = {}
 
     def setUp(self):
@@ -37,12 +36,8 @@ class TestBase(unittest.TestCase):
         self.__drop_database()
 
     def get_data(self, dataset_name):
-        data = self.test_data.get(dataset_name)
-        if data is None:
-            data = self.test_data[dataset_name] = read_csv(
-                '%s%s' % (self._local_fixture_prefix(), dataset_name),
-                encoding='utf-8')
-        return data
+        return read_csv('%s%s' % (self._local_fixture_prefix(), dataset_name),
+                        encoding='utf-8')
 
     def _create_dataset_from_url(self, url):
         dataset = Dataset.create()
