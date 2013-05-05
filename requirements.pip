@@ -12,7 +12,7 @@ amqp==1.0.8
 billiard==2.7.3.21
 kombu==2.5.4
 celery==3.0.13
-pymongo==2.4.1
+pymongo==2.5
 pytz==2012d
 
 cherrypy==3.2.2
