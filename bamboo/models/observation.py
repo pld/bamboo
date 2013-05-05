@@ -130,10 +130,7 @@ class Observation(AbstractModel):
     @classmethod
     def update_from_dframe(cls, dframe, dataset):
         dataset.build_schema(dframe)
-
-        encoded_dframe = dframe.reset_index()
-        encoded_dframe = dataset.encode_dframe(encoded_dframe, add_index=False)
-
+        encoded_dframe = encode(dframe.reset_index(), dataset, add_index=False)
         encoding = cls.encoding(dataset)
 
         cls.__batch_update(encoded_dframe, encoding)
@@ -162,7 +159,7 @@ class Observation(AbstractModel):
         :params dframe: The DataFrame to append.
         :params dataset: The DataSet to add `dframe` to.
         """
-        encoded_dframe = dataset.encode_dframe(dframe)
+        encoded_dframe = encode(dframe, dataset)
         encoding = cls.encoding(dataset, encoded_dframe)
 
         cls.__batch_save(encoded_dframe, encoding)
@@ -184,10 +181,9 @@ class Observation(AbstractModel):
         if not dataset.schema:
             dataset.build_schema(dframe)
 
-        # Add index and encode columns.
-        encoded_dframe = dataset.encode_dframe(dframe)
-
+        encoded_dframe = encode(dframe, dataset)
         encoding = cls.encoding(dataset, encoded_dframe)
+
         cls.__batch_save(encoded_dframe, encoding)
         dataset.update_stats(dframe)
 
@@ -323,3 +319,26 @@ class Observation(AbstractModel):
             batch += 1
 
         return BambooFrame(concat(dframes) if len(dframes) else [])
+
+
+def encode(dframe, dataset, add_index=True):
+    """Encode the columns for `dataset` to slugs and add ID column.
+
+    The ID column is the dataset_id for dataset.  This is
+    used to link observations to a specific dataset.
+
+    :param dframe: The DataFrame to encode.
+    :param dataset: The Dataset to use a mapping for.
+    :param add_index: Add index to the DataFrame, default True.
+
+    :returns: A modified `dframe` as a BambooFrame.
+    """
+    dframe = BambooFrame(dframe)
+
+    if add_index:
+        dframe = dframe.add_index()
+
+    dframe = dframe.add_id_column(dataset.dataset_id)
+    encoded_columns_map = dataset.schema.rename_map_for_dframe(dframe)
+
+    return dframe.rename(columns=encoded_columns_map)
