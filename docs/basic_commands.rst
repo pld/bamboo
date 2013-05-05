@@ -109,7 +109,8 @@ To delete a dataset pass the dataset ID to a delete request.
 .. code-block:: javascript
 
     {
-        "success": "deleted dataset: 8a3d74711475d8a51c84484fe73f24bd151242ea"
+        "success": "deleted dataset",
+        "id": "8a3d74711475d8a51c84484fe73f24bd151242ea"
     }
 
 Retrieve information about a dataset
@@ -654,7 +655,8 @@ Store calculation formula
 .. code-block:: javascript
 
     {
-        "success": "created calulcation: water_functioning_count for dataset: 8a3d74711475d8a51c84484fe73f24bd151242ea"
+        "success": "created calulcation: water_functioning_count",
+        "id": "8a3d74711475d8a51c84484fe73f24bd151242ea"
     }
 
 Retrieve a list of stored calculations
@@ -726,7 +728,8 @@ or ``datasets/[dataset ID]/calculations?name=[name]``. For example,
 .. code-block:: javascript
 
     {
-        "success": "deleted calculation: 'amount_less_than_10' for dataset: 8a3d74711475d8a51c84484fe73f24bd151242ea"
+        "success": "deleted calculation: 'amount_less_than_10'",
+        "id": "8a3d74711475d8a51c84484fe73f24bd151242ea"
     }
 
 Store aggregation formula
