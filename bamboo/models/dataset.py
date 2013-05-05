@@ -79,7 +79,7 @@ class Dataset(AbstractModel, ImportableDataset):
 
     @property
     def columns(self):
-        return self.schema.keys()
+        return self.schema.keys() if self.num_rows else []
 
     @property
     def labels(self):
