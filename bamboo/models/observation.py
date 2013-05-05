@@ -11,6 +11,29 @@ from bamboo.lib.utils import invert_dict, replace_keys
 from bamboo.models.abstract_model import AbstractModel
 
 
+def encode(dframe, dataset, add_index=True):
+    """Encode the columns for `dataset` to slugs and add ID column.
+
+    The ID column is the dataset_id for dataset.  This is
+    used to link observations to a specific dataset.
+
+    :param dframe: The DataFrame to encode.
+    :param dataset: The Dataset to use a mapping for.
+    :param add_index: Add index to the DataFrame, default True.
+
+    :returns: A modified `dframe` as a BambooFrame.
+    """
+    dframe = BambooFrame(dframe)
+
+    if add_index:
+        dframe = dframe.add_index()
+
+    dframe = dframe.add_id_column(dataset.dataset_id)
+    encoded_columns_map = dataset.schema.rename_map_for_dframe(dframe)
+
+    return dframe.rename(columns=encoded_columns_map)
+
+
 class Observation(AbstractModel):
 
     __collectionname__ = 'observations'
@@ -101,21 +124,18 @@ class Observation(AbstractModel):
         id_query = {DATASET_ID: dataset.dataset_id}
         encoding = cls.encoding(dataset) or {}
 
-        if query_args:
-            query = parse_timestamp_query(query_args.query, dataset.schema)
-            query.update(id_query)
-            query_args.query = cls.encode(query, encoding=encoding)
+        query_args = query_args or QueryArgs()
 
-            order_by = query_args.order_by
-            query_args.order_by = order_by and cls.encode(
-                dict(order_by), encoding=encoding).items()
+        query = parse_timestamp_query(query_args.query, dataset.schema)
+        query.update(id_query)
+        query_args.query = cls.encode(query, encoding=encoding)
 
-            select = query_args.select
-            query_args.select = select and cls.encode(
-                select, encoding=encoding)
-        else:
-            query_args = QueryArgs()
-            query_args.query = cls.encode(id_query, encoding=encoding)
+        order_by = query_args.order_by
+        query_args.order_by = order_by and cls.encode(
+            dict(order_by), encoding=encoding).items()
+
+        select = query_args.select
+        query_args.select = select and cls.encode(select, encoding=encoding)
 
         distinct = query_args.distinct
 
@@ -319,26 +339,3 @@ class Observation(AbstractModel):
                   cls.ENCODING: encoding}
         super(cls, cls()).delete({cls.ENCODING_DATASET_ID: dataset.dataset_id})
         super(cls, cls()).save(record)
-
-
-def encode(dframe, dataset, add_index=True):
-    """Encode the columns for `dataset` to slugs and add ID column.
-
-    The ID column is the dataset_id for dataset.  This is
-    used to link observations to a specific dataset.
-
-    :param dframe: The DataFrame to encode.
-    :param dataset: The Dataset to use a mapping for.
-    :param add_index: Add index to the DataFrame, default True.
-
-    :returns: A modified `dframe` as a BambooFrame.
-    """
-    dframe = BambooFrame(dframe)
-
-    if add_index:
-        dframe = dframe.add_index()
-
-    dframe = dframe.add_id_column(dataset.dataset_id)
-    encoded_columns_map = dataset.schema.rename_map_for_dframe(dframe)
-
-    return dframe.rename(columns=encoded_columns_map)
