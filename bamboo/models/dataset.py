@@ -686,3 +686,5 @@ class Dataset(AbstractModel, ImportableDataset):
                 dframe = BambooFrame(dframe.join(place_holder, on=on))
             else:
                 dframe = self.place_holder_dframe()
+
+        return dframe
