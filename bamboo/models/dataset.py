@@ -2,7 +2,7 @@ import uuid
 from time import gmtime, strftime
 
 from celery.task import task
-from pandas import rolling_window, Series
+from pandas import rolling_window
 
 from bamboo.core.calculator import Calculator
 from bamboo.core.frame import BambooFrame, BAMBOO_RESERVED_KEY_PREFIX,\
@@ -587,35 +587,6 @@ class Dataset(AbstractModel, ImportableDataset):
         self.__dframe = None
 
         return self
-
-    def add_id_column(self, dframe):
-        if not DATASET_ID in dframe.columns:
-            id_column = Series([self.dataset_id] * len(dframe))
-            id_column.name = DATASET_ID
-
-            dframe = dframe.join(id_column)
-
-        return BambooFrame(dframe)
-
-    def encode_dframe(self, dframe, add_index=True):
-        """Encode the columns in `dframe` to slugs and add ID column.
-
-        The ID column is the dataset_id for this dataset.  This is
-        used to link observations to a specific dataset.
-
-        :param dframe: The DataFame to rename columns in and add an ID column
-            to.
-        :param add_index: Add index to the DataFrame, default True.
-        :returns: A modified `dframe` as a BambooFrame.
-        """
-        if add_index:
-            dframe = BambooFrame(dframe).add_index()
-
-        dframe = self.add_id_column(dframe)
-        encoded_columns_map = self.schema.rename_map_for_dframe(dframe)
-        dframe = dframe.rename(columns=encoded_columns_map)
-
-        return BambooFrame(dframe)
 
     def new_agg_dataset(self, dframe, groups):
         """Create an aggregated dataset for this dataset.

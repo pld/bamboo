@@ -45,7 +45,16 @@ class BambooFrame(DataFrame):
 
             self.rename(columns={'index': INDEX}, inplace=True)
 
-        return BambooFrame(self)
+        return self.__class__(self)
+
+    def add_id_column(self, dataset_id):
+        if not DATASET_ID in self.columns:
+            id_column = Series([dataset_id] * len(self))
+            id_column.name = DATASET_ID
+
+            self = self.join(id_column)
+
+        return self.__class__(self)
 
     def add_parent_column(self, parent_dataset_id):
         """Add parent ID column to this DataFrame."""
