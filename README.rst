@@ -6,8 +6,12 @@ bamboo
 
 *bamboo* is an application that systematizes realtime data analysis. *bamboo*
 provides an interface for merging, aggregating and adding algebraic
-calculations to dynamic datasets.  Clients can interact with *bamboo* through a
-a REST web interface and through Python.
+calculations to dynamic datasets.
+
+Clients can interact with *bamboo* through a REST web interface, a Python
+library, or a JavaScript library.  For more languages
+`request a libary <https://groups.google.com/forum/#!forum/bamboo-dev>`_ in
+the language you prefer.
 
 *bamboo* supports a simple querying language to build calculations
 (e.g. student teacher ratio) and aggregations (e.g. average number of students
@@ -19,9 +23,9 @@ per district) from datasets. These are updated as new data is received.
 
 .. image:: https://farm4.staticflickr.com/3363/3419345800_2c6c4133d3_z.jpg?zz=1
 
-*bamboo* is `open source <https://github.com/modilabs/bamboo>`_ software released
-under the 3-clause BSD license, which is also known as the "Modified BSD
-License".
+*bamboo* is `open source <https://github.com/modilabs/bamboo>`_ software
+released under the 3-clause BSD license, which is also known as the "Modified
+BSD License".
 
 Dependencies
 ------------
@@ -139,10 +143,11 @@ The latest docs are available at http://bamboo.io/
 About
 -----
 
-Join the `bamboo-dev mailing list <https://groups.google.com/forum/#!forum/bamboo-dev>`_.
+Join the
+`bamboo-dev list <https://groups.google.com/forum/#!forum/bamboo-dev>`_.
 
-*bamboo* is an open source project. The project features, in chronological order,
-the combined efforts of
+*bamboo* is an open source project. The project features, in chronological
+order, the combined efforts of
 
 * Peter Lubell-Doughtie
 * Mark Johnston
@@ -161,4 +166,5 @@ Projects using *bamboo*
 * `formhub <https://formhub.org>`_ - Mobile Data Collection made easy
 * `AFSIS <http://www.africasoils.net/>`_ - Africa Soil Information Service
 
-Is your project using bamboo? `Let us know <https://groups.google.com/forum/#!forum/bamboo-dev>`_!
+Is your project using bamboo?
+`Let us know <https://groups.google.com/forum/#!forum/bamboo-dev>`_!
