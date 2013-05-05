@@ -48,18 +48,15 @@ class BambooFrame(DataFrame):
         return self.__class__(self)
 
     def add_id_column(self, dataset_id):
-        if not DATASET_ID in self.columns:
-            id_column = Series([dataset_id] * len(self))
-            id_column.name = DATASET_ID
-
-            self = self.join(id_column)
-
-        return self.__class__(self)
+        return self.add_constant_column(dataset_id, DATASET_ID) if not\
+            DATASET_ID in self.columns else self
 
     def add_parent_column(self, parent_dataset_id):
         """Add parent ID column to this DataFrame."""
-        column = Series([parent_dataset_id] * len(self), index=self.index)
-        column.name = PARENT_DATASET_ID
+        return self.add_constant_column(parent_dataset_id, PARENT_DATASET_ID)
+
+    def add_constant_column(self, value, name):
+        column = Series([value] * len(self), index=self.index, name=name)
         return self.__class__(self.join(column))
 
     def decode_mongo_reserved_keys(self, keep_mongo_keys=False):
