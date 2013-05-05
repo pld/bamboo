@@ -38,6 +38,13 @@ def invert_dict(dict_):
 
 
 def replace_keys(original, mapping):
+    """Recursively replace any keys in original with their values in mappnig.
+
+    :param original: The dictionary to replace keys in.
+    :param mapping: A dict mapping keys to new keys.
+
+    :returns: Original with keys replaced via mapping.
+    """
     return original and {
         mapping.get(k, k): {
             dict: lambda: replace_keys(v, mapping),

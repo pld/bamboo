@@ -11,6 +11,29 @@ from bamboo.lib.utils import invert_dict, replace_keys
 from bamboo.models.abstract_model import AbstractModel
 
 
+def encode(dframe, dataset, add_index=True):
+    """Encode the columns for `dataset` to slugs and add ID column.
+
+    The ID column is the dataset_id for dataset.  This is
+    used to link observations to a specific dataset.
+
+    :param dframe: The DataFrame to encode.
+    :param dataset: The Dataset to use a mapping for.
+    :param add_index: Add index to the DataFrame, default True.
+
+    :returns: A modified `dframe` as a BambooFrame.
+    """
+    dframe = BambooFrame(dframe)
+
+    if add_index:
+        dframe = dframe.add_index()
+
+    dframe = dframe.add_id_column(dataset.dataset_id)
+    encoded_columns_map = dataset.schema.rename_map_for_dframe(dframe)
+
+    return dframe.rename(columns=encoded_columns_map)
+
+
 class Observation(AbstractModel):
 
     __collectionname__ = 'observations'
@@ -37,9 +60,7 @@ class Observation(AbstractModel):
         :param dataset: The dataset to delete observations for.
         :param query: An optional query to restrict deletion.
         """
-        query.update({
-            DATASET_ID: dataset.dataset_id
-        })
+        query.update({DATASET_ID: dataset.dataset_id})
         query = cls.encode(query, dataset=dataset)
 
         super(cls, cls()).delete(query)
@@ -80,6 +101,7 @@ class Observation(AbstractModel):
     def encode(cls, dict_, dataset=None, encoding=None):
         if dataset:
             encoding = cls.encoding(dataset)
+
         return replace_keys(dict_, encoding) if encoding else dict_
 
     @classmethod
@@ -98,34 +120,19 @@ class Observation(AbstractModel):
         :returns: A list of dictionaries matching the passed in `query` and
             other parameters.
         """
-        id_query = {DATASET_ID: dataset.dataset_id}
         encoding = cls.encoding(dataset) or {}
+        query_args = query_args or QueryArgs()
 
-        if query_args:
-            query = parse_timestamp_query(query_args.query, dataset.schema)
-            query.update(id_query)
-            query_args.query = cls.encode(query, encoding=encoding)
-
-            order_by = query_args.order_by
-            query_args.order_by = order_by and cls.encode(
-                dict(order_by), encoding=encoding).items()
-
-            select = query_args.select
-            query_args.select = select and cls.encode(
-                select, encoding=encoding)
-        else:
-            query_args = QueryArgs()
-            query_args.query = cls.encode(id_query, encoding=encoding)
+        query_args.query = parse_timestamp_query(query_args.query,
+                                                 dataset.schema)
+        query_args.encode(encoding, {DATASET_ID: dataset.dataset_id})
 
         distinct = query_args.distinct
-
         records = super(cls, cls).find(query_args, as_dict=True,
                                        as_cursor=(as_cursor or distinct))
 
-        if query_args.distinct:
-            records = records.distinct(encoding.get(distinct, distinct))
-
-        return records
+        return records.distinct(encoding.get(distinct, distinct)) if distinct\
+            else records
 
     @classmethod
     def update_from_dframe(cls, dframe, dataset):
@@ -201,6 +208,41 @@ class Observation(AbstractModel):
         observation = cls.find_one(dataset, index, decode=False)
         record = cls.encode(record, dataset=dataset)
         super(cls, observation).update(record)
+
+    @classmethod
+    def batch_read_dframe_from_cursor(cls, dataset, observations, distinct,
+                                      limit):
+        """Read a DataFrame from a MongoDB Cursor in batches."""
+        dframes = []
+        batch = 0
+        decoding = cls.decoding(dataset)
+
+        while True:
+            start = batch * cls.DB_READ_BATCH_SIZE
+            end = start + cls.DB_READ_BATCH_SIZE
+
+            if limit > 0 and end > limit:
+                end = limit
+
+            # if there is a limit this may occur, and we are done
+            if start >= end:
+                break
+
+            current_observations = [
+                replace_keys(ob, decoding) for ob in observations[start:end]]
+
+            # if the batches exhausted the data
+            if not len(current_observations):
+                break
+
+            dframes.append(BambooFrame(current_observations))
+
+            if not distinct:
+                observations.rewind()
+
+            batch += 1
+
+        return BambooFrame(concat(dframes) if len(dframes) else [])
 
     @classmethod
     def __batch_save(cls, dframe, encoding):
@@ -284,61 +326,3 @@ class Observation(AbstractModel):
                   cls.ENCODING: encoding}
         super(cls, cls()).delete({cls.ENCODING_DATASET_ID: dataset.dataset_id})
         super(cls, cls()).save(record)
-
-    @classmethod
-    def batch_read_dframe_from_cursor(cls, dataset, observations, distinct,
-                                      limit):
-        """Read a DataFrame from a MongoDB Cursor in batches."""
-        dframes = []
-        batch = 0
-        decoding = cls.decoding(dataset)
-
-        while True:
-            start = batch * cls.DB_READ_BATCH_SIZE
-            end = start + cls.DB_READ_BATCH_SIZE
-
-            if limit > 0 and end > limit:
-                end = limit
-
-            # if there is a limit and we are done
-            if start >= end:
-                break
-
-            current_observations = [
-                replace_keys(ob, decoding) for ob in observations[start:end]]
-
-            # if the batches exhausted the data
-            if not len(current_observations):
-                break
-
-            dframes.append(BambooFrame(current_observations))
-
-            if not distinct:
-                observations.rewind()
-
-            batch += 1
-
-        return BambooFrame(concat(dframes) if len(dframes) else [])
-
-
-def encode(dframe, dataset, add_index=True):
-    """Encode the columns for `dataset` to slugs and add ID column.
-
-    The ID column is the dataset_id for dataset.  This is
-    used to link observations to a specific dataset.
-
-    :param dframe: The DataFrame to encode.
-    :param dataset: The Dataset to use a mapping for.
-    :param add_index: Add index to the DataFrame, default True.
-
-    :returns: A modified `dframe` as a BambooFrame.
-    """
-    dframe = BambooFrame(dframe)
-
-    if add_index:
-        dframe = dframe.add_index()
-
-    dframe = dframe.add_id_column(dataset.dataset_id)
-    encoded_columns_map = dataset.schema.rename_map_for_dframe(dframe)
-
-    return dframe.rename(columns=encoded_columns_map)

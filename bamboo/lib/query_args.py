@@ -1,3 +1,6 @@
+from bamboo.lib.utils import combine_dicts, replace_keys
+
+
 class QueryArgs(object):
     def __init__(self, query=None, select=None, distinct=None, limit=0,
                  order_by=None):
@@ -20,6 +23,19 @@ class QueryArgs(object):
         self.distinct = distinct
         self.limit = limit
         self.order_by = self.__parse_order_by(order_by)
+
+    def encode(self, encoding, query):
+        """Encode query, order_by, and select given an encoding.
+
+        The query will be combined with the existing query.
+
+        :param encoding: A dict to encode the QueryArgs fields with.
+        :param query: An additional dict to combine with the existing query.
+        """
+        self.query = replace_keys(combine_dicts(self.query, query), encoding)
+        self.order_by = self.order_by and replace_keys(dict(self.order_by),
+                                                       encoding).items()
+        self.select = self.select and replace_keys(self.select, encoding)
 
     def __nonzero__(self):
         return bool(self.query or self.select or self.distinct or self.limit
