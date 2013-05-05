@@ -219,25 +219,13 @@ class Dataset(AbstractModel, ImportableDataset):
 
         dframe.decode_mongo_reserved_keys(keep_mongo_keys=keep_mongo_keys)
 
-        excluded = []
-
-        if keep_parent_ids:
-            excluded.append(PARENT_DATASET_ID)
-        if index:
-            excluded.append(INDEX)
-
-        dframe.remove_bamboo_reserved_keys(excluded)
+        excluded = [keep_parent_ids and PARENT_DATASET_ID, index and INDEX]
+        dframe.remove_bamboo_reserved_keys(filter(bool, excluded))
 
         if index:
             dframe = BambooFrame(dframe.rename(columns={INDEX: 'index'}))
 
-        if padded:
-            if len(dframe.columns):
-                on = dframe.columns[0]
-                place_holder = self.place_holder_dframe(dframe).set_index(on)
-                dframe = BambooFrame(dframe.join(place_holder, on=on))
-            else:
-                dframe = self.place_holder_dframe()
+        dframe = self.__maybe_pad(dframe, padded)
 
         if cacheable:
             self.__dframe = dframe
@@ -428,9 +416,8 @@ class Dataset(AbstractModel, ImportableDataset):
         :param query_args: An optional QueryArgs to hold the query arguments.
         :param as_cursor: Return the observations as a cursor.
         """
-        query_args = query_args or QueryArgs()
-
-        return Observation.find(self, query_args, as_cursor=as_cursor)
+        return Observation.find(self, query_args or QueryArgs(),
+                                as_cursor=as_cursor)
 
     def calculations(self):
         """Return the calculations for this dataset."""
@@ -690,3 +677,12 @@ class Dataset(AbstractModel, ImportableDataset):
 
     def __add_linked_data(self, link_key, existing_data, new_data):
         self.update({link_key: existing_data + [new_data]})
+
+    def __maybe_pad(self, dframe, pad):
+        if pad:
+            if len(dframe.columns):
+                on = dframe.columns[0]
+                place_holder = self.place_holder_dframe(dframe).set_index(on)
+                dframe = BambooFrame(dframe.join(place_holder, on=on))
+            else:
+                dframe = self.place_holder_dframe()
