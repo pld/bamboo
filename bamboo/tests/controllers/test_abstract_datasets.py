@@ -4,10 +4,18 @@ from bamboo.controllers.calculations import Calculations
 from bamboo.controllers.datasets import Datasets
 from bamboo.core.frame import BambooFrame
 from bamboo.core.summary import SUMMARY
-from bamboo.lib.jsontools import series_to_jsondict
 from bamboo.lib.mongo import MONGO_ID
 from bamboo.models.dataset import Dataset
 from bamboo.tests.test_base import TestBase
+
+
+def comparable(dframe):
+    return [reduce_precision(r) for r in BambooFrame(dframe).to_jsondict()]
+
+
+def reduce_precision(row):
+    return {k: round(v, 10) if isinstance(v, float) else v
+            for k, v in row.iteritems()}
 
 
 class TestAbstractDatasets(TestBase):
@@ -52,26 +60,16 @@ class TestAbstractDatasets(TestBase):
             self.controller.info(self.dataset_id))[Dataset.SCHEMA]
 
     def _check_dframes_are_equal(self, dframe1, dframe2):
-        self._check_dframe_is_subset(dframe1, dframe2)
-        self._check_dframe_is_subset(dframe2, dframe1)
+        rows1 = comparable(dframe1)
+        rows2 = comparable(dframe2)
 
-    def _check_dframe_is_subset(self, dframe1, dframe2):
-        dframe2_rows = [self._reduce_precision(row) for row in
-                        BambooFrame(dframe2).to_jsondict()]
+        self.__check_dframe_is_subset(rows1, rows2)
+        self.__check_dframe_is_subset(rows2, rows1)
 
-        for row in dframe1.iterrows():
-            dframe1_row = self._reduce_precision(series_to_jsondict(row[1]))
-            self.assertTrue(dframe1_row in dframe2_rows,
-                            'dframe1_row: %s\n\ndframe2_rows: %s' % (
-                                BambooFrame([dframe1_row]),
-                                BambooFrame(dframe2_rows)))
-
-    def _reduce_precision(self, row):
-        for key, value in row.iteritems():
-            if isinstance(value, float):
-                row[key] = round(value, 10)
-
-        return row
+    def __check_dframe_is_subset(self, rows1, rows2):
+        for row in rows1:
+            self.assertTrue(row in rows2,
+                            '\nrow:\n%s\n\nnot in rows2:\n%s' % (row, rows2))
 
     def _post_calculations(self, formulae=[], group=None):
         schema = self._load_schema()
