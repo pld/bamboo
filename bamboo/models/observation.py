@@ -60,9 +60,7 @@ class Observation(AbstractModel):
         :param dataset: The dataset to delete observations for.
         :param query: An optional query to restrict deletion.
         """
-        query.update({
-            DATASET_ID: dataset.dataset_id
-        })
+        query.update({DATASET_ID: dataset.dataset_id})
         query = cls.encode(query, dataset=dataset)
 
         super(cls, cls()).delete(query)
@@ -103,6 +101,7 @@ class Observation(AbstractModel):
     def encode(cls, dict_, dataset=None, encoding=None):
         if dataset:
             encoding = cls.encoding(dataset)
+
         return replace_keys(dict_, encoding) if encoding else dict_
 
     @classmethod
@@ -121,31 +120,19 @@ class Observation(AbstractModel):
         :returns: A list of dictionaries matching the passed in `query` and
             other parameters.
         """
-        id_query = {DATASET_ID: dataset.dataset_id}
         encoding = cls.encoding(dataset) or {}
-
         query_args = query_args or QueryArgs()
 
-        query = parse_timestamp_query(query_args.query, dataset.schema)
-        query.update(id_query)
-        query_args.query = cls.encode(query, encoding=encoding)
-
-        order_by = query_args.order_by
-        query_args.order_by = order_by and cls.encode(
-            dict(order_by), encoding=encoding).items()
-
-        select = query_args.select
-        query_args.select = select and cls.encode(select, encoding=encoding)
+        query_args.query = parse_timestamp_query(query_args.query,
+                                                 dataset.schema)
+        query_args.encode(encoding, {DATASET_ID: dataset.dataset_id})
 
         distinct = query_args.distinct
-
         records = super(cls, cls).find(query_args, as_dict=True,
                                        as_cursor=(as_cursor or distinct))
 
-        if query_args.distinct:
-            records = records.distinct(encoding.get(distinct, distinct))
-
-        return records
+        return records.distinct(encoding.get(distinct, distinct)) if distinct\
+            else records
 
     @classmethod
     def update_from_dframe(cls, dframe, dataset):
