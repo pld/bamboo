@@ -79,11 +79,7 @@ class Dataset(AbstractModel, ImportableDataset):
 
     @property
     def columns(self):
-        # TODO: get columns from schema
-        # NOTE: getting columns within limit is invalid because not all rows
-        # will be full rank.
-        return (self.dframe() if self.__is_cached else
-                self.dframe()).columns
+        return self.schema.keys() if self.num_rows else []
 
     @property
     def labels(self):
