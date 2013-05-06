@@ -1,3 +1,4 @@
+import vincent
 import urllib2
 
 from bamboo.controllers.abstract_controller import AbstractController
@@ -512,6 +513,11 @@ class Datasets(AbstractController):
                 Dataset.ID: dataset_id}
 
         return self._safe_get_and_call(dataset_id, action)
+
+    def plot(self, dataset_id, style):
+        vis = vincent.Bar()
+        # TODO we need this as a string or dict
+        vis.to_json('some_path.json')
 
     def __content_type_for_format(self, format):
         return self.CSV if format == self.CSV else self.JSON
