@@ -4,11 +4,13 @@ from setuptools import setup
 imp.load_source('bamboo_version', 'bamboo/lib/version.py')
 from bamboo_version import VERSION_NUMBER
 
+
 setup(
     name='bamboo-server',
     version=VERSION_NUMBER,
     author='Modi Research Group',
     author_email='info@modilabs.org',
+    license='BSD 3-clause',
     packages=['bamboo',
               'bamboo.config',
               'bamboo.controllers',
@@ -18,12 +20,9 @@ setup(
               'bamboo.tests.core',
               'bamboo.tests.controllers',
               'bamboo.tests.lib',
-              'bamboo.tests.models',
-              ],
+              'bamboo.tests.models'],
     package_data={'bamboo.tests': ['tests/fixtures/*.csv',
-                                   'tests/fixtures/*.json',
-                                   ],
-                  },
+                                   'tests/fixtures/*.json']},
     scripts=['scripts/bamboo.sh',
              'scripts/bamboo_uwsgi.sh',
              'scripts/commands.sh',
@@ -54,6 +53,5 @@ setup(
         'cherrypy',
         'pyparsing',
         'simplejson',
-        'Routes'
-    ],
+        'Routes'],
 )
