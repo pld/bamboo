@@ -514,10 +514,17 @@ class Datasets(AbstractController):
 
         return self._safe_get_and_call(dataset_id, action)
 
-    def plot(self, dataset_id, style):
-        vis = vincent.Bar()
-        # TODO we need this as a string or dict
-        vis.to_json('some_path.json')
+    def plot(self, dataset_id, column):
+        def action(dataset):
+            dframe = dataset.dframe(query_args=QueryArgs(select={column: 1}))
+            dframe.index = [float(i) for i in xrange(0, len(dframe))]
+            vis = vincent.Line()
+            vis.tabular_data(dframe, columns=[column], use_index=True)
+            print vis.vega
+
+            return vis.vega
+
+        return self._safe_get_and_call(dataset_id, action)
 
     def __content_type_for_format(self, format):
         return self.CSV if format == self.CSV else self.JSON

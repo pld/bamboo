@@ -835,3 +835,7 @@ class TestDatasets(TestAbstractDatasets):
         results = json.loads(self.controller.info(dataset_id))
         new_schema = results[Dataset.SCHEMA]
         self.assertEqual(expected_schema, new_schema)
+
+    def test_plot(self):
+        dataset_id = self._post_file()
+        self.controller.plot(dataset_id, 'amount')
