@@ -837,5 +837,10 @@ class TestDatasets(TestAbstractDatasets):
         self.assertEqual(expected_schema, new_schema)
 
     def test_plot(self):
+        column = 'amount'
         dataset_id = self._post_file()
-        self.controller.plot(dataset_id, 'amount')
+        result = self.controller.plot(dataset_id, column)
+        dframe = Dataset.find_one(dataset_id).dframe()
+
+        for i, amount in dframe[column].iteritems():
+            self.assertTrue(str(amount) in result)
