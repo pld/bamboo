@@ -838,8 +838,9 @@ class TestDatasets(TestAbstractDatasets):
 
     def test_plot(self):
         column = 'amount'
+        select = json.dumps({column: 1})
         dataset_id = self._post_file()
-        result = self.controller.plot(dataset_id, column)
+        result = self.controller.plot(dataset_id, select=select)
         dframe = Dataset.find_one(dataset_id).dframe()
 
         for i, amount in dframe[column].iteritems():

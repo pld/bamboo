@@ -176,16 +176,8 @@ class Datasets(AbstractController):
         content_type = self.__content_type_for_format(format)
 
         def action(dataset, limit=limit, query=query, select=select):
-            limit = parse_int(limit, 0)
-            query = self.__parse_query(query)
-            select = self.__parse_select(select)
-
-            query_args = QueryArgs(query=query,
-                                   select=select,
-                                   distinct=distinct,
-                                   limit=limit,
-                                   order_by=order_by)
-
+            query_args = self.__parse_query_args(limit, order_by, query,
+                                                 select, distinct=distinct)
             if count:
                 return dataset.count(query_args)
             else:
@@ -516,9 +508,35 @@ class Datasets(AbstractController):
 
         return self._safe_get_and_call(dataset_id, action)
 
-    def plot(self, dataset_id, column):
-        def action(dataset):
-            dframe = dataset.dframe(query_args=QueryArgs(select={column: 1}))
+    def plot(self, dataset_id, query=None, select=None, limit=0,
+             order_by=None):
+        """Plot a dataset given restrictions.
+
+        :param dataset_id: The dataset ID of the dataset to return.
+        :param select: A MongoDB JSON query for select.
+        :param distinct: A field to return distinct results for.
+        :param query: If passed restrict results to rows matching this query.
+        :param limit: If passed limit the rows to this number.
+        :param order_by: If passed order the result using this column.
+
+        :returns: HTML with an embedded plot.
+        """
+        def action(dataset, select=select):
+            query_args = self.__parse_query_args(limit, order_by, query,
+                                                 select)
+
+            numerics_select = dataset.schema.numerics_select
+            select = query_args.select
+
+            if select is None:
+                select = numerics_select
+            else:
+                select = {k: v for k, v in select.items() if k in
+                          numerics_select.keys()}
+
+            query_args.select = select
+
+            dframe = dataset.dframe(query_args=query_args)
             dframe.index = [float(i) for i in xrange(0, len(dframe))]
             dframe = dframe.dropna()
             vis = bearcart.Chart(dframe)
@@ -555,3 +573,15 @@ class Datasets(AbstractController):
 
     def __parse_query(self, query):
         return safe_json_loads(query, error_title='string') if query else {}
+
+    def __parse_query_args(self, limit, order_by, query, select,
+                           distinct=None):
+            limit = parse_int(limit, 0)
+            query = self.__parse_query(query)
+            select = self.__parse_select(select)
+
+            return QueryArgs(query=query,
+                             select=select,
+                             distinct=distinct,
+                             limit=limit,
+                             order_by=order_by)
