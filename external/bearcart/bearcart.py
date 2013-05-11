@@ -7,12 +7,9 @@ Python Pandas + Rickshaw.js
 
 '''
 
-from __future__ import print_function
 from __future__ import division
 import time
 import json
-import os
-from collections import defaultdict
 from pkg_resources import resource_string
 import numpy as np
 import pandas as pd
@@ -100,8 +97,9 @@ class Chart(object):
             render_vars = {}
             if val:
                 if not self.x_axis_time:
-                    if att == 'x_axis':
+                    if att == 'x_axis' and val is not True:
                         att = 'x_axis_num'
+                        render_vars = self.make_ticks(val)
                     elif att == 'hover':
                         render_vars = {'x_hover': 'xFormatter: function(x)'
                                        '{return Math.floor(x / 10) * 10}'}
@@ -111,6 +109,10 @@ class Chart(object):
         #Transform data into Rickshaw-happy JSON format
         if data is not None:
             self.transform_data(data)
+
+    def make_ticks(self, axis):
+        cases = ','.join(["%s:'%s'" % (i, v) for i, v in enumerate(axis)])
+        return {'ticks': 'tickFormat:function(x){return{%s}[x]},' % cases}
 
     def transform_data(self, data):
         '''Transform Pandas Timeseries into JSON format
@@ -130,8 +132,13 @@ class Chart(object):
         >>>vis.json_data
 
         '''
-        convert = lambda v: float(v) if (
-            isinstance(v, np.float64) or isinstance(v, np.int64)) else v
+        def convert(v):
+            if isinstance(v, np.float64):
+                v = float(v)
+            elif isinstance(v, np.int64):
+                v = int(v)
+
+            return v
 
         objectify = lambda dat: [{"x": convert(x), "y": convert(y)}
                                  for x, y in dat.iteritems()]
@@ -153,7 +160,7 @@ class Chart(object):
                         objs['x'] = None
                     elif (isinstance(objs['x'], pd.tslib.Timestamp) or
                           isinstance(objs['x'], pd.Period)):
-                        objs['x'] = time.mktime(objs['x'].timetuple())
+                        objs['x'] = int(time.mktime(objs['x'].timetuple()))
 
     def _build_graph(self):
         '''Build Rickshaw graph syntax with all data'''
