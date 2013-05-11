@@ -1,3 +1,4 @@
+fabric
 memory-profiler==0.21
 nose-cov==1.5
 nose-progressive==1.3
