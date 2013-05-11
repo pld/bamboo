@@ -1,5 +1,5 @@
 # the dev server
-HOST='http://54.225.70.200'
+HOST='http://dev.bamboo.io'
 WAIT_TIME=15
 
 while getopts l opt
