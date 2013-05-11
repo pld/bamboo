@@ -66,9 +66,13 @@ class Schema(dict):
         }
 
     @property
-    def numeric_slugs(self):
+    def numerics(self):
         return [slug for slug, col_schema in self.items()
                 if col_schema[SIMPLETYPE] in [INTEGER, FLOAT]]
+
+    @property
+    def numerics_select(self):
+        return {col: 1 for col in self.numerics}
 
     def cardinality(self, column):
         if self.is_dimension(column):
