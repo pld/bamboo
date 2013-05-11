@@ -16,7 +16,7 @@ pymongo==2.5
 pytz==2012d
 
 cherrypy==3.2.4
+jinja2==2.6
 pyparsing==1.5.6
 Routes==1.13
 simplejson==2.6.1
-vincent==0.1.5

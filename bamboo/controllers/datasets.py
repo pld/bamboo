@@ -1,4 +1,4 @@
-import vincent
+from external import bearcart
 import urllib2
 
 from bamboo.controllers.abstract_controller import AbstractController
@@ -6,7 +6,7 @@ from bamboo.core.frame import NonUniqueJoinError, OverlapJoinError
 from bamboo.core.merge import merge_dataset_ids, MergeError
 from bamboo.core.summary import ColumnTypeError
 from bamboo.lib.exceptions import ArgumentError
-from bamboo.lib.jsontools import safe_json_loads
+from bamboo.lib.jsontools import JSONError, safe_json_loads
 from bamboo.lib.utils import parse_int
 from bamboo.lib.query_args import QueryArgs
 from bamboo.models.dataset import Dataset
@@ -297,6 +297,8 @@ class Datasets(AbstractController):
             error = 'could not load: %s' % url
         except IOError:
             error = 'could not get a filehandle for: %s' % csv_file
+        except JSONError as e:
+            error = e.__str__()
 
         self.set_response_params(result, success_status_code=201)
         return self._dump_or_error(result, error)
@@ -518,16 +520,16 @@ class Datasets(AbstractController):
         def action(dataset):
             dframe = dataset.dframe(query_args=QueryArgs(select={column: 1}))
             dframe.index = [float(i) for i in xrange(0, len(dframe))]
-            vis = vincent.Line()
-            vis.tabular_data(dframe, columns=[column], use_index=True)
-            print vis.vega
+            dframe = dframe.dropna()
+            vis = bearcart.Chart(dframe)
 
-            return vis.vega
+            return vis.build_html()
 
-        return self._safe_get_and_call(dataset_id, action)
+        return self._safe_get_and_call(
+            dataset_id, action, content_type='text/html')
 
     def __content_type_for_format(self, format):
-        return self.CSV if format == self.CSV else self.JSON
+        return self.CSV if format == 'csv' else self.JSON
 
     def __dataframe_as_content_type(self, content_type, dframe):
         if content_type == self.CSV:
