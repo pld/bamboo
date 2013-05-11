@@ -529,25 +529,28 @@ class Datasets(AbstractController):
                                                  select)
 
             numerics_select = dataset.schema.numerics_select
-            select = query_args.select
+            query_select = query_args.select
 
-            if select is None:
-                select = numerics_select
+            if query_select is None:
+                query_select = numerics_select
             else:
-                select = {k: v for k, v in select.items() if k in
-                          numerics_select.keys()}
+                query_select = {k: v for k, v in query_select.items() if k in
+                                numerics_select.keys()}
+
+            if not query_select:
+                raise ArgumentError(
+                    'No numeric columns for dataset, or no select columns are '
+                    'numeric. Select: %s.' % select)
 
             if index:
-                select[index] = 1
+                query_select[index] = 1
 
-            query_args.select = select
+            query_args.select = query_select
 
             dframe = dataset.dframe(query_args=query_args)
 
             if index:
                 dframe = dframe.set_index(index)
-            else:
-                dframe.index = [float(i) for i in xrange(0, len(dframe))]
 
             vis = bearcart.Chart(dframe.dropna(), plt_type=plot_type,
                                  x_time=index is not None)

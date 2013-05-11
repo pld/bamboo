@@ -10,8 +10,14 @@ class TestDatasets(TestAbstractDatasets):
 
     def setUp(self):
         TestAbstractDatasets.setUp(self)
-        self.dataset_id = self._post_file()
+        self.dataset_id = self._post_file('water_points.csv')
         self.dataset = Dataset.find_one(self.dataset_id)
+
+    def __test_result(self, result, dframe):
+        for column in dframe.columns:
+            for i, v in dframe[column].iteritems():
+                v = str(v)[0:5]
+                self.assertTrue(v in result, v)
 
     def test_plot(self):
         result = self.controller.plot(self.dataset_id)
@@ -20,31 +26,40 @@ class TestDatasets(TestAbstractDatasets):
             query_args=QueryArgs(select=self.dataset.schema.numerics_select))
         dframe = dframe.dropna()
 
-        for column in dframe.columns:
-            for i, amount in dframe[column].iteritems():
-                self.assertTrue(str(amount) in result, amount)
+        self.__test_result(result, dframe)
 
-    def test_plot_select(self):
-        column = 'amount'
+    def test_plot_select_none(self):
+        column = 'acreage'
         select = json.dumps({column: 1})
         result = self.controller.plot(self.dataset_id, select=select)
-        dframe = self.dataset.dframe()
+        result = json.loads(result)
 
-        for i, amount in dframe[column].iteritems():
-            self.assertTrue(str(amount) in result)
+        self.assertTrue(column in result[self.controller.ERROR])
+
+    def test_plot_select(self):
+        column = 'community_pop'
+        select = {column: 1}
+        result = self.controller.plot(self.dataset_id,
+                                      select=json.dumps(select))
+
+        dframe = self.dataset.dframe(QueryArgs(select=select))
+        self.__test_result(result, dframe)
 
     def test_plot_index(self):
+        dataset_id = self._post_file()
+        dataset = Dataset.find_one(dataset_id)
+
         column = 'amount'
         select = json.dumps({column: 1})
-        result = self.controller.plot(self.dataset_id, select=select,
+        result = self.controller.plot(dataset_id, select=select,
                                       index='submit_date')
-        dframe = self.dataset.dframe()
+        dframe = dataset.dframe()
 
         for i, amount in dframe[column].iteritems():
             self.assertTrue(str(amount) in result)
 
     def test_plot_type(self):
-        column = 'amount'
+        column = 'community_pop'
         select = json.dumps({column: 1})
         plot_types = ['area', 'bar', 'line', 'scatterplot', 'stack']
 
