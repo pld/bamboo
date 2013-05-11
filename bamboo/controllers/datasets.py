@@ -1,3 +1,4 @@
+from external import bearcart
 import urllib2
 
 from bamboo.controllers.abstract_controller import AbstractController
@@ -5,7 +6,7 @@ from bamboo.core.frame import NonUniqueJoinError, OverlapJoinError
 from bamboo.core.merge import merge_dataset_ids, MergeError
 from bamboo.core.summary import ColumnTypeError
 from bamboo.lib.exceptions import ArgumentError
-from bamboo.lib.jsontools import safe_json_loads
+from bamboo.lib.jsontools import JSONError, safe_json_loads
 from bamboo.lib.utils import parse_int
 from bamboo.lib.query_args import QueryArgs
 from bamboo.models.dataset import Dataset
@@ -175,16 +176,8 @@ class Datasets(AbstractController):
         content_type = self.__content_type_for_format(format)
 
         def action(dataset, limit=limit, query=query, select=select):
-            limit = parse_int(limit, 0)
-            query = self.__parse_query(query)
-            select = self.__parse_select(select)
-
-            query_args = QueryArgs(query=query,
-                                   select=select,
-                                   distinct=distinct,
-                                   limit=limit,
-                                   order_by=order_by)
-
+            query_args = self.__parse_query_args(limit, order_by, query,
+                                                 select, distinct=distinct)
             if count:
                 return dataset.count(query_args)
             else:
@@ -296,6 +289,8 @@ class Datasets(AbstractController):
             error = 'could not load: %s' % url
         except IOError:
             error = 'could not get a filehandle for: %s' % csv_file
+        except JSONError as e:
+            error = e.__str__()
 
         self.set_response_params(result, success_status_code=201)
         return self._dump_or_error(result, error)
@@ -513,8 +508,57 @@ class Datasets(AbstractController):
 
         return self._safe_get_and_call(dataset_id, action)
 
+    def plot(self, dataset_id, query=None, select=None, limit=0,
+             order_by=None, index=None, plot_type='line'):
+        """Plot a dataset given restrictions.
+
+        :param dataset_id: The dataset ID of the dataset to return.
+        :param select: A MongoDB JSON query for select.
+        :param distinct: A field to return distinct results for.
+        :param query: If passed restrict results to rows matching this query.
+        :param limit: If passed limit the rows to this number.
+        :param order_by: If passed order the result using this column.
+        :param index: If passed set this column as the index.
+        :param plot_type: Option type of plot, may be: *area*, *bar*, *line*,
+            *scatterplot*, or *stack*.  The default is *line*.
+
+        :returns: HTML with an embedded plot.
+        """
+        def action(dataset, select=select):
+            query_args = self.__parse_query_args(limit, order_by, query,
+                                                 select)
+
+            numerics_select = dataset.schema.numerics_select
+            select = query_args.select
+
+            if select is None:
+                select = numerics_select
+            else:
+                select = {k: v for k, v in select.items() if k in
+                          numerics_select.keys()}
+
+            if index:
+                select[index] = 1
+
+            query_args.select = select
+
+            dframe = dataset.dframe(query_args=query_args)
+
+            if index:
+                dframe = dframe.set_index(index)
+            else:
+                dframe.index = [float(i) for i in xrange(0, len(dframe))]
+
+            vis = bearcart.Chart(dframe.dropna(), plt_type=plot_type,
+                                 x_time=index is not None)
+
+            return vis.build_html()
+
+        return self._safe_get_and_call(
+            dataset_id, action, content_type='text/html')
+
     def __content_type_for_format(self, format):
-        return self.CSV if format == self.CSV else self.JSON
+        return self.CSV if format == 'csv' else self.JSON
 
     def __dataframe_as_content_type(self, content_type, dframe):
         if content_type == self.CSV:
@@ -540,3 +584,15 @@ class Datasets(AbstractController):
 
     def __parse_query(self, query):
         return safe_json_loads(query, error_title='string') if query else {}
+
+    def __parse_query_args(self, limit, order_by, query, select,
+                           distinct=None):
+            limit = parse_int(limit, 0)
+            query = self.__parse_query(query)
+            select = self.__parse_select(select)
+
+            return QueryArgs(query=query,
+                             select=select,
+                             distinct=distinct,
+                             limit=limit,
+                             order_by=order_by)

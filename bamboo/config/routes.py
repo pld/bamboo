@@ -33,6 +33,8 @@ ROUTES = [
         '/datasets/:dataset_id/join', 'datasets', 'join'),
     ('datasets_join_alias', 'POST',
         '/datasets/join', 'datasets', 'join'),
+    ('datasets_plot', 'GET',
+        '/datasets/:dataset_id/plot', 'datasets', 'plot'),
     ('datasets_resample', 'GET',
         '/datasets/:dataset_id/resample', 'datasets', 'resample'),
     ('datasets_rolling', 'GET',

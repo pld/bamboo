@@ -18,8 +18,8 @@ class AbstractController(object):
 
     exposed = True
 
-    CSV = 'csv'
-    JSON = 'json'
+    CSV = 'application/csv'
+    JSON = 'application/json'
 
     ERROR = 'error'
     SUCCESS = 'success'
@@ -54,8 +54,7 @@ class AbstractController(object):
         :param success_status_code: The HTTP status code to return, default is
             DEFAULT_SUCCESS_STATUS_CODE.
         """
-        cherrypy.response.headers['Content-Type'] = 'application/%s' % (
-            content_type)
+        cherrypy.response.headers['Content-Type'] = content_type
         cherrypy.response.status = success_status_code if obj is not None else\
             self.ERROR_STATUS_CODE
 
@@ -77,7 +76,7 @@ class AbstractController(object):
         if obj is None:
             obj = {self.ERROR: error_message}
 
-        result = obj if isinstance(obj, str) else dump_mongo_json(obj)
+        result = obj if isinstance(obj, basestring) else dump_mongo_json(obj)
         self.__add_cors_headers()
 
         return '%s(%s)' % (callback, result) if callback else result
