@@ -654,7 +654,7 @@ class Dataset(AbstractModel, ImportableDataset):
         :returns: A BambooFrame of the rolling window calculated for this
             dataset.
         """
-        dframe = self.dframe()[self.schema.numeric_slugs]
+        dframe = self.dframe(select=self.schema.numerics_select)
         return BambooFrame(rolling_window(dframe, window, win_type))
 
     def set_olap_type(self, column, olap_type):
