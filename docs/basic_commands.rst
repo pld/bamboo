@@ -92,7 +92,7 @@ parameter.  For example, to interpret the string 'n/a' as missing data, call:
 
 .. code-block:: sh
 
-    curl -X POST -d "url=http://formhub.org/mberg/forms/good_eats/data.csv&na_values=['n/a']" http://bamboo.io/datasets
+    curl -X POST -d "url=http://formhub.org/mberg/forms/good_eats/data.csv" http://bamboo.io/datasets?na_values='["n/a"]'
 
 
 Deleting a dataset
