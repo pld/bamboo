@@ -2,6 +2,7 @@ from external import bearcart
 import urllib2
 
 from bamboo.controllers.abstract_controller import AbstractController
+from bamboo.core.aggregations import AGGREGATIONS
 from bamboo.core.frame import NonUniqueJoinError, OverlapJoinError
 from bamboo.core.merge import merge_dataset_ids, MergeError
 from bamboo.core.summary import ColumnTypeError
@@ -27,10 +28,12 @@ class Datasets(AbstractController):
 
     Attributes:
 
-    - SELECT_ALL_FOR_SUMMARY: a string the the client can pass to
+    - DEFAULT_AGGREGATION: The default aggregation for plotting with an index.
+    - SELECT_ALL_FOR_SUMMARY: A string the the client can pass to
     - indicate that all columns should be summarized.
 
     """
+    DEFAULT_AGGREGATION = 'sum'
     SELECT_ALL_FOR_SUMMARY = 'all'
 
     def delete(self, dataset_id):
@@ -508,8 +511,8 @@ class Datasets(AbstractController):
 
         return self._safe_get_and_call(dataset_id, action)
 
-    def plot(self, dataset_id, query=None, select=None, limit=0,
-             order_by=None, index=None, plot_type='line'):
+    def plot(self, dataset_id, query=None, select=None, limit=0, group=None,
+             order_by=None, index=None, plot_type='line', aggregation='sum'):
         """Plot a dataset given restrictions.
 
         :param dataset_id: The dataset ID of the dataset to return.
@@ -517,10 +520,13 @@ class Datasets(AbstractController):
         :param distinct: A field to return distinct results for.
         :param query: If passed restrict results to rows matching this query.
         :param limit: If passed limit the rows to this number.
+        :param group: Group by this column.
         :param order_by: If passed order the result using this column.
         :param index: If passed set this column as the index.
         :param plot_type: Option type of plot, may be: *area*, *bar*, *line*,
             *scatterplot*, or *stack*.  The default is *line*.
+        :param aggregation: The type of aggregation to use.  The default is
+            *sum*.
 
         :returns: HTML with an embedded plot.
         """
@@ -545,14 +551,33 @@ class Datasets(AbstractController):
             if index:
                 query_select[index] = 1
 
+            if group:
+                query_select[group] = 1
+
             query_args.select = query_select
 
-            dframe = dataset.dframe(query_args=query_args)
+            dframe = dataset.dframe(query_args=query_args).dropna()
+            axis = True
+
+            if group or index:
+                agg = self.__parse_aggregation(aggregation)
 
             if index:
-                dframe = dframe.set_index(index)
+                if group:
+                    dframe = dframe.groupby(
+                        [index, group]).agg(agg).reset_index()
+                    axis = dframe[group].tolist()
+                    dframe = dframe.drop(group, axis=1).set_index(index)
+                    print dframe
+                else:
+                    dframe = dframe.groupby(index).agg(agg)
+            elif group:
+                dframe = dframe.groupby(group).agg(agg).reset_index()
+                axis = dframe[group].tolist()
+                dframe = dframe.drop(group, axis=1)
+                print dframe
 
-            vis = bearcart.Chart(dframe.dropna(), plt_type=plot_type,
+            vis = bearcart.Chart(dframe, plt_type=plot_type, x_axis=axis,
                                  x_time=index is not None)
 
             return vis.build_html()
@@ -587,6 +612,9 @@ class Datasets(AbstractController):
 
     def __parse_query(self, query):
         return safe_json_loads(query, error_title='string') if query else {}
+
+    def __parse_aggregation(self, agg):
+        return agg if agg in AGGREGATIONS else self.DEFAULT_AGGREGATION
 
     def __parse_query_args(self, limit, order_by, query, select,
                            distinct=None):

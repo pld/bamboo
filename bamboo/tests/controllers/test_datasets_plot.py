@@ -50,13 +50,13 @@ class TestDatasets(TestAbstractDatasets):
         dataset = Dataset.find_one(dataset_id)
 
         column = 'amount'
-        select = json.dumps({column: 1})
-        result = self.controller.plot(dataset_id, select=select,
+        select = {column: 1}
+        result = self.controller.plot(dataset_id, select=json.dumps(select),
                                       index='submit_date')
         dframe = dataset.dframe()
 
-        for i, amount in dframe[column].iteritems():
-            self.assertTrue(str(amount) in result)
+        dframe = self.dataset.dframe(QueryArgs(select=select))
+        self.__test_result(result, dframe)
 
     def test_plot_type(self):
         column = 'community_pop'
