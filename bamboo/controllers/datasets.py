@@ -509,7 +509,7 @@ class Datasets(AbstractController):
         return self._safe_get_and_call(dataset_id, action)
 
     def plot(self, dataset_id, query=None, select=None, limit=0,
-             order_by=None):
+             order_by=None, index=None, plot_type='line'):
         """Plot a dataset given restrictions.
 
         :param dataset_id: The dataset ID of the dataset to return.
@@ -518,6 +518,9 @@ class Datasets(AbstractController):
         :param query: If passed restrict results to rows matching this query.
         :param limit: If passed limit the rows to this number.
         :param order_by: If passed order the result using this column.
+        :param index: If passed set this column as the index.
+        :param plot_type: Option type of plot, may be: *area*, *bar*, *line*,
+            *scatterplot*, or *stack*.  The default is *line*.
 
         :returns: HTML with an embedded plot.
         """
@@ -534,12 +537,20 @@ class Datasets(AbstractController):
                 select = {k: v for k, v in select.items() if k in
                           numerics_select.keys()}
 
+            if index:
+                select[index] = 1
+
             query_args.select = select
 
             dframe = dataset.dframe(query_args=query_args)
-            dframe.index = [float(i) for i in xrange(0, len(dframe))]
-            dframe = dframe.dropna()
-            vis = bearcart.Chart(dframe)
+
+            if index:
+                dframe = dframe.set_index(index)
+            else:
+                dframe.index = [float(i) for i in xrange(0, len(dframe))]
+
+            vis = bearcart.Chart(dframe.dropna(), plt_type=plot_type,
+                                 x_time=index is not None)
 
             return vis.build_html()
 
