@@ -14,6 +14,7 @@ import json
 import os
 from collections import defaultdict
 from pkg_resources import resource_string
+import numpy as np
 import pandas as pd
 from jinja2 import Environment, PackageLoader
 
@@ -129,8 +130,11 @@ class Chart(object):
         >>>vis.json_data
 
         '''
+        convert = lambda v: float(v) if (
+            isinstance(v, np.float64) or isinstance(v, np.int64)) else v
 
-        objectify = lambda dat: [{"x": x, "y": y} for x, y in dat.iteritems()]
+        objectify = lambda dat: [{"x": convert(x), "y": convert(y)}
+                                 for x, y in dat.iteritems()]
 
         self.raw_data = data
         if isinstance(data, pd.Series):
