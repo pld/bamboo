@@ -835,13 +835,3 @@ class TestDatasets(TestAbstractDatasets):
         results = json.loads(self.controller.info(dataset_id))
         new_schema = results[Dataset.SCHEMA]
         self.assertEqual(expected_schema, new_schema)
-
-    def test_plot(self):
-        column = 'amount'
-        select = json.dumps({column: 1})
-        dataset_id = self._post_file()
-        result = self.controller.plot(dataset_id, select=select)
-        dframe = Dataset.find_one(dataset_id).dframe()
-
-        for i, amount in dframe[column].iteritems():
-            self.assertTrue(str(amount) in result)
