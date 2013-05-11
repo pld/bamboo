@@ -74,7 +74,8 @@ class Chart(object):
         self.defaults = {'x_axis': True, 'y_axis': True, 'hover': True,
                          'legend': True}
 
-        self.env = Environment(loader=PackageLoader('external.bearcart', 'templates'))
+        self.env = Environment(loader=PackageLoader('external.bearcart',
+                                                    'templates'))
 
         #Colors need to be js strings
         if colors:
@@ -157,7 +158,8 @@ class Chart(object):
         if not self.colors:
             self.palette = self.env.get_template('palette.js')
             self.template_vars.update({'palette': self.palette.render()})
-            self.colors = {x['name']: 'palette.color()' for x in self.json_data}
+            self.colors = {x['name']: 'palette.color()'
+                           for x in self.json_data}
 
         template_vars = []
         for dataset in self.json_data:
