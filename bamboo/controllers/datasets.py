@@ -582,7 +582,8 @@ class Datasets(AbstractController):
                         data = groupby.get_group(g).groupby(index).agg(agg)
                         dframes.append(data.rename(columns=renamed))
 
-                    dframe = concat(dframes).fillna(0)
+                    dframe = concat(dframes).fillna(0).reset_index().groupby(
+                        index).agg(agg).sort_index()
                 else:
                     dframe = dframe.groupby(index).agg(agg)
             elif group:
