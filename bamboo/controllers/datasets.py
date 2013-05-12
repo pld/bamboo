@@ -576,14 +576,12 @@ class Datasets(AbstractController):
                         [index, group]).agg(agg).reset_index()
                     axis = dframe[group].tolist()
                     dframe = dframe.drop(group, axis=1).set_index(index)
-                    print dframe
                 else:
                     dframe = dframe.groupby(index).agg(agg)
             elif group:
                 dframe = dframe.groupby(group).agg(agg).reset_index()
                 axis = dframe[group].tolist()
                 dframe = dframe.drop(group, axis=1)
-                print dframe
 
             vis = bearcart.Chart(dframe, plt_type=plot_type, x_axis=axis,
                                  x_time=index is not None)
