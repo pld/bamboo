@@ -173,8 +173,11 @@ class Dataset(AbstractModel, ImportableDataset):
     def __linked_datasets(self, ids):
         return [self.find_one(_id) for _id in ids]
 
-    def is_factor(self, col):
+    def is_dimension(self, col):
         return self.schema.is_dimension(col)
+
+    def is_factor(self, col):
+        return self.is_dimension(col) or self.schema.is_date_simpletype(col)
 
     def cardinality(self, col):
         return self.schema.cardinality(col)

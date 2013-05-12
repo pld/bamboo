@@ -34,7 +34,7 @@ def summarizable(dframe, col, groups, dataset):
     :returns: True if column, with parameters should be summarized, otherwise
         False.
     """
-    if dataset.is_factor(col):
+    if dataset.is_dimension(col):
         cardinality = dframe[col].nunique() if len(groups) else\
             dataset.cardinality(col)
         if cardinality > MAX_CARDINALITY_FOR_COUNT:
@@ -48,7 +48,7 @@ def summarize_df(dframe, dataset, groups=[]):
     return {
         col: {
             SUMMARY: series_to_jsondict(
-                summarize_series(dataset.is_factor(col), data))
+                summarize_series(dataset.is_dimension(col), data))
         } for col, data in dframe.iteritems() if summarizable(
             dframe, col, groups, dataset)
     }
