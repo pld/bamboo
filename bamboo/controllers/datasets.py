@@ -1,5 +1,7 @@
-from external import bearcart
 import urllib2
+
+from external import bearcart
+from pandas import concat
 
 from bamboo.controllers.abstract_controller import AbstractController
 from bamboo.core.aggregations import AGGREGATIONS
@@ -572,18 +574,21 @@ class Datasets(AbstractController):
 
             if index:
                 if group:
-                    dframe = dframe.groupby(
-                        [index, group]).agg(agg).reset_index()
-                    axis = dframe[group].tolist()
-                    dframe = dframe.drop(group, axis=1).set_index(index)
-                    print dframe
+                    groupby = dframe.groupby(group)
+                    dframes = []
+
+                    for g in groupby.groups.keys():
+                        renamed = {c: '%s_%s' % (c, g) for c in dframe.columns}
+                        data = groupby.get_group(g).groupby(index).agg(agg)
+                        dframes.append(data.rename(columns=renamed))
+
+                    dframe = concat(dframes).fillna(0)
                 else:
                     dframe = dframe.groupby(index).agg(agg)
             elif group:
                 dframe = dframe.groupby(group).agg(agg).reset_index()
                 axis = dframe[group].tolist()
                 dframe = dframe.drop(group, axis=1)
-                print dframe
 
             vis = bearcart.Chart(dframe, plt_type=plot_type, x_axis=axis,
                                  x_time=index is not None)
