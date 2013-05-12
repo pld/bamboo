@@ -14,6 +14,11 @@ from bamboo.models.dataset import Dataset
 from bamboo.models.observation import Observation
 
 
+def valid_column(dataset, c):
+    if c not in dataset.columns:
+        raise ArgumentError("'%s' is not a column for this dataset." % c)
+
+
 class Datasets(AbstractController):
     """
     The Datasets Controller provides access to data.  Datasets can store data
@@ -120,6 +125,7 @@ class Datasets(AbstractController):
             select = self.__parse_select(select, required=True)
 
             groups = dataset.split_groups(group)
+            [valid_column(dataset, c) for c in groups]
 
             # if select append groups to select
             if select:
@@ -550,9 +556,11 @@ class Datasets(AbstractController):
 
             if index:
                 query_select[index] = 1
+                valid_column(dataset, index)
 
             if group:
                 query_select[group] = 1
+                valid_column(dataset, group)
 
             query_args.select = query_select
 

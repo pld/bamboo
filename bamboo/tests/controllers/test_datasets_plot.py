@@ -70,3 +70,17 @@ class TestDatasets(TestAbstractDatasets):
 
             for i, amount in dframe[column].iteritems():
                 self.assertTrue(str(amount) in result)
+
+    def test_plot_invalid_group(self):
+        column = 'bongo'
+        result = self.controller.plot(self.dataset_id, group=column)
+        result = json.loads(result)
+
+        self.assertTrue(column in result[self.controller.ERROR])
+
+    def test_plot_invalid_index(self):
+        column = 'bongo'
+        result = self.controller.plot(self.dataset_id, index=column)
+        result = json.loads(result)
+
+        self.assertTrue(column in result[self.controller.ERROR])
