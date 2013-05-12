@@ -201,7 +201,7 @@ class TestDatasetsSummary(TestAbstractDatasets):
             select=self.controller.SELECT_ALL_FOR_SUMMARY)
 
         results = self._test_summary_results(results)
-        self.assertTrue(Datasets.ERROR in results.keys())
+        self.assertTrue('not a column' in results[Datasets.ERROR])
 
     def test_summary_with_group_and_query(self):
         dataset_id = self._post_file()

@@ -1,3 +1,4 @@
+from bamboo.lib.exceptions import ArgumentError
 from bamboo.lib.jsontools import series_to_jsondict
 from bamboo.lib.mongo import dict_from_mongo, dict_for_mongo
 from bamboo.lib.utils import combine_dicts
@@ -64,6 +65,10 @@ def summarize(dataset, dframe, groups, no_cache, update=False):
     """Raises a ColumnTypeError if grouping on a non-dimensional column."""
     # do not allow group by numeric types
     for group in groups:
+        if group not in dataset.columns:
+            raise ArgumentError("group: '%s' is not a column for this dataset."
+                                % group)
+
         if not dataset.is_factor(group):
             raise ColumnTypeError("group: '%s' is not a dimension." % group)
 
