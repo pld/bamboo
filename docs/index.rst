@@ -27,6 +27,53 @@ Powered by Bamboo: An Interactive map of the Egyptian election
 .. image:: https://raw.github.com/modilabs/bamboo/master/docs/images/egypt-2012.png
    :width: 800
 
+Plotting
+--------
+
+.. toctree::
+   :maxdepth: 2
+
+   plotting
+
+REST API Usage
+--------------
+
+.. toctree::
+   :maxdepth: 2
+
+   basic_commands
+   manipulating_data
+   advanced_commands
+
+Formula Reference
+^^^^^^^^^^^^^^^^^
+
+.. toctree::
+   :maxdepth: 2
+
+   calculations
+   aggregations
+
+Code Structure
+--------------
+
+.. toctree::
+   :maxdepth: 2
+
+   class_structure
+
+Code Documentation
+------------------
+
+.. toctree::
+   :maxdepth: 2
+
+   config
+   controllers
+   core
+   lib
+   models
+
 Libraries that connect to *bamboo*
 ----------------------------------
 
@@ -100,45 +147,6 @@ Usage
     mothly_amounts.plot()
 
 .. image:: https://raw.github.com/modilabs/bamboo/master/docs/images/amount.png
-
-REST API Usage
---------------
-
-.. toctree::
-   :maxdepth: 2
-
-   basic_commands
-   manipulating_data
-   advanced_commands
-
-Formula Reference
-^^^^^^^^^^^^^^^^^
-
-.. toctree::
-   :maxdepth: 2
-
-   calculations
-   aggregations
-
-Code Structure
---------------
-
-.. toctree::
-   :maxdepth: 2
-
-   class_structure
-
-Code Documentation
-------------------
-
-.. toctree::
-   :maxdepth: 2
-
-   config
-   controllers
-   core
-   lib
-   models
 
 Server Setup and Contributing Code
 ----------------------------------

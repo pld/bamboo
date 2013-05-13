@@ -111,8 +111,8 @@ class Chart(object):
             self.transform_data(data)
 
     def make_ticks(self, axis):
-        self.template_vars['transform'] = ('$("#x_axis text").attr("transform"'
-                                           ',"rotate(-30)").attr("dy", "30")')
+        self.template_vars['transform'] = (
+            "rotateText();$('#legend').bind('click',rotateText);")
         cases = ','.join(["%s:'%s'" % (i, v) for i, v in enumerate(axis)])
         return {'ticks': 'tickFormat:function(x){return{%s}[x]},' % cases}
 
