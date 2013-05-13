@@ -7,7 +7,8 @@ REST end-point:
 
     http://bamboo.io/datasets/[DATASET ID]/plot
     
-`Query parameters <http://bamboo.io/docs/controllers.html#bamboo.controllers.datasets.Datasets.plot>`_
+View the documentation for the `query parameters <http://bamboo.io/docs/controllers.html#bamboo.controllers.datasets.Datasets.plot>`_
+accepted by the ``plot`` end point.
 
 Kenyan school teaching staff by province
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
