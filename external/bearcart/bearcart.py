@@ -20,7 +20,7 @@ class Chart(object):
     '''Visualize Pandas Timeseries with Rickshaw.js'''
 
     def __init__(self, data=None, width=750, height=400, plt_type='line',
-                 colors=None, x_time=True, **kwargs):
+                 colors=None, x_time=True, palette=None, **kwargs):
         '''Generate a Rickshaw time series visualization with Pandas
         Series and DataFrames.
 
@@ -75,6 +75,8 @@ class Chart(object):
         self.env = Environment(loader=PackageLoader('external.bearcart',
                                                     'templates'))
 
+        self.palette_scheme = palette or 'spectrum14'
+
         #Colors need to be js strings
         if colors:
             self.colors = {key: "'{0}'".format(value)
@@ -92,7 +94,7 @@ class Chart(object):
         for key, value in kwargs.iteritems():
             self.defaults[key] = value
 
-        #Get templates for graph elements
+        # Get templates for graph elements
         for att, val in self.defaults.iteritems():
             render_vars = {}
             if val:
@@ -170,7 +172,8 @@ class Chart(object):
         #Set palette colors if necessary
         if not self.colors:
             self.palette = self.env.get_template('palette.js')
-            self.template_vars.update({'palette': self.palette.render()})
+            self.template_vars.update({'palette': self.palette.render(
+                {'scheme': self.palette_scheme})})
             self.colors = {x['name']: 'palette.color()'
                            for x in self.json_data}
 
