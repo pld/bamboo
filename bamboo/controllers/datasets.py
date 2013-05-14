@@ -578,7 +578,7 @@ class Datasets(AbstractController):
                     dframes = []
 
                     for g in groupby.groups.keys():
-                        renamed = {c: '%s_%s' % (c, g) for c in dframe.columns}
+                        renamed = {c: '%s %s' % (c, g) for c in dframe.columns}
                         data = groupby.get_group(g).groupby(index).agg(agg)
                         dframes.append(data.rename(columns=renamed))
 
