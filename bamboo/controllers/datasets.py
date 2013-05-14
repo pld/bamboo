@@ -520,7 +520,8 @@ class Datasets(AbstractController):
         return self._safe_get_and_call(dataset_id, action)
 
     def plot(self, dataset_id, query=None, select=None, limit=0, group=None,
-             order_by=None, index=None, plot_type='line', aggregation='sum'):
+             order_by=None, index=None, plot_type='line', aggregation='sum',
+             palette=None):
         """Plot a dataset given restrictions.
 
         :param dataset_id: The dataset ID of the dataset to return.
@@ -535,6 +536,9 @@ class Datasets(AbstractController):
             *scatterplot*, or *stack*.  The default is *line*.
         :param aggregation: The type of aggregation to use.  The default is
             *sum*.
+        :param palette: Color palette to use for the graph, accepts any of
+            https://github.com/shutterstock/rickshaw#color-schemes, default
+            spectrum14.
 
         :returns: HTML with an embedded plot.
         """
@@ -578,7 +582,7 @@ class Datasets(AbstractController):
                     dframes = []
 
                     for g in groupby.groups.keys():
-                        renamed = {c: '%s_%s' % (c, g) for c in dframe.columns}
+                        renamed = {c: '%s %s' % (c, g) for c in dframe.columns}
                         data = groupby.get_group(g).groupby(index).agg(agg)
                         dframes.append(data.rename(columns=renamed))
 
@@ -592,7 +596,7 @@ class Datasets(AbstractController):
                 dframe = dframe.drop(group, axis=1)
 
             vis = bearcart.Chart(dframe, plt_type=plot_type, x_axis=axis,
-                                 x_time=index is not None)
+                                 x_time=index is not None, palette=palette)
 
             return vis.build_html()
 

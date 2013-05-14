@@ -1,1 +1,1 @@
-var palette = new Rickshaw.Color.Palette( {scheme: 'spectrum14'} );
+var palette = new Rickshaw.Color.Palette( {scheme: '{{ scheme }}'} );
