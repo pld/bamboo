@@ -84,3 +84,9 @@ class TestDatasets(TestAbstractDatasets):
         result = json.loads(result)
 
         self.assertTrue(column in result[self.controller.ERROR])
+
+    def test_plot_output_vega(self):
+        result = self.controller.plot(self.dataset_id, vega=True)
+        result = json.loads(result)
+
+        self.assertTrue(isinstance(result, dict))
