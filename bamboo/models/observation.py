@@ -54,12 +54,13 @@ class Observation(AbstractModel):
         super(cls, cls()).delete(query)
 
     @classmethod
-    def delete_all(cls, dataset, query={}):
+    def delete_all(cls, dataset, query=None):
         """Delete the observations for `dataset`.
 
         :param dataset: The dataset to delete observations for.
         :param query: An optional query to restrict deletion.
         """
+        query = query or {}
         query.update({DATASET_ID: dataset.dataset_id})
         query = cls.encode(query, dataset=dataset)
 

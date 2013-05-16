@@ -8,6 +8,7 @@ from mock import patch
 import simplejson as json
 
 from bamboo.controllers.datasets import Datasets
+from bamboo.lib.query_args import QueryArgs
 from bamboo.lib.schema_builder import CARDINALITY, DATETIME, OLAP_TYPE,\
     SIMPLETYPE
 from bamboo.models.dataset import Dataset
@@ -531,7 +532,6 @@ class TestDatasets(TestAbstractDatasets):
         dataset_id = self._post_file()
         result = json.loads(self.controller.delete(dataset_id))
 
-        self.assertTrue(Datasets.SUCCESS in result)
         self.assertEqual(result[Datasets.SUCCESS], 'deleted dataset')
         self.assertEqual(result[Dataset.ID], dataset_id)
 
@@ -541,6 +541,25 @@ class TestDatasets(TestAbstractDatasets):
                                 self.test_dataset_ids[dataset_name]))
 
             self.assertTrue(Datasets.ERROR in result)
+
+    def test_delete_with_query(self):
+        dataset_id = self._post_file()
+        query = {'food_type': 'caffeination'}
+        dataset = Dataset.find_one(dataset_id)
+        dframe = dataset.dframe(query_args=QueryArgs(query=query))
+        len_after_delete = len(dataset.dframe()) - len(dframe)
+
+        query = json.dumps(query)
+        result = json.loads(self.controller.delete(dataset_id, query=query))
+        message = result[Datasets.SUCCESS]
+
+        self.assertTrue('deleted dataset' in message)
+        self.assertTrue(query in message)
+        self.assertEqual(result[Dataset.ID], dataset_id)
+
+        dframe = Dataset.find_one(dataset_id).dframe()
+
+        self.assertEqual(len(dframe), len_after_delete)
 
     def test_show_jsonp(self):
         dataset_id = self._post_file()

@@ -20,11 +20,14 @@ from bamboo.models.observation import Observation
 
 
 @task(ignore_result=True)
-def delete_task(dataset):
+def delete_task(dataset, query=None):
     """Background task to delete dataset and its associated observations."""
-    Observation.delete_all(dataset)
-    super(dataset.__class__, dataset).delete({DATASET_ID: dataset.dataset_id})
-    Observation.delete_encoding(dataset)
+    Observation.delete_all(dataset, query=query)
+
+    if query is None:
+        super(dataset.__class__, dataset).delete(
+            {DATASET_ID: dataset.dataset_id})
+        Observation.delete_encoding(dataset)
 
 
 class Dataset(AbstractModel, ImportableDataset):
@@ -308,12 +311,13 @@ class Dataset(AbstractModel, ImportableDataset):
 
         return super(self.__class__, self).save(record)
 
-    def delete(self, countdown=0):
+    def delete(self, query=None, countdown=0):
         """Delete this dataset.
 
         :param countdown: Delete dataset after this number of seconds.
         """
-        call_async(delete_task, self.clear_cache(), countdown=countdown)
+        call_async(delete_task, self.clear_cache(), query=query,
+                   countdown=countdown)
 
     def summarize(self, dframe, groups=[], no_cache=False, update=False):
         """Build and return a summary of the data in this dataset.
