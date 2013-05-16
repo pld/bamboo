@@ -45,9 +45,7 @@ def replace_keys(original, mapping):
 
     :returns: Original with keys replaced via mapping.
     """
-    if not type(original) in (dict, list):
-        return original
-    return original and {
+    return original if not type(original) in (dict, list) else {
         mapping.get(k, k): {
             dict: lambda: replace_keys(v, mapping),
             list: lambda: [replace_keys(vi, mapping) for vi in v]
