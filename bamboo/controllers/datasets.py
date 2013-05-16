@@ -2,6 +2,7 @@ import urllib2
 
 from external import bearcart
 from pandas import concat
+import vincent
 
 from bamboo.controllers.abstract_controller import AbstractController
 from bamboo.core.aggregations import AGGREGATIONS
@@ -521,7 +522,7 @@ class Datasets(AbstractController):
 
     def plot(self, dataset_id, query=None, select=None, limit=0, group=None,
              order_by=None, index=None, plot_type='line', aggregation='sum',
-             palette=None):
+             palette=None, vega=False):
         """Plot a dataset given restrictions.
 
         :param dataset_id: The dataset ID of the dataset to return.
@@ -539,6 +540,7 @@ class Datasets(AbstractController):
         :param palette: Color palette to use for the graph, accepts any of
             https://github.com/shutterstock/rickshaw#color-schemes, default
             spectrum14.
+        :param vega: Output vega JSON.
 
         :returns: HTML with an embedded plot.
         """
@@ -571,7 +573,7 @@ class Datasets(AbstractController):
             query_args.select = query_select
 
             dframe = dataset.dframe(query_args=query_args).dropna()
-            axis = True
+            axis = None
 
             if group or index:
                 agg = self.__parse_aggregation(aggregation)
@@ -595,8 +597,16 @@ class Datasets(AbstractController):
                 axis = dframe[group].tolist()
                 dframe = dframe.drop(group, axis=1)
 
-            vis = bearcart.Chart(dframe, plt_type=plot_type, x_axis=axis,
-                                 x_time=index is not None, palette=palette)
+            if vega:
+                dframe.index = axis or dframe.index.map(float)
+                vis = vincent.Bar()
+                vis.tabular_data(dframe, columns=dframe.columns.tolist()[0:1])
+
+                return vis.vega
+            else:
+                vis = bearcart.Chart(dframe, plt_type=plot_type,
+                                     x_axis=axis or True,
+                                     x_time=index is not None, palette=palette)
 
             return vis.build_html()
 
