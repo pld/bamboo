@@ -36,6 +36,6 @@ def series_to_jsondict(series):
 
 def safe_json_loads(string, error_title='string'):
     try:
-        return json.loads(string, object_hook=json_util.object_hook)
+        return string and json.loads(string, object_hook=json_util.object_hook)
     except ValueError as err:
         raise JSONError('cannot decode %s: %s' % (error_title, err.__str__()))

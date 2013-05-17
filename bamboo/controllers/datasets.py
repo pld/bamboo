@@ -44,7 +44,7 @@ class Datasets(AbstractController):
     DEFAULT_AGGREGATION = 'sum'
     SELECT_ALL_FOR_SUMMARY = 'all'
 
-    def delete(self, dataset_id):
+    def delete(self, dataset_id, query=None):
         """Delete the dataset with hash `dataset_id`.
 
         This also deletes any observations associated with the dataset_id. The
@@ -55,9 +55,12 @@ class Datasets(AbstractController):
         :returns: A string of success or error if that dataset could not be
             found.
         """
-        def action(dataset):
-            dataset.delete()
-            return {self.SUCCESS: 'deleted dataset',
+        def action(dataset, query=query):
+            message = ' rows matching query: %s' % query if query else ''
+            query = safe_json_loads(query)
+            dataset.delete(query)
+
+            return {self.SUCCESS: 'deleted dataset%s' % message,
                     Dataset.ID: dataset_id}
 
         return self._safe_get_and_call(dataset_id, action)
@@ -217,8 +220,7 @@ class Datasets(AbstractController):
         """
 
         def action(dataset, dataset_ids=dataset_ids, mapping=mapping):
-            if mapping:
-                mapping = safe_json_loads(mapping)
+            mapping = safe_json_loads(mapping)
 
             dataset_ids = safe_json_loads(dataset_ids)
             dataset = merge_dataset_ids(dataset_ids, mapping)
@@ -282,8 +284,8 @@ class Datasets(AbstractController):
 
                 if schema:
                     dataset.import_schema(schema)
-                if na_values:
-                    na_values = safe_json_loads(na_values)
+
+                na_values = safe_json_loads(na_values)
 
                 if url:
                     dataset.import_from_url(url, na_values=na_values)
@@ -639,7 +641,7 @@ class Datasets(AbstractController):
         return select
 
     def __parse_query(self, query):
-        return safe_json_loads(query, error_title='string') if query else {}
+        return safe_json_loads(query, error_title='string') or {}
 
     def __parse_aggregation(self, agg):
         return agg if agg in AGGREGATIONS else self.DEFAULT_AGGREGATION
