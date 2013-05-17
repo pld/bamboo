@@ -241,7 +241,8 @@ class Calculation(AbstractModel):
     def create_from_list_or_dict(cls, dataset, calculations):
         calculations = to_list(calculations)
 
-        if not len(calculations) or not isinstance(calculations, list):
+        if not len(calculations) or not isinstance(calculations, list) or\
+                any([not isinstance(e, dict) for e in calculations]):
             raise ArgumentError('Improper format for JSON calculations.')
 
         parsed_calculations = []

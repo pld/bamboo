@@ -326,7 +326,7 @@ class TestCalculations(TestBase):
         self.__test_error(
             self.controller.create(self.dataset_id,
                                    json_file=mock_uploaded_file),
-            error_text='No JSON')
+            error_text='Improper format for JSON')
 
     def test_create_reserved_name(self):
         name = 'sum'
