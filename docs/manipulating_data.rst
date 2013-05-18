@@ -31,6 +31,26 @@ given column.
 
     {"id": "8a3d74711475d8a51c84484fe73f24bd151242ea"}
 
+Replacing your dataset
+^^^^^^^^^^^^^^^^^^^^^^
+
+To remove the existing content of a dataset and replace it with new content use
+the ``reset`` end-point.  This takes the same parameters as create plus a
+Dataset ID.  The dataset's content is replaced but the Dataset ID does not
+change.  This requires a PUT request.
+
+.. code-block:: sh
+
+    curl -X PUT -d "url=http://formhub.org/mberg/forms/good_eats/data.csv" http://bamboo.io/datasets/8a3d74711475d8a51c84484fe73f24bd151242ea/reset"
+
+**returns:**
+
+.. code-block:: javascript
+
+    {
+        "id": "8a3d74711475d8a51c84484fe73f24bd151242ea"
+    }
+
 Modifying your data
 -------------------
 
