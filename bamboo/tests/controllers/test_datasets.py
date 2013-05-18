@@ -854,3 +854,19 @@ class TestDatasets(TestAbstractDatasets):
         results = json.loads(self.controller.info(dataset_id))
         new_schema = results[Dataset.SCHEMA]
         self.assertEqual(expected_schema, new_schema)
+
+    def test_reset(self):
+        dataset_id = self._post_file()
+        mock_uploaded_file = self._file_mock(self._file_path)
+
+        result = json.loads(self.controller.reset(dataset_id,
+                                                  csv_file=mock_uploaded_file))
+
+        self.assertEqual(result[Dataset.ID], dataset_id)
+
+        # test parse type as date correctly
+        dframe = Dataset.find_one(result[Dataset.ID]).dframe()
+        self.assertTrue(isinstance(dframe.submit_date[0], datetime))
+
+        results = self._test_summary_built(result)
+        self._test_summary_no_group(results)

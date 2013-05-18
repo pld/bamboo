@@ -230,8 +230,7 @@ class Datasets(AbstractController):
         return self._safe_get_and_call(
             None, action, exceptions=(MergeError,), error = 'merge failed')
 
-    def create(self, url=None, csv_file=None, json_file=None, schema=None,
-               na_values=[], perish=0):
+    def create(self, **kwargs):
         """Create a dataset by URL, CSV or schema file.
 
         If `url` is provided, create a dataset by downloading a CSV from that
@@ -274,13 +273,29 @@ class Datasets(AbstractController):
             the dataset will not be fully loaded until its state is set to
             ready.
         """
+        return self.__create_or_update(**kwargs)
+
+    def reset(self, dataset_id, **kwargs):
+        """Replace a dataset's data.
+
+        Takes equivalent arguments and returns equivalent values as `create`.
+        """
+        return self.__create_or_update(dataset_id=dataset_id, **kwargs)
+
+    def __create_or_update(self, url=None, csv_file=None, json_file=None,
+                           schema=None, na_values=[], perish=0,
+                           dataset_id=None):
         result = None
         error = 'url, csv_file or schema required'
 
         try:
             if schema or url or csv_file or json_file:
-                dataset = Dataset()
-                dataset.save()
+                if dataset_id is None:
+                    dataset = Dataset()
+                    dataset.save()
+                else:
+                    dataset = Dataset.find_one(dataset_id)
+                    Observation.delete_all(dataset)
 
                 if schema:
                     dataset.import_schema(schema)
@@ -307,6 +322,7 @@ class Datasets(AbstractController):
             error = e.__str__()
 
         self.set_response_params(result, success_status_code=201)
+
         return self._dump_or_error(result, error)
 
     def update(self, dataset_id, update):

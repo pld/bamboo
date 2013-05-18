@@ -37,6 +37,8 @@ ROUTES = [
         '/datasets/:dataset_id/plot', 'datasets', 'plot'),
     ('datasets_resample', 'GET',
         '/datasets/:dataset_id/resample', 'datasets', 'resample'),
+    ('datasets_reset', 'PUT',
+        '/datasets/:dataset_id/reset', 'datasets', 'reset'),
     ('datasets_rolling', 'GET',
         '/datasets/:dataset_id/rolling', 'datasets', 'rolling'),
     ('datasets_set_olap_type', 'PUT',
