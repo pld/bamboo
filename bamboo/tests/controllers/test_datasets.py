@@ -605,7 +605,6 @@ class TestDatasets(TestAbstractDatasets):
         results = json.loads(self.controller.join(
             left_dataset_id, right_dataset_id, on=on))
 
-        self.assertTrue(isinstance(results, dict))
         self.assertTrue(Datasets.SUCCESS in results.keys())
         self.assertTrue(Dataset.ID in results.keys())
 
@@ -631,7 +630,6 @@ class TestDatasets(TestAbstractDatasets):
         results = json.loads(self.controller.join(
             left_dataset_id, right_dataset_id, on=on))
 
-        self.assertTrue(isinstance(results, dict))
         self.assertTrue(Datasets.SUCCESS in results.keys())
         self.assertTrue(Dataset.ID in results.keys())
 
@@ -654,7 +652,6 @@ class TestDatasets(TestAbstractDatasets):
         results = json.loads(self.controller.join(
             left_dataset_id, right_dataset_id, on='food_type'))
 
-        self.assertTrue(isinstance(results, dict))
         self.assertTrue(Datasets.ERROR in results.keys())
         self.assertTrue('right' in results[Datasets.ERROR])
         self.assertTrue('not unique' in results[Datasets.ERROR])
@@ -666,7 +663,6 @@ class TestDatasets(TestAbstractDatasets):
         results = json.loads(self.controller.join(
             left_dataset_id, right_dataset_id, on=on))
 
-        self.assertTrue(isinstance(results, dict))
         self.assertTrue(Datasets.ERROR in results.keys())
         self.assertTrue('left' in results[Datasets.ERROR])
 
@@ -677,20 +673,28 @@ class TestDatasets(TestAbstractDatasets):
         results = json.loads(self.controller.join(
             left_dataset_id, right_dataset_id, on=on))
 
-        self.assertTrue(isinstance(results, dict))
         self.assertTrue(Datasets.ERROR in results.keys())
         self.assertTrue('right' in results[Datasets.ERROR])
 
     def test_join_datasets_overlap(self):
-        left_dataset_id = self._post_file('good_eats_aux_join.csv')
-        right_dataset_id = self._post_file('good_eats_aux_join.csv')
-        on = 'also_food_type'
+        left_dataset_id = self._post_file('good_eats.csv')
+        right_dataset_id = self._post_file('good_eats.csv')
+        on = 'food_photo'
 
         results = json.loads(self.controller.join(
             left_dataset_id, right_dataset_id, on=on))
 
-        self.assertTrue(isinstance(results, dict))
-        self.assertTrue(Datasets.ERROR in results.keys())
+        self.assertTrue(Datasets.SUCCESS in results.keys())
+        self.assertTrue(Dataset.ID in results.keys())
+
+        joined_dataset_id = results[Dataset.ID]
+        data = json.loads(self.controller.show(joined_dataset_id))
+        keys = data[0].keys()
+
+        for column in Dataset.find_one(left_dataset_id).dframe().columns:
+            if column != on:
+                self.assertTrue('%s_x' % column in keys)
+                self.assertTrue('%s_y' % column in keys)
 
     def test_bad_date(self):
         dataset_id = self._post_file('bad_date.csv')
