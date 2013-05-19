@@ -90,3 +90,10 @@ class TestDatasets(TestAbstractDatasets):
         result = json.loads(result)
 
         self.assertTrue(isinstance(result, dict))
+
+    def test_plot_output_height_width(self):
+        result = self.controller.plot(self.dataset_id, height=200, width=300)
+        result = result
+
+        self.assertTrue('200' in result)
+        self.assertTrue('300' in result)
