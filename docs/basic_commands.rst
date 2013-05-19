@@ -311,6 +311,12 @@ epochs.
 Returns the rows with a time stamp less than 1320000000, which is October 30th
 2011.
 
+You may also pass dates in the form "YYYY-MM-DD", and other common formats:
+
+.. code-block:: sh
+
+    curl -g http://bamboo.io/datasets/8a3d74711475d8a51c84484fe73f24bd151242ea?query='{"submit_date": {"$lt": "2011-10-30"}'
+
 Only return the count
 ^^^^^^^^^^^^^^^^^^^^^
 

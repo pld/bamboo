@@ -354,8 +354,8 @@ class TestDatasets(TestAbstractDatasets):
         self.assertTrue(Datasets.ERROR in results)
 
     def test_show_with_query(self):
-        self.__test_get_with_query_or_select('{"rating": "delectible"}',
-                                             num_results=11)
+        query = '{"rating": "delectible"}'
+        self.__test_get_with_query_or_select(query, num_results=11)
 
     def test_show_with_or_query(self):
         self.__test_get_with_query_or_select(
@@ -417,6 +417,10 @@ class TestDatasets(TestAbstractDatasets):
         self.__test_get_with_query_or_select(
             query=json.dumps(query),
             num_results=4)
+
+    def test_show_with_formatted_date_query(self):
+        query = '{"submit_date": {"$lt": "2012-01-06"}}'
+        self.__test_get_with_query_or_select(query, num_results=11)
 
     def test_show_with_select(self):
         self.__test_get_with_query_or_select(select='{"rating": 1}',

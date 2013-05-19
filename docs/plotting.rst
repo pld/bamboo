@@ -41,7 +41,7 @@ Meal cost grouped by rating over time
   :target: http://bamboo.io/datasets/1c0461bdd4eb486ebe5f6f5f3a179790/plot?select={%22amount%22:1}&group=food_type&index=submit_date&query={%22amount%22:{%22$lt%22:400},%22submit_date%22:{%22$gt%22:1355011200}}&plot_type=area
   
 
-Click for an `interactive version <http://bamboo.io/datasets/1c0461bdd4eb486ebe5f6f5f3a179790/plot?select={%22amount%22:1}&group=food_type&index=submit_date&query={%22amount%22:{%22$lt%22:400},%22submit_date%22:{%22$gt%22:1355011200}}&plot_type=area>`_.
+Click for an `interactive version <http://bamboo.io/datasets/1c0461bdd4eb486ebe5f6f5f3a179790/plot?select={%22amount%22:1}&group=food_type&index=submit_date&query={%22amount%22:{%22$lt%22:400},%22submit_date%22:{%22$gt%22:"2012-12-09"}}&plot_type=area>`_.
 
 .. note::
 
@@ -59,7 +59,7 @@ Click for an `interactive version <http://bamboo.io/datasets/1c0461bdd4eb486ebe5
 
       * Set the date column ``submit_date`` as the temporal index column.
 
-    * **query** = ``{"amount": {"$lt": 400}, "submit_date": {"$gt": 1355011200}}``
+    * **query** = ``{"amount": {"$lt": 400}, "submit_date": {"$gt": "2012-12-09"}}``
 
       * Restrict the data to dates after December 9th 2012, and to amounts less
         than 400.

@@ -93,11 +93,7 @@ def safe_parse_date_to_unix_time(date):
 def parse_timestamp_query(query, schema):
     """Interpret date column queries as JSON."""
     if query:
-        datetime_columns = [
-            column for (column, col_schema) in
-            schema.items() if
-            schema.is_date_simpletype(column) and column in query.keys()]
-        for date_column in datetime_columns:
+        for date_column in schema.datetimes(query.keys()):
             query[date_column] = {
                 key: datetime.fromtimestamp(int(value)) for (key, value) in
                 query[date_column].items()

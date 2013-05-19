@@ -87,6 +87,10 @@ class Schema(dict):
 
         return value
 
+    def datetimes(self, intersect_with):
+        return [slug for slug, col in self.items()
+                if col[SIMPLETYPE] == DATETIME and slug in intersect_with]
+
     def is_date_simpletype(self, column):
         return self[column][SIMPLETYPE] == DATETIME
 
