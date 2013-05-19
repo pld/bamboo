@@ -539,7 +539,7 @@ class Datasets(AbstractController):
 
     def plot(self, dataset_id, query=None, select=None, limit=0, group=None,
              order_by=None, index=None, plot_type='line', aggregation='sum',
-             palette=None, vega=False):
+             palette=None, vega=False, width=750, height=400):
         """Plot a dataset given restrictions.
 
         :param dataset_id: The dataset ID of the dataset to return.
@@ -621,9 +621,10 @@ class Datasets(AbstractController):
 
                 return vis.vega
             else:
-                vis = bearcart.Chart(dframe, plt_type=plot_type,
+                vis = bearcart.Chart(dframe, plt_type=plot_type, width=width,
+                                     height=height, palette=palette,
                                      x_axis=axis or True,
-                                     x_time=index is not None, palette=palette)
+                                     x_time=index is not None)
 
             return vis.build_html()
 
