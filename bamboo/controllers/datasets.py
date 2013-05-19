@@ -191,8 +191,9 @@ class Datasets(AbstractController):
         content_type = self.__content_type_for_format(format)
 
         def action(dataset, limit=limit, query=query, select=select):
-            query_args = self.__parse_query_args(limit, order_by, query,
-                                                 select, distinct=distinct)
+            query_args = self.__parse_query_args(
+                limit, order_by, query, select, distinct=distinct,
+                dataset=dataset)
             if count:
                 return dataset.count(query_args)
             else:
@@ -563,7 +564,7 @@ class Datasets(AbstractController):
         """
         def action(dataset, select=select):
             query_args = self.__parse_query_args(limit, order_by, query,
-                                                 select)
+                                                 select, dataset=dataset)
 
             numerics_select = dataset.schema.numerics_select
             query_select = query_args.select
@@ -656,13 +657,13 @@ class Datasets(AbstractController):
         return select
 
     def __parse_query(self, query):
-        return safe_json_loads(query, error_title='string') or {}
+        return safe_json_loads(query) or {}
 
     def __parse_aggregation(self, agg):
         return agg if agg in AGGREGATIONS else self.DEFAULT_AGGREGATION
 
     def __parse_query_args(self, limit, order_by, query, select,
-                           distinct=None):
+                           distinct=None, dataset=None):
             limit = parse_int(limit, 0)
             query = self.__parse_query(query)
             select = self.__parse_select(select)
@@ -671,4 +672,5 @@ class Datasets(AbstractController):
                              select=select,
                              distinct=distinct,
                              limit=limit,
-                             order_by=order_by)
+                             order_by=order_by,
+                             dataset=dataset)
