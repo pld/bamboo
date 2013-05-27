@@ -80,7 +80,7 @@ class Calculations(AbstractController):
                                     'nts, or json_file argument')
             else:
                 Calculation.create(dataset, formula, name, group)
-                success_message = 'created calculation: %s'
+                success_message = 'created calculation: %s' % name
 
             return {self.SUCCESS: success_message,
                     Dataset.ID: dataset_id}
