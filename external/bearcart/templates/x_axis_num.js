@@ -1,3 +1,5 @@
+{{ xTicks }}
+
 var x_axis = new Rickshaw.Graph.Axis.X( {
     graph: graph,
     orientation: 'bottom',

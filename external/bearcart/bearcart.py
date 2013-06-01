@@ -104,7 +104,7 @@ class Chart(object):
                         render_vars = self.make_ticks(val)
                     elif att == 'hover':
                         render_vars = {'x_hover': 'xFormatter: function(x)'
-                                       '{return Math.floor(x / 10) * 10}'}
+                                       '{return xTicks[x]}'}
                 temp = self.env.get_template(att + '.js')
                 self.template_vars.update({att: temp.render(render_vars)})
 
@@ -116,7 +116,8 @@ class Chart(object):
         self.template_vars['transform'] = (
             "rotateText();$('#legend').bind('click',rotateText);")
         cases = ','.join(["%s:'%s'" % (i, v) for i, v in enumerate(axis)])
-        return {'ticks': 'tickFormat:function(x){return{%s}[x]},' % cases}
+        return {'xTicks': 'var xTicks = {%s};' % cases,
+                'ticks': 'tickFormat:function(x){return xTicks[x]},'}
 
     def transform_data(self, data):
         '''Transform Pandas Timeseries into JSON format
