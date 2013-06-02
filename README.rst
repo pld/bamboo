@@ -40,6 +40,8 @@ On Arch Linux: ``# pacman -S blas lapack gcc-fortran``.
 
 On Debian based: ``# apt-get install gfortran libatlas-base-dev``.
 
+On Mac OS X: ``$ brew install gfortran``.
+
 Using as a Python Libary
 ------------------------
 
