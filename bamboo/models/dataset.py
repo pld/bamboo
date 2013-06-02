@@ -1,3 +1,4 @@
+import re
 import uuid
 from time import gmtime, strftime
 
@@ -13,10 +14,13 @@ from bamboo.lib.exceptions import ArgumentError
 from bamboo.lib.io import ImportableDataset
 from bamboo.lib.query_args import QueryArgs
 from bamboo.lib.schema_builder import Schema
-from bamboo.lib.utils import to_list
+from bamboo.lib.utils import combine_dicts, to_list
 from bamboo.models.abstract_model import AbstractModel
 from bamboo.models.calculation import Calculation
 from bamboo.models.observation import Observation
+
+# The format pandas encodes multicolumns in.
+strip_pattern = re.compile("\(u'|', u'|'\)")
 
 
 @task(ignore_result=True)
@@ -319,7 +323,8 @@ class Dataset(AbstractModel, ImportableDataset):
         call_async(delete_task, self.clear_cache(), query=query,
                    countdown=countdown)
 
-    def summarize(self, dframe, groups=[], no_cache=False, update=False):
+    def summarize(self, dframe, groups=[], no_cache=False, update=False,
+                  flat=False):
         """Build and return a summary of the data in this dataset.
 
         Return a summary of dframe grouped by `groups`, or the overall
@@ -328,6 +333,7 @@ class Dataset(AbstractModel, ImportableDataset):
         :param dframe: dframe to summarize
         :param groups: A list of columns to group on.
         :param no_cache: Do not fetch a cached summary.
+        :param flat: Return a flattened list of groups.
 
         :returns: A summary of the dataset as a dict. Numeric columns will be
             summarized by the arithmetic mean, standard deviation, and
@@ -335,7 +341,24 @@ class Dataset(AbstractModel, ImportableDataset):
         """
         self.reload()
 
-        return summarize(self, dframe, groups, no_cache, update=update)
+        summary = summarize(self, dframe, groups, no_cache, update=update)
+
+        if flat:
+            flat_summary = []
+
+            for cols, v in summary.iteritems():
+                cols = self.split_groups(cols)
+
+                for k, data in v.iteritems():
+                    col_values = self.split_groups(k)
+                    col_values = [strip_pattern.sub(',', i)[1:-1]
+                                  for i in col_values]
+                    flat_summary.append(
+                        combine_dicts(dict(zip(cols, col_values)), data))
+
+            summary = flat_summary
+
+        return summary
 
     @classmethod
     def create(cls, dataset_id=None):

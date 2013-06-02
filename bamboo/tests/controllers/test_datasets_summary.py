@@ -179,6 +179,25 @@ class TestDatasetsSummary(TestAbstractDatasets):
             len(dataset.split_groups(results[group_columns].keys()[0])),
             len(dataset.split_groups(group_columns)))
 
+    def test_summary_with_multigroup_flat(self):
+        dataset_id = self._post_file()
+        col1 = 'rating'
+        col1_values = ['delectible', 'epic_eat']
+        col2 = 'food_type'
+        group_columns = '%s,%s' % (col1, col2)
+
+        results = json.loads(self.controller.summary(
+            dataset_id,
+            group=group_columns,
+            select=self.controller.SELECT_ALL_FOR_SUMMARY,
+            flat=True))
+
+        self.assertTrue(isinstance(results, list))
+
+        for i in results:
+            self.assertTrue(i[col1] in col1_values)
+            self.assertTrue(col2 in i.keys())
+
     def test_summary_multigroup_noncat_group(self):
         dataset_id = self._post_file()
         group_columns = 'rating,amount'
