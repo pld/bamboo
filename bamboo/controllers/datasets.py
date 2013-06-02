@@ -96,8 +96,8 @@ class Datasets(AbstractController):
 
         return self._safe_get_and_call(dataset_id, action)
 
-    def summary(self, dataset_id, query={}, select=None,
-                group=None, limit=0, order_by=None, callback=False):
+    def summary(self, dataset_id, query={}, select=None, group=None, limit=0,
+                order_by=None, callback=False, flat=False):
         """Return a summary of the dataset ID given the passed parameters.
 
         Retrieve the dataset by ID then limit that data using the optional
@@ -113,6 +113,7 @@ class Datasets(AbstractController):
         :param query: If passed restrict summary to rows matching this query.
         :param limit: If passed limit the rows to summarize to this number.
         :param order_by: If passed order the result using this column.
+        :param flat: Return multigroups as a flat list.
         :param callback: A JSONP callback function to wrap the result in.
 
         :returns: An error message if `dataset_id` does not exist or the JSON
@@ -144,7 +145,7 @@ class Datasets(AbstractController):
             dframe = dataset.dframe(query_args)
 
             return dataset.summarize(dframe, groups=groups,
-                                     no_cache=query or select)
+                                     no_cache=query or select, flat=flat)
 
         return self._safe_get_and_call(dataset_id, action, callback=callback,
                                        exceptions=(ColumnTypeError,))
