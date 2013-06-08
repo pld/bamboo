@@ -27,6 +27,7 @@ class AbstractController(object):
     DEFAULT_ERROR_MESSAGE = 'id not found'
     DEFAULT_SUCCESS_STATUS_CODE = 200
     ERROR_STATUS_CODE = 400
+    NO_CONTENT_STATUS_CODE = 204
 
     def options(self, dataset_id=None, name=None):
         """Set Cross Origin Resource Sharing (CORS) headers.
@@ -40,7 +41,7 @@ class AbstractController(object):
         """
         self.__add_cors_headers()
         cherrypy.response.headers['Content-Length'] = 0
-        cherrypy.response.status = 204
+        cherrypy.response.status = self.NO_CONTENT_STATUS_CODE
 
         return ''
 
