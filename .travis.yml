@@ -6,8 +6,8 @@ virtualenv:
 before_install:
   - sudo apt-get install -qq gfortran libatlas-base-dev python-numpy python-scipy
 install:
-  - pip install -r requirements.pip --use-mirrors
-  - pip install -r requirements-test.pip --use-mirrors
+  - pip install -r deploy/requirements/requirements.pip --use-mirrors
+  - pip install -r deploy/requirements/requirements-test.pip --use-mirrors
   - pip freeze # list our pip library versions
 script:
   - sudo rmdir /dev/shm
