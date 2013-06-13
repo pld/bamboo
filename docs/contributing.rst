@@ -10,7 +10,7 @@ To work on the code:
 
     .. code-block:: sh
 
-        $ pip install pep8
+        $ pip install -r deploy/requirements/requirements-test.pip
         $ pep8 bamboo
 
 5. ensure all existing tests and your new tests are passing
@@ -29,7 +29,7 @@ Testing
 
     .. code-block:: sh
 
-        $ pip install -r requirements-test.pip
+        $ pip install -r deploy/requirements/requirements-test.pip
 
 2. run tests
 
