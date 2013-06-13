@@ -61,6 +61,13 @@ For the time being all date arithmetic is performed in seconds.
 
     date("09-04-2012") - submit_date > 21078000
 
+To calculate dynamic time periods, such as age, you can use the `today`
+function:
+
+.. code-block:: sh
+
+    today() - submit_date > 21078000
+
 Case Statements
 ---------------
 
