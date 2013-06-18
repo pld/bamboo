@@ -7,7 +7,8 @@ from pyparsing import alphanums, nums, oneOf, opAssoc, operatorPrecedence,\
 from bamboo.core.aggregations import AGGREGATIONS
 from bamboo.core.operations import EvalAndOp, EvalCaseOp, EvalComparisonOp,\
     EvalConstant, EvalExpOp, EvalDate, EvalInOp, EvalMapOp, EvalMultOp,\
-    EvalNotOp, EvalOrOp, EvalPercentile, EvalPlusOp, EvalSignOp, EvalString
+    EvalNotOp, EvalOrOp, EvalPercentile, EvalPlusOp, EvalSignOp, EvalString,\
+    EvalToday
 
 
 class ParseError(Exception):
@@ -37,7 +38,7 @@ class Parser(object):
     bnf = None
     column_functions = None
     dataset = None
-    function_names = ['date', 'percentile', 'years']
+    function_names = ['date', 'percentile', 'today']
     operator_names = ['and', 'or', 'not', 'in']
     parsed_expr = None
     special_names = ['default']
@@ -108,10 +109,6 @@ class Parser(object):
         comparison_op = oneOf('< <= > >= != ==')
         case_op = CaselessLiteral('case').suppress()
 
-        # functions
-        date_func = CaselessLiteral('date')
-        percentile_func = CaselessLiteral('percentile')
-
         # aggregation functions
         aggregations = self.__build_caseless_or_expression(
             self.aggregation_names)
@@ -124,6 +121,11 @@ class Parser(object):
         comma = Literal(',').suppress()
         dquote = Literal('"').suppress()
         colon = Literal(':').suppress()
+
+        # functions
+        date_func = CaselessLiteral('date')
+        percentile_func = CaselessLiteral('percentile')
+        today_func = CaselessLiteral('today()').setParseAction(EvalToday)
 
         # case statment
         default = CaselessLiteral('default')
@@ -148,7 +150,7 @@ class Parser(object):
 
         func_expr = operatorPrecedence(string, [
             (date_func, 1, opAssoc.RIGHT, EvalDate),
-        ])
+        ]) | today_func
 
         arith_expr = operatorPrecedence(atom | func_expr, [
             (sign_op, 1, opAssoc.RIGHT, EvalSignOp),

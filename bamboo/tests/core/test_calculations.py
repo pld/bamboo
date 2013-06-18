@@ -1,5 +1,8 @@
+from datetime import datetime
+
 import numpy as np
 
+from bamboo.lib.datetools import parse_date_to_unix_time
 from bamboo.models.dataset import Dataset
 from bamboo.tests.core.test_calculator import TestCalculator
 
@@ -55,6 +58,7 @@ CALCS_TO_DEPS = {
 
     # dates
     'date("09-04-2012") - submit_date > 21078000': ['submit_date'],
+    'today() - submit_date': ['submit_date'],
 
     # cases
     'case food_type in ["morning_food"]: 1, food_type in ["lunch"]: 2,'
@@ -66,12 +70,15 @@ CALCS_TO_DEPS = {
     'percentile(amount)': ['amount']
 }
 
+DYNAMIC = ['today() - submit_date']
+
 
 class TestCalculations(TestCalculator):
 
     def setUp(self):
         TestCalculator.setUp(self)
         self.calculations = CALCS_TO_DEPS.keys()
+        self.dynamic_calculations = DYNAMIC
 
     def _test_calculation_results(self, name, formula):
             unslug_name = name
@@ -107,20 +114,34 @@ class TestCalculations(TestCalculator):
             self.assertEqual(sorted(labels), sorted(self.label_list))
 
             # test result of calculation
-            formula = self.column_labels_to_slugs[formula]
+            self._test_cached_dframe(name, formula,
+                                     formula in self.dynamic_calculations)
 
-            for idx, row in self.dframe.iterrows():
-                try:
-                    result = np.float64(row[name])
+    def _test_cached_dframe(self, name, formula, dynamic):
+        formula = not dynamic and self.column_labels_to_slugs[formula]
+
+        for idx, row in self.dframe.iterrows():
+            try:
+                result = np.float64(row[name])
+                places = self.places
+
+                if dynamic:
+                    now = datetime.now()
+                    stored = parse_date_to_unix_time(now) -\
+                        parse_date_to_unix_time(row['submit_date'])
+                    # large approximate window for time compares
+                    places = 2
+                else:
                     stored = np.float64(row[formula])
-                    # np.nan != np.nan, continue if we have two nan values
-                    if np.isnan(result) and np.isnan(stored):
-                        continue
-                    msg = self._equal_msg(result, stored, formula)
-                    self.assertAlmostEqual(result, stored, self.places, msg)
-                except ValueError:
-                    msg = self._equal_msg(row[name], row[formula], formula)
-                    self.assertEqual(row[name], row[formula], msg)
+
+                # one np.nan != np.nan, continue if we have two nan values
+                if np.isnan(result) and np.isnan(stored):
+                    continue
+                msg = self._equal_msg(result, stored, formula)
+                self.assertAlmostEqual(result, stored, places, msg)
+            except ValueError:
+                msg = self._equal_msg(row[name], row[formula], formula)
+                self.assertEqual(row[name], row[formula], msg)
 
     def test_calculator(self):
         self._test_calculator()

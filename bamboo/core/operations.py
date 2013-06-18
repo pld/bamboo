@@ -1,12 +1,13 @@
 # future must be first
 from __future__ import division
+from datetime import datetime
 import operator
 
 import numpy as np
 from scipy.stats import percentileofscore
 
-from bamboo.lib.datetools import safe_parse_date_to_unix_time,\
-    parse_str_to_unix_time
+from bamboo.lib.datetools import parse_date_to_unix_time,\
+    parse_str_to_unix_time, safe_parse_date_to_unix_time
 from bamboo.lib.query_args import QueryArgs
 from bamboo.lib.utils import parse_float
 
@@ -287,6 +288,13 @@ class EvalDate(EvalFunction):
     def eval(self, row, dataset):
         # parse date from string
         return parse_str_to_unix_time(self.value.eval(row, dataset))
+
+
+class EvalToday(EvalTerm):
+    """Class to produce te current date time."""
+
+    def eval(self, row, dataset):
+        return parse_date_to_unix_time(datetime.now())
 
 
 class EvalPercentile(EvalFunction):

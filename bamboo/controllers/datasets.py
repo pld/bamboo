@@ -257,7 +257,7 @@ class Datasets(AbstractController):
                 - not
                 - or
                 - sum
-                - years
+                - today
 
         :param url: A URL to load a CSV file from. The URL must point to a CSV
             file.
