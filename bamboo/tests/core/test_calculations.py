@@ -123,17 +123,22 @@ class TestCalculations(TestCalculator):
         for idx, row in self.dframe.iterrows():
             try:
                 result = np.float64(row[name])
+                places = self.places
+
                 if dynamic:
                     now = datetime.now()
                     stored = parse_date_to_unix_time(now) -\
                         parse_date_to_unix_time(row['submit_date'])
+                    # large approximate window for time compares
+                    places = 2
                 else:
                     stored = np.float64(row[formula])
-                # np.nan != np.nan, continue if we have two nan values
+
+                # one np.nan != np.nan, continue if we have two nan values
                 if np.isnan(result) and np.isnan(stored):
                     continue
                 msg = self._equal_msg(result, stored, formula)
-                self.assertAlmostEqual(result, stored, self.places, msg)
+                self.assertAlmostEqual(result, stored, places, msg)
             except ValueError:
                 msg = self._equal_msg(row[name], row[formula], formula)
                 self.assertEqual(row[name], row[formula], msg)
