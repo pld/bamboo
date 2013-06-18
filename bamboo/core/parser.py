@@ -109,7 +109,6 @@ class Parser(object):
         comparison_op = oneOf('< <= > >= != ==')
         case_op = CaselessLiteral('case').suppress()
 
-
         # aggregation functions
         aggregations = self.__build_caseless_or_expression(
             self.aggregation_names)
