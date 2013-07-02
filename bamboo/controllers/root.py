@@ -1,6 +1,6 @@
-import smtplib
-
 import cherrypy
+
+from bamboo.lib.mail import send_mail
 
 
 ERROR_RESPONSE_BODY = """
@@ -10,24 +10,12 @@ ERROR_RESPONSE_BODY = """
     list</a></p></body></html>"""
 
 
-def send_mail(smtp_server, mailbox_name, mailbox_password, recipient, sender,
-              subject, body):
-    server = smtplib.SMTP(smtp_server)
-    server.login(mailbox_name, mailbox_password)
-
-    msg = ('To: %s\r\nFrom: %s\r\nSubject: %s\r\nContent-type:'
-           'text/plain\r\n\r\n%s' % (recipient, sender, subject, body))
-
-    server.sendmail(sender, recipient, msg)
-    server.quit()
-
-
 def handle_error():
     cherrypy.response.status = 500
     cherrypy.response.body = [ERROR_RESPONSE_BODY]
-    send_mail('imap.googlemail.com', 'bamboo.errors', 'test-password',
-              'bamboo.errors@gmail.com',
+    send_mail('smtp.googlemail.com', 'bamboo.errors', 'test-password',
               'bamboo-errors@googlegroups.com',
+              'bamboo.errors@gmail.com',
               '[ERROR] 500 Error in Bamboo',
               cherrypy._cperror.format_exc())
 
