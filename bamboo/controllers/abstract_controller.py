@@ -121,7 +121,11 @@ class AbstractController(object):
             error = err.__str__()
 
         self.set_response_params(result, success_status_code, content_type)
+
         return self._dump_or_error(result, error, callback)
+
+    def _success(self, msg, dataset_id):
+        return {self.SUCCESS: msg, Dataset.ID: dataset_id}
 
     def __add_cors_headers(self):
         cherrypy.response.headers['Access-Control-Allow-Origin'] = '*'
