@@ -60,8 +60,7 @@ class Datasets(AbstractController):
             query = safe_json_loads(query)
             dataset.delete(query)
 
-            return {self.SUCCESS: 'deleted dataset%s' % message,
-                    Dataset.ID: dataset_id}
+            return self._success('deleted dataset%s' % message, dataset_id)
 
         return self._safe_get_and_call(dataset_id, action)
 
@@ -195,6 +194,7 @@ class Datasets(AbstractController):
             query_args = self.__parse_query_args(
                 limit, order_by, query, select, distinct=distinct,
                 dataset=dataset)
+
             if count:
                 return dataset.count(query_args)
             else:
@@ -284,49 +284,6 @@ class Datasets(AbstractController):
         """
         return self.__create_or_update(dataset_id=dataset_id, **kwargs)
 
-    def __create_or_update(self, url=None, csv_file=None, json_file=None,
-                           schema=None, na_values=[], perish=0,
-                           dataset_id=None):
-        result = None
-        error = 'url, csv_file or schema required'
-
-        try:
-            if schema or url or csv_file or json_file:
-                if dataset_id is None:
-                    dataset = Dataset()
-                    dataset.save()
-                else:
-                    dataset = Dataset.find_one(dataset_id)
-                    Observation.delete_all(dataset)
-
-                if schema:
-                    dataset.import_schema(schema)
-
-                na_values = safe_json_loads(na_values)
-
-                if url:
-                    dataset.import_from_url(url, na_values=na_values)
-                elif csv_file:
-                    dataset.import_from_csv(csv_file, na_values=na_values)
-                elif json_file:
-                    dataset.import_from_json(json_file)
-
-                result = {Dataset.ID: dataset.dataset_id}
-
-            perish = parse_int(perish)
-            if perish:
-                dataset.delete(countdown=perish)
-        except urllib2.URLError:
-            error = 'could not load: %s' % url
-        except IOError:
-            error = 'could not get a filehandle for: %s' % csv_file
-        except JSONError as e:
-            error = e.__str__()
-
-        self.set_response_params(result, success_status_code=201)
-
-        return self._dump_or_error(result, error)
-
     def update(self, dataset_id, update):
         """Update the `dataset_id` with the new rows as JSON.
 
@@ -359,8 +316,7 @@ class Datasets(AbstractController):
         def action(dataset):
             deleted = dataset.delete_columns(columns)
 
-            return {self.SUCCESS: 'dropped columns: %s' % deleted,
-                    Dataset.ID: dataset.dataset_id}
+            return self._success('dropped columns: %s' % deleted, dataset_id)
 
         return self._safe_get_and_call(dataset_id, action)
 
@@ -393,11 +349,9 @@ class Datasets(AbstractController):
             if other_dataset.record:
                 merged_dataset = dataset.join(other_dataset, on)
 
-                return {
-                    self.SUCCESS: 'joined dataset %s to %s on %s' % (
-                        other_dataset_id, dataset.dataset_id, on),
-                    Dataset.ID: merged_dataset.dataset_id,
-                }
+                return self._success('joined dataset %s to %s on %s' % (
+                    other_dataset_id, dataset_id, on),
+                    merged_dataset.dataset_id)
 
         return self._safe_get_and_call(
             dataset_id, action, exceptions=(KeyError, NonUniqueJoinError))
@@ -425,8 +379,8 @@ class Datasets(AbstractController):
 
         def action(dataset, query=query):
             query = self.__parse_query(query)
-
             dframe = dataset.resample(date_column, interval, how, query=query)
+
             return self.__dataframe_as_content_type(content_type, dframe)
 
         return self._safe_get_and_call(dataset_id, action,
@@ -450,9 +404,8 @@ class Datasets(AbstractController):
         def action(dataset):
             dataset.set_olap_type(column, olap_type)
 
-            return {self.SUCCESS: 'set OLAP Type for column "%s" to "%s".' % (
-                column, olap_type),
-                Dataset.ID: dataset_id}
+            return self._success('set OLAP Type for column "%s" to "%s".' % (
+                column, olap_type), dataset_id)
 
         return self._safe_get_and_call(dataset_id, action)
 
@@ -492,9 +445,8 @@ class Datasets(AbstractController):
         def action(dataset):
             dataset.delete_observation(parse_int(index))
 
-            return {
-                self.SUCCESS: 'Deleted row with index "%s".' % index,
-                Dataset.ID: dataset_id}
+            return self._success('Deleted row with index "%s".' % index,
+                                 dataset_id)
 
         return self._safe_get_and_call(dataset_id, action)
 
@@ -533,9 +485,8 @@ class Datasets(AbstractController):
             data = safe_json_loads(data)
             Observation.update(dataset, int(index), data)
 
-            return {
-                self.SUCCESS: 'Updated row with index "%s".' % index,
-                Dataset.ID: dataset_id}
+            return self._success('Updated row with index "%s".' % index,
+                                 dataset_id)
 
         return self._safe_get_and_call(dataset_id, action)
 
@@ -632,6 +583,48 @@ class Datasets(AbstractController):
 
         return self._safe_get_and_call(
             dataset_id, action, content_type='text/html')
+
+    def __create_or_update(self, url=None, csv_file=None, json_file=None,
+                           schema=None, na_values=[], perish=0,
+                           dataset_id=None):
+        result = None
+        error = 'url, csv_file or schema required'
+
+        try:
+            if schema or url or csv_file or json_file:
+                if dataset_id is None:
+                    dataset = Dataset()
+                    dataset.save()
+                else:
+                    dataset = Dataset.find_one(dataset_id)
+                    Observation.delete_all(dataset)
+
+                if schema:
+                    dataset.import_schema(schema)
+
+                na_values = safe_json_loads(na_values)
+
+                if url:
+                    dataset.import_from_url(url, na_values=na_values)
+                elif csv_file:
+                    dataset.import_from_csv(csv_file, na_values=na_values)
+                elif json_file:
+                    dataset.import_from_json(json_file)
+
+                result = {Dataset.ID: dataset.dataset_id}
+
+            perish = parse_int(perish)
+            perish and dataset.delete(countdown=perish)
+        except urllib2.URLError:
+            error = 'could not load: %s' % url
+        except IOError:
+            error = 'could not get a filehandle for: %s' % csv_file
+        except JSONError as e:
+            error = e.__str__()
+
+        self.set_response_params(result, success_status_code=201)
+
+        return self._dump_or_error(result, error)
 
     def __content_type_for_format(self, format):
         return self.CSV if format == 'csv' else self.JSON

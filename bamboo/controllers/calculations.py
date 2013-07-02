@@ -42,8 +42,8 @@ class Calculations(AbstractController):
             if calculation:
                 calculation.delete(dataset)
 
-                return {self.SUCCESS: 'deleted calculation: \'%s\'' % name,
-                        Dataset.ID: dataset.dataset_id}
+                return self._success('deleted calculation: \'%s\'' % name,
+                                     dataset_id)
 
         return self._safe_get_and_call(
             dataset_id, action, exceptions=(DependencyError,),
@@ -80,10 +80,8 @@ class Calculations(AbstractController):
                                     'nts, or json_file argument')
             else:
                 Calculation.create(dataset, formula, name, group)
-                success_message = 'created calculation: %s' % name
 
-            return {self.SUCCESS: success_message,
-                    Dataset.ID: dataset_id}
+            return self._success('created calculation: %s' % name, dataset_id)
 
         return self._safe_get_and_call(
             dataset_id, action,
@@ -102,6 +100,7 @@ class Calculations(AbstractController):
         """
         def action(dataset):
             result = Calculation.find(dataset)
+
             return [x.clean_record for x in result]
 
         return self._safe_get_and_call(dataset_id, action, callback=callback)
