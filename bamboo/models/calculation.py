@@ -262,6 +262,7 @@ class Calculation(AbstractModel):
         except KeyError as e:
             raise ArgumentError('Required key %s not found in JSON' % e)
 
+        # Save instead of create so that we calculate on all at once.
         calculations = [cls().save(dataset, formula, name, group)
                         for formula, name, group in parsed_calculations]
         call_async(calculate_task, calculations, dataset.clear_cache())
