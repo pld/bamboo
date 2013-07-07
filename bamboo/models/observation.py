@@ -37,6 +37,8 @@ def encode(dframe, dataset, add_index=True):
 class Observation(AbstractModel):
 
     __collectionname__ = 'observations'
+
+    DELETED_AT = '-1'  # use a short code for key
     ENCODING = 'enc'
     ENCODING_DATASET_ID = '%s_%s' % (DATASET_ID, ENCODING)
 
@@ -130,10 +132,17 @@ class Observation(AbstractModel):
                                                  dataset.schema)
         query_args.encode(encoding, {DATASET_ID: dataset.dataset_id})
 
+        if not include_deleted:
+            query = query_args.query
+            query[cls.DELETED_AT] = 0
+            query_args.query = query
+
+        # exclude deleted at column
+        query_args.select = query_args.select or {cls.DELETED_AT: 0}
+
         distinct = query_args.distinct
         records = super(cls, cls).find(query_args, as_dict=True,
-                                       as_cursor=(as_cursor or distinct),
-                                       include_deleted=include_deleted)
+                                       as_cursor=(as_cursor or distinct))
 
         return records.distinct(encoding.get(distinct, distinct)) if distinct\
             else records
