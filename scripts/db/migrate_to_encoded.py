@@ -10,6 +10,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('-d', '--dataset', help='The dataset ID to migrate')
     args = parser.parse_args()
+    main()
 
 
 def main():
@@ -17,6 +18,3 @@ def main():
 
     dataset = Dataset(url=dataset_url)
     print dataset.id
-
-
-main()

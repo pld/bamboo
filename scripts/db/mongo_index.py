@@ -8,16 +8,17 @@ from pymongo import ASCENDING
 
 from bamboo.config.db import Database
 from bamboo.core.frame import DATASET_ID
-from bamboo.models.abstract_model import AbstractModel
 from bamboo.models.observation import Observation
 
 # The encoded dataset_id will be set to '0'.
 ENCODED_DATASET_ID = '0'
 
+
 def bamboo_index(collection, key):
     ensure_index = collection.__getattribute__('ensure_index')
     ensure_index([(key, ASCENDING)])
-    ensure_index([(key, ASCENDING), (AbstractModel.DELETED_AT, ASCENDING)])
+    ensure_index([(key, ASCENDING), (Observation.DELETED_AT, ASCENDING)])
+
 
 def ensure_indexing():
     """Ensure that bamboo models are indexed."""
@@ -31,7 +32,7 @@ def ensure_indexing():
     # indices
     bamboo_index(datasets, DATASET_ID)
     bamboo_index(observations, ENCODED_DATASET_ID)
-    bamboo_index(observations, Observations.ENCODING_DATASET_ID)
+    bamboo_index(observations, Observation.ENCODING_DATASET_ID)
     bamboo_index(calculations, DATASET_ID)
 
 
