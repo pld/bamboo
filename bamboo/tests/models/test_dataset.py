@@ -27,8 +27,14 @@ class TestDataset(TestBase):
             rows = Dataset.find(self.test_dataset_ids[dataset_name])
 
             self.assertEqual(record, rows[0].record)
-            self.assertEqual(record, Dataset.find_one(
-                             self.test_dataset_ids[dataset_name]).record)
+
+    def test_find_one(self):
+        for dataset_name in self.TEST_DATASETS:
+            dataset = Dataset.create(self.test_dataset_ids[dataset_name])
+            record = dataset.record
+            row = Dataset.find_one(self.test_dataset_ids[dataset_name])
+
+            self.assertEqual(record, row.record)
 
     def test_create(self):
         for dataset_name in self.TEST_DATASETS:

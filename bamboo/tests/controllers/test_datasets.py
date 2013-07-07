@@ -8,6 +8,7 @@ from mock import patch
 import simplejson as json
 
 from bamboo.controllers.datasets import Datasets
+from bamboo.lib.datetools import now
 from bamboo.lib.query_args import QueryArgs
 from bamboo.lib.schema_builder import CARDINALITY, DATETIME, OLAP_TYPE,\
     SIMPLETYPE
@@ -399,13 +400,13 @@ class TestDatasets(TestAbstractDatasets):
 
     def test_show_with_date_query(self):
         query = {
-            'submit_date': {'$lt': mktime(datetime.now().timetuple())}
+            'submit_date': {'$lt': mktime(now().timetuple())}
         }
         self.__test_get_with_query_or_select(
             query=json.dumps(query),
             num_results=self.NUM_ROWS)
         query = {
-            'submit_date': {'$gt': mktime(datetime.now().timetuple())}
+            'submit_date': {'$gt': mktime(now().timetuple())}
         }
         self.__test_get_with_query_or_select(
             query=json.dumps(query),

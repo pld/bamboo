@@ -19,14 +19,13 @@ class AbstractModel(object):
     __collection__ = None
     __collectionname__ = None
 
-    # delimiter when passing multiple groups as a string
-    GROUP_DELIMITER = ','
-    ERROR_MESSAGE = 'error_message'
-
     DB_READ_BATCH_SIZE = 1000
     DB_SAVE_BATCH_SIZE = 2000
+    DELETED_AT = '-1'  # keys get replicated, we encode as non-generable
+                       # numerics
+    ERROR_MESSAGE = 'error_message'
+    GROUP_DELIMITER = ','  # delimiter when passing multiple groups as a string
     MIN_BATCH_SIZE = 50
-
     STATE = 'state'
     STATE_FAILED = 'failed'
     STATE_PENDING = 'pending'
@@ -87,17 +86,27 @@ class AbstractModel(object):
         return model.save(*args)
 
     @classmethod
-    def find(cls, query_args, as_dict=False, as_cursor=False):
+    def find(cls, query_args, as_dict=False, as_cursor=False,
+             include_deleted=False):
         """An interface to MongoDB's find functionality.
 
         :param query_args: An optional QueryArgs to hold the query arguments.
-        :param as_cursor: If true, return the cursor.
-        :param as_dict: If true, return dicts and not model instances.
+        :param as_cursor: If True, return the cursor.
+        :param as_dict: If True, return dicts and not model instances.
+        :param include_deleted: If True, return delete records, default False.
 
         :returns: A list of dicts or model instances for each row returned.
         """
-        cursor = cls.collection.find(query_args.query,
-                                     query_args.select,
+        query = query_args.query
+
+        if not include_deleted:
+            query[cls.DELETED_AT] = 0
+
+        # exclude deleted at column
+        select = query_args.select or {cls.DELETED_AT: 0}
+
+        cursor = cls.collection.find(query,
+                                     select,
                                      sort=query_args.order_by,
                                      limit=query_args.limit)
 
@@ -119,7 +128,10 @@ class AbstractModel(object):
         :returns: A model instance of the row returned for this query and
             select.
         """
+        # exclude deleted at column
+        select = select or {cls.DELETED_AT: 0}
         record = cls.collection.find_one(query, select)
+
         return record if as_dict else cls(record)
 
     @classmethod
@@ -175,7 +187,12 @@ class AbstractModel(object):
 
         :returns: The record passed in.
         """
+        # Set deleted at to False to avoid using poorly indexable $exists
+        # operator in find
+        record[self.DELETED_AT] = 0
+
         self.collection.insert(record)
+        record.pop(self.DELETED_AT)
         self.record = record
 
         return self

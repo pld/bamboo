@@ -3,6 +3,7 @@ import simplejson as json
 
 from bamboo.controllers.datasets import Datasets
 from bamboo.models.dataset import Dataset
+from bamboo.models.observation import Observation
 from bamboo.tests.controllers.test_abstract_datasets import\
     TestAbstractDatasets
 
@@ -40,6 +41,7 @@ class TestDatasetsEdits(TestAbstractDatasets):
 
     def test_delete_row(self):
         dataset_id = self._post_file()
+        dataset = Dataset.find_one(dataset_id)
         index = 0
         expected_dframe = Dataset.find_one(
             dataset_id).dframe()[index + 1:].reset_index()
@@ -57,6 +59,10 @@ class TestDatasetsEdits(TestAbstractDatasets):
         info = dataset.info()
         self.assertEqual(self.NUM_ROWS - 1, info[Dataset.NUM_ROWS])
 
+        # check that row is softly deleted
+        all_observations = Observation.find(dataset, include_deleted=True)
+        self.assertEqual(self.NUM_ROWS, len(all_observations))
+
     def test_update_row(self):
         dataset_id = self._post_file()
         index = 0
@@ -70,6 +76,11 @@ class TestDatasetsEdits(TestAbstractDatasets):
                                                         json.dumps(update)))
         self.assertTrue(Datasets.SUCCESS in results.keys())
 
-        dframe = Dataset.find_one(dataset_id).dframe()
+        dataset = Dataset.find_one(dataset_id)
+        dframe = dataset.dframe()
         self.assertEqual(self.NUM_ROWS, len(dframe))
         self._check_dframes_are_equal(expected_dframe, dframe)
+
+        # check that previous row exists
+        all_observations = Observation.find(dataset, include_deleted=True)
+        self.assertEqual(self.NUM_ROWS + 1, len(all_observations))

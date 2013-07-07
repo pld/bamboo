@@ -68,6 +68,10 @@ def _convert_column_to_date(dframe, column):
         pass
 
 
+def now():
+    return datetime.now()
+
+
 def parse_date(x):
     try:
         return date_parse(x) if _is_potential_date(x) else x
@@ -83,13 +87,6 @@ def parse_date_to_unix_time(date):
     return timegm(date.utctimetuple())
 
 
-def safe_parse_date_to_unix_time(date):
-    if isinstance(date, datetime):
-        date = parse_date_to_unix_time(date)
-
-    return date
-
-
 def parse_timestamp_query(query, schema):
     """Interpret date column queries as JSON."""
     if query:
@@ -100,3 +97,10 @@ def parse_timestamp_query(query, schema):
             }
 
     return query
+
+
+def safe_parse_date_to_unix_time(date):
+    if isinstance(date, datetime):
+        date = parse_date_to_unix_time(date)
+
+    return date
