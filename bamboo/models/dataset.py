@@ -449,9 +449,13 @@ class Dataset(AbstractModel, ImportableDataset):
         return Observation.find(self, query_args or QueryArgs(),
                                 as_cursor=as_cursor)
 
-    def calculations(self):
-        """Return the calculations for this dataset."""
-        return Calculation.find(self)
+    def calculations(self, include_aggs=True, only_aggs=False):
+        """Return the calculations for this dataset.
+
+        :param include_aggs: Include aggregations, default True.
+        :param only_aggs: Exclude non-aggregations, default False.
+        """
+        return Calculation.find(self, include_aggs, only_aggs)
 
     def remove_parent_observations(self, parent_id):
         """Remove obervations for this dataset with the passed `parent_id`.

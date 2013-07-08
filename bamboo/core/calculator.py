@@ -9,7 +9,7 @@ from bamboo.core.parser import ParseError, Parser
 from bamboo.lib.mongo import MONGO_ID, MONGO_ID_ENCODED
 from bamboo.lib.query_args import QueryArgs
 from bamboo.lib.schema_builder import make_unique
-from bamboo.lib.utils import combine_dicts, to_list
+from bamboo.lib.utils import combine_dicts, flatten, to_list
 
 
 class Calculator(object):
@@ -141,8 +141,7 @@ class Calculator(object):
         new_dframe = new_dframe_raw.recognize_dates_from_schema(
             self.dataset.schema)
 
-        new_dframe, aggregations = self.__add_calcs_and_find_aggregations(
-            new_dframe, labels_to_slugs)
+        new_dframe = self.__add_calculations(new_dframe, labels_to_slugs)
 
         # set parent id if provided
         if parent_dataset_id:
@@ -151,7 +150,7 @@ class Calculator(object):
         self.dataset.append_observations(new_dframe)
         self.dataset.clear_summary_stats()
 
-        self.__update_aggregate_datasets(aggregations, new_dframe)
+        self.__update_aggregate_datasets(new_dframe)
         self.__update_merged_datasets(new_data, labels_to_slugs)
         self.__update_joined_datasets(new_dframe_raw)
 
@@ -233,29 +232,25 @@ class Calculator(object):
             self.dataset.reload()
             raise self.calculate_updates.retry()
 
-    def __add_calcs_and_find_aggregations(self, new_dframe, labels_to_slugs):
-        aggregations = []
+    def __add_calculations(self, new_dframe, labels_to_slugs):
         calculations = self.dataset.calculations()
 
-        for calculation in calculations:
-            if calculation.aggregation is not None:
-                aggregations.append(calculation)
+        for calculation in self.dataset.calculations(include_aggs=False):
+            function, self.dependent_columns = self.parser.parse_formula(
+                calculation.formula)
+            new_column = new_dframe.apply(function[0], axis=1,
+                                          args=(self.parser.dataset, ))
+            potential_name = calculation.name
+
+            if potential_name not in self.dataset.dframe().columns:
+                if potential_name in labels_to_slugs:
+                    new_column.name = labels_to_slugs[potential_name]
             else:
-                function, self.dependent_columns = self.parser.parse_formula(
-                    calculation.formula)
-                new_column = new_dframe.apply(function[0], axis=1,
-                                              args=(self.parser.dataset, ))
-                potential_name = calculation.name
+                new_column.name = potential_name
 
-                if potential_name not in self.dataset.dframe().columns:
-                    if potential_name in labels_to_slugs:
-                        new_column.name = labels_to_slugs[potential_name]
-                else:
-                    new_column.name = potential_name
+            new_dframe = new_dframe.join(new_column)
 
-                new_dframe = new_dframe.join(new_column)
-
-        return new_dframe, aggregations
+        return new_dframe
 
     def __update_merged_datasets(self, new_data, labels_to_slugs):
         # store slugs as labels for child datasets
@@ -339,9 +334,8 @@ class Calculator(object):
 
         return BambooFrame(filtered_data, index=index)
 
-    def __update_aggregate_datasets(self, calculations, new_dframe):
-        calcs_to_data = self.__create_calculations_to_groups_and_datasets(
-            calculations)
+    def __update_aggregate_datasets(self, new_dframe):
+        calcs_to_data = self.__calculation_data()
 
         for formula, slug, groups, dataset in calcs_to_data:
             self.__update_aggregate_dataset(formula, new_dframe, slug, groups,
@@ -384,19 +378,22 @@ class Calculator(object):
                 merged_calculator, new_data,
                 parent_dataset_id=agg_dataset.dataset_id)
 
-    def __create_calculations_to_groups_and_datasets(self, calculations):
-        """Create list of groups and calculations."""
+    def __calculation_data(self):
+        """Create a list of aggregate calculation information.
+
+        Builds a list of calculation information from the current datasets
+        aggregated datasets and aggregate calculations.
+        """
         calcs_to_data = defaultdict(list)
 
-        names_to_formulas = {
-            calc.name: calc.formula for calc in calculations
-        }
-        calculations = set([calculation.name for calculation in calculations])
+        calculations = self.dataset.calculations(only_aggs=True)
+        names_to_formulas = {c.name: c.formula for c in calculations}
+        names = set(names_to_formulas.keys())
 
         for group, dataset in self.dataset.aggregated_datasets:
             labels_to_slugs = dataset.schema.labels_to_slugs
             calculations_for_dataset = list(set(
-                labels_to_slugs.keys()).intersection(calculations))
+                labels_to_slugs.keys()).intersection(names))
 
             for calc in calculations_for_dataset:
                 calcs_to_data[calc].append((
@@ -406,9 +403,7 @@ class Calculator(object):
                     dataset
                 ))
 
-        return [
-            item for sublist in calcs_to_data.values() for item in sublist
-        ]
+        return flatten(calcs_to_data.values())
 
     def __slugify_data(self, new_data, labels_to_slugs):
         slugified_data = []
