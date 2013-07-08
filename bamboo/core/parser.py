@@ -268,29 +268,19 @@ class Parser(object):
         :returns: A tuple with the name of the aggregation in the formula, if
             any and a list of functions built from the input string.
         """
-        # reset cached aggregation
+        # reset cached fields
         self.aggregation = None
-
-        try:
-            self.parsed_expr = self.bnf.parseString(
-                input_str, parseAll=True)[0]
-        except ParseException, err:
-            raise ParseError('Parse Failure for string "%s": %s' % (input_str,
-                             err))
-
-        functions = []
         self.dependent_columns = set()
 
-        if self.aggregation:
-            for column_function in self.column_functions:
-                functions.append(partial(column_function.eval))
-                self.dependent_columns = self.dependent_columns.union(
-                    self.__get_dependent_columns(column_function))
-        else:
-            functions.append(partial(self.parsed_expr.eval))
-            self.dependent_columns = self.__get_dependent_columns(self.parsed_expr)
+        try:
+            self.parsed_expr = self.bnf.parseString(input_str, parseAll=True)
+        except ParseException, err:
+            raise ParseError('Parse Failure for string "%s": %s' % (
+                             input_str, err))
 
-        return functions
+        funcs = self.column_functions if self.aggregation else self.parsed_expr
+
+        return [self.__extract_function(f) for f in funcs]
 
     def validate_formula(self, formula):
         """Validate the *formula* on an example *row* of data.
@@ -325,6 +315,12 @@ class Parser(object):
             aggregation in self.aggregation_names
         ]
         return reduce(lambda or_expr, literal: or_expr | literal, literals)
+
+    def __extract_function(self, function):
+        self.dependent_columns = self.dependent_columns.union(
+            self.__get_dependent_columns(function))
+
+        return partial(function.eval)
 
     def __get_dependent_columns(self, parsed_expr):
         return [] if self.dataset is None else set(
