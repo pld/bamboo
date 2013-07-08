@@ -410,7 +410,8 @@ class Calculator(object):
                             self.dataset, on)
                         joined_dataset.replace_observations(merged_dframe)
 
-                        self.__propagate_join(joined_dataset, merged_dframe)
+                        # TODO is it OK not to propagate the join here?
+                        #self.__propagate_join(joined_dataset, merged_dframe)
             else:
                 merged_dframe = new_dframe_raw
 
