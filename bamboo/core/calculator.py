@@ -15,6 +15,10 @@ from bamboo.lib.utils import combine_dicts, flatten, to_list
 class Calculator(object):
     """Perform and store calculations and recalculations on update."""
 
+    @property
+    def dependent_columns(self):
+        return self.parser.dependent_columns
+
     def __init__(self, dataset):
         self.dataset = dataset.reload()
         self.parser = Parser(self.dataset)
@@ -190,7 +194,7 @@ class Calculator(object):
     def parse_aggregation(self, formula, name, groups, dframe=None):
         # TODO this should work with index eventually
         columns = self.parse_columns(formula, name, dframe, no_index=True)
-        functions, self.dependent_columns = self.parser.parse_formula(formula)
+        functions = self.parser.parse_formula(formula)
 
         # get dframe with only necessary columns or _id column
         # so there is at least one column, e.g. for the count aggregation
@@ -207,7 +211,7 @@ class Calculator(object):
     def parse_columns(self, formula, name, dframe=None, length=None,
                       no_index=False):
         """Parse formula into function and variables."""
-        functions, self.dependent_columns = self.parser.parse_formula(formula)
+        functions = self.parser.parse_formula(formula)
 
         # make select from dependent_columns
         if dframe is None:
@@ -270,8 +274,7 @@ class Calculator(object):
         calculations = self.dataset.calculations()
 
         for calculation in self.dataset.calculations(include_aggs=False):
-            function, self.dependent_columns = self.parser.parse_formula(
-                calculation.formula)
+            function = self.parser.parse_formula(calculation.formula)
             new_column = new_dframe.apply(function[0], axis=1,
                                           args=(self.parser.dataset, ))
             potential_name = calculation.name
