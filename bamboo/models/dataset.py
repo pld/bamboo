@@ -478,7 +478,7 @@ class Dataset(AbstractModel, ImportableDataset):
 
         new_dframe_raw = calculator.dframe_from_update(
             new_data, self.schema.labels_to_slugs)
-        calculator._check_update_is_valid(new_dframe_raw)
+        calculator.check_update_is_valid(new_dframe_raw)
         calculator.dataset.clear_cache()
 
         call_async(calculator.calculate_updates, calculator, new_data,

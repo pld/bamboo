@@ -81,37 +81,6 @@ class Calculator(object):
             merged_calculator = Calculator(merged_dataset)
             merged_calculator.propagate_column(self.dataset)
 
-    def propagate_column(self, parent_dataset):
-        """Propagate columns in `parent_dataset` to this dataset.
-
-        This is used when there has been a new calculation added to
-        a dataset and that new column needs to be propagated to all
-        child (merged) datasets.
-
-        :param parent_dataset: The dataset to propagate to `self.dataset`.
-        """
-        # delete the rows in this dataset from the parent
-        self.dataset.remove_parent_observations(parent_dataset.dataset_id)
-
-        # get this dataset without the out-of-date parent rows
-        dframe = self.dataset.dframe(keep_parent_ids=True)
-
-        # create new dframe from the upated parent and add parent id
-        parent_dframe = parent_dataset.dframe().add_parent_column(
-            parent_dataset.dataset_id)
-
-        # merge this new dframe with the existing dframe
-        updated_dframe = concat([dframe, parent_dframe])
-
-        # save new dframe (updates schema)
-        self.dataset.replace_observations(updated_dframe)
-        self.dataset.clear_summary_stats()
-
-        # recur
-        for merged_dataset in self.dataset.merged_datasets:
-            merged_calculator = Calculator(merged_dataset)
-            merged_calculator.propagate_column(self.dataset)
-
     @task(default_retry_delay=5, ignore_result=True)
     def calculate_updates(self, new_data, new_dframe_raw=None,
                           parent_dataset_id=None, update_id=None):
@@ -136,7 +105,7 @@ class Calculator(object):
         if new_dframe_raw is None:
             new_dframe_raw = self.dframe_from_update(new_data, labels_to_slugs)
 
-        self._check_update_is_valid(new_dframe_raw)
+        self.check_update_is_valid(new_dframe_raw)
 
         new_dframe = new_dframe_raw.recognize_dates_from_schema(
             self.dataset.schema)
@@ -155,6 +124,68 @@ class Calculator(object):
         self.__update_joined_datasets(new_dframe_raw)
 
         self.dataset.update_complete(update_id)
+
+    def check_update_is_valid(self, new_dframe_raw):
+        """Check if the update is valid.
+
+        Check whether this is a right-hand side of any joins
+        and deny the update if the update would produce an invalid
+        join as a result.
+
+        :raises: `NonUniqueJoinError` if update is illegal given joins of
+            dataset.
+        """
+        for on in self.dataset.on_columns_for_rhs_of_joins:
+            if on in new_dframe_raw.columns and on in self.dataset.columns:
+                query_args = QueryArgs(select={on: 1})
+                dframe = self.dataset.dframe(query_args=query_args)
+                merged_join_column = concat([new_dframe_raw[on], dframe[on]])
+
+                if len(merged_join_column) != merged_join_column.nunique():
+                    raise NonUniqueJoinError(
+                        'Cannot update. This is the right hand join and the'
+                        'column "%s" will become non-unique.' % on)
+
+    def dframe_from_update(self, new_data, labels_to_slugs):
+        """Make a single-row dataframe for the additional data to add.
+
+        :param new_data: Data to add to dframe.
+        :type new_data: List.
+        :param labels_to_slugs: Map of labels to slugs.
+        """
+        filtered_data = []
+        columns = self.dataset.columns
+        num_columns = len(columns)
+        num_rows = self.dataset.num_rows
+        dframe_empty = not num_columns
+
+        if dframe_empty:
+            columns = self.dataset.schema.keys()
+
+        for row in new_data:
+            filtered_row = dict()
+            for col, val in row.iteritems():
+                # special case for reserved keys (e.g. _id)
+                if col == MONGO_ID:
+                    if (not num_columns or col in columns) and\
+                            col not in filtered_row.keys():
+                        filtered_row[col] = val
+                else:
+                    # if col is a label take slug, if it's a slug take col
+                    slug = labels_to_slugs.get(
+                        col, col if col in labels_to_slugs.values() else None)
+
+                    # if slug is valid or there is an empty dframe
+                    if (slug or col in labels_to_slugs.keys()) and (
+                            dframe_empty or slug in columns):
+                        filtered_row[slug] = self.dataset.schema.convert_type(
+                            slug, val)
+
+            filtered_data.append(filtered_row)
+
+        index = range(num_rows, num_rows + len(filtered_data))
+
+        return BambooFrame(filtered_data, index=index)
 
     def parse_aggregation(self, formula, name, groups, dframe=None):
         # TODO this should work with index eventually
@@ -204,33 +235,36 @@ class Calculator(object):
 
         return columns
 
-    def _check_update_is_valid(self, new_dframe_raw):
-        """Check if the update is valid.
+    def propagate_column(self, parent_dataset):
+        """Propagate columns in `parent_dataset` to this dataset.
 
-        Check whether this is a right-hand side of any joins
-        and deny the update if the update would produce an invalid
-        join as a result.
+        This is used when there has been a new calculation added to
+        a dataset and that new column needs to be propagated to all
+        child (merged) datasets.
 
-        :raises: `NonUniqueJoinError` if update is illegal given joins of
-            dataset.
+        :param parent_dataset: The dataset to propagate to `self.dataset`.
         """
-        for on in self.dataset.on_columns_for_rhs_of_joins:
-            if on in new_dframe_raw.columns and on in self.dataset.columns:
-                query_args = QueryArgs(select={on: 1})
-                dframe = self.dataset.dframe(query_args=query_args)
-                merged_join_column = concat([new_dframe_raw[on], dframe[on]])
+        # delete the rows in this dataset from the parent
+        self.dataset.remove_parent_observations(parent_dataset.dataset_id)
 
-                if len(merged_join_column) != merged_join_column.nunique():
-                    raise NonUniqueJoinError(
-                        'Cannot update. This is the right hand join and the'
-                        'column "%s" will become non-unique.' % on)
+        # get this dataset without the out-of-date parent rows
+        dframe = self.dataset.dframe(keep_parent_ids=True)
 
-    def __ensure_ready(self, update_id):
-        # dataset must not be pending
-        if not self.dataset.is_ready or (
-                update_id and self.dataset.has_pending_updates(update_id)):
-            self.dataset.reload()
-            raise self.calculate_updates.retry()
+        # create new dframe from the upated parent and add parent id
+        parent_dframe = parent_dataset.dframe().add_parent_column(
+            parent_dataset.dataset_id)
+
+        # merge this new dframe with the existing dframe
+        updated_dframe = concat([dframe, parent_dframe])
+
+        # save new dframe (updates schema)
+        self.dataset.replace_observations(updated_dframe)
+        self.dataset.clear_summary_stats()
+
+        # recur
+        for merged_dataset in self.dataset.merged_datasets:
+            merged_calculator = Calculator(merged_dataset)
+            merged_calculator.propagate_column(self.dataset)
 
     def __add_calculations(self, new_dframe, labels_to_slugs):
         calculations = self.dataset.calculations()
@@ -252,87 +286,62 @@ class Calculator(object):
 
         return new_dframe
 
-    def __update_merged_datasets(self, new_data, labels_to_slugs):
-        # store slugs as labels for child datasets
-        slugified_data = self.__slugify_data(new_data, labels_to_slugs)
+    def __calculation_data(self):
+        """Create a list of aggregate calculation information.
 
-        # update the merged datasets with new_dframe
-        for mapping, merged_dataset in self.dataset.merged_datasets_with_map:
-            merged_calculator = Calculator(merged_dataset)
-            slugified_data = self.__remapped_data(mapping, slugified_data)
-
-            merged_calculator.calculate_updates(
-                merged_calculator,
-                slugified_data,
-                parent_dataset_id=self.dataset.dataset_id)
-
-    def __update_joined_datasets(self, new_dframe_raw):
-        # update any joined datasets
-        for direction, other_dataset, on, joined_dataset in\
-                self.dataset.joined_datasets:
-            if direction == 'left':
-                if on in new_dframe_raw.columns:
-                    # only proceed if on in new dframe
-                    other_dframe = other_dataset.dframe(padded=True)
-
-                    if len(set(new_dframe_raw[on]).intersection(
-                            set(other_dframe[on]))):
-                        # only proceed if new on value is in on column in lhs
-                        merged_dframe = other_dframe.join_dataset(
-                            self.dataset, on)
-                        joined_dataset.replace_observations(merged_dframe)
-            else:
-                merged_dframe = new_dframe_raw
-
-                if on in merged_dframe:
-                    merged_dframe = new_dframe_raw.join_dataset(
-                        other_dataset, on)
-
-                joined_calculator = Calculator(joined_dataset)
-                joined_calculator.calculate_updates(
-                    joined_calculator, merged_dframe.to_jsondict(),
-                    parent_dataset_id=self.dataset.dataset_id)
-
-    def dframe_from_update(self, new_data, labels_to_slugs):
-        """Make a single-row dataframe for the additional data to add.
-
-        :param new_data: Data to add to dframe.
-        :type new_data: List.
-        :param labels_to_slugs: Map of labels to slugs.
+        Builds a list of calculation information from the current datasets
+        aggregated datasets and aggregate calculations.
         """
-        filtered_data = []
-        columns = self.dataset.columns
-        num_columns = len(columns)
-        num_rows = self.dataset.num_rows
-        dframe_empty = not num_columns
+        calcs_to_data = defaultdict(list)
 
-        if dframe_empty:
-            columns = self.dataset.schema.keys()
+        calculations = self.dataset.calculations(only_aggs=True)
+        names_to_formulas = {c.name: c.formula for c in calculations}
+        names = set(names_to_formulas.keys())
+
+        for group, dataset in self.dataset.aggregated_datasets:
+            labels_to_slugs = dataset.schema.labels_to_slugs
+            calculations_for_dataset = list(set(
+                labels_to_slugs.keys()).intersection(names))
+
+            for calc in calculations_for_dataset:
+                calcs_to_data[calc].append((
+                    names_to_formulas[calc],
+                    labels_to_slugs[calc],
+                    group,
+                    dataset
+                ))
+
+        return flatten(calcs_to_data.values())
+
+    def __ensure_ready(self, update_id):
+        # dataset must not be pending
+        if not self.dataset.is_ready or (
+                update_id and self.dataset.has_pending_updates(update_id)):
+            self.dataset.reload()
+            raise self.calculate_updates.retry()
+
+    def __remapped_data(self, mapping, slugified_data):
+        column_map = mapping.get(self.dataset.dataset_id) if mapping else None
+
+        if column_map:
+            slugified_data = [{column_map.get(k, k): v for k, v in row.items()}
+                              for row in slugified_data]
+
+        return slugified_data
+
+    def __slugify_data(self, new_data, labels_to_slugs):
+        slugified_data = []
+        new_data = to_list(new_data)
 
         for row in new_data:
-            filtered_row = dict()
-            for col, val in row.iteritems():
-                # special case for reserved keys (e.g. _id)
-                if col == MONGO_ID:
-                    if (not num_columns or col in columns) and\
-                            col not in filtered_row.keys():
-                        filtered_row[col] = val
-                else:
-                    # if col is a label take slug, if it's a slug take col
-                    slug = labels_to_slugs.get(
-                        col, col if col in labels_to_slugs.values() else None)
+            for key, value in row.iteritems():
+                if labels_to_slugs.get(key) and key != MONGO_ID:
+                    del row[key]
+                    row[labels_to_slugs[key]] = value
 
-                    # if slug is valid or there is an empty dframe
-                    if (slug or col in labels_to_slugs.keys()) and (
-                            dframe_empty or slug in columns):
-                        filtered_row[slug] = self.dataset.schema.convert_type(
-                            slug, val)
+            slugified_data.append(row)
 
-            filtered_data.append(filtered_row)
-
-        index = range(num_rows, num_rows + len(filtered_data))
-
-        return BambooFrame(filtered_data, index=index)
+        return slugified_data
 
     def __update_aggregate_datasets(self, new_dframe):
         calcs_to_data = self.__calculation_data()
@@ -378,55 +387,46 @@ class Calculator(object):
                 merged_calculator, new_data,
                 parent_dataset_id=agg_dataset.dataset_id)
 
-    def __calculation_data(self):
-        """Create a list of aggregate calculation information.
+    def __update_joined_datasets(self, new_dframe_raw):
+        # update any joined datasets
+        for direction, other_dataset, on, joined_dataset in\
+                self.dataset.joined_datasets:
+            if direction == 'left':
+                if on in new_dframe_raw.columns:
+                    # only proceed if on in new dframe
+                    other_dframe = other_dataset.dframe(padded=True)
 
-        Builds a list of calculation information from the current datasets
-        aggregated datasets and aggregate calculations.
-        """
-        calcs_to_data = defaultdict(list)
+                    if len(set(new_dframe_raw[on]).intersection(
+                            set(other_dframe[on]))):
+                        # only proceed if new on value is in on column in lhs
+                        merged_dframe = other_dframe.join_dataset(
+                            self.dataset, on)
+                        joined_dataset.replace_observations(merged_dframe)
+            else:
+                merged_dframe = new_dframe_raw
 
-        calculations = self.dataset.calculations(only_aggs=True)
-        names_to_formulas = {c.name: c.formula for c in calculations}
-        names = set(names_to_formulas.keys())
+                if on in merged_dframe:
+                    merged_dframe = new_dframe_raw.join_dataset(
+                        other_dataset, on)
 
-        for group, dataset in self.dataset.aggregated_datasets:
-            labels_to_slugs = dataset.schema.labels_to_slugs
-            calculations_for_dataset = list(set(
-                labels_to_slugs.keys()).intersection(names))
+                joined_calculator = Calculator(joined_dataset)
+                joined_calculator.calculate_updates(
+                    joined_calculator, merged_dframe.to_jsondict(),
+                    parent_dataset_id=self.dataset.dataset_id)
 
-            for calc in calculations_for_dataset:
-                calcs_to_data[calc].append((
-                    names_to_formulas[calc],
-                    labels_to_slugs[calc],
-                    group,
-                    dataset
-                ))
+    def __update_merged_datasets(self, new_data, labels_to_slugs):
+        # store slugs as labels for child datasets
+        slugified_data = self.__slugify_data(new_data, labels_to_slugs)
 
-        return flatten(calcs_to_data.values())
+        # update the merged datasets with new_dframe
+        for mapping, merged_dataset in self.dataset.merged_datasets_with_map:
+            merged_calculator = Calculator(merged_dataset)
+            slugified_data = self.__remapped_data(mapping, slugified_data)
 
-    def __slugify_data(self, new_data, labels_to_slugs):
-        slugified_data = []
-        new_data = to_list(new_data)
-
-        for row in new_data:
-            for key, value in row.iteritems():
-                if labels_to_slugs.get(key) and key != MONGO_ID:
-                    del row[key]
-                    row[labels_to_slugs[key]] = value
-
-            slugified_data.append(row)
-
-        return slugified_data
-
-    def __remapped_data(self, mapping, slugified_data):
-        column_map = mapping.get(self.dataset.dataset_id) if mapping else None
-
-        if column_map:
-            slugified_data = [{column_map.get(k, k): v for k, v in row.items()}
-                              for row in slugified_data]
-
-        return slugified_data
+            merged_calculator.calculate_updates(
+                merged_calculator,
+                slugified_data,
+                parent_dataset_id=self.dataset.dataset_id)
 
     def __getstate__(self):
         """Get state for pickle."""
