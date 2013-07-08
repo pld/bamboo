@@ -271,8 +271,6 @@ class Calculator(object):
             merged_calculator.propagate_column(self.dataset)
 
     def __add_calculations(self, new_dframe, labels_to_slugs):
-        calculations = self.dataset.calculations()
-
         for calculation in self.dataset.calculations(include_aggs=False):
             function = self.parser.parse_formula(calculation.formula)
             new_column = new_dframe.apply(function[0], axis=1,
@@ -322,6 +320,12 @@ class Calculator(object):
                 update_id and self.dataset.has_pending_updates(update_id)):
             self.dataset.reload()
             raise self.calculate_updates.retry()
+
+    def __propagate_join(self, joined_dataset, merged_dframe):
+        joined_calculator = Calculator(joined_dataset)
+        joined_calculator.calculate_updates(
+            joined_calculator, merged_dframe.to_jsondict(),
+            parent_dataset_id=self.dataset.dataset_id)
 
     def __remapped_data(self, mapping, slugified_data):
         column_map = mapping.get(self.dataset.dataset_id) if mapping else None
@@ -395,27 +399,27 @@ class Calculator(object):
         for direction, other_dataset, on, joined_dataset in\
                 self.dataset.joined_datasets:
             if direction == 'left':
+                # only proceed if on in new dframe
                 if on in new_dframe_raw.columns:
-                    # only proceed if on in new dframe
                     other_dframe = other_dataset.dframe(padded=True)
 
+                    # only proceed if new on value is in on column in lhs
                     if len(set(new_dframe_raw[on]).intersection(
                             set(other_dframe[on]))):
-                        # only proceed if new on value is in on column in lhs
                         merged_dframe = other_dframe.join_dataset(
                             self.dataset, on)
                         joined_dataset.replace_observations(merged_dframe)
+
+                        self.__propagate_join(joined_dataset, merged_dframe)
             else:
                 merged_dframe = new_dframe_raw
 
+                # if on in new data join with existing data
                 if on in merged_dframe:
                     merged_dframe = new_dframe_raw.join_dataset(
                         other_dataset, on)
 
-                joined_calculator = Calculator(joined_dataset)
-                joined_calculator.calculate_updates(
-                    joined_calculator, merged_dframe.to_jsondict(),
-                    parent_dataset_id=self.dataset.dataset_id)
+                self.__propagate_join(joined_dataset, merged_dframe)
 
     def __update_merged_datasets(self, new_data, labels_to_slugs):
         # store slugs as labels for child datasets
