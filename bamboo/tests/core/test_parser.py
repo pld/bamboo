@@ -16,7 +16,7 @@ class TestParser(TestBase):
         self.row = {'amount': 1}
 
     def _parse_and_check_func(self, formula):
-        functions, _ = self.parser.parse_formula(formula)
+        functions = self.parser.parse_formula(formula)
         for func in functions:
             self.assertEqual(func.func.func_name, 'eval')
         return functions[0]
@@ -37,8 +37,8 @@ class TestParser(TestBase):
         formulas_to_deps = combine_dicts(AGG_CALCS_TO_DEPS, CALCS_TO_DEPS)
 
         for formula, column_list in formulas_to_deps.iteritems():
-            functions, dependent_columns = self.parser.parse_formula(formula)
-            self.assertEqual(set(column_list), dependent_columns)
+            self.parser.parse_formula(formula)
+            self.assertEqual(set(column_list), self.parser.dependent_columns)
 
     def test_parse_formula_bad_formula(self):
         bad_formulas = [

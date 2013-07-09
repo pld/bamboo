@@ -280,8 +280,22 @@ class Calculation(AbstractModel):
         return super(cls, cls).find_one(query)
 
     @classmethod
-    def find(cls, dataset):
-        query_args = QueryArgs(query={DATASET_ID: dataset.dataset_id},
+    def find(cls, dataset, include_aggs=True, only_aggs=False):
+        """Return the calculations for`dataset`.
+
+        :param dataset: The dataset to retrieve the calculations for.
+        :param include_aggs: Include aggregations, default True.
+        :param only_aggs: Exclude non-aggregations, default False.
+        """
+        query = {DATASET_ID: dataset.dataset_id}
+
+        if not include_aggs:
+            query[cls.AGGREGATION] = None
+
+        if only_aggs:
+            query[cls.AGGREGATION] = {'$ne': None}
+
+        query_args = QueryArgs(query=query,
                                order_by='name')
         return super(cls, cls).find(query_args)
 

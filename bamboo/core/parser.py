@@ -11,6 +11,21 @@ from bamboo.core.operations import EvalAndOp, EvalCaseOp, EvalComparisonOp,\
     EvalToday
 
 
+def find_dependent_columns(dataset, parsed_expr, result):
+    """Find dependent columns for a dataset and parsed expression.
+
+    :param dataset: The dataset to find dependent columns for.
+    :param parsed_expr: The parsed formula expression.
+    """
+    dependent_columns = parsed_expr.dependent_columns(dataset)
+    result.extend(dependent_columns)
+
+    for child in parsed_expr.get_children():
+        find_dependent_columns(dataset, child, result)
+
+    return result
+
+
 class ParseError(Exception):
     """For errors while parsing formulas."""
     pass
@@ -38,6 +53,7 @@ class Parser(object):
     bnf = None
     column_functions = None
     dataset = None
+    dependent_columns = None
     function_names = ['date', 'percentile', 'today']
     operator_names = ['and', 'or', 'not', 'in']
     parsed_expr = None
@@ -252,29 +268,19 @@ class Parser(object):
         :returns: A tuple with the name of the aggregation in the formula, if
             any and a list of functions built from the input string.
         """
-        # reset cached aggregation
+        # reset cached fields
         self.aggregation = None
+        self.dependent_columns = set()
 
         try:
-            self.parsed_expr = self.bnf.parseString(
-                input_str, parseAll=True)[0]
+            self.parsed_expr = self.bnf.parseString(input_str, parseAll=True)
         except ParseException, err:
-            raise ParseError('Parse Failure for string "%s": %s' % (input_str,
-                             err))
+            raise ParseError('Parse Failure for string "%s": %s' % (
+                             input_str, err))
 
-        functions = []
-        dependent_columns = set()
+        funcs = self.column_functions if self.aggregation else self.parsed_expr
 
-        if self.aggregation:
-            for column_function in self.column_functions:
-                functions.append(partial(column_function.eval))
-                dependent_columns = dependent_columns.union(
-                    self.__get_dependent_columns(column_function))
-        else:
-            functions.append(partial(self.parsed_expr.eval))
-            dependent_columns = self.__get_dependent_columns(self.parsed_expr)
-
-        return functions, dependent_columns
+        return [self.__extract_function(f) for f in funcs]
 
     def validate_formula(self, formula):
         """Validate the *formula* on an example *row* of data.
@@ -290,35 +296,18 @@ class Parser(object):
         self.aggregation = None
 
         # check valid formula
-        functions, dependent_columns = self.parse_formula(formula)
+        self.parse_formula(formula)
 
         if not self.dataset.schema:
             raise ParseError(
                 'No schema for dataset, please add data or wait for it to '
                 'finish processing')
 
-        for column in dependent_columns:
+        for column in self.dependent_columns:
             if column not in self.dataset.schema.keys():
                 raise ParseError('Missing column reference: %s' % column)
 
         return self.aggregation
-
-    def __get_dependent_columns(self, parsed_expr):
-        result = []
-
-        if self.dataset is None:
-            return result
-
-        def find_dependent_columns(parsed_expr, result):
-            dependent_columns = parsed_expr.dependent_columns(self.dataset)
-            result.extend(dependent_columns)
-
-            for child in parsed_expr.get_children():
-                find_dependent_columns(child, result)
-
-            return result
-
-        return set(find_dependent_columns(parsed_expr, result))
 
     def __build_caseless_or_expression(self, strings):
         literals = [
@@ -326,6 +315,16 @@ class Parser(object):
             aggregation in self.aggregation_names
         ]
         return reduce(lambda or_expr, literal: or_expr | literal, literals)
+
+    def __extract_function(self, function):
+        self.dependent_columns = self.dependent_columns.union(
+            self.__get_dependent_columns(function))
+
+        return partial(function.eval)
+
+    def __get_dependent_columns(self, parsed_expr):
+        return [] if self.dataset is None else set(
+            find_dependent_columns(self.dataset, parsed_expr, []))
 
     def __getstate__(self):
         """Get state for pickle."""
