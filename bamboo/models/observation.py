@@ -4,10 +4,10 @@ from pandas import concat
 from pymongo.errors import AutoReconnect
 
 from bamboo.core.frame import BambooFrame, DATASET_ID, INDEX
-from bamboo.lib.datetools import parse_timestamp_query
+from bamboo.lib.datetools import now, parse_timestamp_query
 from bamboo.lib.mongo import MONGO_ID, MONGO_ID_ENCODED
 from bamboo.lib.query_args import QueryArgs
-from bamboo.lib.utils import invert_dict, replace_keys
+from bamboo.lib.utils import combine_dicts, invert_dict, replace_keys
 from bamboo.models.abstract_model import AbstractModel
 
 
@@ -37,6 +37,8 @@ def encode(dframe, dataset, add_index=True):
 class Observation(AbstractModel):
 
     __collectionname__ = 'observations'
+
+    DELETED_AT = '-1'  # use a short code for key
     ENCODING = 'enc'
     ENCODING_DATASET_ID = '%s_%s' % (DATASET_ID, ENCODING)
 
@@ -51,7 +53,7 @@ class Observation(AbstractModel):
                  DATASET_ID: dataset.dataset_id}
         query = cls.encode(query, dataset=dataset)
 
-        super(cls, cls()).delete(query)
+        cls.__soft_delete(query)
 
     @classmethod
     def delete_all(cls, dataset, query=None):
@@ -110,10 +112,12 @@ class Observation(AbstractModel):
         return invert_dict(cls.encoding(dataset))
 
     @classmethod
-    def find(cls, dataset, query_args=None, as_cursor=False):
+    def find(cls, dataset, query_args=None, as_cursor=False,
+             include_deleted=False):
         """Return observation rows matching parameters.
 
         :param dataset: Dataset to return rows for.
+        :param include_deleted: If True, return delete records, default False.
         :param query_args: An optional QueryArgs to hold the query arguments.
 
         :raises: `JSONError` if the query could not be parsed.
@@ -127,6 +131,14 @@ class Observation(AbstractModel):
         query_args.query = parse_timestamp_query(query_args.query,
                                                  dataset.schema)
         query_args.encode(encoding, {DATASET_ID: dataset.dataset_id})
+
+        if not include_deleted:
+            query = query_args.query
+            query[cls.DELETED_AT] = 0
+            query_args.query = query
+
+        # exclude deleted at column
+        query_args.select = query_args.select or {cls.DELETED_AT: 0}
 
         distinct = query_args.distinct
         records = super(cls, cls).find(query_args, as_dict=True,
@@ -206,9 +218,13 @@ class Observation(AbstractModel):
         :param dex: The index of the row to update.
         :param record: The dictionary to update the row with.
         """
-        observation = cls.find_one(dataset, index, decode=False)
+        previous_record = cls.find_one(dataset, index).record
+        previous_record.pop('_id')
+        record = combine_dicts(previous_record, record)
         record = cls.encode(record, dataset=dataset)
-        super(cls, observation).update(record)
+
+        cls.delete(dataset, index)
+        super(cls, cls()).save(record)
 
     @classmethod
     def batch_read_dframe_from_cursor(cls, dataset, observations, distinct,
@@ -313,8 +329,20 @@ class Observation(AbstractModel):
 
     @classmethod
     def __encode_records(cls, dframe, encoding):
-        return [replace_keys(row.to_dict(), encoding) for (_, row)
-                in dframe.iterrows()]
+        return [cls.__encode_record(row.to_dict(), encoding)
+                for (_, row) in dframe.iterrows()]
+
+    @classmethod
+    def __encode_record(cls, row, encoding):
+        encoded = replace_keys(row, encoding)
+        encoded[cls.DELETED_AT] = 0
+
+        return encoded
+
+    @classmethod
+    def __soft_delete(cls, query):
+        cls.collection.update(query,
+                              {'$set': {cls.DELETED_AT: now().isoformat()}})
 
     @classmethod
     def __store_encoding(cls, dataset, encoding):

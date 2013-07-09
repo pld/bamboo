@@ -19,14 +19,11 @@ class AbstractModel(object):
     __collection__ = None
     __collectionname__ = None
 
-    # delimiter when passing multiple groups as a string
-    GROUP_DELIMITER = ','
-    ERROR_MESSAGE = 'error_message'
-
     DB_READ_BATCH_SIZE = 1000
     DB_SAVE_BATCH_SIZE = 2000
+    ERROR_MESSAGE = 'error_message'
+    GROUP_DELIMITER = ','  # delimiter when passing multiple groups as a string
     MIN_BATCH_SIZE = 50
-
     STATE = 'state'
     STATE_FAILED = 'failed'
     STATE_PENDING = 'pending'
@@ -91,8 +88,8 @@ class AbstractModel(object):
         """An interface to MongoDB's find functionality.
 
         :param query_args: An optional QueryArgs to hold the query arguments.
-        :param as_cursor: If true, return the cursor.
-        :param as_dict: If true, return dicts and not model instances.
+        :param as_cursor: If True, return the cursor.
+        :param as_dict: If True, return dicts and not model instances.
 
         :returns: A list of dicts or model instances for each row returned.
         """
@@ -120,6 +117,7 @@ class AbstractModel(object):
             select.
         """
         record = cls.collection.find_one(query, select)
+
         return record if as_dict else cls(record)
 
     @classmethod

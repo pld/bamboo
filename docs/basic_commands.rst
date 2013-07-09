@@ -11,13 +11,6 @@ Basic Commands
 
     [*SIC*] all spelling errors in the example dataset.
 
-Check the *bamboo* version
---------------------------
-
-.. code-block:: sh
-
-    curl http://bamboo.io/version
-
 Storing data in *bamboo*
 ------------------------
 
@@ -884,3 +877,10 @@ Linked dataset are the same as any other dataset.
             "sum_of_amount": 4.0
         }
     ]
+
+Check the *bamboo* version
+--------------------------
+
+.. code-block:: sh
+
+    curl http://bamboo.io/version

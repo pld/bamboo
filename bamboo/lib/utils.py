@@ -10,6 +10,7 @@ def flatten(list_):
 
 
 def combine_dicts(*dicts):
+    """Combine dicts with keys in later dicts taking precedence."""
     return dict(chain(*[_dict.iteritems() for _dict in dicts]))
 
 

@@ -1,8 +1,7 @@
-from datetime import datetime
-
 import numpy as np
 
 from bamboo.lib.datetools import parse_date_to_unix_time
+from bamboo.lib.datetools import now
 from bamboo.models.dataset import Dataset
 from bamboo.tests.core.test_calculator import TestCalculator
 
@@ -126,8 +125,7 @@ class TestCalculations(TestCalculator):
                 places = self.places
 
                 if dynamic:
-                    now = datetime.now()
-                    stored = parse_date_to_unix_time(now) -\
+                    stored = parse_date_to_unix_time(now()) -\
                         parse_date_to_unix_time(row['submit_date'])
                     # large approximate window for time compares
                     places = 2
