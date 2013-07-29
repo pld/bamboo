@@ -135,6 +135,7 @@ class TestCalculations(TestCalculator):
                 # one np.nan != np.nan, continue if we have two nan values
                 if np.isnan(result) and np.isnan(stored):
                     continue
+
                 msg = self._equal_msg(result, stored, formula)
                 self.assertAlmostEqual(result, stored, places, msg)
             except ValueError:

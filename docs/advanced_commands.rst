@@ -201,7 +201,7 @@ You can pass this to bamboo using the ``json`` parameter as follows:
 
 .. code-block:: sh
 
-    curl http://bamboo.io/datasets/8a3d74711475d8a51c84484fe73f24bd151242ea&jsonp=handleBambooDataset
+    curl http://bamboo.io/datasets/8a3d74711475d8a51c84484fe73f24bd151242ea&callback=handleBambooDataset
 
 Updating Dataset Metadata
 -------------------------
