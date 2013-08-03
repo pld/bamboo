@@ -80,7 +80,7 @@ class AbstractController(object):
         result = obj if isinstance(obj, basestring) else dump_mongo_json(obj)
         self.__add_cors_headers()
 
-        return '%s(%s)' % (callback, result) if callback else result
+        return '%s(%s)' % (str(callback), result) if callback else result
 
     def _safe_get_and_call(self, dataset_id, action, callback=None,
                            exceptions=(),
