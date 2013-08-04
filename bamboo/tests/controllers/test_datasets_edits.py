@@ -84,3 +84,20 @@ class TestDatasetsEdits(TestAbstractDatasets):
         # check that previous row exists
         all_observations = Observation.find(dataset, include_deleted=True)
         self.assertEqual(self.NUM_ROWS + 1, len(all_observations))
+
+    def test_update_row_with_agg(self):
+        amount_sum = 2007.5
+        amount_sum_after = 2008.5
+
+        self.dataset_id = self._post_file()
+        self._post_calculations(formulae=['sum(amount)'])
+        agg = self._test_aggregations()[0]
+        self.assertEqual(agg['sum_amount_'], amount_sum)
+
+        index = 0
+        update = {'amount': 10, 'food_type': 'breakfast'}
+        results = json.loads(self.controller.row_update(self.dataset_id, index,
+                                                        json.dumps(update)))
+        self._post_calculations(formulae=['sum(amount)'])
+        agg = self._test_aggregations()[0]
+        self.assertEqual(agg['sum_amount_'], amount_sum_after)

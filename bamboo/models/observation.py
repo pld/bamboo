@@ -223,8 +223,14 @@ class Observation(AbstractModel):
         record = combine_dicts(previous_record, record)
         record = cls.encode(record, dataset=dataset)
 
+        # TODO check that update is valid
+
         cls.delete(dataset, index)
         super(cls, cls()).save(record)
+
+        # propagate updates
+        # given edited dataset propagate updates
+        # update propagation function determines any optimizations
 
     @classmethod
     def batch_read_dframe_from_cursor(cls, dataset, observations, distinct,

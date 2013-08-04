@@ -194,13 +194,13 @@ class Calculator(object):
     def parse_aggregation(self, formula, name, groups, dframe=None):
         # TODO this should work with index eventually
         columns = self.parse_columns(formula, name, dframe, no_index=True)
-        functions = self.parser.parse_formula(formula)
+        self.parser.parse_formula(formula)
 
-        # get dframe with only necessary columns or _id column
-        # so there is at least one column, e.g. for the count aggregation
+        # get dframe with only the necessary columns
         select = combine_dicts({group: 1 for group in groups},
                                {col: 1 for col in self.dependent_columns})
 
+        # ensure at least one column (MONGO_ID) for the count aggregation
         query_args = QueryArgs(select=select or {MONGO_ID: 1})
         dframe = self.dataset.dframe(query_args=query_args,
                                      keep_mongo_keys=not select)
@@ -208,9 +208,17 @@ class Calculator(object):
         return Aggregator(self.dataset, dframe, groups,
                           self.parser.aggregation, name, columns)
 
-    def parse_columns(self, formula, name, dframe=None, length=None,
-                      no_index=False):
-        """Parse formula into function and variables."""
+    def parse_columns(self, formula, name, dframe=None, no_index=False):
+        """Parse a formula and return columns resulting from its functions.
+
+        Parse a formula into a list of functions then apply those functions to
+        the Data Frame and return the resulting columns.
+
+        :param formula: The formula to parse.
+        :param name: Name of the formula.
+        :param dframe: A DataFrame to apply functions to.
+        :param no_index: Drop the index on result columns.
+        """
         functions = self.parser.parse_formula(formula)
 
         # make select from dependent_columns
