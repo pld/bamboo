@@ -98,6 +98,7 @@ class TestDatasetsEdits(TestAbstractDatasets):
         update = {'amount': 10, 'food_type': 'breakfast'}
         results = json.loads(self.controller.row_update(self.dataset_id, index,
                                                         json.dumps(update)))
-        self._post_calculations(formulae=['sum(amount)'])
+        self.assertTrue(Datasets.SUCCESS in results.keys())
+
         agg = self._test_aggregations()[0]
         self.assertEqual(agg['sum_amount_'], amount_sum_after)

@@ -71,8 +71,7 @@ class Calculator(object):
                     c.formula, c.name, c.groups_as_list)
                 aggregator.save()
             else:
-                columns = self.parse_columns(c.formula, c.name,
-                                             length=self.dataset.num_columns)
+                columns = self.parse_columns(c.formula, c.name)
                 if new_cols is None:
                     new_cols = DataFrame(columns[0])
                 else:
@@ -194,6 +193,8 @@ class Calculator(object):
     def parse_aggregation(self, formula, name, groups, dframe=None):
         # TODO this should work with index eventually
         columns = self.parse_columns(formula, name, dframe, no_index=True)
+
+        # TODO is the below necessary?
         self.parser.parse_formula(formula)
 
         # get dframe with only the necessary columns
@@ -247,12 +248,16 @@ class Calculator(object):
 
         return columns
 
+    @task(default_retry_delay=5, ignore_result=True)
+    def propagate(self):
+        """Propagate changes in a modified dataset."""
+        pass
+
     def propagate_column(self, parent_dataset):
         """Propagate columns in `parent_dataset` to this dataset.
 
-        This is used when there has been a new calculation added to
-        a dataset and that new column needs to be propagated to all
-        child (merged) datasets.
+        When a new calculation is added to a dataset this will propagate the
+        new column to all child (merged) datasets.
 
         :param parent_dataset: The dataset to propagate to `self.dataset`.
         """

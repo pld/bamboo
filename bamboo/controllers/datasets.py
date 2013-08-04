@@ -483,7 +483,7 @@ class Datasets(AbstractController):
         """
         def action(dataset, data=data):
             data = safe_json_loads(data)
-            Observation.update(dataset, int(index), data)
+            dataset.update_observation(parse_int(index), data)
 
             return self._success('Updated row with index "%s".' % index,
                                  dataset_id)

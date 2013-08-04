@@ -500,6 +500,14 @@ class Dataset(AbstractModel, ImportableDataset):
         self.update({self.NUM_ROWS: len(dframe)})
         self.build_schema(dframe, overwrite=True)
 
+    def update_observation(self, index, data):
+        # TODO check that update is valid
+
+        Observation.update(self, index, data)
+
+        calculator = Calculator(self)
+        call_async(calculator.propagate, calculator)
+
     def delete_columns(self, columns):
         """Delete column `column` from this dataset.
 

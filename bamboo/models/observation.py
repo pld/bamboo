@@ -219,18 +219,14 @@ class Observation(AbstractModel):
         :param record: The dictionary to update the row with.
         """
         previous_record = cls.find_one(dataset, index).record
-        previous_record.pop('_id')
+        previous_record.pop(MONGO_ID)
         record = combine_dicts(previous_record, record)
         record = cls.encode(record, dataset=dataset)
 
-        # TODO check that update is valid
-
         cls.delete(dataset, index)
-        super(cls, cls()).save(record)
 
-        # propagate updates
-        # given edited dataset propagate updates
-        # update propagation function determines any optimizations
+        # TODO do we need to ensure the index stays the same?
+        super(cls, cls()).save(record)
 
     @classmethod
     def batch_read_dframe_from_cursor(cls, dataset, observations, distinct,

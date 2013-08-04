@@ -20,7 +20,7 @@ class Aggregator(object):
         :param dataset: The dataset to aggregate.
         :param dframe: The DataFrame to aggregate.
         :param groups: A list of columns to group on.
-        :param _type: The aggreagtion to perform.
+        :param _type: The aggregation to perform.
         :param name: The name of the aggregation.
         """
         self.columns = columns
