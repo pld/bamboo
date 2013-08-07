@@ -26,6 +26,11 @@ def find_dependent_columns(dataset, parsed_expr, result):
     return result
 
 
+def get_dependent_columns(parsed_expr, dataset):
+    return [] if dataset is None else set(
+        find_dependent_columns(dataset, parsed_expr, []))
+
+
 class ParseError(Exception):
     """For errors while parsing formulas."""
     pass
@@ -52,7 +57,6 @@ class Parser(object):
     aggregation_names = AGGREGATIONS.keys()
     bnf = None
     column_functions = None
-    dataset = None
     dependent_columns = None
     function_names = ['date', 'percentile', 'today']
     operator_names = ['and', 'or', 'not', 'in']
@@ -62,12 +66,7 @@ class Parser(object):
     reserved_words = aggregation_names + function_names + operator_names +\
         special_names
 
-    def __init__(self, dataset=None):
-        """Create parser and set dataset.
-
-        :params dataset: The dataset this parser will operate with.
-        """
-        self.dataset = dataset
+    def __init__(self):
         self.__build_bnf()
 
     def store_aggregation(self, _, __, tokens):
@@ -209,7 +208,7 @@ class Parser(object):
         # top level bnf
         self.bnf = agg_expr
 
-    def parse_formula(self, input_str):
+    def parse_formula(self, input_str, dataset):
         """Parse formula and return evaluation function.
 
         Parse `input_str` into an aggregation name and functions.
@@ -264,6 +263,7 @@ class Parser(object):
             - ``percentile(amount)``
 
         :param input_str: The string to parse.
+        :param dataset: The dataset to extract for.
 
         :returns: A tuple with the name of the aggregation in the formula, if
             any and a list of functions built from the input string.
@@ -280,15 +280,15 @@ class Parser(object):
 
         funcs = self.column_functions if self.aggregation else self.parsed_expr
 
-        return [self.__extract_function(f) for f in funcs]
+        return [self.__extract_function(f, dataset) for f in funcs]
 
-    def validate_formula(self, formula):
+    def validate_formula(self, formula, dataset):
         """Validate the *formula* on an example *row* of data.
 
         Rebuild the BNF then parse the `formula` given the sample `row`.
 
         :param formula: The formula to validate.
-        :param row: A sample row to check the formula against.
+        :param dataset: The dataset to validate against.
 
         :returns: The aggregation for the formula.
         """
@@ -296,15 +296,16 @@ class Parser(object):
         self.aggregation = None
 
         # check valid formula
-        self.parse_formula(formula)
+        self.parse_formula(formula, dataset)
+        schema = dataset.schema
 
-        if not self.dataset.schema:
+        if not schema:
             raise ParseError(
                 'No schema for dataset, please add data or wait for it to '
                 'finish processing')
 
         for column in self.dependent_columns:
-            if column not in self.dataset.schema.keys():
+            if column not in schema.keys():
                 raise ParseError('Missing column reference: %s' % column)
 
         return self.aggregation
@@ -316,15 +317,11 @@ class Parser(object):
         ]
         return reduce(lambda or_expr, literal: or_expr | literal, literals)
 
-    def __extract_function(self, function):
+    def __extract_function(self, function, dataset):
         self.dependent_columns = self.dependent_columns.union(
-            self.__get_dependent_columns(function))
+            get_dependent_columns(function, dataset))
 
         return partial(function.eval)
-
-    def __get_dependent_columns(self, parsed_expr):
-        return [] if self.dataset is None else set(
-            find_dependent_columns(self.dataset, parsed_expr, []))
 
     def __getstate__(self):
         """Get state for pickle."""
@@ -336,12 +333,11 @@ class Parser(object):
             self.special_names,
             self.reserved_words,
             self.special_names,
-            self.dataset,
         ]
 
     def __setstate__(self, state):
         """Set internal variables from pickled state."""
         self.aggregation, self.aggregation_names, self.function_names,\
             self.operator_names, self.special_names, self.reserved_words,\
-            self.special_names, self.dataset = state
+            self.special_names = state
         self.__build_bnf()

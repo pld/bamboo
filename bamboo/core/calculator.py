@@ -21,7 +21,7 @@ class Calculator(object):
 
     def __init__(self, dataset):
         self.dataset = dataset.reload()
-        self.parser = Parser(self.dataset)
+        self.parser = Parser()
 
     def validate(self, formula, groups):
         """Validate `formula` and `groups` for calculator's dataset.
@@ -36,10 +36,10 @@ class Calculator(object):
 
         :returns: The aggregation (or None) for the formula.
         """
-        aggregation = self.parser.validate_formula(formula)
+        aggregation = self.parser.validate_formula(formula, self.dataset)
 
         for group in groups:
-            if not group in self.parser.dataset.schema.keys():
+            if not group in self.dataset.schema.keys():
                 raise ParseError(
                     'Group %s not in dataset columns.' % group)
 
@@ -217,7 +217,7 @@ class Calculator(object):
         :param dframe: A DataFrame to apply functions to.
         :param no_index: Drop the index on result columns.
         """
-        functions = self.parser.parse_formula(formula)
+        functions = self.parser.parse_formula(formula, self.dataset)
 
         # make select from dependent_columns
         if dframe is None:
@@ -235,7 +235,7 @@ class Calculator(object):
 
         for function in functions:
             column = dframe.apply(function, axis=1,
-                                  args=(self.parser.dataset,))
+                                  args=(self.dataset,))
             column.name = make_unique(name, [c.name for c in columns])
 
             if no_index:
@@ -282,9 +282,10 @@ class Calculator(object):
 
     def __add_calculations(self, new_dframe, labels_to_slugs):
         for calculation in self.dataset.calculations(include_aggs=False):
-            function = self.parser.parse_formula(calculation.formula)
+            function = self.parser.parse_formula(calculation.formula,
+                                                 self.dataset)
             new_column = new_dframe.apply(function[0], axis=1,
-                                          args=(self.parser.dataset, ))
+                                          args=(self.dataset, ))
             potential_name = calculation.name
 
             if potential_name not in self.dataset.dframe().columns:
