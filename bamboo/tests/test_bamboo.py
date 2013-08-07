@@ -10,7 +10,7 @@ class TestBamboo(TestBase):
         TestBase.setUp(self)
 
     def test_bambooapp(self):
-        # this tests the importing bamboo.bambooapp succeeds
+        # this tests that importing bamboo.bambooapp succeeds
         pass
 
     def test_pep8(self):
