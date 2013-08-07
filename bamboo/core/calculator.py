@@ -194,9 +194,6 @@ class Calculator(object):
         # TODO this should work with index eventually
         columns = self.parse_columns(formula, name, dframe, no_index=True)
 
-        # TODO is the below necessary?
-        self.parser.parse_formula(formula)
-
         # get dframe with only the necessary columns
         select = combine_dicts({group: 1 for group in groups},
                                {col: 1 for col in self.dependent_columns})
