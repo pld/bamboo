@@ -40,15 +40,17 @@ def calculation_data(dataset):
     return flatten(calcs_to_data.values())
 
 
-def parse_aggregation(dataset, parser, formula, name, groups, dframe=None):
+def create_aggregator(dataset, formula, name, groups, dframe=None):
     # TODO this should work with index eventually
     columns = parse_columns(
         dataset, formula, name, dframe, no_index=True)
 
+    parser = Parser()
+    dependent_columns = parser.dependent_columns(formula, dataset)
+
     # get dframe with only the necessary columns
     select = combine_dicts({group: 1 for group in groups},
-                           {col: 1 for col in parser.dependent_columns(
-                               formula, dataset)})
+                           {col: 1 for col in dependent_columns})
 
     # ensure at least one column (MONGO_ID) for the count aggregation
     query_args = QueryArgs(select=select or {MONGO_ID: 1})
@@ -112,13 +114,11 @@ class Calculator(object):
         for c in calculations:
 
             if c.aggregation:
-                aggregator = parse_aggregation(
-                    self.dataset, self.parser, c.formula, c.name,
-                    c.groups_as_list)
+                aggregator = create_aggregator(
+                    self.dataset, c.formula, c.name, c.groups_as_list)
                 aggregator.save(self.dataset)
             else:
-                columns = parse_columns(
-                    self.dataset, c.formula, c.name)
+                columns = parse_columns(self.dataset, c.formula, c.name)
                 if new_cols is None:
                     new_cols = DataFrame(columns[0])
                 else:
@@ -353,8 +353,8 @@ class Calculator(object):
         :param agg_dataset: The DataSet to store the aggregation in.
         """
         # parse aggregation and build column arguments
-        aggregator = parse_aggregation(
-            self.dataset, self.parser, formula, name, groups, new_dframe)
+        aggregator = create_aggregator(
+            self.dataset, formula, name, groups, new_dframe)
         new_agg_dframe = aggregator.update(self.dataset, agg_dataset, formula)
 
         # jsondict from new dframe
