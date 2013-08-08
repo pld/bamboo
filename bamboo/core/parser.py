@@ -32,8 +32,7 @@ def find_dependent_columns(dataset, parsed_expr, result):
 
 
 def get_dependent_columns(parsed_expr, dataset):
-    return [] if dataset is None else set(
-        find_dependent_columns(dataset, parsed_expr, []))
+    return find_dependent_columns(dataset, parsed_expr, [])
 
 
 class ParseError(Exception):
@@ -62,7 +61,6 @@ class Parser(object):
     aggregation_names = AGGREGATIONS.keys()
     bnf = None
     column_functions = None
-    dependent_columns = None
     function_names = ['date', 'percentile', 'today']
     operator_names = ['and', 'or', 'not', 'in']
     parsed_expr = None
@@ -71,8 +69,18 @@ class Parser(object):
     reserved_words = aggregation_names + function_names + operator_names +\
         special_names
 
+    @property
+    def functions(self):
+        return self.column_functions if self.aggregation else self.parsed_expr
+
     def __init__(self):
         self.__build_bnf()
+
+    def dependent_columns(self, formula, dataset):
+        self.parse_formula(formula, dataset)
+        columns = [get_dependent_columns(f, dataset) for f in self.functions]
+
+        return set.union(set(), *columns)
 
     def store_aggregation(self, _, __, tokens):
         """Cached a parsed aggregation."""
@@ -274,7 +282,6 @@ class Parser(object):
         """
         # reset cached fields
         self.aggregation = None
-        self.dependent_columns = set()
 
         try:
             self.parsed_expr = self.bnf.parseString(input_str, parseAll=True)
@@ -282,9 +289,7 @@ class Parser(object):
             raise ParseError('Parse Failure for string "%s": %s' % (
                              input_str, err))
 
-        funcs = self.column_functions if self.aggregation else self.parsed_expr
-
-        return [self.__extract_function(f, dataset) for f in funcs]
+        return [partial(f.eval) for f in self.functions]
 
     def validate_formula(self, formula, dataset):
         """Validate the *formula* on an example *row* of data.
@@ -308,17 +313,11 @@ class Parser(object):
                 'No schema for dataset, please add data or wait for it to '
                 'finish processing')
 
-        for column in self.dependent_columns:
+        for column in self.dependent_columns(formula, dataset):
             if column not in schema.keys():
                 raise ParseError('Missing column reference: %s' % column)
 
         return self.aggregation
-
-    def __extract_function(self, function, dataset):
-        self.dependent_columns = self.dependent_columns.union(
-            get_dependent_columns(function, dataset))
-
-        return partial(function.eval)
 
     def __getstate__(self):
         """Get state for pickle."""

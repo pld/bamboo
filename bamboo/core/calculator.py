@@ -6,26 +6,10 @@ from pandas import concat, DataFrame
 from bamboo.core.aggregator import Aggregator
 from bamboo.core.frame import BambooFrame, NonUniqueJoinError
 from bamboo.core.parser import ParseError, Parser
-from bamboo.lib.mongo import MONGO_ID, MONGO_ID_ENCODED
+from bamboo.lib.mongo import MONGO_ID
+from bamboo.lib.parsing import parse_columns
 from bamboo.lib.query_args import QueryArgs
-from bamboo.lib.schema_builder import make_unique
 from bamboo.lib.utils import combine_dicts, flatten, to_list
-
-
-def build_columns(dataset, dframe, functions, name, no_index):
-    columns = []
-
-    for function in functions:
-        column = dframe.apply(function, axis=1,
-                              args=(dataset,))
-        column.name = make_unique(name, [c.name for c in columns])
-
-        if no_index:
-            column = column.reset_index(drop=True)
-
-        columns.append(column)
-
-    return columns
 
 
 def calculation_data(dataset):
@@ -59,47 +43,19 @@ def calculation_data(dataset):
 def parse_aggregation(dataset, parser, formula, name, groups, dframe=None):
     # TODO this should work with index eventually
     columns = parse_columns(
-        dataset, parser, formula, name, dframe, no_index=True)
+        dataset, formula, name, dframe, no_index=True)
 
     # get dframe with only the necessary columns
     select = combine_dicts({group: 1 for group in groups},
-                           {col: 1 for col in parser.dependent_columns})
+                           {col: 1 for col in parser.dependent_columns(
+                               formula, dataset)})
 
     # ensure at least one column (MONGO_ID) for the count aggregation
     query_args = QueryArgs(select=select or {MONGO_ID: 1})
     dframe = dataset.dframe(query_args=query_args,
                             keep_mongo_keys=not select)
 
-    return Aggregator(dataset, dframe, groups,
-                      parser.aggregation, name, columns)
-
-
-def parse_columns(dataset, parser, formula, name, dframe=None, no_index=False):
-    """Parse a formula and return columns resulting from its functions.
-
-    Parse a formula into a list of functions then apply those functions to
-    the Data Frame and return the resulting columns.
-
-    :param formula: The formula to parse.
-    :param name: Name of the formula.
-    :param dframe: A DataFrame to apply functions to.
-    :param no_index: Drop the index on result columns.
-    """
-    functions = parser.parse_formula(formula, dataset)
-
-    # make select from dependent_columns
-    if dframe is None:
-        select = {col: 1 for col in parser.dependent_columns or [MONGO_ID]}
-
-        dframe = dataset.dframe(
-            query_args=QueryArgs(select=select),
-            keep_mongo_keys=True).set_index(MONGO_ID_ENCODED)
-
-        if not parser.dependent_columns:
-            # constant column, use dummy
-            dframe['dummy'] = 0
-
-    return build_columns(dataset, dframe, functions, name, no_index)
+    return Aggregator(dframe, groups, parser.aggregation, name, columns)
 
 
 class Calculator(object):
@@ -109,9 +65,8 @@ class Calculator(object):
         self.dataset = dataset.reload()
         self.parser = Parser()
 
-    @property
-    def dependent_columns(self):
-        return self.parser.dependent_columns
+    def dependent_columns(self, formula, dataset):
+        return self.parser.dependent_columns(formula, dataset)
 
     def validate(self, formula, groups):
         """Validate `formula` and `groups` for calculator's dataset.
@@ -160,10 +115,10 @@ class Calculator(object):
                 aggregator = parse_aggregation(
                     self.dataset, self.parser, c.formula, c.name,
                     c.groups_as_list)
-                aggregator.save()
+                aggregator.save(self.dataset)
             else:
                 columns = parse_columns(
-                    self.dataset, self.parser, c.formula, c.name)
+                    self.dataset, c.formula, c.name)
                 if new_cols is None:
                     new_cols = DataFrame(columns[0])
                 else:
@@ -400,7 +355,7 @@ class Calculator(object):
         # parse aggregation and build column arguments
         aggregator = parse_aggregation(
             self.dataset, self.parser, formula, name, groups, new_dframe)
-        new_agg_dframe = aggregator.update(agg_dataset, self, formula)
+        new_agg_dframe = aggregator.update(self.dataset, agg_dataset, formula)
 
         # jsondict from new dframe
         new_data = new_agg_dframe.to_jsondict()
