@@ -56,6 +56,24 @@ def calculation_data(dataset):
     return flatten(calcs_to_data.values())
 
 
+def parse_aggregation(dataset, parser, formula, name, groups, dframe=None):
+    # TODO this should work with index eventually
+    columns = parse_columns(
+        dataset, parser, formula, name, dframe, no_index=True)
+
+    # get dframe with only the necessary columns
+    select = combine_dicts({group: 1 for group in groups},
+                           {col: 1 for col in parser.dependent_columns})
+
+    # ensure at least one column (MONGO_ID) for the count aggregation
+    query_args = QueryArgs(select=select or {MONGO_ID: 1})
+    dframe = dataset.dframe(query_args=query_args,
+                            keep_mongo_keys=not select)
+
+    return Aggregator(dataset, dframe, groups,
+                      parser.aggregation, name, columns)
+
+
 def parse_columns(dataset, parser, formula, name, dframe=None, no_index=False):
     """Parse a formula and return columns resulting from its functions.
 
@@ -139,8 +157,9 @@ class Calculator(object):
         for c in calculations:
 
             if c.aggregation:
-                aggregator = self.parse_aggregation(
-                    c.formula, c.name, c.groups_as_list)
+                aggregator = parse_aggregation(
+                    self.dataset, self.parser, c.formula, c.name,
+                    c.groups_as_list)
                 aggregator.save()
             else:
                 columns = parse_columns(
@@ -263,23 +282,6 @@ class Calculator(object):
 
         return BambooFrame(filtered_data, index=index)
 
-    def parse_aggregation(self, formula, name, groups, dframe=None):
-        # TODO this should work with index eventually
-        columns = parse_columns(
-            self.dataset, self.parser, formula, name, dframe, no_index=True)
-
-        # get dframe with only the necessary columns
-        select = combine_dicts({group: 1 for group in groups},
-                               {col: 1 for col in self.dependent_columns})
-
-        # ensure at least one column (MONGO_ID) for the count aggregation
-        query_args = QueryArgs(select=select or {MONGO_ID: 1})
-        dframe = self.dataset.dframe(query_args=query_args,
-                                     keep_mongo_keys=not select)
-
-        return Aggregator(self.dataset, dframe, groups,
-                          self.parser.aggregation, name, columns)
-
     @task(default_retry_delay=5, ignore_result=True)
     def propagate(self):
         """Propagate changes in a modified dataset."""
@@ -396,7 +398,8 @@ class Calculator(object):
         :param agg_dataset: The DataSet to store the aggregation in.
         """
         # parse aggregation and build column arguments
-        aggregator = self.parse_aggregation(formula, name, groups, new_dframe)
+        aggregator = parse_aggregation(
+            self.dataset, self.parser, formula, name, groups, new_dframe)
         new_agg_dframe = aggregator.update(agg_dataset, self, formula)
 
         # jsondict from new dframe
