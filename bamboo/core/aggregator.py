@@ -19,6 +19,28 @@ def merge_dframes(groups, dframes):
     return new_dframe
 
 
+def aggregated_dataset(dataset, dframe, groups):
+    """Create an aggregated dataset for this dataset.
+
+    Creates and saves a dataset from the given `dframe`.  Then stores this
+    dataset as an aggregated dataset given `groups` for `self`.
+
+    :param dframe: The DataFrame to store in the new aggregated dataset.
+    :param groups: The groups associated with this aggregated dataset.
+    :returns: The newly created aggregated dataset.
+    """
+    a_dataset = dataset.create()
+    a_dataset.save_observations(dframe)
+
+    # store a link to the new dataset
+    group_str = dataset.join_groups(groups)
+    a_datasets_dict = dataset.aggregated_datasets_dict
+    a_datasets_dict[group_str] = a_dataset.dataset_id
+    dataset.update({dataset.AGGREGATED_DATASETS: a_datasets_dict})
+
+    return a_dataset
+
+
 class Aggregator(object):
     """Perform a aggregations on datasets.
 
@@ -55,15 +77,14 @@ class Aggregator(object):
         new_dframe = BambooFrame(self.aggregation.eval(self.columns))
         new_dframe = new_dframe.add_parent_column(dataset.dataset_id)
 
-        agg_dataset = dataset.aggregated_dataset(self.groups)
+        a_dataset = dataset.aggregated_dataset(self.groups)
 
-        if agg_dataset is None:
-            agg_dataset = dataset.new_agg_dataset(
-                new_dframe, self.groups)
+        if a_dataset is None:
+            a_dataset = aggregated_dataset(dataset, new_dframe, self.groups)
         else:
-            agg_dframe = agg_dataset.dframe()
-            new_dframe = merge_dframes(self.groups, [agg_dframe, new_dframe])
-            agg_dataset.replace_observations(new_dframe)
+            a_dframe = a_dataset.dframe()
+            new_dframe = merge_dframes(self.groups, [a_dframe, new_dframe])
+            a_dataset.replace_observations(new_dframe)
 
         self.new_dframe = new_dframe
 
@@ -86,9 +107,9 @@ class Aggregator(object):
         else:
             dframe = self.updated_dframe(dataset, formula, dframe)
 
-        new_agg_dframe = concat([child_dataset.dframe(), dframe])
-        new_agg_dframe = new_agg_dframe.add_parent_column(parent_dataset_id)
-        child_dataset.replace_observations(new_agg_dframe)
+        new_a_dframe = concat([child_dataset.dframe(), dframe])
+        new_a_dframe = new_a_dframe.add_parent_column(parent_dataset_id)
+        child_dataset.replace_observations(new_a_dframe)
 
         return child_dataset.dframe()
 
