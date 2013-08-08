@@ -37,8 +37,8 @@ class TestParser(TestBase):
         formulas_to_deps = combine_dicts(AGG_CALCS_TO_DEPS, CALCS_TO_DEPS)
 
         for formula, column_list in formulas_to_deps.iteritems():
-            self.parser.parse_formula(formula, self.dataset)
-            self.assertEqual(set(column_list), self.parser.dependent_columns)
+            columns = self.parser.dependent_columns(formula, self.dataset)
+            self.assertEqual(set(column_list), columns)
 
     def test_parse_formula_bad_formula(self):
         bad_formulas = [

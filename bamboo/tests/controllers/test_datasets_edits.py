@@ -85,6 +85,8 @@ class TestDatasetsEdits(TestAbstractDatasets):
         all_observations = Observation.find(dataset, include_deleted=True)
         self.assertEqual(self.NUM_ROWS + 1, len(all_observations))
 
+"""
+FUTURE TEST
     def test_update_row_with_agg(self):
         amount_sum = 2007.5
         amount_sum_after = 2008.5
@@ -102,3 +104,4 @@ class TestDatasetsEdits(TestAbstractDatasets):
 
         agg = self._test_aggregations()[0]
         self.assertEqual(agg['sum_amount_'], amount_sum_after)
+"""
