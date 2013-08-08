@@ -11,6 +11,11 @@ from bamboo.core.operations import EvalAndOp, EvalCaseOp, EvalComparisonOp,\
     EvalToday
 
 
+def build_caseless_or_expression(strings):
+    literals = [CaselessLiteral(aggregation) for aggregation in strings]
+    return reduce(lambda or_expr, literal: or_expr | literal, literals)
+
+
 def find_dependent_columns(dataset, parsed_expr, result):
     """Find dependent columns for a dataset and parsed expression.
 
@@ -125,8 +130,7 @@ class Parser(object):
         case_op = CaselessLiteral('case').suppress()
 
         # aggregation functions
-        aggregations = self.__build_caseless_or_expression(
-            self.aggregation_names)
+        aggregations = build_caseless_or_expression(self.aggregation_names)
 
         # literal syntactic
         open_bracket = Literal('[').suppress()
@@ -309,13 +313,6 @@ class Parser(object):
                 raise ParseError('Missing column reference: %s' % column)
 
         return self.aggregation
-
-    def __build_caseless_or_expression(self, strings):
-        literals = [
-            CaselessLiteral(aggregation) for
-            aggregation in self.aggregation_names
-        ]
-        return reduce(lambda or_expr, literal: or_expr | literal, literals)
 
     def __extract_function(self, function, dataset):
         self.dependent_columns = self.dependent_columns.union(
