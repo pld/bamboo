@@ -88,7 +88,7 @@ class Aggregator(object):
 
         self.new_dframe = new_dframe
 
-    def update(self, dataset, child_dataset, formula):
+    def update(self, dataset, child_dataset, formula, reducible):
         """Attempt to reduce an update and store."""
         parent_dataset_id = dataset.dataset_id
 
@@ -100,8 +100,7 @@ class Aggregator(object):
         # remove rows in child from parent
         child_dataset.remove_parent_observations(parent_dataset_id)
 
-        if not self.groups and 'reduce' in dir(self.aggregation):
-            # if it is not grouped and a reduce is defined
+        if reducible and self.__is_reducible():
             dframe = BambooFrame(
                 self.aggregation.reduce(dframe, self.columns))
         else:
@@ -125,3 +124,7 @@ class Aggregator(object):
         dframe = merge_dframes(self.groups, [new_dframe, dframe])
 
         return dframe
+
+    def __is_reducible(self):
+        """If it is not grouped and a reduce is defined."""
+        return not self.groups and 'reduce' in dir(self.aggregation)

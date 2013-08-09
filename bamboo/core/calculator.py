@@ -240,7 +240,7 @@ class Calculator(object):
     @task(default_retry_delay=5, ignore_result=True)
     def propagate(self):
         """Propagate changes in a modified dataset."""
-        pass
+        self.__update_aggregate_datasets(None, reducible=False)
 
     def propagate_column(self, parent_dataset):
         """Propagate columns in `parent_dataset` to this dataset.
@@ -326,15 +326,15 @@ class Calculator(object):
 
         return slugified_data
 
-    def __update_aggregate_datasets(self, new_dframe):
+    def __update_aggregate_datasets(self, new_dframe, reducible=True):
         calcs_to_data = calculation_data(self.dataset)
 
         for formula, slug, groups, dataset in calcs_to_data:
             self.__update_aggregate_dataset(formula, new_dframe, slug, groups,
-                                            dataset)
+                                            dataset, reducible)
 
     def __update_aggregate_dataset(self, formula, new_dframe, name, groups,
-                                   agg_dataset):
+                                   agg_dataset, reducible):
         """Update the aggregated dataset built for `self` with `calculation`.
 
         Proceed with the following steps:
@@ -355,7 +355,8 @@ class Calculator(object):
         # parse aggregation and build column arguments
         aggregator = create_aggregator(
             self.dataset, formula, name, groups, new_dframe)
-        new_agg_dframe = aggregator.update(self.dataset, agg_dataset, formula)
+        new_agg_dframe = aggregator.update(self.dataset, agg_dataset, formula,
+                                           reducible)
 
         # jsondict from new dframe
         new_data = new_agg_dframe.to_jsondict()
