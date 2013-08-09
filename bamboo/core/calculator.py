@@ -6,22 +6,69 @@ from pandas import concat, DataFrame
 from bamboo.core.aggregator import Aggregator
 from bamboo.core.frame import BambooFrame, NonUniqueJoinError
 from bamboo.core.parser import ParseError, Parser
-from bamboo.lib.mongo import MONGO_ID, MONGO_ID_ENCODED
+from bamboo.lib.mongo import MONGO_ID
+from bamboo.lib.parsing import parse_columns
 from bamboo.lib.query_args import QueryArgs
-from bamboo.lib.schema_builder import make_unique
 from bamboo.lib.utils import combine_dicts, flatten, to_list
+
+
+def calculation_data(dataset):
+    """Create a list of aggregate calculation information.
+
+    Builds a list of calculation information from the current datasets
+    aggregated datasets and aggregate calculations.
+    """
+    calcs_to_data = defaultdict(list)
+
+    calculations = dataset.calculations(only_aggs=True)
+    names_to_formulas = {c.name: c.formula for c in calculations}
+    names = set(names_to_formulas.keys())
+
+    for group, dataset in dataset.aggregated_datasets:
+        labels_to_slugs = dataset.schema.labels_to_slugs
+        calculations_for_dataset = list(set(
+            labels_to_slugs.keys()).intersection(names))
+
+        for calc in calculations_for_dataset:
+            calcs_to_data[calc].append((
+                names_to_formulas[calc],
+                labels_to_slugs[calc],
+                group,
+                dataset
+            ))
+
+    return flatten(calcs_to_data.values())
+
+
+def create_aggregator(dataset, formula, name, groups, dframe=None):
+    # TODO this should work with index eventually
+    columns = parse_columns(
+        dataset, formula, name, dframe, no_index=True)
+
+    parser = Parser()
+    dependent_columns = parser.dependent_columns(formula, dataset)
+
+    # get dframe with only the necessary columns
+    select = combine_dicts({group: 1 for group in groups},
+                           {col: 1 for col in dependent_columns})
+
+    # ensure at least one column (MONGO_ID) for the count aggregation
+    query_args = QueryArgs(select=select or {MONGO_ID: 1})
+    dframe = dataset.dframe(query_args=query_args,
+                            keep_mongo_keys=not select)
+
+    return Aggregator(dframe, groups, parser.aggregation, name, columns)
 
 
 class Calculator(object):
     """Perform and store calculations and recalculations on update."""
 
-    @property
-    def dependent_columns(self):
-        return self.parser.dependent_columns
-
     def __init__(self, dataset):
         self.dataset = dataset.reload()
-        self.parser = Parser(self.dataset)
+        self.parser = Parser()
+
+    def dependent_columns(self, formula, dataset):
+        return self.parser.dependent_columns(formula, dataset)
 
     def validate(self, formula, groups):
         """Validate `formula` and `groups` for calculator's dataset.
@@ -36,10 +83,10 @@ class Calculator(object):
 
         :returns: The aggregation (or None) for the formula.
         """
-        aggregation = self.parser.validate_formula(formula)
+        aggregation = self.parser.validate_formula(formula, self.dataset)
 
         for group in groups:
-            if not group in self.parser.dataset.schema.keys():
+            if not group in self.dataset.schema.keys():
                 raise ParseError(
                     'Group %s not in dataset columns.' % group)
 
@@ -67,12 +114,11 @@ class Calculator(object):
         for c in calculations:
 
             if c.aggregation:
-                aggregator = self.parse_aggregation(
-                    c.formula, c.name, c.groups_as_list)
-                aggregator.save()
+                aggregator = create_aggregator(
+                    self.dataset, c.formula, c.name, c.groups_as_list)
+                aggregator.save(self.dataset)
             else:
-                columns = self.parse_columns(c.formula, c.name,
-                                             length=self.dataset.num_columns)
+                columns = parse_columns(self.dataset, c.formula, c.name)
                 if new_cols is None:
                     new_cols = DataFrame(columns[0])
                 else:
@@ -191,60 +237,16 @@ class Calculator(object):
 
         return BambooFrame(filtered_data, index=index)
 
-    def parse_aggregation(self, formula, name, groups, dframe=None):
-        # TODO this should work with index eventually
-        columns = self.parse_columns(formula, name, dframe, no_index=True)
-        functions = self.parser.parse_formula(formula)
-
-        # get dframe with only necessary columns or _id column
-        # so there is at least one column, e.g. for the count aggregation
-        select = combine_dicts({group: 1 for group in groups},
-                               {col: 1 for col in self.dependent_columns})
-
-        query_args = QueryArgs(select=select or {MONGO_ID: 1})
-        dframe = self.dataset.dframe(query_args=query_args,
-                                     keep_mongo_keys=not select)
-
-        return Aggregator(self.dataset, dframe, groups,
-                          self.parser.aggregation, name, columns)
-
-    def parse_columns(self, formula, name, dframe=None, length=None,
-                      no_index=False):
-        """Parse formula into function and variables."""
-        functions = self.parser.parse_formula(formula)
-
-        # make select from dependent_columns
-        if dframe is None:
-            select = {col: 1 for col in self.dependent_columns or [MONGO_ID]}
-
-            dframe = self.dataset.dframe(
-                query_args=QueryArgs(select=select),
-                keep_mongo_keys=True).set_index(MONGO_ID_ENCODED)
-
-            if not self.dependent_columns:
-                # constant column, use dummy
-                dframe['dummy'] = 0
-
-        columns = []
-
-        for function in functions:
-            column = dframe.apply(function, axis=1,
-                                  args=(self.parser.dataset,))
-            column.name = make_unique(name, [c.name for c in columns])
-
-            if no_index:
-                column = column.reset_index(drop=True)
-
-            columns.append(column)
-
-        return columns
+    @task(default_retry_delay=5, ignore_result=True)
+    def propagate(self):
+        """Propagate changes in a modified dataset."""
+        self.__update_aggregate_datasets(None, reducible=False)
 
     def propagate_column(self, parent_dataset):
         """Propagate columns in `parent_dataset` to this dataset.
 
-        This is used when there has been a new calculation added to
-        a dataset and that new column needs to be propagated to all
-        child (merged) datasets.
+        When a new calculation is added to a dataset this will propagate the
+        new column to all child (merged) datasets.
 
         :param parent_dataset: The dataset to propagate to `self.dataset`.
         """
@@ -272,9 +274,10 @@ class Calculator(object):
 
     def __add_calculations(self, new_dframe, labels_to_slugs):
         for calculation in self.dataset.calculations(include_aggs=False):
-            function = self.parser.parse_formula(calculation.formula)
+            function = self.parser.parse_formula(
+                calculation.formula, self.dataset)
             new_column = new_dframe.apply(function[0], axis=1,
-                                          args=(self.parser.dataset, ))
+                                          args=(self.dataset, ))
             potential_name = calculation.name
 
             if potential_name not in self.dataset.dframe().columns:
@@ -286,33 +289,6 @@ class Calculator(object):
             new_dframe = new_dframe.join(new_column)
 
         return new_dframe
-
-    def __calculation_data(self):
-        """Create a list of aggregate calculation information.
-
-        Builds a list of calculation information from the current datasets
-        aggregated datasets and aggregate calculations.
-        """
-        calcs_to_data = defaultdict(list)
-
-        calculations = self.dataset.calculations(only_aggs=True)
-        names_to_formulas = {c.name: c.formula for c in calculations}
-        names = set(names_to_formulas.keys())
-
-        for group, dataset in self.dataset.aggregated_datasets:
-            labels_to_slugs = dataset.schema.labels_to_slugs
-            calculations_for_dataset = list(set(
-                labels_to_slugs.keys()).intersection(names))
-
-            for calc in calculations_for_dataset:
-                calcs_to_data[calc].append((
-                    names_to_formulas[calc],
-                    labels_to_slugs[calc],
-                    group,
-                    dataset
-                ))
-
-        return flatten(calcs_to_data.values())
 
     def __ensure_ready(self, update_id):
         # dataset must not be pending
@@ -350,15 +326,15 @@ class Calculator(object):
 
         return slugified_data
 
-    def __update_aggregate_datasets(self, new_dframe):
-        calcs_to_data = self.__calculation_data()
+    def __update_aggregate_datasets(self, new_dframe, reducible=True):
+        calcs_to_data = calculation_data(self.dataset)
 
         for formula, slug, groups, dataset in calcs_to_data:
             self.__update_aggregate_dataset(formula, new_dframe, slug, groups,
-                                            dataset)
+                                            dataset, reducible)
 
     def __update_aggregate_dataset(self, formula, new_dframe, name, groups,
-                                   agg_dataset):
+                                   agg_dataset, reducible):
         """Update the aggregated dataset built for `self` with `calculation`.
 
         Proceed with the following steps:
@@ -377,8 +353,10 @@ class Calculator(object):
         :param agg_dataset: The DataSet to store the aggregation in.
         """
         # parse aggregation and build column arguments
-        aggregator = self.parse_aggregation(formula, name, groups, new_dframe)
-        new_agg_dframe = aggregator.update(agg_dataset, self, formula)
+        aggregator = create_aggregator(
+            self.dataset, formula, name, groups, new_dframe)
+        new_agg_dframe = aggregator.update(self.dataset, agg_dataset, formula,
+                                           reducible)
 
         # jsondict from new dframe
         new_data = new_agg_dframe.to_jsondict()

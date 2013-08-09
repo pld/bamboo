@@ -219,11 +219,13 @@ class Observation(AbstractModel):
         :param record: The dictionary to update the row with.
         """
         previous_record = cls.find_one(dataset, index).record
-        previous_record.pop('_id')
+        previous_record.pop(MONGO_ID)
         record = combine_dicts(previous_record, record)
         record = cls.encode(record, dataset=dataset)
 
         cls.delete(dataset, index)
+
+        # TODO do we need to ensure the index stays the same?
         super(cls, cls()).save(record)
 
     @classmethod

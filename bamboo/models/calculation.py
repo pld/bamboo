@@ -74,7 +74,9 @@ def calculate_task(calculations, dataset):
     calculator.calculate_columns(calculations)
 
     for calculation in calculations:
-        calculation.add_dependencies(dataset, calculator.dependent_columns)
+        calculation.add_dependencies(
+            dataset,
+            calculator.dependent_columns(calculation.formula, dataset))
 
         if calculation.aggregation is not None:
             aggregated_id = dataset.aggregated_datasets_dict[calculation.group]

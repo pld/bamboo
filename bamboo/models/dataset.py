@@ -500,6 +500,14 @@ class Dataset(AbstractModel, ImportableDataset):
         self.update({self.NUM_ROWS: len(dframe)})
         self.build_schema(dframe, overwrite=True)
 
+    def update_observation(self, index, data):
+        # TODO check that update is valid
+
+        Observation.update(self, index, data)
+
+        calculator = Calculator(self)
+        call_async(calculator.propagate, calculator)
+
     def delete_columns(self, columns):
         """Delete column `column` from this dataset.
 
@@ -604,28 +612,6 @@ class Dataset(AbstractModel, ImportableDataset):
         self.__dframe = None
 
         return self
-
-    def new_agg_dataset(self, dframe, groups):
-        """Create an aggregated dataset for this dataset.
-
-        Creates and saves a dataset from the given `dframe`.  Then stores this
-        dataset as an aggregated dataset given `groups` for `self`.
-
-        :param dframe: The DataFrame to store in the new aggregated dataset.
-        :param groups: The groups associated with this aggregated dataset.
-        :returns: The newly created aggregated dataset.
-        """
-        agg_dataset = self.create()
-        agg_dataset.save_observations(dframe)
-
-        # store a link to the new dataset
-        group_str = self.join_groups(groups)
-        agg_datasets_dict = self.aggregated_datasets_dict
-        agg_datasets_dict[group_str] = agg_dataset.dataset_id
-        self.update({
-            self.AGGREGATED_DATASETS: agg_datasets_dict})
-
-        return agg_dataset
 
     def has_pending_updates(self, update_id):
         """Check if this dataset has pending updates.

@@ -12,18 +12,18 @@ class TestParser(TestBase):
         TestBase.setUp(self)
         self.dataset_id = self._post_file()
         self.dataset = Dataset.find_one(self.dataset_id)
-        self.parser = Parser(self.dataset)
+        self.parser = Parser()
         self.row = {'amount': 1}
 
     def _parse_and_check_func(self, formula):
-        functions = self.parser.parse_formula(formula)
+        functions = self.parser.parse_formula(formula, self.dataset)
         for func in functions:
             self.assertEqual(func.func.func_name, 'eval')
         return functions[0]
 
     def test_parse_formula(self):
         func = self._parse_and_check_func('amount')
-        self.assertEqual(func(self.row, self.parser.dataset), 1)
+        self.assertEqual(func(self.row, self.dataset), 1)
 
     def test_bnf(self):
         self.parser._Parser__build_bnf()
@@ -31,14 +31,14 @@ class TestParser(TestBase):
 
     def test_parse_formula_with_var(self):
         func = self._parse_and_check_func('amount + 1')
-        self.assertEqual(func(self.row, self.parser.dataset), 2)
+        self.assertEqual(func(self.row, self.dataset), 2)
 
     def test_parse_formula_dependent_columns(self):
         formulas_to_deps = combine_dicts(AGG_CALCS_TO_DEPS, CALCS_TO_DEPS)
 
         for formula, column_list in formulas_to_deps.iteritems():
-            self.parser.parse_formula(formula)
-            self.assertEqual(set(column_list), self.parser.dependent_columns)
+            columns = self.parser.dependent_columns(formula, self.dataset)
+            self.assertEqual(set(column_list), columns)
 
     def test_parse_formula_bad_formula(self):
         bad_formulas = [
@@ -49,4 +49,4 @@ class TestParser(TestBase):
 
         for bad_formula in bad_formulas:
             self.assertRaises(ParseError, self.parser.parse_formula,
-                              bad_formula)
+                              bad_formula, self.dataset)
