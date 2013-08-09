@@ -69,18 +69,19 @@ class Parser(object):
     reserved_words = aggregation_names + function_names + operator_names +\
         special_names
 
+    def __init__(self):
+        self.bnf = self.__build_bnf()
+
+    @classmethod
+    def dependent_columns(cls, formula, dataset):
+        functions, _ = cls.parse(formula)
+        columns = [get_dependent_columns(f, dataset) for f in functions]
+
+        return set.union(set(), *columns)
+
     @property
     def functions(self):
         return self.column_functions if self.aggregation else self.parsed_expr
-
-    def __init__(self):
-        self.__build_bnf()
-
-    def dependent_columns(self, formula, dataset):
-        self.parse_formula(formula, dataset)
-        columns = [get_dependent_columns(f, dataset) for f in self.functions]
-
-        return set.union(set(), *columns)
 
     def store_aggregation(self, _, __, tokens):
         """Cached a parsed aggregation."""
@@ -211,19 +212,16 @@ class Parser(object):
             (percentile_func, 1, opAssoc.RIGHT, EvalPercentile),
         ])
 
-        agg_expr = ((
-                    aggregations + open_paren +
-                    Optional(trans_expr + ZeroOrMore(comma + trans_expr)))
-                    .setParseAction(self.store_aggregation) + close_paren)\
+        return ((aggregations + open_paren + Optional(
+            trans_expr + ZeroOrMore(comma + trans_expr)))
+            .setParseAction(self.store_aggregation) + close_paren)\
             | trans_expr
 
-        # top level bnf
-        self.bnf = agg_expr
-
-    def parse_formula(self, input_str, dataset):
+    @classmethod
+    def parse(cls, formula):
         """Parse formula and return evaluation function.
 
-        Parse `input_str` into an aggregation name and functions.
+        Parse `formula` into an aggregation name and functions.
         There will be multiple functions is the aggregation takes multiple
         arguments, e.g. ratio which takes a numerator and denominator formula.
 
@@ -274,24 +272,36 @@ class Parser(object):
         - transformations: row-wise column based aggregations
             - ``percentile(amount)``
 
-        :param input_str: The string to parse.
-        :param dataset: The dataset to extract for.
+        :param formula: The string to parse.
 
         :returns: A tuple with the name of the aggregation in the formula, if
-            any and a list of functions built from the input string.
+           any and a list of functions built from the input string.
         """
-        # reset cached fields
-        self.aggregation = None
+        parser = cls()
 
         try:
-            self.parsed_expr = self.bnf.parseString(input_str, parseAll=True)
+            parser.parsed_expr = parser.bnf.parseString(formula, parseAll=True)
         except ParseException, err:
             raise ParseError('Parse Failure for string "%s": %s' % (
-                             input_str, err))
+                             formula, err))
 
-        return [partial(f.eval) for f in self.functions]
+        return [parser.functions, parser.aggregation]
 
-    def validate_formula(self, formula, dataset):
+    @classmethod
+    def parse_aggregation(cls, formula):
+        _, a = cls.parse(formula)
+        return a
+
+    @classmethod
+    def parse_function(cls, formula):
+        return cls.parse_functions(formula)[0]
+
+    @classmethod
+    def parse_functions(cls, formula):
+        return [partial(f.eval) for f in cls.parse(formula)[0]]
+
+    @classmethod
+    def validate_formula(cls, formula, dataset):
         """Validate the *formula* on an example *row* of data.
 
         Rebuild the BNF then parse the `formula` given the sample `row`.
@@ -301,11 +311,8 @@ class Parser(object):
 
         :returns: The aggregation for the formula.
         """
-        # remove saved aggregation
-        self.aggregation = None
-
         # check valid formula
-        self.parse_formula(formula, dataset)
+        cls.parse(formula)
         schema = dataset.schema
 
         if not schema:
@@ -313,11 +320,11 @@ class Parser(object):
                 'No schema for dataset, please add data or wait for it to '
                 'finish processing')
 
-        for column in self.dependent_columns(formula, dataset):
+        for column in cls.dependent_columns(formula, dataset):
             if column not in schema.keys():
                 raise ParseError('Missing column reference: %s' % column)
 
-        return self.aggregation
+        return cls.parse_aggregation(formula)
 
     def __getstate__(self):
         """Get state for pickle."""

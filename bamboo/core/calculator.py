@@ -45,8 +45,8 @@ def create_aggregator(dataset, formula, name, groups, dframe=None):
     columns = parse_columns(
         dataset, formula, name, dframe, no_index=True)
 
-    parser = Parser()
-    dependent_columns = parser.dependent_columns(formula, dataset)
+    dependent_columns = Parser.dependent_columns(formula, dataset)
+    aggregation = Parser.parse_aggregation(formula)
 
     # get dframe with only the necessary columns
     select = combine_dicts({group: 1 for group in groups},
@@ -57,7 +57,7 @@ def create_aggregator(dataset, formula, name, groups, dframe=None):
     dframe = dataset.dframe(query_args=query_args,
                             keep_mongo_keys=not select)
 
-    return Aggregator(dframe, groups, parser.aggregation, name, columns)
+    return Aggregator(dframe, groups, aggregation, name, columns)
 
 
 class Calculator(object):
@@ -68,7 +68,7 @@ class Calculator(object):
         self.parser = Parser()
 
     def dependent_columns(self, formula, dataset):
-        return self.parser.dependent_columns(formula, dataset)
+        return Parser.dependent_columns(formula, dataset)
 
     def validate(self, formula, groups):
         """Validate `formula` and `groups` for calculator's dataset.
@@ -83,7 +83,7 @@ class Calculator(object):
 
         :returns: The aggregation (or None) for the formula.
         """
-        aggregation = self.parser.validate_formula(formula, self.dataset)
+        aggregation = Parser.validate_formula(formula, self.dataset)
 
         for group in groups:
             if not group in self.dataset.schema.keys():
@@ -274,9 +274,8 @@ class Calculator(object):
 
     def __add_calculations(self, new_dframe, labels_to_slugs):
         for calculation in self.dataset.calculations(include_aggs=False):
-            function = self.parser.parse_formula(
-                calculation.formula, self.dataset)
-            new_column = new_dframe.apply(function[0], axis=1,
+            function = Parser.parse_function(calculation.formula)
+            new_column = new_dframe.apply(function, axis=1,
                                           args=(self.dataset, ))
             potential_name = calculation.name
 

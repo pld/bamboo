@@ -31,9 +31,8 @@ def parse_columns(dataset, formula, name, dframe=None, no_index=False):
     :param dframe: A DataFrame to apply functions to.
     :param no_index: Drop the index on result columns.
     """
-    parser = Parser()
-    functions = parser.parse_formula(formula, dataset)
-    dependent_columns = parser.dependent_columns(formula, dataset)
+    functions = Parser.parse_functions(formula)
+    dependent_columns = Parser.dependent_columns(formula, dataset)
 
     # make select from dependent_columns
     if dframe is None:
