@@ -399,8 +399,7 @@ class Calculator(object):
             slugified_data = remapped_data(self.dataset.dataset_id,
                                            mapping, slugified_data)
 
-            # TODO is reload necessary?
-            calculate_updates(merged_dataset.reload(), slugified_data,
+            calculate_updates(merged_dataset, slugified_data,
                               parent_dataset_id=self.dataset.dataset_id)
 
     def __getstate__(self):
