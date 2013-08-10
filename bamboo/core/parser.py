@@ -16,7 +16,11 @@ def build_caseless_or_expression(strings):
     return reduce(lambda or_expr, literal: or_expr | literal, literals)
 
 
-def find_dependent_columns(dataset, parsed_expr, result):
+def get_dependent_columns(parsed_expr, dataset):
+    return __find_dependent_columns(dataset, parsed_expr, [])
+
+
+def __find_dependent_columns(dataset, parsed_expr, result):
     """Find dependent columns for a dataset and parsed expression.
 
     :param dataset: The dataset to find dependent columns for.
@@ -26,13 +30,9 @@ def find_dependent_columns(dataset, parsed_expr, result):
     result.extend(dependent_columns)
 
     for child in parsed_expr.get_children():
-        find_dependent_columns(dataset, child, result)
+        __find_dependent_columns(dataset, child, result)
 
     return result
-
-
-def get_dependent_columns(parsed_expr, dataset):
-    return find_dependent_columns(dataset, parsed_expr, [])
 
 
 class ParseError(Exception):

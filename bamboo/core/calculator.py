@@ -12,24 +12,6 @@ from bamboo.lib.query_args import QueryArgs
 from bamboo.lib.utils import combine_dicts, flatten, to_list
 
 
-def add_calculations(dataset, new_dframe, labels_to_slugs):
-    for calculation in dataset.calculations(include_aggs=False):
-        function = Parser.parse_function(calculation.formula)
-        new_column = new_dframe.apply(function, axis=1,
-                                      args=(dataset, ))
-        potential_name = calculation.name
-
-        if potential_name not in dataset.dframe().columns:
-            if potential_name in labels_to_slugs:
-                new_column.name = labels_to_slugs[potential_name]
-        else:
-            new_column.name = potential_name
-
-        new_dframe = new_dframe.join(new_column)
-
-    return new_dframe
-
-
 def calculate_columns(dataset, calculations):
     """Calculate and store new columns for `calculations`.
 
@@ -53,7 +35,7 @@ def calculate_columns(dataset, calculations):
     for c in calculations:
 
         if c.aggregation:
-            aggregator = create_aggregator(
+            aggregator = __create_aggregator(
                 dataset, c.formula, c.name, c.groups_as_list)
             aggregator.save(dataset)
         else:
@@ -66,7 +48,7 @@ def calculate_columns(dataset, calculations):
             dataset.update_observations(new_cols)
 
     # propagate calculation to any merged child datasets
-    [propagate_column(x, dataset) for x in dataset.merged_datasets]
+    [__propagate_column(x, dataset) for x in dataset.merged_datasets]
 
 
 @task(default_retry_delay=5, ignore_result=True)
@@ -86,7 +68,7 @@ def calculate_updates(dataset, new_data, new_dframe_raw=None,
     :param parent_dataset_id: If passed add ID as parent ID to column,
         default is None.
     """
-    ensure_ready(dataset, update_id)
+    __ensure_ready(dataset, update_id)
 
     labels_to_slugs = dataset.schema.labels_to_slugs
 
@@ -98,7 +80,7 @@ def calculate_updates(dataset, new_data, new_dframe_raw=None,
     new_dframe = new_dframe_raw.recognize_dates_from_schema(
         dataset.schema)
 
-    new_dframe = add_calculations(
+    new_dframe = __add_calculations(
         dataset, new_dframe, labels_to_slugs)
 
     # set parent id if provided
@@ -108,40 +90,11 @@ def calculate_updates(dataset, new_data, new_dframe_raw=None,
     dataset.append_observations(new_dframe)
     dataset.clear_summary_stats()
 
-    calculator = Calculator(dataset)
-    calculator.propagate(calculator, new_data=new_data, new_dframe=new_dframe,
-                         new_dframe_raw=new_dframe_raw,
-                         labels_to_slugs=labels_to_slugs)
+    propagate(dataset, new_data=new_data, new_dframe=new_dframe,
+              new_dframe_raw=new_dframe_raw,
+              labels_to_slugs=labels_to_slugs)
 
     dataset.update_complete(update_id)
-
-
-def calculation_data(dataset):
-    """Create a list of aggregate calculation information.
-
-    Builds a list of calculation information from the current datasets
-    aggregated datasets and aggregate calculations.
-    """
-    calcs_to_data = defaultdict(list)
-
-    calculations = dataset.calculations(only_aggs=True)
-    names_to_formulas = {c.name: c.formula for c in calculations}
-    names = set(names_to_formulas.keys())
-
-    for group, dataset in dataset.aggregated_datasets:
-        labels_to_slugs = dataset.schema.labels_to_slugs
-        calculations_for_dataset = list(set(
-            labels_to_slugs.keys()).intersection(names))
-
-        for calc in calculations_for_dataset:
-            calcs_to_data[calc].append((
-                names_to_formulas[calc],
-                labels_to_slugs[calc],
-                group,
-                dataset
-            ))
-
-    return flatten(calcs_to_data.values())
 
 
 def check_update_is_valid(dataset, new_dframe_raw):
@@ -165,26 +118,6 @@ def check_update_is_valid(dataset, new_dframe_raw):
             raise NonUniqueJoinError(
                 'Cannot update. This is the right hand join and the'
                 'column "%s" will become non-unique.' % on)
-
-
-def create_aggregator(dataset, formula, name, groups, dframe=None):
-    # TODO this should work with index eventually
-    columns = parse_columns(
-        dataset, formula, name, dframe, no_index=True)
-
-    dependent_columns = Parser.dependent_columns(formula, dataset)
-    aggregation = Parser.parse_aggregation(formula)
-
-    # get dframe with only the necessary columns
-    select = combine_dicts({group: 1 for group in groups},
-                           {col: 1 for col in dependent_columns})
-
-    # ensure at least one column (MONGO_ID) for the count aggregation
-    query_args = QueryArgs(select=select or {MONGO_ID: 1})
-    dframe = dataset.dframe(query_args=query_args,
-                            keep_mongo_keys=not select)
-
-    return Aggregator(dframe, groups, aggregation, name, columns)
 
 
 def dframe_from_update(dataset, new_data, labels_to_slugs):
@@ -229,7 +162,87 @@ def dframe_from_update(dataset, new_data, labels_to_slugs):
     return BambooFrame(filtered_data, index=index)
 
 
-def ensure_ready(dataset, update_id):
+@task(default_retry_delay=5, ignore_result=True)
+def propagate(dataset, new_data=None, new_dframe=None,
+              new_dframe_raw=None,
+              labels_to_slugs=None, reducible=True):
+    """Propagate changes in a modified dataset."""
+    __update_aggregate_datasets(dataset, new_dframe, reducible=reducible)
+
+    if new_data:
+        __update_merged_datasets(dataset, new_data, labels_to_slugs)
+
+    if new_dframe_raw is not None:
+        __update_joined_datasets(dataset, new_dframe_raw)
+
+
+def __add_calculations(dataset, new_dframe, labels_to_slugs):
+    for calculation in dataset.calculations(include_aggs=False):
+        function = Parser.parse_function(calculation.formula)
+        new_column = new_dframe.apply(function, axis=1,
+                                      args=(dataset, ))
+        potential_name = calculation.name
+
+        if potential_name not in dataset.dframe().columns:
+            if potential_name in labels_to_slugs:
+                new_column.name = labels_to_slugs[potential_name]
+        else:
+            new_column.name = potential_name
+
+        new_dframe = new_dframe.join(new_column)
+
+    return new_dframe
+
+
+def __calculation_data(dataset):
+    """Create a list of aggregate calculation information.
+
+    Builds a list of calculation information from the current datasets
+    aggregated datasets and aggregate calculations.
+    """
+    calcs_to_data = defaultdict(list)
+
+    calculations = dataset.calculations(only_aggs=True)
+    names_to_formulas = {c.name: c.formula for c in calculations}
+    names = set(names_to_formulas.keys())
+
+    for group, dataset in dataset.aggregated_datasets:
+        labels_to_slugs = dataset.schema.labels_to_slugs
+        calculations_for_dataset = list(set(
+            labels_to_slugs.keys()).intersection(names))
+
+        for calc in calculations_for_dataset:
+            calcs_to_data[calc].append((
+                names_to_formulas[calc],
+                labels_to_slugs[calc],
+                group,
+                dataset
+            ))
+
+    return flatten(calcs_to_data.values())
+
+
+def __create_aggregator(dataset, formula, name, groups, dframe=None):
+    # TODO this should work with index eventually
+    columns = parse_columns(
+        dataset, formula, name, dframe, no_index=True)
+
+    dependent_columns = Parser.dependent_columns(formula, dataset)
+    aggregation = Parser.parse_aggregation(formula)
+
+    # get dframe with only the necessary columns
+    select = combine_dicts({group: 1 for group in groups},
+                           {col: 1 for col in dependent_columns})
+
+    # ensure at least one column (MONGO_ID) for the count aggregation
+    query_args = QueryArgs(select=select or {MONGO_ID: 1})
+    dframe = dataset.dframe(query_args=query_args,
+                            keep_mongo_keys=not select)
+
+    return Aggregator(dframe, groups, aggregation, name, columns)
+
+
+def __ensure_ready(dataset, update_id):
     # dataset must not be pending
     if not dataset.is_ready or (
             update_id and dataset.has_pending_updates(update_id)):
@@ -237,14 +250,14 @@ def ensure_ready(dataset, update_id):
         raise calculate_updates.retry()
 
 
-def propagate_column(dataset, parent_dataset):
+def __propagate_column(dataset, parent_dataset):
     """Propagate columns in `parent_dataset` to `dataset`.
 
     When a new calculation is added to a dataset this will propagate the
     new column to all child (merged) datasets.
 
     :param dataset: THe child dataet.
-    :param parent_dataset: The dataset to propagate to `self.dataset`.
+    :param parent_dataset: The dataset to propagate.
     """
     # delete the rows in this dataset from the parent
     dataset.remove_parent_observations(parent_dataset.dataset_id)
@@ -264,10 +277,10 @@ def propagate_column(dataset, parent_dataset):
     dataset.clear_summary_stats()
 
     # recur into merged dataset
-    [propagate_column(x, dataset) for x in dataset.merged_datasets]
+    [__propagate_column(x, dataset) for x in dataset.merged_datasets]
 
 
-def remapped_data(dataset_id, mapping, slugified_data):
+def __remapped_data(dataset_id, mapping, slugified_data):
     column_map = mapping.get(dataset_id) if mapping else None
 
     if column_map:
@@ -277,7 +290,7 @@ def remapped_data(dataset_id, mapping, slugified_data):
     return slugified_data
 
 
-def slugify_data(new_data, labels_to_slugs):
+def __slugify_data(new_data, labels_to_slugs):
     slugified_data = []
     new_data = to_list(new_data)
 
@@ -292,116 +305,85 @@ def slugify_data(new_data, labels_to_slugs):
     return slugified_data
 
 
-class Calculator(object):
-    """Perform and store calculations and recalculations on update."""
+def __update_aggregate_datasets(dataset, new_dframe, reducible=True):
+    calcs_to_data = __calculation_data(dataset)
 
-    def __init__(self, dataset):
-        self.dataset = dataset.reload()
+    for formula, slug, groups, a_dataset in calcs_to_data:
+        __update_aggregate_dataset(dataset, formula, new_dframe, slug, groups,
+                                   a_dataset, reducible)
 
-    @task(default_retry_delay=5, ignore_result=True)
-    def propagate(self, new_data=None, new_dframe=None,
-                  new_dframe_raw=None,
-                  labels_to_slugs=None, reducible=True):
-        """Propagate changes in a modified dataset."""
-        self.__update_aggregate_datasets(new_dframe, reducible=reducible)
 
-        if new_data:
-            self.__update_merged_datasets(new_data, labels_to_slugs)
+def __update_aggregate_dataset(dataset, formula, new_dframe, name, groups,
+                               a_dataset, reducible):
+    """Update the aggregated dataset built for `dataset` with `calculation`.
 
-        if new_dframe_raw is not None:
-            self.__update_joined_datasets(new_dframe_raw)
+    Proceed with the following steps:
 
-    def __propagate_join(self, joined_dataset, merged_dframe):
-        calculate_updates(joined_dataset, merged_dframe.to_jsondict(),
-                          parent_dataset_id=self.dataset.dataset_id)
+        - delete the rows in this dataset from the parent
+        - recalculate aggregated dataframe from aggregation
+        - update aggregated dataset with new dataframe and add parent id
+        - recur on all merged datasets descending from the aggregated
+          dataset
 
-    def __update_aggregate_datasets(self, new_dframe, reducible=True):
-        calcs_to_data = calculation_data(self.dataset)
+    :param formula: The formula to execute.
+    :param new_dframe: The DataFrame to aggregate on.
+    :param name: The name of the aggregation.
+    :param groups: A column or columns to group on.
+    :type group: String, list of strings, or None.
+    :param a_dataset: The DataSet to store the aggregation in.
+    """
+    # parse aggregation and build column arguments
+    aggregator = __create_aggregator(
+        dataset, formula, name, groups, new_dframe)
+    new_agg_dframe = aggregator.update(dataset, a_dataset, formula, reducible)
 
-        for formula, slug, groups, dataset in calcs_to_data:
-            self.__update_aggregate_dataset(formula, new_dframe, slug, groups,
-                                            dataset, reducible)
+    # jsondict from new dframe
+    new_data = new_agg_dframe.to_jsondict()
 
-    def __update_aggregate_dataset(self, formula, new_dframe, name, groups,
-                                   agg_dataset, reducible):
-        """Update the aggregated dataset built for `self` with `calculation`.
+    for merged_dataset in a_dataset.merged_datasets:
+        # remove rows in child from this merged dataset
+        merged_dataset.remove_parent_observations(
+            a_dataset.dataset_id)
 
-        Proceed with the following steps:
+        # calculate updates for the child
+        calculate_updates(merged_dataset, new_data,
+                          parent_dataset_id=a_dataset.dataset_id)
 
-            - delete the rows in this dataset from the parent
-            - recalculate aggregated dataframe from aggregation
-            - update aggregated dataset with new dataframe and add parent id
-            - recur on all merged datasets descending from the aggregated
-              dataset
 
-        :param formula: The formula to execute.
-        :param new_dframe: The DataFrame to aggregate on.
-        :param name: The name of the aggregation.
-        :param groups: A column or columns to group on.
-        :type group: String, list of strings, or None.
-        :param agg_dataset: The DataSet to store the aggregation in.
-        """
-        # parse aggregation and build column arguments
-        aggregator = create_aggregator(
-            self.dataset, formula, name, groups, new_dframe)
-        new_agg_dframe = aggregator.update(self.dataset, agg_dataset, formula,
-                                           reducible)
+def __update_joined_datasets(dataset, new_dframe_raw):
+    # update any joined datasets
+    for direction, other_dataset, on, j_dataset in dataset.joined_datasets:
+        if direction == 'left':
+            # only proceed if on in new dframe
+            if on in new_dframe_raw.columns:
+                other_dframe = other_dataset.dframe(padded=True)
 
-        # jsondict from new dframe
-        new_data = new_agg_dframe.to_jsondict()
+                # only proceed if new on value is in on column in lhs
+                if len(set(new_dframe_raw[on]).intersection(
+                        set(other_dframe[on]))):
+                    merged_dframe = other_dframe.join_dataset(dataset, on)
+                    j_dataset.replace_observations(merged_dframe)
 
-        for merged_dataset in agg_dataset.merged_datasets:
-            # remove rows in child from this merged dataset
-            merged_dataset.remove_parent_observations(
-                agg_dataset.dataset_id)
+                    # TODO is it OK not to propagate the join here?
+        else:
+            merged_dframe = new_dframe_raw
 
-            # calculate updates for the child
-            calculate_updates(merged_dataset, new_data,
-                              parent_dataset_id=agg_dataset.dataset_id)
+            # if on in new data join with existing data
+            if on in merged_dframe:
+                merged_dframe = new_dframe_raw.join_dataset(other_dataset, on)
 
-    def __update_joined_datasets(self, new_dframe_raw):
-        # update any joined datasets
-        for direction, other_dataset, on, joined_dataset in\
-                self.dataset.joined_datasets:
-            if direction == 'left':
-                # only proceed if on in new dframe
-                if on in new_dframe_raw.columns:
-                    other_dframe = other_dataset.dframe(padded=True)
+            calculate_updates(j_dataset, merged_dframe.to_jsondict(),
+                              parent_dataset_id=dataset.dataset_id)
 
-                    # only proceed if new on value is in on column in lhs
-                    if len(set(new_dframe_raw[on]).intersection(
-                            set(other_dframe[on]))):
-                        merged_dframe = other_dframe.join_dataset(
-                            self.dataset, on)
-                        joined_dataset.replace_observations(merged_dframe)
 
-                        # TODO is it OK not to propagate the join here?
-                        #self.__propagate_join(joined_dataset, merged_dframe)
-            else:
-                merged_dframe = new_dframe_raw
+def __update_merged_datasets(dataset, new_data, labels_to_slugs):
+    # store slugs as labels for child datasets
+    slugified_data = __slugify_data(new_data, labels_to_slugs)
 
-                # if on in new data join with existing data
-                if on in merged_dframe:
-                    merged_dframe = new_dframe_raw.join_dataset(
-                        other_dataset, on)
+    # update the merged datasets with new_dframe
+    for mapping, merged_dataset in dataset.merged_datasets_with_map:
+        slugified_data = __remapped_data(dataset.dataset_id, mapping,
+                                         slugified_data)
 
-                self.__propagate_join(joined_dataset, merged_dframe)
-
-    def __update_merged_datasets(self, new_data, labels_to_slugs):
-        # store slugs as labels for child datasets
-        slugified_data = slugify_data(new_data, labels_to_slugs)
-
-        # update the merged datasets with new_dframe
-        for mapping, merged_dataset in self.dataset.merged_datasets_with_map:
-            slugified_data = remapped_data(self.dataset.dataset_id,
-                                           mapping, slugified_data)
-
-            calculate_updates(merged_dataset, slugified_data,
-                              parent_dataset_id=self.dataset.dataset_id)
-
-    def __getstate__(self):
-        """Get state for pickle."""
-        return self.dataset
-
-    def __setstate__(self, state):
-        self.dataset = state
+        calculate_updates(merged_dataset, slugified_data,
+                          parent_dataset_id=dataset.dataset_id)

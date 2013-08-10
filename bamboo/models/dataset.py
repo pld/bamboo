@@ -6,7 +6,7 @@ from celery.task import task
 from pandas import rolling_window
 
 from bamboo.core.calculator import calculate_updates,\
-    Calculator, check_update_is_valid, dframe_from_update
+    check_update_is_valid, dframe_from_update, propagate
 from bamboo.core.frame import BambooFrame, BAMBOO_RESERVED_KEY_PREFIX,\
     DATASET_ID, INDEX, PARENT_DATASET_ID
 from bamboo.core.summary import summarize
@@ -507,8 +507,7 @@ class Dataset(AbstractModel, ImportableDataset):
 
         Observation.update(self, index, data)
 
-        calculator = Calculator(self)
-        call_async(calculator.propagate, calculator, reducible=False)
+        call_async(propagate, self, reducible=False)
 
     def delete_columns(self, columns):
         """Delete column `column` from this dataset.
