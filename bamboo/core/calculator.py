@@ -359,8 +359,7 @@ class Calculator(object):
                 agg_dataset.dataset_id)
 
             # calculate updates for the child
-            # TODO is reload necessary?
-            calculate_updates(merged_dataset.reload(), new_data,
+            calculate_updates(merged_dataset, new_data,
                               parent_dataset_id=agg_dataset.dataset_id)
 
     def __update_joined_datasets(self, new_dframe_raw):
