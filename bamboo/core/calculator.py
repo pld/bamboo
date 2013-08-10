@@ -66,9 +66,7 @@ def calculate_columns(dataset, calculations):
             dataset.update_observations(new_cols)
 
     # propagate calculation to any merged child datasets
-    for merged_dataset in dataset.merged_datasets:
-        merged_calculator = Calculator(merged_dataset)
-        merged_calculator.propagate_column(dataset)
+    [propagate_column(x, dataset) for x in dataset.merged_datasets]
 
 
 @task(default_retry_delay=5, ignore_result=True)
@@ -169,6 +167,26 @@ def check_update_is_valid(dataset, new_dframe_raw):
                 'column "%s" will become non-unique.' % on)
 
 
+def create_aggregator(dataset, formula, name, groups, dframe=None):
+    # TODO this should work with index eventually
+    columns = parse_columns(
+        dataset, formula, name, dframe, no_index=True)
+
+    dependent_columns = Parser.dependent_columns(formula, dataset)
+    aggregation = Parser.parse_aggregation(formula)
+
+    # get dframe with only the necessary columns
+    select = combine_dicts({group: 1 for group in groups},
+                           {col: 1 for col in dependent_columns})
+
+    # ensure at least one column (MONGO_ID) for the count aggregation
+    query_args = QueryArgs(select=select or {MONGO_ID: 1})
+    dframe = dataset.dframe(query_args=query_args,
+                            keep_mongo_keys=not select)
+
+    return Aggregator(dframe, groups, aggregation, name, columns)
+
+
 def dframe_from_update(dataset, new_data, labels_to_slugs):
     """Make a single-row dataframe for the additional data to add.
 
@@ -219,6 +237,36 @@ def ensure_ready(dataset, update_id):
         raise calculate_updates.retry()
 
 
+def propagate_column(dataset, parent_dataset):
+    """Propagate columns in `parent_dataset` to `dataset`.
+
+    When a new calculation is added to a dataset this will propagate the
+    new column to all child (merged) datasets.
+
+    :param dataset: THe child dataet.
+    :param parent_dataset: The dataset to propagate to `self.dataset`.
+    """
+    # delete the rows in this dataset from the parent
+    dataset.remove_parent_observations(parent_dataset.dataset_id)
+
+    # get this dataset without the out-of-date parent rows
+    dframe = dataset.dframe(keep_parent_ids=True)
+
+    # create new dframe from the upated parent and add parent id
+    parent_dframe = parent_dataset.dframe().add_parent_column(
+        parent_dataset.dataset_id)
+
+    # merge this new dframe with the existing dframe
+    updated_dframe = concat([dframe, parent_dframe])
+
+    # save new dframe (updates schema)
+    dataset.replace_observations(updated_dframe)
+    dataset.clear_summary_stats()
+
+    # recur into merged dataset
+    [propagate_column(x, dataset) for x in dataset.merged_datasets]
+
+
 def remapped_data(dataset_id, mapping, slugified_data):
     column_map = mapping.get(dataset_id) if mapping else None
 
@@ -229,24 +277,19 @@ def remapped_data(dataset_id, mapping, slugified_data):
     return slugified_data
 
 
-def create_aggregator(dataset, formula, name, groups, dframe=None):
-    # TODO this should work with index eventually
-    columns = parse_columns(
-        dataset, formula, name, dframe, no_index=True)
+def slugify_data(new_data, labels_to_slugs):
+    slugified_data = []
+    new_data = to_list(new_data)
 
-    dependent_columns = Parser.dependent_columns(formula, dataset)
-    aggregation = Parser.parse_aggregation(formula)
+    for row in new_data:
+        for key, value in row.iteritems():
+            if labels_to_slugs.get(key) and key != MONGO_ID:
+                del row[key]
+                row[labels_to_slugs[key]] = value
 
-    # get dframe with only the necessary columns
-    select = combine_dicts({group: 1 for group in groups},
-                           {col: 1 for col in dependent_columns})
+        slugified_data.append(row)
 
-    # ensure at least one column (MONGO_ID) for the count aggregation
-    query_args = QueryArgs(select=select or {MONGO_ID: 1})
-    dframe = dataset.dframe(query_args=query_args,
-                            keep_mongo_keys=not select)
-
-    return Aggregator(dframe, groups, aggregation, name, columns)
+    return slugified_data
 
 
 class Calculator(object):
@@ -268,55 +311,9 @@ class Calculator(object):
         if new_dframe_raw is not None:
             self.__update_joined_datasets(new_dframe_raw)
 
-    def propagate_column(self, parent_dataset):
-        """Propagate columns in `parent_dataset` to this dataset.
-
-        When a new calculation is added to a dataset this will propagate the
-        new column to all child (merged) datasets.
-
-        :param parent_dataset: The dataset to propagate to `self.dataset`.
-        """
-        # delete the rows in this dataset from the parent
-        self.dataset.remove_parent_observations(parent_dataset.dataset_id)
-
-        # get this dataset without the out-of-date parent rows
-        dframe = self.dataset.dframe(keep_parent_ids=True)
-
-        # create new dframe from the upated parent and add parent id
-        parent_dframe = parent_dataset.dframe().add_parent_column(
-            parent_dataset.dataset_id)
-
-        # merge this new dframe with the existing dframe
-        updated_dframe = concat([dframe, parent_dframe])
-
-        # save new dframe (updates schema)
-        self.dataset.replace_observations(updated_dframe)
-        self.dataset.clear_summary_stats()
-
-        # recur
-        for merged_dataset in self.dataset.merged_datasets:
-            merged_calculator = Calculator(merged_dataset)
-            merged_calculator.propagate_column(self.dataset)
-
     def __propagate_join(self, joined_dataset, merged_dframe):
-        joined_calculator = Calculator(joined_dataset)
-        joined_calculator.calculate_updates(
-            joined_calculator, merged_dframe.to_jsondict(),
-            parent_dataset_id=self.dataset.dataset_id)
-
-    def __slugify_data(self, new_data, labels_to_slugs):
-        slugified_data = []
-        new_data = to_list(new_data)
-
-        for row in new_data:
-            for key, value in row.iteritems():
-                if labels_to_slugs.get(key) and key != MONGO_ID:
-                    del row[key]
-                    row[labels_to_slugs[key]] = value
-
-            slugified_data.append(row)
-
-        return slugified_data
+        calculate_updates(joined_dataset, merged_dframe.to_jsondict(),
+                          parent_dataset_id=self.dataset.dataset_id)
 
     def __update_aggregate_datasets(self, new_dframe, reducible=True):
         calcs_to_data = calculation_data(self.dataset)
@@ -392,7 +389,7 @@ class Calculator(object):
 
     def __update_merged_datasets(self, new_data, labels_to_slugs):
         # store slugs as labels for child datasets
-        slugified_data = self.__slugify_data(new_data, labels_to_slugs)
+        slugified_data = slugify_data(new_data, labels_to_slugs)
 
         # update the merged datasets with new_dframe
         for mapping, merged_dataset in self.dataset.merged_datasets_with_map:
