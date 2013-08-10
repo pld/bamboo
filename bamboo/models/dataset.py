@@ -506,7 +506,7 @@ class Dataset(AbstractModel, ImportableDataset):
         Observation.update(self, index, data)
 
         calculator = Calculator(self)
-        call_async(calculator.propagate, calculator)
+        call_async(calculator.propagate, calculator, reducible=False)
 
     def delete_columns(self, columns):
         """Delete column `column` from this dataset.

@@ -155,9 +155,9 @@ class Calculator(object):
         self.dataset.append_observations(new_dframe)
         self.dataset.clear_summary_stats()
 
-        self.__update_aggregate_datasets(new_dframe)
-        self.__update_merged_datasets(new_data, labels_to_slugs)
-        self.__update_joined_datasets(new_dframe_raw)
+        self.propagate(new_data=new_data, new_dframe=new_dframe,
+                       new_dframe_raw=new_dframe_raw,
+                       labels_to_slugs=labels_to_slugs)
 
         self.dataset.update_complete(update_id)
 
@@ -224,9 +224,17 @@ class Calculator(object):
         return BambooFrame(filtered_data, index=index)
 
     @task(default_retry_delay=5, ignore_result=True)
-    def propagate(self):
+    def propagate(self, new_data=None, new_dframe=None,
+                  new_dframe_raw=None,
+                  labels_to_slugs=None, reducible=True):
         """Propagate changes in a modified dataset."""
-        self.__update_aggregate_datasets(None, reducible=False)
+        self.__update_aggregate_datasets(new_dframe, reducible=reducible)
+
+        if new_data:
+            self.__update_merged_datasets(new_data, labels_to_slugs)
+
+        if new_dframe_raw:
+            self.__update_joined_datasets(new_dframe_raw)
 
     def propagate_column(self, parent_dataset):
         """Propagate columns in `parent_dataset` to this dataset.
