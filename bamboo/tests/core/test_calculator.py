@@ -1,5 +1,5 @@
 from bamboo.core.parser import Parser
-from bamboo.core.calculator import Calculator
+from bamboo.core.calculator import calculate_columns
 from bamboo.lib.datetools import recognize_dates
 from bamboo.models.calculation import Calculation
 from bamboo.models.dataset import Dataset
@@ -44,11 +44,9 @@ class TestCalculator(TestBase):
 
             Parser.validate_formula(formula, self.dataset)
 
-            calculator = Calculator(self.dataset)
-
             calculation = Calculation()
             calculation.save(self.dataset, formula, name, self.group)
-            calculator.calculate_columns([calculation])
+            calculate_columns(self.dataset, [calculation])
 
             self.column_labels_to_slugs = self.dataset.schema.labels_to_slugs
 

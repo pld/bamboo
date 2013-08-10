@@ -12,6 +12,47 @@ from bamboo.lib.query_args import QueryArgs
 from bamboo.lib.utils import combine_dicts, flatten, to_list
 
 
+def calculate_columns(dataset, calculations):
+    """Calculate and store new columns for `calculations`.
+
+    The new columns are join t othe Calculation dframe and replace the
+    dataset's observations.
+
+    .. note::
+
+        This can result in race-conditions when:
+
+        - deleting ``controllers.Datasets.DELETE``
+        - updating ``controllers.Datasets.POST([dataset_id])``
+
+        Therefore, perform these actions asychronously.
+
+    :param dataset: The dataset to calculate for.
+    :param calculations: A list of calculations.
+    """
+    new_cols = None
+
+    for c in calculations:
+
+        if c.aggregation:
+            aggregator = create_aggregator(
+                dataset, c.formula, c.name, c.groups_as_list)
+            aggregator.save(dataset)
+        else:
+            columns = parse_columns(dataset, c.formula, c.name)
+            if new_cols is None:
+                new_cols = DataFrame(columns[0])
+            else:
+                new_cols = new_cols.join(columns[0])
+
+            dataset.update_observations(new_cols)
+
+    # propagate calculation to any merged child datasets
+    for merged_dataset in dataset.merged_datasets:
+        merged_calculator = Calculator(merged_dataset)
+        merged_calculator.propagate_column(dataset)
+
+
 def calculation_data(dataset):
     """Create a list of aggregate calculation information.
 
@@ -40,6 +81,16 @@ def calculation_data(dataset):
     return flatten(calcs_to_data.values())
 
 
+def remapped_data(dataset_id, mapping, slugified_data):
+    column_map = mapping.get(dataset_id) if mapping else None
+
+    if column_map:
+        slugified_data = [{column_map.get(k, k): v for k, v in row.items()}
+                          for row in slugified_data]
+
+    return slugified_data
+
+
 def create_aggregator(dataset, formula, name, groups, dframe=None):
     # TODO this should work with index eventually
     columns = parse_columns(
@@ -65,45 +116,6 @@ class Calculator(object):
 
     def __init__(self, dataset):
         self.dataset = dataset.reload()
-
-    def calculate_columns(self, calculations):
-        """Calculate and store new columns for `calculations`.
-
-        The new columns are join t othe Calculation dframe and replace the
-        dataset's observations.
-
-        .. note::
-
-            This can result in race-conditions when:
-
-            - deleting ``controllers.Datasets.DELETE``
-            - updating ``controllers.Datasets.POST([dataset_id])``
-
-            Therefore, perform these actions asychronously.
-
-        :param calculations: A list of calculations.
-        """
-        new_cols = None
-
-        for c in calculations:
-
-            if c.aggregation:
-                aggregator = create_aggregator(
-                    self.dataset, c.formula, c.name, c.groups_as_list)
-                aggregator.save(self.dataset)
-            else:
-                columns = parse_columns(self.dataset, c.formula, c.name)
-                if new_cols is None:
-                    new_cols = DataFrame(columns[0])
-                else:
-                    new_cols = new_cols.join(columns[0])
-
-                self.dataset.update_observations(new_cols)
-
-        # propagate calculation to any merged child datasets
-        for merged_dataset in self.dataset.merged_datasets:
-            merged_calculator = Calculator(merged_dataset)
-            merged_calculator.propagate_column(self.dataset)
 
     @task(default_retry_delay=5, ignore_result=True)
     def calculate_updates(self, new_data, new_dframe_raw=None,
@@ -276,15 +288,6 @@ class Calculator(object):
             joined_calculator, merged_dframe.to_jsondict(),
             parent_dataset_id=self.dataset.dataset_id)
 
-    def __remapped_data(self, mapping, slugified_data):
-        column_map = mapping.get(self.dataset.dataset_id) if mapping else None
-
-        if column_map:
-            slugified_data = [{column_map.get(k, k): v for k, v in row.items()}
-                              for row in slugified_data]
-
-        return slugified_data
-
     def __slugify_data(self, new_data, labels_to_slugs):
         slugified_data = []
         new_data = to_list(new_data)
@@ -380,7 +383,8 @@ class Calculator(object):
         # update the merged datasets with new_dframe
         for mapping, merged_dataset in self.dataset.merged_datasets_with_map:
             merged_calculator = Calculator(merged_dataset)
-            slugified_data = self.__remapped_data(mapping, slugified_data)
+            slugified_data = remapped_data(self.dataset.dataset_id,
+                                           mapping, slugified_data)
 
             merged_calculator.calculate_updates(
                 merged_calculator,

@@ -2,7 +2,7 @@ import traceback
 
 from celery.task import Task, task
 
-from bamboo.core.calculator import Calculator
+from bamboo.core.calculator import calculate_columns
 from bamboo.core.frame import DATASET_ID
 from bamboo.core.parser import Parser
 from bamboo.lib.async import call_async
@@ -71,8 +71,7 @@ def calculate_task(calculations, dataset):
     # block until other calculations for this dataset are finished
     calculations[0].restart_if_has_pending(dataset, calculations[1:])
 
-    calculator = Calculator(dataset)
-    calculator.calculate_columns(calculations)
+    calculate_columns(dataset.reload(), calculations)
 
     for calculation in calculations:
         calculation.add_dependencies(
