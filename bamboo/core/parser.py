@@ -301,6 +301,28 @@ class Parser(object):
         return [partial(f.eval) for f in cls.parse(formula)[0]]
 
     @classmethod
+    def validate(cls, dataset, formula, groups):
+        """Validate `formula` and `groups` for dataset.
+
+        Validate the formula and group string by attempting to get a row from
+        the dframe for the dataset and then running parser validation on this
+        row. Additionally, ensure that the groups in the group string are
+        columns in the dataset.
+
+        :param dataset: The dataset to validate for.
+        :param formula: The formula to validate.
+        :param groups: A list of columns to group by.
+
+        :returns: The aggregation (or None) for the formula.
+        """
+        cls.validate_formula(formula, dataset)
+
+        for group in groups:
+            if not group in dataset.schema.keys():
+                raise ParseError(
+                    'Group %s not in dataset columns.' % group)
+
+    @classmethod
     def validate_formula(cls, formula, dataset):
         """Validate the *formula* on an example *row* of data.
 
@@ -323,8 +345,6 @@ class Parser(object):
         for column in cls.dependent_columns(formula, dataset):
             if column not in schema.keys():
                 raise ParseError('Missing column reference: %s' % column)
-
-        return cls.parse_aggregation(formula)
 
     def __getstate__(self):
         """Get state for pickle."""

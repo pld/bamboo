@@ -5,7 +5,7 @@ from pandas import concat, DataFrame
 
 from bamboo.core.aggregator import Aggregator
 from bamboo.core.frame import BambooFrame, NonUniqueJoinError
-from bamboo.core.parser import ParseError, Parser
+from bamboo.core.parser import Parser
 from bamboo.lib.mongo import MONGO_ID
 from bamboo.lib.parsing import parse_columns
 from bamboo.lib.query_args import QueryArgs
@@ -65,32 +65,6 @@ class Calculator(object):
 
     def __init__(self, dataset):
         self.dataset = dataset.reload()
-        self.parser = Parser()
-
-    def dependent_columns(self, formula, dataset):
-        return Parser.dependent_columns(formula, dataset)
-
-    def validate(self, formula, groups):
-        """Validate `formula` and `groups` for calculator's dataset.
-
-        Validate the formula and group string by attempting to get a row from
-        the dframe for the dataset and then running parser validation on this
-        row. Additionally, ensure that the groups in the group string are
-        columns in the dataset.
-
-        :param formula: The formula to validate.
-        :param groups: A list of columns to group by.
-
-        :returns: The aggregation (or None) for the formula.
-        """
-        aggregation = Parser.validate_formula(formula, self.dataset)
-
-        for group in groups:
-            if not group in self.dataset.schema.keys():
-                raise ParseError(
-                    'Group %s not in dataset columns.' % group)
-
-        return aggregation
 
     def calculate_columns(self, calculations):
         """Calculate and store new columns for `calculations`.
@@ -415,7 +389,7 @@ class Calculator(object):
 
     def __getstate__(self):
         """Get state for pickle."""
-        return [self.dataset, self.parser]
+        return self.dataset
 
     def __setstate__(self, state):
-        self.dataset, self.parser = state
+        self.dataset = state

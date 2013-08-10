@@ -4,6 +4,7 @@ from celery.task import Task, task
 
 from bamboo.core.calculator import Calculator
 from bamboo.core.frame import DATASET_ID
+from bamboo.core.parser import Parser
 from bamboo.lib.async import call_async
 from bamboo.lib.exceptions import ArgumentError
 from bamboo.lib.query_args import QueryArgs
@@ -76,7 +77,7 @@ def calculate_task(calculations, dataset):
     for calculation in calculations:
         calculation.add_dependencies(
             dataset,
-            calculator.dependent_columns(calculation.formula, dataset))
+            Parser.dependent_columns(calculation.formula, dataset))
 
         if calculation.aggregation is not None:
             aggregated_id = dataset.aggregated_datasets_dict[calculation.group]
@@ -200,11 +201,10 @@ class Calculation(AbstractModel):
 
         :raises: `ParseError` if an invalid formula was supplied.
         """
-        calculator = Calculator(dataset)
-
         # ensure that the formula is parsable
         groups = self.split_groups(group_str) if group_str else []
-        aggregation = calculator.validate(formula, groups)
+        Parser.validate(dataset, formula, groups)
+        aggregation = Parser.parse_aggregation(formula)
 
         if aggregation:
             # set group if aggregation and group unset
