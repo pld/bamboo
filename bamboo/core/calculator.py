@@ -71,6 +71,53 @@ def calculate_columns(dataset, calculations):
         merged_calculator.propagate_column(dataset)
 
 
+@task(default_retry_delay=5, ignore_result=True)
+def calculate_updates(dataset, new_data, new_dframe_raw=None,
+                      parent_dataset_id=None, update_id=None):
+    """Update dataset with `new_data`.
+
+    This can result in race-conditions when:
+
+    - deleting ``controllers.Datasets.DELETE``
+    - updating ``controllers.Datasets.POST([dataset_id])``
+
+    Therefore, perform these actions asychronously.
+
+    :param new_data: Data to update this dataset with.
+    :param new_dframe_raw: DataFrame to update this dataset with.
+    :param parent_dataset_id: If passed add ID as parent ID to column,
+        default is None.
+    """
+    ensure_ready(dataset, update_id)
+
+    labels_to_slugs = dataset.schema.labels_to_slugs
+
+    if new_dframe_raw is None:
+        new_dframe_raw = dframe_from_update(dataset, new_data, labels_to_slugs)
+
+    check_update_is_valid(dataset, new_dframe_raw)
+
+    new_dframe = new_dframe_raw.recognize_dates_from_schema(
+        dataset.schema)
+
+    new_dframe = add_calculations(
+        dataset, new_dframe, labels_to_slugs)
+
+    # set parent id if provided
+    if parent_dataset_id:
+        new_dframe = new_dframe.add_parent_column(parent_dataset_id)
+
+    dataset.append_observations(new_dframe)
+    dataset.clear_summary_stats()
+
+    calculator = Calculator(dataset)
+    calculator.propagate(calculator, new_data=new_data, new_dframe=new_dframe,
+                         new_dframe_raw=new_dframe_raw,
+                         labels_to_slugs=labels_to_slugs)
+
+    dataset.update_complete(update_id)
+
+
 def calculation_data(dataset):
     """Create a list of aggregate calculation information.
 
@@ -122,6 +169,56 @@ def check_update_is_valid(dataset, new_dframe_raw):
                 'column "%s" will become non-unique.' % on)
 
 
+def dframe_from_update(dataset, new_data, labels_to_slugs):
+    """Make a single-row dataframe for the additional data to add.
+
+    :param new_data: Data to add to dframe.
+    :type new_data: List.
+    :param labels_to_slugs: Map of labels to slugs.
+    """
+    filtered_data = []
+    columns = dataset.columns
+    num_columns = len(columns)
+    num_rows = dataset.num_rows
+    dframe_empty = not num_columns
+
+    if dframe_empty:
+        columns = dataset.schema.keys()
+
+    for row in new_data:
+        filtered_row = dict()
+        for col, val in row.iteritems():
+            # special case for reserved keys (e.g. _id)
+            if col == MONGO_ID:
+                if (not num_columns or col in columns) and\
+                        col not in filtered_row.keys():
+                    filtered_row[col] = val
+            else:
+                # if col is a label take slug, if it's a slug take col
+                slug = labels_to_slugs.get(
+                    col, col if col in labels_to_slugs.values() else None)
+
+                # if slug is valid or there is an empty dframe
+                if (slug or col in labels_to_slugs.keys()) and (
+                        dframe_empty or slug in columns):
+                    filtered_row[slug] = dataset.schema.convert_type(
+                        slug, val)
+
+        filtered_data.append(filtered_row)
+
+    index = range(num_rows, num_rows + len(filtered_data))
+
+    return BambooFrame(filtered_data, index=index)
+
+
+def ensure_ready(dataset, update_id):
+    # dataset must not be pending
+    if not dataset.is_ready or (
+            update_id and dataset.has_pending_updates(update_id)):
+        dataset.reload()
+        raise calculate_updates.retry()
+
+
 def remapped_data(dataset_id, mapping, slugified_data):
     column_map = mapping.get(dataset_id) if mapping else None
 
@@ -157,92 +254,6 @@ class Calculator(object):
 
     def __init__(self, dataset):
         self.dataset = dataset.reload()
-
-    @task(default_retry_delay=5, ignore_result=True)
-    def calculate_updates(self, new_data, new_dframe_raw=None,
-                          parent_dataset_id=None, update_id=None):
-        """Update dataset with `new_data`.
-
-        This can result in race-conditions when:
-
-        - deleting ``controllers.Datasets.DELETE``
-        - updating ``controllers.Datasets.POST([dataset_id])``
-
-        Therefore, perform these actions asychronously.
-
-        :param new_data: Data to update this dataset with.
-        :param new_dframe_raw: DataFrame to update this dataset with.
-        :param parent_dataset_id: If passed add ID as parent ID to column,
-            default is None.
-        """
-        self.__ensure_ready(update_id)
-
-        labels_to_slugs = self.dataset.schema.labels_to_slugs
-
-        if new_dframe_raw is None:
-            new_dframe_raw = self.dframe_from_update(new_data, labels_to_slugs)
-
-        check_update_is_valid(self.dataset, new_dframe_raw)
-
-        new_dframe = new_dframe_raw.recognize_dates_from_schema(
-            self.dataset.schema)
-
-        new_dframe = add_calculations(
-            self.dataset, new_dframe, labels_to_slugs)
-
-        # set parent id if provided
-        if parent_dataset_id:
-            new_dframe = new_dframe.add_parent_column(parent_dataset_id)
-
-        self.dataset.append_observations(new_dframe)
-        self.dataset.clear_summary_stats()
-
-        self.propagate(self, new_data=new_data, new_dframe=new_dframe,
-                       new_dframe_raw=new_dframe_raw,
-                       labels_to_slugs=labels_to_slugs)
-
-        self.dataset.update_complete(update_id)
-
-    def dframe_from_update(self, new_data, labels_to_slugs):
-        """Make a single-row dataframe for the additional data to add.
-
-        :param new_data: Data to add to dframe.
-        :type new_data: List.
-        :param labels_to_slugs: Map of labels to slugs.
-        """
-        filtered_data = []
-        columns = self.dataset.columns
-        num_columns = len(columns)
-        num_rows = self.dataset.num_rows
-        dframe_empty = not num_columns
-
-        if dframe_empty:
-            columns = self.dataset.schema.keys()
-
-        for row in new_data:
-            filtered_row = dict()
-            for col, val in row.iteritems():
-                # special case for reserved keys (e.g. _id)
-                if col == MONGO_ID:
-                    if (not num_columns or col in columns) and\
-                            col not in filtered_row.keys():
-                        filtered_row[col] = val
-                else:
-                    # if col is a label take slug, if it's a slug take col
-                    slug = labels_to_slugs.get(
-                        col, col if col in labels_to_slugs.values() else None)
-
-                    # if slug is valid or there is an empty dframe
-                    if (slug or col in labels_to_slugs.keys()) and (
-                            dframe_empty or slug in columns):
-                        filtered_row[slug] = self.dataset.schema.convert_type(
-                            slug, val)
-
-            filtered_data.append(filtered_row)
-
-        index = range(num_rows, num_rows + len(filtered_data))
-
-        return BambooFrame(filtered_data, index=index)
 
     @task(default_retry_delay=5, ignore_result=True)
     def propagate(self, new_data=None, new_dframe=None,
@@ -286,13 +297,6 @@ class Calculator(object):
         for merged_dataset in self.dataset.merged_datasets:
             merged_calculator = Calculator(merged_dataset)
             merged_calculator.propagate_column(self.dataset)
-
-    def __ensure_ready(self, update_id):
-        # dataset must not be pending
-        if not self.dataset.is_ready or (
-                update_id and self.dataset.has_pending_updates(update_id)):
-            self.dataset.reload()
-            raise self.calculate_updates.retry()
 
     def __propagate_join(self, joined_dataset, merged_dframe):
         joined_calculator = Calculator(joined_dataset)
@@ -353,12 +357,11 @@ class Calculator(object):
             # remove rows in child from this merged dataset
             merged_dataset.remove_parent_observations(
                 agg_dataset.dataset_id)
-            merged_calculator = Calculator(merged_dataset)
 
             # calculate updates for the child
-            merged_calculator.calculate_updates(
-                merged_calculator, new_data,
-                parent_dataset_id=agg_dataset.dataset_id)
+            # TODO is reload necessary?
+            calculate_updates(merged_dataset.reload(), new_data,
+                              parent_dataset_id=agg_dataset.dataset_id)
 
     def __update_joined_datasets(self, new_dframe_raw):
         # update any joined datasets
@@ -394,14 +397,12 @@ class Calculator(object):
 
         # update the merged datasets with new_dframe
         for mapping, merged_dataset in self.dataset.merged_datasets_with_map:
-            merged_calculator = Calculator(merged_dataset)
             slugified_data = remapped_data(self.dataset.dataset_id,
                                            mapping, slugified_data)
 
-            merged_calculator.calculate_updates(
-                merged_calculator,
-                slugified_data,
-                parent_dataset_id=self.dataset.dataset_id)
+            # TODO is reload necessary?
+            calculate_updates(merged_dataset.reload(), slugified_data,
+                              parent_dataset_id=self.dataset.dataset_id)
 
     def __getstate__(self):
         """Get state for pickle."""
