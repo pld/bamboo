@@ -12,6 +12,24 @@ from bamboo.lib.query_args import QueryArgs
 from bamboo.lib.utils import combine_dicts, flatten, to_list
 
 
+def add_calculations(dataset, new_dframe, labels_to_slugs):
+    for calculation in dataset.calculations(include_aggs=False):
+        function = Parser.parse_function(calculation.formula)
+        new_column = new_dframe.apply(function, axis=1,
+                                      args=(dataset, ))
+        potential_name = calculation.name
+
+        if potential_name not in dataset.dframe().columns:
+            if potential_name in labels_to_slugs:
+                new_column.name = labels_to_slugs[potential_name]
+        else:
+            new_column.name = potential_name
+
+        new_dframe = new_dframe.join(new_column)
+
+    return new_dframe
+
+
 def calculate_columns(dataset, calculations):
     """Calculate and store new columns for `calculations`.
 
@@ -81,6 +99,29 @@ def calculation_data(dataset):
     return flatten(calcs_to_data.values())
 
 
+def check_update_is_valid(dataset, new_dframe_raw):
+    """Check if the update is valid.
+
+    Check whether this is a right-hand side of any joins
+    and deny the update if the update would produce an invalid
+    join as a result.
+
+    :raises: `NonUniqueJoinError` if update is illegal given joins of
+        dataset.
+    """
+    select = {on: 1 for on in dataset.on_columns_for_rhs_of_joins if on in
+              new_dframe_raw.columns and on in dataset.columns}
+    dframe = dataset.dframe(query_args=QueryArgs(select=select))
+
+    for on in select.keys():
+        merged_join_column = concat([new_dframe_raw[on], dframe[on]])
+
+        if len(merged_join_column) != merged_join_column.nunique():
+            raise NonUniqueJoinError(
+                'Cannot update. This is the right hand join and the'
+                'column "%s" will become non-unique.' % on)
+
+
 def remapped_data(dataset_id, mapping, slugified_data):
     column_map = mapping.get(dataset_id) if mapping else None
 
@@ -141,12 +182,13 @@ class Calculator(object):
         if new_dframe_raw is None:
             new_dframe_raw = self.dframe_from_update(new_data, labels_to_slugs)
 
-        self.check_update_is_valid(new_dframe_raw)
+        check_update_is_valid(self.dataset, new_dframe_raw)
 
         new_dframe = new_dframe_raw.recognize_dates_from_schema(
             self.dataset.schema)
 
-        new_dframe = self.__add_calculations(new_dframe, labels_to_slugs)
+        new_dframe = add_calculations(
+            self.dataset, new_dframe, labels_to_slugs)
 
         # set parent id if provided
         if parent_dataset_id:
@@ -155,32 +197,11 @@ class Calculator(object):
         self.dataset.append_observations(new_dframe)
         self.dataset.clear_summary_stats()
 
-        self.propagate(new_data=new_data, new_dframe=new_dframe,
+        self.propagate(self, new_data=new_data, new_dframe=new_dframe,
                        new_dframe_raw=new_dframe_raw,
                        labels_to_slugs=labels_to_slugs)
 
         self.dataset.update_complete(update_id)
-
-    def check_update_is_valid(self, new_dframe_raw):
-        """Check if the update is valid.
-
-        Check whether this is a right-hand side of any joins
-        and deny the update if the update would produce an invalid
-        join as a result.
-
-        :raises: `NonUniqueJoinError` if update is illegal given joins of
-            dataset.
-        """
-        for on in self.dataset.on_columns_for_rhs_of_joins:
-            if on in new_dframe_raw.columns and on in self.dataset.columns:
-                query_args = QueryArgs(select={on: 1})
-                dframe = self.dataset.dframe(query_args=query_args)
-                merged_join_column = concat([new_dframe_raw[on], dframe[on]])
-
-                if len(merged_join_column) != merged_join_column.nunique():
-                    raise NonUniqueJoinError(
-                        'Cannot update. This is the right hand join and the'
-                        'column "%s" will become non-unique.' % on)
 
     def dframe_from_update(self, new_data, labels_to_slugs):
         """Make a single-row dataframe for the additional data to add.
@@ -233,7 +254,7 @@ class Calculator(object):
         if new_data:
             self.__update_merged_datasets(new_data, labels_to_slugs)
 
-        if new_dframe_raw:
+        if new_dframe_raw is not None:
             self.__update_joined_datasets(new_dframe_raw)
 
     def propagate_column(self, parent_dataset):
@@ -265,23 +286,6 @@ class Calculator(object):
         for merged_dataset in self.dataset.merged_datasets:
             merged_calculator = Calculator(merged_dataset)
             merged_calculator.propagate_column(self.dataset)
-
-    def __add_calculations(self, new_dframe, labels_to_slugs):
-        for calculation in self.dataset.calculations(include_aggs=False):
-            function = Parser.parse_function(calculation.formula)
-            new_column = new_dframe.apply(function, axis=1,
-                                          args=(self.dataset, ))
-            potential_name = calculation.name
-
-            if potential_name not in self.dataset.dframe().columns:
-                if potential_name in labels_to_slugs:
-                    new_column.name = labels_to_slugs[potential_name]
-            else:
-                new_column.name = potential_name
-
-            new_dframe = new_dframe.join(new_column)
-
-        return new_dframe
 
     def __ensure_ready(self, update_id):
         # dataset must not be pending

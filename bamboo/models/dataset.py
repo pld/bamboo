@@ -5,7 +5,7 @@ from time import gmtime, strftime
 from celery.task import task
 from pandas import rolling_window
 
-from bamboo.core.calculator import Calculator
+from bamboo.core.calculator import Calculator, check_update_is_valid
 from bamboo.core.frame import BambooFrame, BAMBOO_RESERVED_KEY_PREFIX,\
     DATASET_ID, INDEX, PARENT_DATASET_ID
 from bamboo.core.summary import summarize
@@ -478,7 +478,7 @@ class Dataset(AbstractModel, ImportableDataset):
 
         new_dframe_raw = calculator.dframe_from_update(
             new_data, self.schema.labels_to_slugs)
-        calculator.check_update_is_valid(new_dframe_raw)
+        check_update_is_valid(self, new_dframe_raw)
         calculator.dataset.clear_cache()
 
         call_async(calculator.calculate_updates, calculator, new_data,
