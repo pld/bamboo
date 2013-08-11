@@ -501,6 +501,7 @@ class Dataset(AbstractModel, ImportableDataset):
         dframe = self.dframe()
         self.update({self.NUM_ROWS: len(dframe)})
         self.build_schema(dframe, overwrite=True)
+        call_async(propagate, self, reducible=False)
 
     def update_observation(self, index, data):
         # TODO check that update is valid

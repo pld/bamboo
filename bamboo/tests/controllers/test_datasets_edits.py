@@ -63,7 +63,24 @@ class TestDatasetsEdits(TestAbstractDatasets):
         all_observations = Observation.find(dataset, include_deleted=True)
         self.assertEqual(self.NUM_ROWS, len(all_observations))
 
-    def test_update_row(self):
+    def test_delete_row_with_agg(self):
+        amount_sum = 2007.5
+        amount_sum_after = 1998.5
+        index = 0
+
+        self.dataset_id = self._post_file()
+        self._post_calculations(formulae=['sum(amount)'])
+        agg = self._test_aggregations()[0]
+        self.assertEqual(agg['sum_amount_'], amount_sum)
+
+        results = json.loads(
+            self.controller.row_delete(self.dataset_id, index))
+        self.assertTrue(Datasets.SUCCESS in results.keys())
+
+        agg = self._test_aggregations()[0]
+        self.assertEqual(agg['sum_amount_'], amount_sum_after)
+
+    def test_edit_row(self):
         dataset_id = self._post_file()
         index = 0
         update = {'amount': 10, 'food_type': 'breakfast'}
@@ -85,7 +102,7 @@ class TestDatasetsEdits(TestAbstractDatasets):
         all_observations = Observation.find(dataset, include_deleted=True)
         self.assertEqual(self.NUM_ROWS + 1, len(all_observations))
 
-    def test_update_row_with_agg(self):
+    def test_edit_row_with_agg(self):
         amount_sum = 2007.5
         amount_sum_after = 2008.5
 
