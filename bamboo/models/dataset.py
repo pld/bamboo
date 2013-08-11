@@ -5,7 +5,8 @@ from time import gmtime, strftime
 from celery.task import task
 from pandas import rolling_window
 
-from bamboo.core.calculator import Calculator
+from bamboo.core.calculator import calculate_updates,\
+    check_update_is_valid, dframe_from_update, propagate
 from bamboo.core.frame import BambooFrame, BAMBOO_RESERVED_KEY_PREFIX,\
     DATASET_ID, INDEX, PARENT_DATASET_ID
 from bamboo.core.summary import summarize
@@ -474,14 +475,15 @@ class Dataset(AbstractModel, ImportableDataset):
 
         new_data = to_list(new_data)
 
-        calculator = Calculator(self)
+        # TODO is reload necessary?
+        dataset = self.reload()
 
-        new_dframe_raw = calculator.dframe_from_update(
-            new_data, self.schema.labels_to_slugs)
-        calculator.check_update_is_valid(new_dframe_raw)
-        calculator.dataset.clear_cache()
+        new_dframe_raw = dframe_from_update(
+            dataset, new_data, self.schema.labels_to_slugs)
+        check_update_is_valid(self, new_dframe_raw)
+        dataset.clear_cache()
 
-        call_async(calculator.calculate_updates, calculator, new_data,
+        call_async(calculate_updates, dataset, new_data,
                    new_dframe_raw=new_dframe_raw, update_id=update_id)
 
     def add_pending_update(self, update_id):
@@ -499,14 +501,14 @@ class Dataset(AbstractModel, ImportableDataset):
         dframe = self.dframe()
         self.update({self.NUM_ROWS: len(dframe)})
         self.build_schema(dframe, overwrite=True)
+        call_async(propagate, self, reducible=False)
 
     def update_observation(self, index, data):
         # TODO check that update is valid
 
         Observation.update(self, index, data)
 
-        calculator = Calculator(self)
-        call_async(calculator.propagate, calculator)
+        call_async(propagate, self, reducible=False)
 
     def delete_columns(self, columns):
         """Delete column `column` from this dataset.

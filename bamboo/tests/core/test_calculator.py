@@ -1,5 +1,5 @@
 from bamboo.core.parser import Parser
-from bamboo.core.calculator import Calculator
+from bamboo.core.calculator import calculate_columns
 from bamboo.lib.datetools import recognize_dates
 from bamboo.models.calculation import Calculation
 from bamboo.models.dataset import Dataset
@@ -17,7 +17,6 @@ class TestCalculator(TestBase):
             self.get_data('good_eats_with_calculations.csv'))
         self.dataset.save_observations(dframe)
         self.group = None
-        self.parser = Parser()
         self.places = 5
 
     def _equal_msg(self, calculated, stored, formula):
@@ -43,13 +42,11 @@ class TestCalculator(TestBase):
         for idx, formula in enumerate(self.calculations):
             name = 'test-%s' % idx
 
-            self.parser.validate_formula(formula, self.dataset)
-
-            calculator = Calculator(self.dataset)
+            Parser.validate_formula(formula, self.dataset)
 
             calculation = Calculation()
             calculation.save(self.dataset, formula, name, self.group)
-            calculator.calculate_columns([calculation])
+            calculate_columns(self.dataset, [calculation])
 
             self.column_labels_to_slugs = self.dataset.schema.labels_to_slugs
 

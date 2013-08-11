@@ -4,22 +4,6 @@ from bamboo.lib.query_args import QueryArgs
 from bamboo.lib.schema_builder import make_unique
 
 
-def build_columns(dataset, dframe, functions, name, no_index):
-    columns = []
-
-    for function in functions:
-        column = dframe.apply(function, axis=1,
-                              args=(dataset,))
-        column.name = make_unique(name, [c.name for c in columns])
-
-        if no_index:
-            column = column.reset_index(drop=True)
-
-        columns.append(column)
-
-    return columns
-
-
 def parse_columns(dataset, formula, name, dframe=None, no_index=False):
     """Parse a formula and return columns resulting from its functions.
 
@@ -31,9 +15,8 @@ def parse_columns(dataset, formula, name, dframe=None, no_index=False):
     :param dframe: A DataFrame to apply functions to.
     :param no_index: Drop the index on result columns.
     """
-    parser = Parser()
-    functions = parser.parse_formula(formula, dataset)
-    dependent_columns = parser.dependent_columns(formula, dataset)
+    functions = Parser.parse_functions(formula)
+    dependent_columns = Parser.dependent_columns(formula, dataset)
 
     # make select from dependent_columns
     if dframe is None:
@@ -47,4 +30,19 @@ def parse_columns(dataset, formula, name, dframe=None, no_index=False):
             # constant column, use dummy
             dframe['dummy'] = 0
 
-    return build_columns(dataset, dframe, functions, name, no_index)
+    return __build_columns(dataset, dframe, functions, name, no_index)
+
+
+def __build_columns(dataset, dframe, functions, name, no_index):
+    columns = []
+
+    for function in functions:
+        column = dframe.apply(function, axis=1, args=(dataset,))
+        column.name = make_unique(name, [c.name for c in columns])
+
+        if no_index:
+            column = column.reset_index(drop=True)
+
+        columns.append(column)
+
+    return columns
