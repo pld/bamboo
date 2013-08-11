@@ -81,9 +81,9 @@ class TestCalculations(TestCalculator):
 
     def _test_calculation_results(self, name, formula):
             unslug_name = name
-            self.assertTrue(unslug_name in self.column_labels_to_slugs.keys(),
-                            '%s not in %s' % (unslug_name,
-                            self.column_labels_to_slugs.keys()))
+            labels = self.column_labels_to_slugs.keys()
+            self.assertTrue(name in labels, '%s not in %s' % (name, labels))
+
             name = self.column_labels_to_slugs[unslug_name]
 
             # test that updated dataframe persisted

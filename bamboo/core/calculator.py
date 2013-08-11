@@ -77,11 +77,9 @@ def calculate_updates(dataset, new_data, new_dframe_raw=None,
 
     check_update_is_valid(dataset, new_dframe_raw)
 
-    new_dframe = new_dframe_raw.recognize_dates_from_schema(
-        dataset.schema)
+    new_dframe = new_dframe_raw.recognize_dates_from_schema(dataset.schema)
 
-    new_dframe = __add_calculations(
-        dataset, new_dframe, labels_to_slugs)
+    new_dframe = __add_calculations(dataset, new_dframe, labels_to_slugs)
 
     # set parent id if provided
     if parent_dataset_id:
@@ -334,7 +332,7 @@ def __update_aggregate_dataset(dataset, formula, new_dframe, name, groups,
     """
     # parse aggregation and build column arguments
     aggregator = __create_aggregator(
-        dataset, formula, name, groups, new_dframe)
+        dataset, formula, name, groups, dframe=new_dframe)
     new_agg_dframe = aggregator.update(dataset, a_dataset, formula, reducible)
 
     # jsondict from new dframe
@@ -342,8 +340,7 @@ def __update_aggregate_dataset(dataset, formula, new_dframe, name, groups,
 
     for merged_dataset in a_dataset.merged_datasets:
         # remove rows in child from this merged dataset
-        merged_dataset.remove_parent_observations(
-            a_dataset.dataset_id)
+        merged_dataset.remove_parent_observations(a_dataset.dataset_id)
 
         # calculate updates for the child
         calculate_updates(merged_dataset, new_data,
@@ -351,7 +348,7 @@ def __update_aggregate_dataset(dataset, formula, new_dframe, name, groups,
 
 
 def __update_joined_datasets(dataset, new_dframe_raw):
-    # update any joined datasets
+    """Update any joined datasets."""
     for direction, other_dataset, on, j_dataset in dataset.joined_datasets:
         if direction == 'left':
             # only proceed if on in new dframe
