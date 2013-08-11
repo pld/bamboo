@@ -1,7 +1,6 @@
 import numpy as np
 
 from bamboo.lib.datetools import parse_date_to_unix_time
-from bamboo.lib.datetools import now
 from bamboo.models.dataset import Dataset
 from bamboo.tests.core.test_calculator import TestCalculator
 
@@ -116,8 +115,8 @@ class TestCalculations(TestCalculator):
             self._test_cached_dframe(name, formula,
                                      formula in self.dynamic_calculations)
 
-    def _test_cached_dframe(self, name, formula, dynamic):
-        formula = not dynamic and self.column_labels_to_slugs[formula]
+    def _test_cached_dframe(self, name, original_formula, dynamic):
+        formula = not dynamic and self.column_labels_to_slugs[original_formula]
 
         for idx, row in self.dframe.iterrows():
             try:
@@ -125,7 +124,7 @@ class TestCalculations(TestCalculator):
                 places = self.places
 
                 if dynamic:
-                    stored = parse_date_to_unix_time(now()) -\
+                    stored = parse_date_to_unix_time(self.now) -\
                         parse_date_to_unix_time(row['submit_date'])
                     # large approximate window for time compares
                     places = 2
@@ -136,7 +135,7 @@ class TestCalculations(TestCalculator):
                 if np.isnan(result) and np.isnan(stored):
                     continue
 
-                msg = self._equal_msg(result, stored, formula)
+                msg = self._equal_msg(result, stored, original_formula)
                 self.assertAlmostEqual(result, stored, places, msg)
             except ValueError:
                 msg = self._equal_msg(row[name], row[formula], formula)
