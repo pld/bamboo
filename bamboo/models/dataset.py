@@ -475,15 +475,12 @@ class Dataset(AbstractModel, ImportableDataset):
 
         new_data = to_list(new_data)
 
-        # TODO is reload necessary?
-        dataset = self.reload()
-
+        # get data before other updates, check valid before async
         new_dframe_raw = dframe_from_update(
-            dataset, new_data, self.schema.labels_to_slugs)
+            self, new_data, self.schema.labels_to_slugs)
         check_update_is_valid(self, new_dframe_raw)
-        dataset.clear_cache()
 
-        call_async(calculate_updates, dataset, new_data,
+        call_async(calculate_updates, self, new_data,
                    new_dframe_raw=new_dframe_raw, update_id=update_id)
 
     def add_pending_update(self, update_id):
