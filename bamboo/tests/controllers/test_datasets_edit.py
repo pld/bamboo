@@ -8,7 +8,7 @@ from bamboo.tests.controllers.test_abstract_datasets import\
     TestAbstractDatasets
 
 
-class TestDatasetsEdits(TestAbstractDatasets):
+class TestDatasetsEdit(TestAbstractDatasets):
 
     def setUp(self):
         TestAbstractDatasets.setUp(self)
@@ -79,6 +79,24 @@ class TestDatasetsEdits(TestAbstractDatasets):
 
         agg = self._test_aggregations()[0]
         self.assertEqual(agg['sum_amount_'], amount_sum_after)
+
+    def test_delete_row_with_join(self):
+        index = 0
+
+        left_dataset_id = self._post_file()
+        right_dataset_id = self._post_file('good_eats_aux.csv')
+        on = 'food_type'
+        results = json.loads(self.controller.join(
+            left_dataset_id, right_dataset_id, on=on))
+        joined_dataset_id = results[Dataset.ID]
+
+        results = json.loads(
+            self.controller.row_delete(left_dataset_id, index))
+        self.assertTrue(Datasets.SUCCESS in results.keys())
+
+        dframe = Dataset.find_one(joined_dataset_id).dframe(index=True)
+        print dframe['index']
+        self.assertFalse(index in dframe['index'])
 
     def test_edit_row(self):
         dataset_id = self._post_file()
