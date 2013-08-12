@@ -347,29 +347,26 @@ def __update_aggregate_dataset(dataset, formula, new_dframe, name, groups,
                           parent_dataset_id=a_dataset.dataset_id)
 
 
-def __update_joined_datasets(dataset, new_dframe_raw):
+def __update_joined_datasets(dataset, new_dframe):
     """Update any joined datasets."""
     for direction, other_dataset, on, j_dataset in dataset.joined_datasets:
         if direction == 'left':
             # only proceed if on in new dframe
-            if on in new_dframe_raw.columns:
-                other_dframe = other_dataset.dframe(padded=True)
+            if on in new_dframe.columns:
+                left_dframe = other_dataset.dframe(padded=True)
 
                 # only proceed if new on value is in on column in lhs
-                if len(set(new_dframe_raw[on]).intersection(
-                        set(other_dframe[on]))):
-                    merged_dframe = other_dframe.join_dataset(dataset, on)
+                if len(set(new_dframe[on]).intersection(set(left_dframe[on]))):
+                    merged_dframe = left_dframe.join_dataset(dataset, on)
                     j_dataset.replace_observations(merged_dframe)
 
                     # TODO is it OK not to propagate the join here?
         else:
-            merged_dframe = new_dframe_raw
-
             # if on in new data join with existing data
-            if on in merged_dframe:
-                merged_dframe = new_dframe_raw.join_dataset(other_dataset, on)
+            if on in new_dframe:
+                new_dframe = new_dframe.join_dataset(other_dataset, on)
 
-            calculate_updates(j_dataset, merged_dframe.to_jsondict(),
+            calculate_updates(j_dataset, new_dframe.to_jsondict(),
                               parent_dataset_id=dataset.dataset_id)
 
 
