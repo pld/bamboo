@@ -70,16 +70,12 @@ def calculate_updates(dataset, new_data, new_dframe_raw=None,
     """
     __ensure_ready(dataset, update_id)
 
-    labels_to_slugs = dataset.schema.labels_to_slugs
-
     if new_dframe_raw is None:
-        new_dframe_raw = dframe_from_update(dataset, new_data, labels_to_slugs)
-
-    check_update_is_valid(dataset, new_dframe_raw)
+        new_dframe_raw = dframe_from_update(dataset, new_data)
 
     new_dframe = new_dframe_raw.recognize_dates_from_schema(dataset.schema)
 
-    new_dframe = __add_calculations(dataset, new_dframe, labels_to_slugs)
+    new_dframe = __add_calculations(dataset, new_dframe)
 
     # set parent id if provided
     if parent_dataset_id:
@@ -89,44 +85,20 @@ def calculate_updates(dataset, new_data, new_dframe_raw=None,
     dataset.clear_summary_stats()
 
     propagate(dataset, new_data=new_data, new_dframe=new_dframe,
-              new_dframe_raw=new_dframe_raw,
-              labels_to_slugs=labels_to_slugs)
+              new_dframe_raw=new_dframe_raw)
 
     dataset.update_complete(update_id)
 
 
-def check_update_is_valid(dataset, new_dframe_raw):
-    """Check if the update is valid.
-
-    Check whether this is a right-hand side of any joins
-    and deny the update if the update would produce an invalid
-    join as a result.
-
-    :raises: `NonUniqueJoinError` if update is illegal given joins of
-        dataset.
-    """
-    select = {on: 1 for on in dataset.on_columns_for_rhs_of_joins if on in
-              new_dframe_raw.columns and on in dataset.columns}
-    dframe = dataset.dframe(query_args=QueryArgs(select=select))
-
-    for on in select.keys():
-        merged_join_column = concat([new_dframe_raw[on], dframe[on]])
-
-        if len(merged_join_column) != merged_join_column.nunique():
-            raise NonUniqueJoinError(
-                'Cannot update. This is the right hand join and the'
-                'column "%s" will become non-unique.' % on)
-
-
-def dframe_from_update(dataset, new_data, labels_to_slugs):
-    """Make a single-row dataframe for the additional data to add.
+def dframe_from_update(dataset, new_data):
+    """Make a DataFrame for the `new_data`.
 
     :param new_data: Data to add to dframe.
     :type new_data: List.
-    :param labels_to_slugs: Map of labels to slugs.
     """
     filtered_data = []
     columns = dataset.columns
+    labels_to_slugs = dataset.schema.labels_to_slugs
     num_columns = len(columns)
     num_rows = dataset.num_rows
     dframe_empty = not num_columns
@@ -156,25 +128,28 @@ def dframe_from_update(dataset, new_data, labels_to_slugs):
         filtered_data.append(filtered_row)
 
     index = range(num_rows, num_rows + len(filtered_data))
+    new_dframe = BambooFrame(filtered_data, index=index)
+    __check_update_is_valid(dataset, new_dframe)
 
-    return BambooFrame(filtered_data, index=index)
+    return new_dframe
 
 
 @task(default_retry_delay=5, ignore_result=True)
-def propagate(dataset, new_data=None, new_dframe=None,
-              new_dframe_raw=None,
-              labels_to_slugs=None, reducible=True):
+def propagate(dataset, new_data=None, new_dframe=None, new_dframe_raw=None,
+              reducible=True):
     """Propagate changes in a modified dataset."""
     __update_aggregate_datasets(dataset, new_dframe, reducible=reducible)
 
     if new_data:
-        __update_merged_datasets(dataset, new_data, labels_to_slugs)
+        __update_merged_datasets(dataset, new_data)
 
     if new_dframe_raw is not None:
         __update_joined_datasets(dataset, new_dframe_raw)
 
 
-def __add_calculations(dataset, new_dframe, labels_to_slugs):
+def __add_calculations(dataset, new_dframe):
+    labels_to_slugs = dataset.schema.labels_to_slugs
+
     for calculation in dataset.calculations(include_aggs=False):
         function = Parser.parse_function(calculation.formula)
         new_column = new_dframe.apply(function, axis=1,
@@ -218,6 +193,29 @@ def __calculation_data(dataset):
             ))
 
     return flatten(calcs_to_data.values())
+
+
+def __check_update_is_valid(dataset, new_dframe_raw):
+    """Check if the update is valid.
+
+    Check whether this is a right-hand side of any joins
+    and deny the update if the update would produce an invalid
+    join as a result.
+
+    :raises: `NonUniqueJoinError` if update is illegal given joins of
+        dataset.
+    """
+    select = {on: 1 for on in dataset.on_columns_for_rhs_of_joins if on in
+              new_dframe_raw.columns and on in dataset.columns}
+    dframe = dataset.dframe(query_args=QueryArgs(select=select))
+
+    for on in select.keys():
+        merged_join_column = concat([new_dframe_raw[on], dframe[on]])
+
+        if len(merged_join_column) != merged_join_column.nunique():
+            raise NonUniqueJoinError(
+                'Cannot update. This is the right hand join and the'
+                'column "%s" will become non-unique.' % on)
 
 
 def __create_aggregator(dataset, formula, name, groups, dframe=None):
@@ -370,9 +368,9 @@ def __update_joined_datasets(dataset, new_dframe):
                               parent_dataset_id=dataset.dataset_id)
 
 
-def __update_merged_datasets(dataset, new_data, labels_to_slugs):
+def __update_merged_datasets(dataset, new_data):
     # store slugs as labels for child datasets
-    slugified_data = __slugify_data(new_data, labels_to_slugs)
+    slugified_data = __slugify_data(new_data, dataset.schema.labels_to_slugs)
 
     # update the merged datasets with new_dframe
     for mapping, merged_dataset in dataset.merged_datasets_with_map:
