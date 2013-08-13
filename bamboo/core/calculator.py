@@ -84,8 +84,7 @@ def calculate_updates(dataset, new_data, new_dframe_raw=None,
     dataset.append_observations(new_dframe)
     dataset.clear_summary_stats()
 
-    propagate(dataset, new_data=new_data, new_dframe=new_dframe,
-              new_dframe_raw=new_dframe_raw)
+    propagate(dataset, new_dframe=new_dframe, new_dframe_raw=new_dframe_raw)
 
     dataset.update_complete(update_id)
 
@@ -135,15 +134,13 @@ def dframe_from_update(dataset, new_data):
 
 
 @task(default_retry_delay=5, ignore_result=True)
-def propagate(dataset, new_data=None, new_dframe=None, new_dframe_raw=None,
-              reducible=True):
+def propagate(dataset, new_dframe=None, new_dframe_raw=None, reducible=True,
+              update=None):
     """Propagate changes in a modified dataset."""
     __update_aggregate_datasets(dataset, new_dframe, reducible=reducible)
 
-    if new_data:
-        __update_merged_datasets(dataset, new_data)
-
     if new_dframe_raw is not None:
+        __update_merged_datasets(dataset, new_dframe_raw.to_jsondict())
         __update_joined_datasets(dataset, new_dframe_raw)
 
 
@@ -369,7 +366,7 @@ def __update_joined_datasets(dataset, new_dframe):
 
 
 def __update_merged_datasets(dataset, new_data):
-    # store slugs as labels for child datasets
+    # store slugs as labes for child datasets
     slugified_data = __slugify_data(new_data, dataset.schema.labels_to_slugs)
 
     # update the merged datasets with new_dframe
