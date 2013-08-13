@@ -138,8 +138,9 @@ def propagate(dataset, new_dframe=None, reducible=True, update=None):
     """Propagate changes in a modified dataset."""
     __update_aggregate_datasets(dataset, new_dframe, reducible=reducible)
 
-    __update_merged_datasets(dataset, update)
-    __update_joined_datasets(dataset, update)
+    if update:
+        __update_merged_datasets(dataset, update)
+        __update_joined_datasets(dataset, update)
 
 
 def __add_calculations(dataset, new_dframe):
