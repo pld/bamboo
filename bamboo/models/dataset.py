@@ -154,6 +154,12 @@ class Dataset(AbstractModel, ImportableDataset):
                 self.joined_datasets if direction == 'left']
 
     @property
+    def parent_ids(self):
+        query_args = QueryArgs(select={PARENT_DATASET_ID: 1},
+                               distinct=PARENT_DATASET_ID)
+        return self.observations(query_args)
+
+    @property
     def pending_updates(self):
         return self.record[self.PENDING_UPDATES]
 
@@ -413,10 +419,6 @@ class Dataset(AbstractModel, ImportableDataset):
                            if key in self.updatable_keys}
             self.update(update_dict)
 
-        query_args = QueryArgs(select={PARENT_DATASET_ID: 1},
-                               distinct=PARENT_DATASET_ID)
-        parent_ids = self.observations(query_args)
-
         return {
             self.ID: self.dataset_id,
             self.LABEL: self.label,
@@ -429,7 +431,7 @@ class Dataset(AbstractModel, ImportableDataset):
             self.NUM_COLUMNS: self.num_columns,
             self.NUM_ROWS: self.num_rows,
             self.STATE: self.state,
-            self.PARENT_IDS: parent_ids,
+            self.PARENT_IDS: self.parent_ids,
         }
 
     def is_dimension(self, col):

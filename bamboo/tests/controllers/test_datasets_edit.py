@@ -104,6 +104,27 @@ class TestDatasetsEdit(TestAbstractDatasets):
         dframe = Dataset.find_one(joined_dataset_id2).dframe(index=True)
         self.assertFalse(index in dframe['index'].tolist())
 
+    def test_delete_row_with_merge(self):
+        index = 0
+
+        dataset_id1 = self._post_file()
+        dataset_id2 = self._post_file()
+        result = json.loads(self.controller.merge(
+            dataset_ids=json.dumps([dataset_id1, dataset_id2])))
+        merged_id = result[Dataset.ID]
+
+        results = json.loads(
+            self.controller.row_delete(dataset_id2, index))
+        self.assertTrue(Datasets.SUCCESS in results.keys())
+
+        results = json.loads(
+            self.controller.row_delete(dataset_id1, index))
+        self.assertTrue(Datasets.SUCCESS in results.keys())
+
+        dframe = Dataset.find_one(merged_id).dframe(index=True)
+        self.assertFalse(index in dframe['index'].tolist())
+        self.assertFalse(index + self.NUM_ROWS in dframe['index'].tolist())
+
     def test_edit_row(self):
         dataset_id = self._post_file()
         index = 0
