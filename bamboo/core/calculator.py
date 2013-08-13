@@ -376,14 +376,13 @@ def __update_merged_datasets(dataset, update):
         data = update['add'].to_jsondict()
 
         # store slugs as labels for child datasets
-        slugified_data = __slugify_data(data, dataset.schema.labels_to_slugs)
+        data = __slugify_data(data, dataset.schema.labels_to_slugs)
 
     # update the merged datasets with new_dframe
     for mapping, merged_dataset in dataset.merged_datasets_with_map:
         if 'add' in update:
-            slugified_data = __remapped_data(dataset.dataset_id, mapping,
-                                             slugified_data)
-            calculate_updates(merged_dataset, slugified_data,
+            mapped_data = __remapped_data(dataset.dataset_id, mapping, data)
+            calculate_updates(merged_dataset, mapped_data,
                               parent_dataset_id=dataset.dataset_id)
         elif 'delete' in update:
             offset = 0
