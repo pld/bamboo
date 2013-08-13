@@ -90,13 +90,19 @@ class TestDatasetsEdit(TestAbstractDatasets):
             left_dataset_id, right_dataset_id, on=on))
         joined_dataset_id = results[Dataset.ID]
 
+        results = json.loads(self.controller.join(
+            joined_dataset_id, right_dataset_id, on=on))
+        joined_dataset_id2 = results[Dataset.ID]
+
         results = json.loads(
             self.controller.row_delete(left_dataset_id, index))
         self.assertTrue(Datasets.SUCCESS in results.keys())
 
         dframe = Dataset.find_one(joined_dataset_id).dframe(index=True)
-        print dframe['index']
-        self.assertFalse(index in dframe['index'])
+        self.assertFalse(index in dframe['index'].tolist())
+
+        dframe = Dataset.find_one(joined_dataset_id2).dframe(index=True)
+        self.assertFalse(index in dframe['index'].tolist())
 
     def test_edit_row(self):
         dataset_id = self._post_file()

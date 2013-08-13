@@ -84,7 +84,7 @@ def calculate_updates(dataset, new_data, new_dframe_raw=None,
     dataset.append_observations(new_dframe)
     dataset.clear_summary_stats()
 
-    propagate(dataset, new_dframe=new_dframe, new_dframe_raw=new_dframe_raw)
+    propagate(dataset, new_dframe=new_dframe, update={'add': new_dframe_raw})
 
     dataset.update_complete(update_id)
 
@@ -134,14 +134,12 @@ def dframe_from_update(dataset, new_data):
 
 
 @task(default_retry_delay=5, ignore_result=True)
-def propagate(dataset, new_dframe=None, new_dframe_raw=None, reducible=True,
-              update=None):
+def propagate(dataset, new_dframe=None, reducible=True, update=None):
     """Propagate changes in a modified dataset."""
     __update_aggregate_datasets(dataset, new_dframe, reducible=reducible)
 
-    if new_dframe_raw is not None:
-        __update_merged_datasets(dataset, new_dframe_raw.to_jsondict())
-        __update_joined_datasets(dataset, new_dframe_raw)
+    __update_merged_datasets(dataset, update)
+    __update_joined_datasets(dataset, update)
 
 
 def __add_calculations(dataset, new_dframe):
@@ -342,37 +340,47 @@ def __update_aggregate_dataset(dataset, formula, new_dframe, name, groups,
                           parent_dataset_id=a_dataset.dataset_id)
 
 
-def __update_joined_datasets(dataset, new_dframe):
+def __update_joined_datasets(dataset, update):
     """Update any joined datasets."""
+    if 'add' in update:
+        new_dframe = update['add']
+
     for direction, other_dataset, on, j_dataset in dataset.joined_datasets:
-        if direction == 'left':
-            # only proceed if on in new dframe
-            if on in new_dframe.columns:
-                left_dframe = other_dataset.dframe(padded=True)
+        if 'add' in update:
+            if direction == 'left':
+                # only proceed if on in new dframe
+                if on in new_dframe.columns:
+                    left_dframe = other_dataset.dframe(padded=True)
 
-                # only proceed if new on value is in on column in lhs
-                if len(set(new_dframe[on]).intersection(set(left_dframe[on]))):
-                    merged_dframe = left_dframe.join_dataset(dataset, on)
-                    j_dataset.replace_observations(merged_dframe)
+                    # only proceed if new on value is in on column in lhs
+                    if len(set(new_dframe[on]).intersection(
+                            set(left_dframe[on]))):
+                        merged_dframe = left_dframe.join_dataset(dataset, on)
+                        j_dataset.replace_observations(merged_dframe)
 
-                    # TODO is it OK not to propagate the join here?
-        else:
-            # if on in new data join with existing data
-            if on in new_dframe:
-                new_dframe = new_dframe.join_dataset(other_dataset, on)
+                        # TODO is it OK not to propagate the join here?
+            else:
+                # if on in new data join with existing data
+                if on in new_dframe:
+                    new_dframe = new_dframe.join_dataset(other_dataset, on)
 
-            calculate_updates(j_dataset, new_dframe.to_jsondict(),
+                calculate_updates(j_dataset, new_dframe.to_jsondict(),
+                                  parent_dataset_id=dataset.dataset_id)
+        elif 'delete' in update:
+            j_dataset.delete_observation(update['delete'])
+
+
+def __update_merged_datasets(dataset, update):
+    if 'add' in update:
+        data = update['add'].to_jsondict()
+
+        # store slugs as labes for child datasets
+        slugified_data = __slugify_data(data, dataset.schema.labels_to_slugs)
+
+        # update the merged datasets with new_dframe
+        for mapping, merged_dataset in dataset.merged_datasets_with_map:
+            slugified_data = __remapped_data(dataset.dataset_id, mapping,
+                                             slugified_data)
+
+            calculate_updates(merged_dataset, slugified_data,
                               parent_dataset_id=dataset.dataset_id)
-
-
-def __update_merged_datasets(dataset, new_data):
-    # store slugs as labes for child datasets
-    slugified_data = __slugify_data(new_data, dataset.schema.labels_to_slugs)
-
-    # update the merged datasets with new_dframe
-    for mapping, merged_dataset in dataset.merged_datasets_with_map:
-        slugified_data = __remapped_data(dataset.dataset_id, mapping,
-                                         slugified_data)
-
-        calculate_updates(merged_dataset, slugified_data,
-                          parent_dataset_id=dataset.dataset_id)
