@@ -8,7 +8,7 @@ from bamboo.tests.controllers.test_abstract_datasets import\
     TestAbstractDatasets
 
 
-class TestDatasetsEdits(TestAbstractDatasets):
+class TestDatasetsEdit(TestAbstractDatasets):
 
     def setUp(self):
         TestAbstractDatasets.setUp(self)
@@ -79,6 +79,51 @@ class TestDatasetsEdits(TestAbstractDatasets):
 
         agg = self._test_aggregations()[0]
         self.assertEqual(agg['sum_amount_'], amount_sum_after)
+
+    def test_delete_row_with_join(self):
+        index = 0
+
+        left_dataset_id = self._post_file()
+        right_dataset_id = self._post_file('good_eats_aux.csv')
+        on = 'food_type'
+        results = json.loads(self.controller.join(
+            left_dataset_id, right_dataset_id, on=on))
+        joined_dataset_id = results[Dataset.ID]
+
+        results = json.loads(self.controller.join(
+            joined_dataset_id, right_dataset_id, on=on))
+        joined_dataset_id2 = results[Dataset.ID]
+
+        results = json.loads(
+            self.controller.row_delete(left_dataset_id, index))
+        self.assertTrue(Datasets.SUCCESS in results.keys())
+
+        dframe = Dataset.find_one(joined_dataset_id).dframe(index=True)
+        self.assertFalse(index in dframe['index'].tolist())
+
+        dframe = Dataset.find_one(joined_dataset_id2).dframe(index=True)
+        self.assertFalse(index in dframe['index'].tolist())
+
+    def test_delete_row_with_merge(self):
+        index = 0
+
+        dataset_id1 = self._post_file()
+        dataset_id2 = self._post_file()
+        result = json.loads(self.controller.merge(
+            dataset_ids=json.dumps([dataset_id1, dataset_id2])))
+        merged_id = result[Dataset.ID]
+
+        results = json.loads(
+            self.controller.row_delete(dataset_id2, index))
+        self.assertTrue(Datasets.SUCCESS in results.keys())
+
+        results = json.loads(
+            self.controller.row_delete(dataset_id1, index))
+        self.assertTrue(Datasets.SUCCESS in results.keys())
+
+        dframe = Dataset.find_one(merged_id).dframe(index=True)
+        self.assertFalse(index in dframe['index'].tolist())
+        self.assertFalse(index + self.NUM_ROWS in dframe['index'].tolist())
 
     def test_edit_row(self):
         dataset_id = self._post_file()

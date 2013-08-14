@@ -46,8 +46,8 @@ class TestCalculator(TestBase):
 
             calculation = Calculation()
             calculation.save(self.dataset, formula, name, self.group)
-            calculate_columns(self.dataset, [calculation])
             self.now = now()
+            calculate_columns(self.dataset, [calculation])
 
             self.column_labels_to_slugs = self.dataset.schema.labels_to_slugs
 
