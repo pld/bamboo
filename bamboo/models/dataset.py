@@ -408,6 +408,24 @@ class Dataset(AbstractModel, ImportableDataset):
 
         return dframe
 
+    def has_pending_updates(self, update_id):
+        """Check if this dataset has pending updates.
+
+        Call the update identfied by `update_id` the current update. A dataset
+        has pending updates if, not including the current update, there are any
+        pending updates and the update at the top of the queue is not the
+        current update.
+
+        :param update_id: An update to exclude when checking for pending
+            updates.
+        :returns: True if there are pending updates, False otherwise.
+        """
+        self.reload()
+        pending_updates = self.pending_updates
+
+        return pending_updates[0] != update_id and len(
+            set(pending_updates) - set([update_id]))
+
     def info(self, update=None):
         """Return or update meta-data for this dataset.
 
@@ -653,24 +671,6 @@ class Dataset(AbstractModel, ImportableDataset):
 
     def update_observations(self, dframe):
         return Observation.update_from_dframe(dframe, self)
-
-    def has_pending_updates(self, update_id):
-        """Check if this dataset has pending updates.
-
-        Call the update identfied by `update_id` the current update. A dataset
-        has pending updates if, not including the current update, there are any
-        pending updates and the update at the top of the queue is not the
-        current update.
-
-        :param update_id: An update to exclude when checking for pending
-            updates.
-        :returns: True if there are pending updates, False otherwise.
-        """
-        self.reload()
-        pending_updates = self.pending_updates
-
-        return pending_updates[0] != update_id and len(
-            set(pending_updates) - set([update_id]))
 
     def update_complete(self, update_id):
         """Remove `update_id` from this datasets list of pending updates.

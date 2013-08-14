@@ -242,6 +242,18 @@ def __ensure_ready(dataset, update_id):
         raise calculate_updates.retry()
 
 
+def __find_merge_offset(dataset, merged_dataset):
+    offset = 0
+
+    for parent_id in merged_dataset.parent_ids:
+        if dataset.dataset_id == parent_id:
+            break
+
+        offset += dataset.find_one(parent_id).num_rows
+
+    return offset
+
+
 def __propagate_column(dataset, parent_dataset):
     """Propagate columns in `parent_dataset` to `dataset`.
 
@@ -394,15 +406,3 @@ def __update_merged_datasets(dataset, update):
             offset = __find_merge_offset(dataset, merged_dataset)
             index, data = update['edit']
             merged_dataset.update_observation(index + offset, data)
-
-
-def __find_merge_offset(dataset, merged_dataset):
-    offset = 0
-
-    for parent_id in merged_dataset.parent_ids:
-        if dataset.dataset_id == parent_id:
-            break
-
-        offset += dataset.find_one(parent_id).num_rows
-
-    return offset
