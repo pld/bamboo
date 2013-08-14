@@ -128,15 +128,15 @@ def dframe_from_update(dataset, new_data):
 
     index = range(num_rows, num_rows + len(filtered_data))
     new_dframe = BambooFrame(filtered_data, index=index)
-    __check_update_is_valid(dataset, new_dframe)
+    check_update_is_valid(dataset, new_dframe)
 
     return new_dframe
 
 
 @task(default_retry_delay=5, ignore_result=True)
-def propagate(dataset, new_dframe=None, reducible=True, update=None):
+def propagate(dataset, new_dframe=None, update=None):
     """Propagate changes in a modified dataset."""
-    __update_aggregate_datasets(dataset, new_dframe, reducible=reducible)
+    __update_aggregate_datasets(dataset, new_dframe, update=update)
 
     if update:
         __update_merged_datasets(dataset, update)
@@ -191,7 +191,7 @@ def __calculation_data(dataset):
     return flatten(calcs_to_data.values())
 
 
-def __check_update_is_valid(dataset, new_dframe_raw):
+def check_update_is_valid(dataset, new_dframe_raw):
     """Check if the update is valid.
 
     Check whether this is a right-hand side of any joins
@@ -297,12 +297,12 @@ def __slugify_data(new_data, labels_to_slugs):
     return slugified_data
 
 
-def __update_aggregate_datasets(dataset, new_dframe, reducible=True):
+def __update_aggregate_datasets(dataset, new_dframe, update=None):
     calcs_to_data = __calculation_data(dataset)
 
     for formula, slug, groups, a_dataset in calcs_to_data:
         __update_aggregate_dataset(dataset, formula, new_dframe, slug, groups,
-                                   a_dataset, reducible)
+                                   a_dataset, update is None)
 
 
 def __update_aggregate_dataset(dataset, formula, new_dframe, name, groups,
@@ -369,6 +369,9 @@ def __update_joined_datasets(dataset, update):
                                   parent_dataset_id=dataset.dataset_id)
         elif 'delete' in update:
             j_dataset.delete_observation(update['delete'])
+        elif 'edit' in update:
+            j_dataset.update_observation(*update['edit'])
+            #print j_dataset.dframe()
 
 
 def __update_merged_datasets(dataset, update):
@@ -385,12 +388,21 @@ def __update_merged_datasets(dataset, update):
             calculate_updates(merged_dataset, mapped_data,
                               parent_dataset_id=dataset.dataset_id)
         elif 'delete' in update:
-            offset = 0
-
-            for parent_id in merged_dataset.parent_ids:
-                if dataset.dataset_id == parent_id:
-                    break
-
-                offset += dataset.find_one(parent_id).num_rows
-
+            offset = __find_merge_offset(dataset, merged_dataset)
             merged_dataset.delete_observation(update['delete'] + offset)
+        elif 'edit' in update:
+            offset = __find_merge_offset(dataset, merged_dataset)
+            index, data = update['edit']
+            merged_dataset.update_observation(index + offset, data)
+
+
+def __find_merge_offset(dataset, merged_dataset):
+    offset = 0
+
+    for parent_id in merged_dataset.parent_ids:
+        if dataset.dataset_id == parent_id:
+            break
+
+        offset += dataset.find_one(parent_id).num_rows
+
+    return offset

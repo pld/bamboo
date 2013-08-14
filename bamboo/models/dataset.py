@@ -359,7 +359,7 @@ class Dataset(AbstractModel, ImportableDataset):
         dframe = self.dframe()
         self.update({self.NUM_ROWS: len(dframe)})
         self.build_schema(dframe, overwrite=True)
-        call_async(propagate, self, reducible=False, update={'delete': index})
+        call_async(propagate, self, update={'delete': index})
 
     def dframe(self, query_args=None, keep_parent_ids=False, padded=False,
                index=False, reload_=False, keep_mongo_keys=False):
@@ -646,11 +646,10 @@ class Dataset(AbstractModel, ImportableDataset):
         super(self.__class__, self).update(record)
 
     def update_observation(self, index, data):
-        # TODO check that update is valid
-
+        # check that update is valid
+        dframe_from_update(self, [data])
         Observation.update(self, index, data)
-
-        call_async(propagate, self, reducible=False)
+        call_async(propagate, self, update={'edit': [index, data]})
 
     def update_observations(self, dframe):
         return Observation.update_from_dframe(dframe, self)

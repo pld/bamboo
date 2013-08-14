@@ -488,7 +488,8 @@ class Datasets(AbstractController):
             return self._success('Updated row with index "%s".' % index,
                                  dataset_id)
 
-        return self._safe_get_and_call(dataset_id, action)
+        return self._safe_get_and_call(dataset_id, action,
+                                       exceptions=(NonUniqueJoinError,))
 
     def plot(self, dataset_id, query=None, select=None, limit=0, group=None,
              order_by=None, index=None, plot_type='line', aggregation='sum',
