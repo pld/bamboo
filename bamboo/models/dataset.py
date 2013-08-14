@@ -359,7 +359,7 @@ class Dataset(AbstractModel, ImportableDataset):
         dframe = self.dframe()
         self.update({self.NUM_ROWS: len(dframe)})
         self.build_schema(dframe, overwrite=True)
-        call_async(propagate, self, reducible=False, update={'delete': index})
+        call_async(propagate, self, update={'delete': index})
 
     def dframe(self, query_args=None, keep_parent_ids=False, padded=False,
                index=False, reload_=False, keep_mongo_keys=False):
@@ -407,6 +407,24 @@ class Dataset(AbstractModel, ImportableDataset):
             self.__dframe = dframe
 
         return dframe
+
+    def has_pending_updates(self, update_id):
+        """Check if this dataset has pending updates.
+
+        Call the update identfied by `update_id` the current update. A dataset
+        has pending updates if, not including the current update, there are any
+        pending updates and the update at the top of the queue is not the
+        current update.
+
+        :param update_id: An update to exclude when checking for pending
+            updates.
+        :returns: True if there are pending updates, False otherwise.
+        """
+        self.reload()
+        pending_updates = self.pending_updates
+
+        return pending_updates[0] != update_id and len(
+            set(pending_updates) - set([update_id]))
 
     def info(self, update=None):
         """Return or update meta-data for this dataset.
@@ -646,32 +664,13 @@ class Dataset(AbstractModel, ImportableDataset):
         super(self.__class__, self).update(record)
 
     def update_observation(self, index, data):
-        # TODO check that update is valid
-
+        # check that update is valid
+        dframe_from_update(self, [data])
         Observation.update(self, index, data)
-
-        call_async(propagate, self, reducible=False)
+        call_async(propagate, self, update={'edit': [index, data]})
 
     def update_observations(self, dframe):
         return Observation.update_from_dframe(dframe, self)
-
-    def has_pending_updates(self, update_id):
-        """Check if this dataset has pending updates.
-
-        Call the update identfied by `update_id` the current update. A dataset
-        has pending updates if, not including the current update, there are any
-        pending updates and the update at the top of the queue is not the
-        current update.
-
-        :param update_id: An update to exclude when checking for pending
-            updates.
-        :returns: True if there are pending updates, False otherwise.
-        """
-        self.reload()
-        pending_updates = self.pending_updates
-
-        return pending_updates[0] != update_id and len(
-            set(pending_updates) - set([update_id]))
 
     def update_complete(self, update_id):
         """Remove `update_id` from this datasets list of pending updates.

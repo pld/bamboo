@@ -164,8 +164,8 @@ class Observation(AbstractModel):
         :param dataset: The dataset to find the row for.
         :param index: The index of the row to find.
         """
-        query = {INDEX: index,
-                 DATASET_ID: dataset.dataset_id}
+        query = {INDEX: index, DATASET_ID: dataset.dataset_id,
+                 cls.DELETED_AT: 0}
         query = cls.encode(query, dataset=dataset)
         decoding = cls.decoding(dataset)
         record = super(cls, cls).find_one(query, as_dict=True)
@@ -225,7 +225,6 @@ class Observation(AbstractModel):
 
         cls.delete(dataset, index)
 
-        # TODO do we need to ensure the index stays the same?
         super(cls, cls()).save(record)
 
     @classmethod

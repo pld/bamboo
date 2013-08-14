@@ -110,6 +110,14 @@ class Calculation(AbstractModel):
         return self.record[DATASET_ID]
 
     @property
+    def dependencies(self):
+        return self.record.get(self.DEPENDENCIES, [])
+
+    @property
+    def dependent_calculations(self):
+        return self.record.get(self.DEPENDENT_CALCULATIONS, [])
+
+    @property
     def formula(self):
         return self.record[self.FORMULA]
 
@@ -125,33 +133,91 @@ class Calculation(AbstractModel):
     def name(self):
         return self.record[self.NAME]
 
-    @property
-    def dependencies(self):
-        return self.record.get(self.DEPENDENCIES, [])
+    @classmethod
+    def create(cls, dataset, formula, name, group=None):
+        calculation = super(cls, cls).create(dataset, formula, name, group)
+        call_async(calculate_task, [calculation], dataset.clear_cache())
+        return calculation
 
-    @property
-    def dependent_calculations(self):
-        return self.record.get(self.DEPENDENT_CALCULATIONS, [])
+    @classmethod
+    def create_from_list_or_dict(cls, dataset, calculations):
+        calculations = to_list(calculations)
+
+        if not len(calculations) or not isinstance(calculations, list) or\
+                any([not isinstance(e, dict) for e in calculations]):
+            raise ArgumentError('Improper format for JSON calculations.')
+
+        parsed_calculations = []
+
+        # Pull out args to check JSON format
+        try:
+            for c in calculations:
+                groups = c.get("groups")
+
+                if not isinstance(groups, list):
+                    groups = [groups]
+
+                for group in groups:
+                    parsed_calculations.append([
+                        c[cls.FORMULA],
+                        c[cls.NAME], group])
+        except KeyError as e:
+            raise ArgumentError('Required key %s not found in JSON' % e)
+
+        # Save instead of create so that we calculate on all at once.
+        calculations = [cls().save(dataset, formula, name, group)
+                        for formula, name, group in parsed_calculations]
+        call_async(calculate_task, calculations, dataset.clear_cache())
+
+    @classmethod
+    def find(cls, dataset, include_aggs=True, only_aggs=False):
+        """Return the calculations for`dataset`.
+
+        :param dataset: The dataset to retrieve the calculations for.
+        :param include_aggs: Include aggregations, default True.
+        :param only_aggs: Exclude non-aggregations, default False.
+        """
+        query = {DATASET_ID: dataset.dataset_id}
+
+        if not include_aggs:
+            query[cls.AGGREGATION] = None
+
+        if only_aggs:
+            query[cls.AGGREGATION] = {'$ne': None}
+
+        query_args = QueryArgs(query=query,
+                               order_by='name')
+        return super(cls, cls).find(query_args)
+
+    @classmethod
+    def find_one(cls, dataset_id, name, group=None):
+        query = {
+            DATASET_ID: dataset_id,
+            cls.NAME: name,
+        }
+
+        if group:
+            query[cls.GROUP] = group
+
+        return super(cls, cls).find_one(query)
 
     def add_dependency(self, name):
         self.__add_and_update_set(self.DEPENDENCIES, self.dependencies, name)
 
+    def add_dependencies(self, dataset, dependent_columns):
+        """Store calculation dependencies."""
+        calculations = dataset.calculations()
+        names_to_calcs = {calc.name: calc for calc in calculations}
+
+        for column_name in dependent_columns:
+            calc = names_to_calcs.get(column_name)
+            if calc:
+                self.add_dependency(calc.name)
+                calc.add_dependent_calculation(self.name)
+
     def add_dependent_calculation(self, name):
         self.__add_and_update_set(self.DEPENDENT_CALCULATIONS,
                                   self.dependent_calculations, name)
-
-    def remove_dependent_calculation(self, name):
-        new_dependent_calcs = self.dependent_calculations
-        new_dependent_calcs.remove(name)
-        self.update({self.DEPENDENT_CALCULATIONS: new_dependent_calcs})
-
-    def remove_dependencies(self):
-        for name in self.dependencies:
-            calculation = self.find_one(self.dataset_id, name)
-            calculation.remove_dependent_calculation(self.name)
-
-    def set_aggregation_id(self, _id):
-        self.update({self.AGGREGATION_ID: _id})
 
     def delete(self, dataset):
         """Delete this calculation.
@@ -180,6 +246,24 @@ class Calculation(AbstractModel):
                     'dataset' % self.group)
 
         call_async(delete_task, self, dataset)
+
+    def remove_dependent_calculation(self, name):
+        new_dependent_calcs = self.dependent_calculations
+        new_dependent_calcs.remove(name)
+        self.update({self.DEPENDENT_CALCULATIONS: new_dependent_calcs})
+
+    def remove_dependencies(self):
+        for name in self.dependencies:
+            calculation = self.find_one(self.dataset_id, name)
+            calculation.remove_dependent_calculation(self.name)
+
+    def restart_if_has_pending(self, dataset, current_calcs=[]):
+        current_names = sorted([self.name] + [c.name for c in current_calcs])
+        unfinished = [c for c in dataset.calculations() if c.is_pending]
+        unfinished_names = [c.name for c in unfinished[:len(current_names)]]
+
+        if len(unfinished) and current_names != sorted(unfinished_names):
+            raise calculate_task.retry()
 
     def save(self, dataset, formula, name, group_str=None):
         """Parse, save, and calculate a formula.
@@ -232,92 +316,14 @@ class Calculation(AbstractModel):
 
         return self
 
-    @classmethod
-    def create(cls, dataset, formula, name, group=None):
-        calculation = super(cls, cls).create(dataset, formula, name, group)
-        call_async(calculate_task, [calculation], dataset.clear_cache())
-        return calculation
+    def set_aggregation_id(self, _id):
+        self.update({self.AGGREGATION_ID: _id})
 
-    @classmethod
-    def create_from_list_or_dict(cls, dataset, calculations):
-        calculations = to_list(calculations)
+    def __add_and_update_set(self, link_key, existing, new):
+        new_list = list(set(existing + [new]))
 
-        if not len(calculations) or not isinstance(calculations, list) or\
-                any([not isinstance(e, dict) for e in calculations]):
-            raise ArgumentError('Improper format for JSON calculations.')
-
-        parsed_calculations = []
-
-        # Pull out args to check JSON format
-        try:
-            for c in calculations:
-                groups = c.get("groups")
-
-                if not isinstance(groups, list):
-                    groups = [groups]
-
-                for group in groups:
-                    parsed_calculations.append([
-                        c[cls.FORMULA],
-                        c[cls.NAME], group])
-        except KeyError as e:
-            raise ArgumentError('Required key %s not found in JSON' % e)
-
-        # Save instead of create so that we calculate on all at once.
-        calculations = [cls().save(dataset, formula, name, group)
-                        for formula, name, group in parsed_calculations]
-        call_async(calculate_task, calculations, dataset.clear_cache())
-
-    @classmethod
-    def find_one(cls, dataset_id, name, group=None):
-        query = {
-            DATASET_ID: dataset_id,
-            cls.NAME: name,
-        }
-
-        if group:
-            query[cls.GROUP] = group
-
-        return super(cls, cls).find_one(query)
-
-    @classmethod
-    def find(cls, dataset, include_aggs=True, only_aggs=False):
-        """Return the calculations for`dataset`.
-
-        :param dataset: The dataset to retrieve the calculations for.
-        :param include_aggs: Include aggregations, default True.
-        :param only_aggs: Exclude non-aggregations, default False.
-        """
-        query = {DATASET_ID: dataset.dataset_id}
-
-        if not include_aggs:
-            query[cls.AGGREGATION] = None
-
-        if only_aggs:
-            query[cls.AGGREGATION] = {'$ne': None}
-
-        query_args = QueryArgs(query=query,
-                               order_by='name')
-        return super(cls, cls).find(query_args)
-
-    def restart_if_has_pending(self, dataset, current_calcs=[]):
-        current_names = sorted([self.name] + [c.name for c in current_calcs])
-        unfinished = [c for c in dataset.calculations() if c.is_pending]
-        unfinished_names = [c.name for c in unfinished[:len(current_names)]]
-
-        if len(unfinished) and current_names != sorted(unfinished_names):
-            raise calculate_task.retry()
-
-    def add_dependencies(self, dataset, dependent_columns):
-        """Store calculation dependencies."""
-        calculations = dataset.calculations()
-        names_to_calcs = {calc.name: calc for calc in calculations}
-
-        for column_name in dependent_columns:
-            calc = names_to_calcs.get(column_name)
-            if calc:
-                self.add_dependency(calc.name)
-                calc.add_dependent_calculation(self.name)
+        if new_list != existing:
+            self.update({link_key: new_list})
 
     def __check_name_and_make_unique(self, name, dataset):
         """Check that the name is valid and make unique if valid.
@@ -333,9 +339,3 @@ class Calculation(AbstractModel):
             raise UniqueCalculationError(name, current_names)
 
         return make_unique(name, dataset.schema.keys())
-
-    def __add_and_update_set(self, link_key, existing, new):
-        new_list = list(set(existing + [new]))
-
-        if new_list != existing:
-            self.update({link_key: new_list})

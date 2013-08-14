@@ -164,3 +164,69 @@ class TestDatasetsEdit(TestAbstractDatasets):
 
         agg = self._test_aggregations()[0]
         self.assertEqual(agg['sum_amount_'], amount_sum_after)
+
+    def test_edit_row_with_join(self):
+        index = 0
+        value = 10
+        update = {'amount': value, 'food_type': 'breakfast'}
+
+        left_dataset_id = self._post_file()
+        right_dataset_id = self._post_file('good_eats_aux.csv')
+        on = 'food_type'
+        results = json.loads(self.controller.join(
+            left_dataset_id, right_dataset_id, on=on))
+        joined_dataset_id = results[Dataset.ID]
+
+        results = json.loads(self.controller.join(
+            joined_dataset_id, right_dataset_id, on=on))
+        joined_dataset_id2 = results[Dataset.ID]
+
+        results = json.loads(self.controller.row_update(left_dataset_id, index,
+                                                        json.dumps(update)))
+        self.assertTrue(Datasets.SUCCESS in results.keys())
+
+        result = json.loads(self.controller.row_show(joined_dataset_id, 0))
+        self.assertEqual(value, result['amount'])
+
+        result = json.loads(self.controller.row_show(joined_dataset_id2, 0))
+        self.assertEqual(value, result['amount'])
+
+    def test_edit_row_with_join_invalid(self):
+        index = 0
+        update = {'food_type': 'deserts'}
+
+        left_dataset_id = self._post_file()
+        right_dataset_id = self._post_file('good_eats_aux.csv')
+        on = 'food_type'
+        json.loads(self.controller.join(
+            left_dataset_id, right_dataset_id, on=on))
+
+        results = json.loads(self.controller.row_update(
+            right_dataset_id, index, json.dumps(update)))
+        self.assertTrue(Datasets.ERROR in results.keys())
+
+    def test_edit_row_with_merge(self):
+        index = 0
+        value = 10
+        update = {'amount': value, 'food_type': 'breakfast'}
+
+        dataset_id1 = self._post_file()
+        dataset_id2 = self._post_file()
+        result = json.loads(self.controller.merge(
+            dataset_ids=json.dumps([dataset_id1, dataset_id2])))
+        merged_id = result[Dataset.ID]
+
+        results = json.loads(self.controller.row_update(dataset_id1, index,
+                                                        json.dumps(update)))
+        self.assertTrue(Datasets.SUCCESS in results.keys())
+
+        results = json.loads(self.controller.row_update(dataset_id2, index,
+                                                        json.dumps(update)))
+        self.assertTrue(Datasets.SUCCESS in results.keys())
+
+        result = json.loads(self.controller.row_show(merged_id, index))
+        self.assertEqual(value, result['amount'])
+
+        result = json.loads(self.controller.row_show(merged_id, index +
+                                                     self.NUM_ROWS))
+        self.assertEqual(value, result['amount'])
