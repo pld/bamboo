@@ -128,7 +128,7 @@ def dframe_from_update(dataset, new_data):
 
     index = range(num_rows, num_rows + len(filtered_data))
     new_dframe = BambooFrame(filtered_data, index=index)
-    check_update_is_valid(dataset, new_dframe)
+    __check_update_is_valid(dataset, new_dframe)
 
     return new_dframe
 
@@ -191,7 +191,7 @@ def __calculation_data(dataset):
     return flatten(calcs_to_data.values())
 
 
-def check_update_is_valid(dataset, new_dframe_raw):
+def __check_update_is_valid(dataset, new_dframe_raw):
     """Check if the update is valid.
 
     Check whether this is a right-hand side of any joins
