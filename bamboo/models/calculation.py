@@ -13,6 +13,19 @@ from bamboo.lib.utils import to_list
 from bamboo.models.abstract_model import AbstractModel
 
 
+class CalculateTask(Task):
+    def after_return(self, status, retval, task_id, args, kwargs, einfo=None):
+        if status == 'FAILURE':
+            calculations = args[0]
+
+            for calculation in calculations:
+                calculation.failed(traceback.format_exc())
+
+
+class DependencyError(Exception):
+    pass
+
+
 class UniqueCalculationError(Exception):
 
     def __init__(self, name, current_names):
@@ -22,40 +35,6 @@ class UniqueCalculationError(Exception):
                    'names are: "%s"' % (name, current_names_str))
 
         Exception.__init__(self, message)
-
-
-class DependencyError(Exception):
-    pass
-
-
-@task(ignore_result=True)
-def delete_task(calculation, dataset):
-    """Background task to delete `calculation` and columns in its dataset.
-
-    :param calculation: Calculation to delete.
-    :param dataset: Dataset for this calculation.
-    """
-    slug = dataset.schema.labels_to_slugs.get(calculation.name)
-
-    if slug:
-        dataset.delete_columns(slug)
-        dataset.clear_summary_stats(column=slug)
-
-    calculation.remove_dependencies()
-
-    super(calculation.__class__, calculation).delete({
-        DATASET_ID: calculation.dataset_id,
-        calculation.NAME: calculation.name
-    })
-
-
-class CalculateTask(Task):
-    def after_return(self, status, retval, task_id, args, kwargs, einfo=None):
-        if status == 'FAILURE':
-            calculations = args[0]
-
-            for calculation in calculations:
-                calculation.failed(traceback.format_exc())
 
 
 @task(base=CalculateTask, default_retry_delay=5, max_retries=10,
@@ -83,6 +62,42 @@ def calculate_task(calculations, dataset):
             calculation.set_aggregation_id(aggregated_id)
 
         calculation.ready()
+
+
+def _check_name_and_make_unique(name, dataset):
+    """Check that the name is valid and make unique if valid.
+
+    :param name: The name to make unique.
+    :param dataset: The dataset to make unique for.
+    :raises: `UniqueCalculationError` if not unique.
+    :returns: A unique name.
+    """
+    current_names = dataset.labels
+
+    if name in current_names:
+        raise UniqueCalculationError(name, current_names)
+
+    return make_unique(name, dataset.schema.keys())
+
+
+@task(ignore_result=True)
+def delete_task(calculation, dataset):
+    """Background task to delete `calculation` and columns in its dataset.
+
+    :param calculation: Calculation to delete.
+    :param dataset: Dataset for this calculation.
+    """
+    slug = dataset.schema.labels_to_slugs.get(calculation.name)
+
+    if slug:
+        dataset.delete_columns(slug)
+        dataset.clear_summary_stats(column=slug)
+
+    calculation.remove_dependencies()
+
+    super(calculation.__class__, calculation).delete({
+        DATASET_ID: calculation.dataset_id,
+        calculation.NAME: calculation.name})
 
 
 class Calculation(AbstractModel):
@@ -137,6 +152,7 @@ class Calculation(AbstractModel):
     def create(cls, dataset, formula, name, group=None):
         calculation = super(cls, cls).create(dataset, formula, name, group)
         call_async(calculate_task, [calculation], dataset.clear_cache())
+
         return calculation
 
     @classmethod
@@ -297,12 +313,11 @@ class Calculation(AbstractModel):
             aggregated_dataset = dataset.aggregated_dataset(groups)
 
             if aggregated_dataset:
-                name = self.__check_name_and_make_unique(name,
-                                                         aggregated_dataset)
+                name = _check_name_and_make_unique(name, aggregated_dataset)
 
         else:
             # set group if aggregation and group unset
-            name = self.__check_name_and_make_unique(name, dataset)
+            name = _check_name_and_make_unique(name, dataset)
 
         record = {
             DATASET_ID: dataset.dataset_id,
@@ -324,18 +339,3 @@ class Calculation(AbstractModel):
 
         if new_list != existing:
             self.update({link_key: new_list})
-
-    def __check_name_and_make_unique(self, name, dataset):
-        """Check that the name is valid and make unique if valid.
-
-        :param name: The name to make unique.
-        :param dataset: The dataset to make unique for.
-        :raises: `UniqueCalculationError` if not unique.
-        :returns: A unique name.
-        """
-        current_names = dataset.labels
-
-        if name in current_names:
-            raise UniqueCalculationError(name, current_names)
-
-        return make_unique(name, dataset.schema.keys())

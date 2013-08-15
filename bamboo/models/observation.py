@@ -1,11 +1,12 @@
 from math import ceil
 
-from pandas import concat
+from pandas import concat, DataFrame
 from pymongo.errors import AutoReconnect
 
 from bamboo.core.frame import BambooFrame, DATASET_ID, INDEX
 from bamboo.lib.datetools import now, parse_timestamp_query
 from bamboo.lib.mongo import MONGO_ID, MONGO_ID_ENCODED
+from bamboo.lib.parsing import parse_columns
 from bamboo.lib.query_args import QueryArgs
 from bamboo.lib.utils import combine_dicts, invert_dict, replace_keys
 from bamboo.models.abstract_model import AbstractModel
@@ -32,6 +33,20 @@ def encode(dframe, dataset, add_index=True):
     encoded_columns_map = dataset.schema.rename_map_for_dframe(dframe)
 
     return dframe.rename(columns=encoded_columns_map)
+
+
+def update_calculations(record, dataset):
+    calculations = dataset.calculations(include_aggs=False)
+
+    if len(calculations):
+        dframe = DataFrame(data=record, index=[0])
+        labels_to_slugs = dataset.schema.labels_to_slugs
+
+        for c in calculations:
+            columns = parse_columns(dataset, c.formula, c.name, dframe=dframe)
+            record[labels_to_slugs[c.name]] = columns[0][0]
+
+    return record
 
 
 class Observation(AbstractModel):
@@ -221,6 +236,8 @@ class Observation(AbstractModel):
         previous_record = cls.find_one(dataset, index).record
         previous_record.pop(MONGO_ID)
         record = combine_dicts(previous_record, record)
+        record = update_calculations(record, dataset)
+
         record = cls.encode(record, dataset=dataset)
 
         cls.delete(dataset, index)
