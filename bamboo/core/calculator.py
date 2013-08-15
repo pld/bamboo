@@ -44,7 +44,8 @@ def calculate_columns(dataset, calculations):
             else:
                 new_cols = new_cols.join(columns[0])
 
-            dataset.update_observations(new_cols)
+    if new_cols is not None:
+        dataset.update_observations(new_cols)
 
     # propagate calculation to any merged child datasets
     [__propagate_column(x, dataset) for x in dataset.merged_datasets]
