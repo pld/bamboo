@@ -33,7 +33,6 @@ def calculate_columns(dataset, calculations):
     new_cols = None
 
     for c in calculations:
-
         if c.aggregation:
             aggregator = __create_aggregator(
                 dataset, c.formula, c.name, c.groups_as_list)

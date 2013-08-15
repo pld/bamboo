@@ -3,6 +3,7 @@ from math import ceil
 from pandas import concat
 from pymongo.errors import AutoReconnect
 
+from bamboo.core.calculator import calculate_columns
 from bamboo.core.frame import BambooFrame, DATASET_ID, INDEX
 from bamboo.lib.datetools import now, parse_timestamp_query
 from bamboo.lib.mongo import MONGO_ID, MONGO_ID_ENCODED
@@ -220,6 +221,9 @@ class Observation(AbstractModel):
         """
         previous_record = cls.find_one(dataset, index).record
         previous_record.pop(MONGO_ID)
+
+        #calculations = dataset.calculations(include_aggs=False)
+        #calculate_columns(dataset, calculations, dframe)
         record = combine_dicts(previous_record, record)
         record = cls.encode(record, dataset=dataset)
 
