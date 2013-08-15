@@ -147,6 +147,26 @@ class TestDatasetsEdit(TestAbstractDatasets):
         all_observations = Observation.find(dataset, include_deleted=True)
         self.assertEqual(self.NUM_ROWS + 1, len(all_observations))
 
+    def test_edit_row_with_calculation(self):
+        amount_before = 9
+        amount_after = 10
+        value = 5
+        index = 0
+        update = {'amount': amount_after, 'food_type': 'breakfast'}
+
+        self.dataset_id = self._post_file()
+        self._post_calculations(formulae=['amount + %s' % value])
+
+        result = json.loads(self.controller.row_show(self.dataset_id, index))
+        self.assertEqual(amount_before + value, result['amount___%s' % value])
+
+        results = json.loads(self.controller.row_update(self.dataset_id, index,
+                                                        json.dumps(update)))
+        self.assertTrue(Datasets.SUCCESS in results.keys())
+
+        result = json.loads(self.controller.row_show(self.dataset_id, index))
+        self.assertEqual(amount_after + value, result['amount___%s' % value])
+
     def test_edit_row_with_agg(self):
         amount_sum = 2007.5
         amount_sum_after = 2008.5
