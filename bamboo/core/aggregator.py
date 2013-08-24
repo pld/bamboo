@@ -5,18 +5,11 @@ from bamboo.core.frame import BambooFrame
 from bamboo.lib.parsing import parse_columns
 
 
-def merge_dframes(groups, dframes):
+def group_join(groups, left, other):
     if groups:
-        # set indexes on new dataframes to merge correctly
-        dframes = [dframe.set_index(groups) for dframe in dframes]
+        other.set_index(groups, inplace=True)
 
-    # attach new column to aggregation data frame and remove index
-    new_dframe = dframes[0].join(dframes[1:])
-
-    if groups:
-        new_dframe = new_dframe.reset_index()
-
-    return new_dframe
+    return left.join(other, on=groups)
 
 
 def aggregated_dataset(dataset, dframe, groups):
@@ -83,7 +76,7 @@ class Aggregator(object):
             a_dataset = aggregated_dataset(dataset, new_dframe, self.groups)
         else:
             a_dframe = a_dataset.dframe()
-            new_dframe = merge_dframes(self.groups, [a_dframe, new_dframe])
+            new_dframe = group_join(self.groups, a_dframe, new_dframe)
             a_dataset.replace_observations(new_dframe)
 
         self.new_dframe = new_dframe
@@ -121,7 +114,7 @@ class Aggregator(object):
         new_columns = [x for x in new_dframe.columns if x not in self.groups]
 
         dframe = dframe.drop(new_columns, axis=1)
-        dframe = merge_dframes(self.groups, [new_dframe, dframe])
+        dframe = group_join(self.groups, new_dframe, dframe)
 
         return dframe
 
