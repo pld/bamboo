@@ -4,8 +4,8 @@ from celery.task import task
 from pandas import concat, DataFrame
 
 from bamboo.core.aggregator import Aggregator
-from bamboo.core.frame import add_parent_column,\
-    BambooFrame, join_dataset, NonUniqueJoinError
+from bamboo.core.frame import add_parent_column, join_dataset,\
+    NonUniqueJoinError
 from bamboo.core.parser import Parser
 from bamboo.lib.datetools import recognize_dates
 from bamboo.lib.jsontools import df_to_jsondict
@@ -130,7 +130,7 @@ def dframe_from_update(dataset, new_data):
         filtered_data.append(filtered_row)
 
     index = range(num_rows, num_rows + len(filtered_data))
-    new_dframe = BambooFrame(filtered_data, index=index)
+    new_dframe = DataFrame(filtered_data, index=index)
     __check_update_is_valid(dataset, new_dframe)
 
     return new_dframe

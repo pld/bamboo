@@ -1,8 +1,7 @@
 from pandas import concat
 
 from bamboo.core.aggregations import AGGREGATIONS
-from bamboo.core.frame import add_parent_column, BambooFrame,\
-    rows_for_parent_id
+from bamboo.core.frame import add_parent_column, rows_for_parent_id
 from bamboo.lib.parsing import parse_columns
 
 
@@ -68,7 +67,7 @@ class Aggregator(object):
         the aggregation in this new aggregated dataset.
 
         """
-        new_dframe = BambooFrame(self.aggregation.eval(self.columns))
+        new_dframe = self.aggregation.eval(self.columns)
         new_dframe = add_parent_column(new_dframe, dataset.dataset_id)
 
         a_dataset = dataset.aggregated_dataset(self.groups)
@@ -94,8 +93,7 @@ class Aggregator(object):
         child_dataset.remove_parent_observations(parent_dataset_id)
 
         if reducible and self.__is_reducible():
-            dframe = BambooFrame(
-                self.aggregation.reduce(dframe, self.columns))
+            dframe = self.aggregation.reduce(dframe, self.columns)
         else:
             dframe = self.updated_dframe(dataset, formula, dframe)
 

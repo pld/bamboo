@@ -1,8 +1,8 @@
 from cStringIO import StringIO
 
-from pandas import DataFrame, Series
+from pandas import Series
 
-from bamboo.lib.mongo import MONGO_ID, MONGO_ID_ENCODED
+from bamboo.lib.mongo import MONGO_ID_ENCODED
 
 
 # reserved bamboo keys
@@ -81,6 +81,17 @@ def join_dataset(left, other, on):
     return left.join(right_dframe, on=on_lhs)
 
 
+def remove_reserved_keys(df, exclude=[]):
+    """Remove reserved internal columns in this DataFrame.
+
+    :param keep_parent_ids: Keep parent column if True, default False.
+    """
+    reserved_keys = __column_intersect(
+        df, BAMBOO_RESERVED_KEYS).difference(set(exclude))
+
+    return df.drop(reserved_keys, axis=1)
+
+
 def rows_for_parent_id(df, parent_id):
     """DataFrame with only rows for `parent_id`.
 
@@ -92,54 +103,10 @@ def rows_for_parent_id(df, parent_id):
     return df[df[PARENT_DATASET_ID] == parent_id].drop(PARENT_DATASET_ID, 1)
 
 
+def __column_intersect(df, list_):
+    """Return the intersection of `list_` and DataFrame's columns."""
+    return set(list_).intersection(set(df.columns.tolist()))
+
+
 class NonUniqueJoinError(Exception):
     pass
-
-
-class BambooFrame(DataFrame):
-    """Add bamboo related functionality to DataFrame class."""
-
-    def add_index(self):
-        """Add an encoded index to this DataFrame."""
-        if not INDEX in self.columns:
-            # No index, create index for this dframe.
-
-            if not 'index' in self.columns:
-                # Custom index not supplied, use pandas default index.
-                self = self.reset_index()
-
-            self.rename(columns={'index': INDEX}, inplace=True)
-
-        return self.__class__(self)
-
-    def decode_mongo_reserved_keys(self, keep_mongo_keys=False):
-        """Decode MongoDB reserved keys in this DataFrame."""
-        rename_dict = {}
-
-        if MONGO_ID in self.columns:
-            if keep_mongo_keys:
-                self.rename(
-                    columns={MONGO_ID: MONGO_ID_ENCODED,
-                             MONGO_ID_ENCODED: MONGO_ID},
-                    inplace=True)
-            else:
-                del self[MONGO_ID]
-                if MONGO_ID_ENCODED in self.columns:
-                    rename_dict[MONGO_ID_ENCODED] = MONGO_ID
-
-        if rename_dict:
-            self.rename(columns={MONGO_ID_ENCODED: MONGO_ID}, inplace=True)
-
-    def remove_bamboo_reserved_keys(self, exclude=[]):
-        """Remove reserved internal columns in this DataFrame.
-
-        :param keep_parent_ids: Keep parent column if True, default False.
-        """
-        reserved_keys = self.__column_intersect(
-            BAMBOO_RESERVED_KEYS).difference(set(exclude))
-
-        return self.drop(reserved_keys, axis=1)
-
-    def __column_intersect(self, list_):
-        """Return the intersection of `list_` and this DataFrame's columns."""
-        return set(list_).intersection(set(self.columns.tolist()))

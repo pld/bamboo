@@ -1,7 +1,7 @@
 from celery.task import task
 from pandas import concat
 
-from bamboo.core.frame import add_parent_column, BambooFrame
+from bamboo.core.frame import add_parent_column
 from bamboo.lib.async import call_async
 from bamboo.models.dataset import Dataset
 
@@ -70,7 +70,7 @@ def __merge_datasets(datasets, mapping):
         column_map = mapping.get(dataset.dataset_id)
 
         if column_map:
-            dframe = BambooFrame(dframe.rename(columns=column_map))
+            dframe = dframe.rename(columns=column_map)
 
         dframe = add_parent_column(dframe, dataset.dataset_id)
         dframes.append(dframe)

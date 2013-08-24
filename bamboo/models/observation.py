@@ -2,13 +2,26 @@ from math import ceil
 from pandas import concat, DataFrame
 from pymongo.errors import AutoReconnect
 
-from bamboo.core.frame import add_id_column, BambooFrame, DATASET_ID, INDEX
+from bamboo.core.frame import add_id_column, DATASET_ID, INDEX
 from bamboo.lib.datetools import now, parse_timestamp_query
 from bamboo.lib.mongo import MONGO_ID, MONGO_ID_ENCODED
 from bamboo.lib.parsing import parse_columns
 from bamboo.lib.query_args import QueryArgs
 from bamboo.lib.utils import combine_dicts, invert_dict, replace_keys
 from bamboo.models.abstract_model import AbstractModel
+
+
+def add_index(df):
+    """Add an encoded index to this DataFrame."""
+    if not INDEX in df.columns:
+        # No index, create index for this dframe.
+        if not 'index' in df.columns:
+            # Custom index not supplied, use pandas default index.
+            df.reset_index(inplace=True)
+
+        df.rename(columns={'index': INDEX}, inplace=True)
+
+    return df
 
 
 def encode(dframe, dataset, add_index=True):
@@ -21,12 +34,10 @@ def encode(dframe, dataset, add_index=True):
     :param dataset: The Dataset to use a mapping for.
     :param add_index: Add index to the DataFrame, default True.
 
-    :returns: A modified `dframe` as a BambooFrame.
+    :returns: A modified `dframe`.
     """
-    dframe = BambooFrame(dframe)
-
     if add_index:
-        dframe = dframe.add_index()
+        dframe = add_index(dframe)
 
     dframe = add_id_column(dframe, dataset.dataset_id)
     encoded_columns_map = dataset.schema.rename_map_for_dframe(dframe)
@@ -208,7 +219,7 @@ class Observation(AbstractModel):
         slugs using the dataset's schema.  The dataset is update to store the
         size of the stored data.
 
-        :param dframe: The DataFrame (or BambooFrame) to store.
+        :param dframe: The DataFrame to store.
         :param dataset: The dataset to store the dframe in.
         """
         # Build schema for the dataset after having read it from file.
@@ -269,14 +280,14 @@ class Observation(AbstractModel):
             if not len(current_observations):
                 break
 
-            dframes.append(BambooFrame(current_observations))
+            dframes.append(current_observations)
 
             if not distinct:
                 observations.rewind()
 
             batch += 1
 
-        return BambooFrame(concat(dframes) if len(dframes) else [])
+        return DataFrame(concat(dframes) if len(dframes) else [])
 
     @classmethod
     def __batch_save(cls, dframe, encoding):

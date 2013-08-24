@@ -1,8 +1,7 @@
 from pandas import Series
 
-from bamboo.core.frame import BAMBOO_RESERVED_KEYS, BambooFrame,\
+from bamboo.core.frame import BAMBOO_RESERVED_KEYS, remove_reserved_keys,\
     rows_for_parent_id, PARENT_DATASET_ID
-from bamboo.lib.mongo import MONGO_ID
 from bamboo.tests.test_base import TestBase
 
 
@@ -11,44 +10,38 @@ class TestFrame(TestBase):
     def setUp(self):
         TestBase.setUp(self)
         self.dframe = self.get_data('good_eats.csv')
-        self.bframe = BambooFrame(self.dframe)
 
     def _add_bamboo_reserved_keys(self, value=1):
         for key in BAMBOO_RESERVED_KEYS:
-            column = Series([value] * len(self.bframe))
+            column = Series([value] * len(self.dframe))
             column.name = key
-            self.bframe = BambooFrame(self.bframe.join(column))
+            self.dframe = self.dframe.join(column)
 
     def test_add_parent_column(self):
         value = 1
         self._add_bamboo_reserved_keys(value)
 
-        for index, item in self.bframe[PARENT_DATASET_ID].iteritems():
+        for index, item in self.dframe[PARENT_DATASET_ID].iteritems():
             self.assertEqual(item, value)
 
-    def test_decode_mongo_reserved_keys(self):
-        self.assertTrue(MONGO_ID in self.bframe.columns)
-        self.bframe.decode_mongo_reserved_keys()
-        self.assertFalse(MONGO_ID in self.bframe.columns)
-
-    def test_remove_bamboo_reserved_keys(self):
+    def test_remove_reserved_keys(self):
         self._add_bamboo_reserved_keys()
 
         for key in BAMBOO_RESERVED_KEYS:
-            self.assertTrue(key in self.bframe.columns)
+            self.assertTrue(key in self.dframe.columns)
 
-        dframe = self.bframe.remove_bamboo_reserved_keys()
+        dframe = remove_reserved_keys(self.dframe)
 
         for key in BAMBOO_RESERVED_KEYS:
             self.assertFalse(key in dframe.columns)
 
-    def test_remove_bamboo_reserved_keys_exclusion(self):
+    def test_remove_reserved_keys_exclusion(self):
         self._add_bamboo_reserved_keys()
 
         for key in BAMBOO_RESERVED_KEYS:
-            self.assertTrue(key in self.bframe.columns)
+            self.assertTrue(key in self.dframe.columns)
 
-        dframe = self.bframe.remove_bamboo_reserved_keys([PARENT_DATASET_ID])
+        dframe = remove_reserved_keys(self.dframe, [PARENT_DATASET_ID])
 
         for key in BAMBOO_RESERVED_KEYS:
             if key == PARENT_DATASET_ID:
@@ -58,13 +51,13 @@ class TestFrame(TestBase):
 
     def test_only_rows_for_parent_id(self):
         parent_id = 1
-        len_parent_rows = len(self.bframe) / 2
+        len_parent_rows = len(self.dframe) / 2
 
         column = Series([parent_id] * len_parent_rows)
         column.name = PARENT_DATASET_ID
 
-        self.bframe = BambooFrame(self.bframe.join(column))
-        bframe_only = rows_for_parent_id(self.bframe, parent_id)
+        self.dframe = self.dframe.join(column)
+        dframe_only = rows_for_parent_id(self.dframe, parent_id)
 
-        self.assertFalse(PARENT_DATASET_ID in bframe_only.columns)
-        self.assertEqual(len(bframe_only), len_parent_rows)
+        self.assertFalse(PARENT_DATASET_ID in dframe_only.columns)
+        self.assertEqual(len(dframe_only), len_parent_rows)
