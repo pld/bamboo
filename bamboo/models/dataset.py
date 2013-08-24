@@ -12,7 +12,7 @@ from bamboo.core.frame import BambooFrame, BAMBOO_RESERVED_KEY_PREFIX,\
 from bamboo.core.summary import summarize
 from bamboo.lib.async import call_async
 from bamboo.lib.exceptions import ArgumentError
-from bamboo.lib.io import ImportableDataset
+from bamboo.lib.readers import ImportableDataset
 from bamboo.lib.query_args import QueryArgs
 from bamboo.lib.schema_builder import Schema
 from bamboo.lib.utils import combine_dicts, to_list
