@@ -45,7 +45,7 @@ def csv_file_reader(name, na_values=[], delete=False):
 
 
 def json_file_reader(content):
-    return recognize_dates(json.loads(content))
+    return recognize_dates(pd.DataFrame(json.loads(content)))
 
 
 class ImportableDataset(object):
