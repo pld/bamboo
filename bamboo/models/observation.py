@@ -224,11 +224,13 @@ class Observation(AbstractModel):
         if not dataset.schema:
             dataset.build_schema(dframe)
 
+        # Update stats, before inplace encoding.
+        dataset.update_stats(dframe)
+
         encoded_dframe = encode(dframe, dataset)
         encoding = cls.encoding(dataset, encoded_dframe)
 
         cls.__batch_save(encoded_dframe, encoding)
-        dataset.update_stats(dframe)
 
     @classmethod
     def update(cls, dataset, index, record):
