@@ -396,10 +396,11 @@ class Dataset(AbstractModel, ImportableDataset):
         dframe.decode_mongo_reserved_keys(keep_mongo_keys=keep_mongo_keys)
 
         excluded = [keep_parent_ids and PARENT_DATASET_ID, index and INDEX]
-        dframe.remove_bamboo_reserved_keys(filter(bool, excluded))
+        dframe = dframe.remove_bamboo_reserved_keys(filter(bool, excluded))
 
         if index:
-            dframe = BambooFrame(dframe.rename(columns={INDEX: 'index'}))
+            dframe.rename(columns={INDEX: 'index'}, inplace=True)
+            dframe = BambooFrame(dframe)
 
         dframe = self.__maybe_pad(dframe, padded)
 
@@ -497,8 +498,9 @@ class Dataset(AbstractModel, ImportableDataset):
 
     def place_holder_dframe(self, dframe=None):
         columns = self.schema.keys()
+
         if dframe is not None:
-            columns = [col for col in columns if col not in dframe.columns[1:]]
+            columns = [c for c in columns if c not in dframe.columns[1:]]
 
         return BambooFrame([[''] * len(columns)], columns=columns)
 

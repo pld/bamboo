@@ -25,6 +25,7 @@ class TestFrame(TestBase):
     def test_add_parent_column(self):
         value = 1
         self._add_bamboo_reserved_keys(value)
+
         for index, item in self.bframe[PARENT_DATASET_ID].iteritems():
             self.assertEqual(item, value)
 
@@ -35,6 +36,7 @@ class TestFrame(TestBase):
 
     def test_recognize_dates(self):
         bframe_with_dates = self.bframe.recognize_dates()
+
         for field in bframe_with_dates['submit_date']:
             self.assertTrue(isinstance(field, datetime))
 
@@ -45,27 +47,34 @@ class TestFrame(TestBase):
             }
         })
         bframe_with_dates = self.bframe.recognize_dates_from_schema(schema)
+
         for field in bframe_with_dates['submit_date']:
             self.assertTrue(isinstance(field, datetime))
 
     def test_remove_bamboo_reserved_keys(self):
         self._add_bamboo_reserved_keys()
+
         for key in BAMBOO_RESERVED_KEYS:
             self.assertTrue(key in self.bframe.columns)
-        self.bframe.remove_bamboo_reserved_keys()
+
+        dframe = self.bframe.remove_bamboo_reserved_keys()
+
         for key in BAMBOO_RESERVED_KEYS:
-            self.assertFalse(key in self.bframe.columns)
+            self.assertFalse(key in dframe.columns)
 
     def test_remove_bamboo_reserved_keys_exclusion(self):
         self._add_bamboo_reserved_keys()
+
         for key in BAMBOO_RESERVED_KEYS:
             self.assertTrue(key in self.bframe.columns)
-        self.bframe.remove_bamboo_reserved_keys([PARENT_DATASET_ID])
+
+        dframe = self.bframe.remove_bamboo_reserved_keys([PARENT_DATASET_ID])
+
         for key in BAMBOO_RESERVED_KEYS:
             if key == PARENT_DATASET_ID:
-                self.assertTrue(key in self.bframe.columns)
+                self.assertTrue(key in dframe.columns)
             else:
-                self.assertFalse(key in self.bframe.columns)
+                self.assertFalse(key in dframe.columns)
 
     def test_only_rows_for_parent_id(self):
         parent_id = 1
@@ -83,6 +92,7 @@ class TestFrame(TestBase):
     def test_to_jsondict(self):
         jsondict = self.bframe.to_jsondict()
         self.assertEqual(len(jsondict), len(self.bframe))
+
         for col in jsondict:
             self.assertEqual(len(col), len(self.bframe.columns))
 

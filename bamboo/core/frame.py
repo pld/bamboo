@@ -84,11 +84,10 @@ class BambooFrame(DataFrame):
 
         :param keep_parent_ids: Keep parent column if True, default False.
         """
-        reserved_keys = self.__column_intersect(BAMBOO_RESERVED_KEYS)
-        reserved_keys = reserved_keys.difference(set(exclude))
+        reserved_keys = self.__column_intersect(
+            BAMBOO_RESERVED_KEYS).difference(set(exclude))
 
-        for column in reserved_keys:
-            del self[column]
+        return self.drop(reserved_keys, axis=1)
 
     def only_rows_for_parent_id(self, parent_id):
         """DataFrame with only rows for `parent_id`.
