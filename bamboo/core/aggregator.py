@@ -9,7 +9,7 @@ def group_join(groups, left, other):
     if groups:
         other.set_index(groups, inplace=True)
 
-    return left.join(other, on=groups)
+    return left.join(other, on=groups if len(groups) else None)
 
 
 def aggregated_dataset(dataset, dframe, groups):
