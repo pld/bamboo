@@ -63,14 +63,9 @@ def _convert_column_to_date(dframe, column):
     """Inline conversion of column in dframe to date type."""
     try:
         return dframe[column].apply(parse_date)
-    except AttributeError:
-        # it is already a datetime
-        pass
-    except ValueError:
-        # it is not a correctly formatted date
-        pass
-    except OverflowError:
-        # it is a number that is too large to be a date
+    except (AttributeError, OverflowError, ValueError):
+        # It is already a datetime, a number that is too large to be a date, or
+        # not a correctly formatted date.
         pass
 
 
