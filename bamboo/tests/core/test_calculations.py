@@ -124,10 +124,11 @@ class TestCalculations(TestCalculator):
                 places = self.places
 
                 if dynamic:
-                    stored = parse_date_to_unix_time(self.now) -\
-                        parse_date_to_unix_time(row['submit_date'])
-                    # large approximate window for time compares
-                    places = 2
+                    # downsample and set low precision for time comparison
+                    stored = (parse_date_to_unix_time(self.now) -
+                              parse_date_to_unix_time(row['submit_date'])) / 10
+                    result = result / 10
+                    places = 0
                 else:
                     stored = np.float64(row[formula])
 
