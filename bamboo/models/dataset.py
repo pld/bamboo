@@ -343,8 +343,7 @@ class Dataset(AbstractModel, ImportableDataset):
         Observation.delete_columns(self, columns)
         new_schema = self.schema
 
-        for c in columns:
-            del new_schema[c]
+        [new_schema.pop(c) for c in columns]
 
         self.set_schema(new_schema, set_num_columns=True)
 
