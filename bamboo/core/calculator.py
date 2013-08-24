@@ -7,6 +7,7 @@ from bamboo.core.aggregator import Aggregator
 from bamboo.core.frame import add_parent_column,\
     BambooFrame, NonUniqueJoinError
 from bamboo.core.parser import Parser
+from bamboo.lib.jsontools import df_to_jsondict
 from bamboo.lib.mongo import MONGO_ID
 from bamboo.lib.parsing import parse_columns
 from bamboo.lib.query_args import QueryArgs
@@ -343,7 +344,7 @@ def __update_aggregate_dataset(dataset, formula, new_dframe, name, groups,
     new_agg_dframe = aggregator.update(dataset, a_dataset, formula, reducible)
 
     # jsondict from new dframe
-    new_data = BambooFrame(new_agg_dframe).to_jsondict()
+    new_data = df_to_jsondict(new_agg_dframe)
 
     for merged_dataset in a_dataset.merged_datasets:
         # remove rows in child from this merged dataset
@@ -378,7 +379,7 @@ def __update_joined_datasets(dataset, update):
                 if on in new_dframe:
                     new_dframe = new_dframe.join_dataset(other_dataset, on)
 
-                calculate_updates(j_dataset, new_dframe.to_jsondict(),
+                calculate_updates(j_dataset, df_to_jsondict(new_dframe),
                                   parent_dataset_id=dataset.dataset_id)
         elif 'delete' in update:
             j_dataset.delete_observation(update['delete'])
@@ -389,7 +390,7 @@ def __update_joined_datasets(dataset, update):
 
 def __update_merged_datasets(dataset, update):
     if 'add' in update:
-        data = update['add'].to_jsondict()
+        data = df_to_jsondict(update['add'])
 
         # store slugs as labels for child datasets
         data = __slugify_data(data, dataset.schema.labels_to_slugs)

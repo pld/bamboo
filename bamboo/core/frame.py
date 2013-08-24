@@ -3,8 +3,7 @@ from cStringIO import StringIO
 from pandas import DataFrame, Series
 
 from bamboo.lib.datetools import recognize_dates, recognize_dates_from_schema
-from bamboo.lib.jsontools import series_to_jsondict
-from bamboo.lib.mongo import dump_mongo_json, MONGO_ID, MONGO_ID_ENCODED
+from bamboo.lib.mongo import MONGO_ID, MONGO_ID_ENCODED
 
 
 # reserved bamboo keys
@@ -36,6 +35,12 @@ def add_parent_column(df, parent_dataset_id):
 def add_constant_column(df, value, name):
     column = Series([value] * len(df), index=df.index, name=name)
     return df.join(column)
+
+
+def df_to_csv_string(df):
+    buffer = StringIO()
+    df.to_csv(buffer, encoding='utf-8', index=False)
+    return buffer.getvalue()
 
 
 def rows_for_parent_id(df, parent_id):
@@ -102,20 +107,6 @@ class BambooFrame(DataFrame):
             BAMBOO_RESERVED_KEYS).difference(set(exclude))
 
         return self.drop(reserved_keys, axis=1)
-
-    def to_jsondict(self):
-        """Return DataFrame as a list of dicts for each row."""
-        return [series_to_jsondict(series) for _, series in self.iterrows()]
-
-    def to_json(self):
-        """Convert DataFrame to a list of dicts, then dump to JSON."""
-        jsondict = self.to_jsondict()
-        return dump_mongo_json(jsondict)
-
-    def to_csv_as_string(self):
-        buffer = StringIO()
-        self.to_csv(buffer, encoding='utf-8', index=False)
-        return buffer.getvalue()
 
     def join_dataset(self, other, on):
         """Left join an `other` dataset.

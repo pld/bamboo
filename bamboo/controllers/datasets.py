@@ -6,11 +6,11 @@ import vincent
 
 from bamboo.controllers.abstract_controller import AbstractController
 from bamboo.core.aggregations import AGGREGATIONS
-from bamboo.core.frame import NonUniqueJoinError
+from bamboo.core.frame import df_to_csv_string, NonUniqueJoinError
 from bamboo.core.merge import merge_dataset_ids, MergeError
 from bamboo.core.summary import ColumnTypeError
 from bamboo.lib.exceptions import ArgumentError
-from bamboo.lib.jsontools import JSONError, safe_json_loads
+from bamboo.lib.jsontools import df_to_jsondict, JSONError, safe_json_loads
 from bamboo.lib.utils import parse_int
 from bamboo.lib.query_args import QueryArgs
 from bamboo.models.dataset import Dataset
@@ -632,9 +632,9 @@ class Datasets(AbstractController):
 
     def __dataframe_as_content_type(self, content_type, dframe):
         if content_type == self.CSV:
-            return dframe.to_csv_as_string()
+            return df_to_csv_string(dframe)
         else:
-            return dframe.to_jsondict()
+            return df_to_jsondict(dframe)
 
     def __parse_select(self, select, required=False):
         if required and select is None:
@@ -646,9 +646,8 @@ class Datasets(AbstractController):
             select = safe_json_loads(select, error_title='select')
 
             if not isinstance(select, dict):
-                raise ArgumentError(
-                    'select argument must be a JSON dictionary, found: %s.' %
-                    select)
+                msg = 'select argument must be a JSON dictionary, found: %s.'
+                raise ArgumentError(msg % select)
 
         return select
 

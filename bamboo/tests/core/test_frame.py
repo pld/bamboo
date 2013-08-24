@@ -88,14 +88,3 @@ class TestFrame(TestBase):
 
         self.assertFalse(PARENT_DATASET_ID in bframe_only.columns)
         self.assertEqual(len(bframe_only), len_parent_rows)
-
-    def test_to_jsondict(self):
-        jsondict = self.bframe.to_jsondict()
-        self.assertEqual(len(jsondict), len(self.bframe))
-
-        for col in jsondict:
-            self.assertEqual(len(col), len(self.bframe.columns))
-
-    def test_to_json(self):
-        json = self.bframe.to_json()
-        self.assertEqual(type(json), str)
