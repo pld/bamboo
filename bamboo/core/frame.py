@@ -57,18 +57,17 @@ def join_dataset(left, other, on):
     right_dframe = other.dframe(padded=True)
 
     if on_lhs not in left.columns:
-        raise KeyError('no item named "%s" in left hand side dataset' %
-                       on_lhs)
+        raise KeyError('No item named "%s" in left hand side dataset' % on_lhs)
 
     if on_rhs not in right_dframe.columns:
-        raise KeyError('no item named "%s" in right hand side dataset' %
+        raise KeyError('No item named "%s" in right hand side dataset' %
                        on_rhs)
 
     right_dframe = right_dframe.set_index(on_rhs)
 
     if len(right_dframe.index) != len(right_dframe.index.unique()):
-        raise NonUniqueJoinError('The join column "%s" of the right hand s'
-                                 'ide dataset is not unique' % on_rhs)
+        msg = 'Join column "%s" of the right hand side dataset is not unique'
+        raise NonUniqueJoinError(msg % on_rhs)
 
     shared_columns = left.columns.intersection(right_dframe.columns)
 
