@@ -24,7 +24,7 @@ def add_index(df):
     return df
 
 
-def encode(dframe, dataset, add_index=True):
+def encode(dframe, dataset, append_index=True):
     """Encode the columns for `dataset` to slugs and add ID column.
 
     The ID column is the dataset_id for dataset.  This is
@@ -32,11 +32,11 @@ def encode(dframe, dataset, add_index=True):
 
     :param dframe: The DataFrame to encode.
     :param dataset: The Dataset to use a mapping for.
-    :param add_index: Add index to the DataFrame, default True.
+    :param append_index: Add index to the DataFrame, default True.
 
     :returns: A modified `dframe`.
     """
-    if add_index:
+    if append_index:
         dframe = add_index(dframe)
 
     dframe = add_id_column(dframe, dataset.dataset_id)
@@ -173,14 +173,14 @@ class Observation(AbstractModel):
             else records
 
     @classmethod
-    def update_from_dframe(cls, dframe, dataset):
-        dataset.build_schema(dframe)
-        encoded_dframe = encode(dframe.reset_index(), dataset, add_index=False)
+    def update_from_dframe(cls, df, dataset):
+        dataset.build_schema(df)
+        encoded_dframe = encode(df.reset_index(), dataset, append_index=False)
         encoding = cls.encoding(dataset)
 
         cls.__batch_update(encoded_dframe, encoding)
         cls.__store_encoding(dataset, encoding)
-        dataset.update_stats(dframe, update=True)
+        dataset.update_stats(df, update=True)
 
     @classmethod
     def find_one(cls, dataset, index, decode=True):
@@ -280,14 +280,14 @@ class Observation(AbstractModel):
             if not len(current_observations):
                 break
 
-            dframes.append(current_observations)
+            dframes.append(DataFrame(current_observations))
 
             if not distinct:
                 observations.rewind()
 
             batch += 1
 
-        return DataFrame(concat(dframes) if len(dframes) else [])
+        return concat(dframes) if len(dframes) else DataFrame()
 
     @classmethod
     def __batch_save(cls, dframe, encoding):
