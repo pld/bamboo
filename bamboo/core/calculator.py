@@ -5,8 +5,9 @@ from pandas import concat, DataFrame
 
 from bamboo.core.aggregator import Aggregator
 from bamboo.core.frame import add_parent_column,\
-    BambooFrame, NonUniqueJoinError
+    BambooFrame, join_dataset, NonUniqueJoinError
 from bamboo.core.parser import Parser
+from bamboo.lib.datetools import recognize_dates
 from bamboo.lib.jsontools import df_to_jsondict
 from bamboo.lib.mongo import MONGO_ID
 from bamboo.lib.parsing import parse_columns
@@ -75,7 +76,7 @@ def calculate_updates(dataset, new_data, new_dframe_raw=None,
     if new_dframe_raw is None:
         new_dframe_raw = dframe_from_update(dataset, new_data)
 
-    new_dframe = new_dframe_raw.recognize_dates_from_schema(dataset.schema)
+    new_dframe = recognize_dates(new_dframe_raw, dataset.schema)
 
     new_dframe = __add_calculations(dataset, new_dframe)
 
@@ -370,14 +371,14 @@ def __update_joined_datasets(dataset, update):
                     # only proceed if new on value is in on column in lhs
                     if len(set(new_dframe[on]).intersection(
                             set(left_dframe[on]))):
-                        merged_dframe = left_dframe.join_dataset(dataset, on)
+                        merged_dframe = join_dataset(left_dframe, dataset, on)
                         j_dataset.replace_observations(merged_dframe)
 
                         # TODO is it OK not to propagate the join here?
             else:
                 # if on in new data join with existing data
                 if on in new_dframe:
-                    new_dframe = new_dframe.join_dataset(other_dataset, on)
+                    new_dframe = join_dataset(new_dframe, other_dataset, on)
 
                 calculate_updates(j_dataset, df_to_jsondict(new_dframe),
                                   parent_dataset_id=dataset.dataset_id)

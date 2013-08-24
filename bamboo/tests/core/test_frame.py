@@ -1,10 +1,7 @@
-from datetime import datetime
-
 from pandas import Series
 
 from bamboo.core.frame import BAMBOO_RESERVED_KEYS, BambooFrame,\
     rows_for_parent_id, PARENT_DATASET_ID
-from bamboo.lib.schema_builder import DATETIME, SIMPLETYPE, Schema
 from bamboo.lib.mongo import MONGO_ID
 from bamboo.tests.test_base import TestBase
 
@@ -33,23 +30,6 @@ class TestFrame(TestBase):
         self.assertTrue(MONGO_ID in self.bframe.columns)
         self.bframe.decode_mongo_reserved_keys()
         self.assertFalse(MONGO_ID in self.bframe.columns)
-
-    def test_recognize_dates(self):
-        bframe_with_dates = self.bframe.recognize_dates()
-
-        for field in bframe_with_dates['submit_date']:
-            self.assertTrue(isinstance(field, datetime))
-
-    def test_recognize_dates_from_schema(self):
-        schema = Schema({
-            'submit_date': {
-                SIMPLETYPE: DATETIME
-            }
-        })
-        bframe_with_dates = self.bframe.recognize_dates_from_schema(schema)
-
-        for field in bframe_with_dates['submit_date']:
-            self.assertTrue(isinstance(field, datetime))
 
     def test_remove_bamboo_reserved_keys(self):
         self._add_bamboo_reserved_keys()

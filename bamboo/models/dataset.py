@@ -8,7 +8,7 @@ from pandas import rolling_window
 from bamboo.core.calculator import calculate_updates, dframe_from_update,\
     propagate
 from bamboo.core.frame import BambooFrame, BAMBOO_RESERVED_KEY_PREFIX,\
-    DATASET_ID, INDEX, PARENT_DATASET_ID
+    DATASET_ID, INDEX, join_dataset, PARENT_DATASET_ID
 from bamboo.core.summary import summarize
 from bamboo.lib.async import call_async
 from bamboo.lib.exceptions import ArgumentError
@@ -470,7 +470,7 @@ class Dataset(AbstractModel, ImportableDataset):
             # Empty dataset, simulate columns
             merged_dframe = self.place_holder_dframe()
 
-        merged_dframe = merged_dframe.join_dataset(other, on)
+        merged_dframe = join_dataset(merged_dframe, other, on)
         merged_dataset = self.create()
 
         if self.num_rows and other.num_rows:

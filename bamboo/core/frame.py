@@ -2,7 +2,6 @@ from cStringIO import StringIO
 
 from pandas import DataFrame, Series
 
-from bamboo.lib.datetools import recognize_dates, recognize_dates_from_schema
 from bamboo.lib.mongo import MONGO_ID, MONGO_ID_ENCODED
 
 
@@ -27,20 +26,59 @@ def add_id_column(df, dataset_id):
         DATASET_ID in df.columns else df
 
 
-def add_parent_column(df, parent_dataset_id):
-    """Add parent ID column to this DataFrame."""
-    return add_constant_column(df, parent_dataset_id, PARENT_DATASET_ID)
-
-
 def add_constant_column(df, value, name):
     column = Series([value] * len(df), index=df.index, name=name)
     return df.join(column)
+
+
+def add_parent_column(df, parent_dataset_id):
+    """Add parent ID column to this DataFrame."""
+    return add_constant_column(df, parent_dataset_id, PARENT_DATASET_ID)
 
 
 def df_to_csv_string(df):
     buffer = StringIO()
     df.to_csv(buffer, encoding='utf-8', index=False)
     return buffer.getvalue()
+
+
+def join_dataset(left, other, on):
+    """Left join an `other` dataset.
+
+    :param other: Other dataset to join.
+    :param on: Column or 2 comma seperated columns to join on.
+
+    :returns: Joined DataFrame.
+
+    :raises: `KeyError` if join columns not in datasets.
+    """
+    on_lhs, on_rhs = (on.split(',') * 2)[:2]
+
+    right_dframe = other.dframe(padded=True)
+
+    if on_lhs not in left.columns:
+        raise KeyError('no item named "%s" in left hand side dataset' %
+                       on_lhs)
+
+    if on_rhs not in right_dframe.columns:
+        raise KeyError('no item named "%s" in right hand side dataset' %
+                       on_rhs)
+
+    right_dframe = right_dframe.set_index(on_rhs)
+
+    if len(right_dframe.index) != len(right_dframe.index.unique()):
+        raise NonUniqueJoinError('The join column "%s" of the right hand s'
+                                 'ide dataset is not unique' % on_rhs)
+
+    shared_columns = left.columns.intersection(right_dframe.columns)
+
+    if len(shared_columns):
+        rename_map = [{c: '%s.%s' % (c, v) for c in shared_columns} for v
+                      in ['x', 'y']]
+        left.rename(columns=rename_map[0], inplace=True)
+        right_dframe.rename(columns=rename_map[1], inplace=True)
+
+    return left.join(right_dframe, on=on_lhs)
 
 
 def rows_for_parent_id(df, parent_id):
@@ -92,12 +130,6 @@ class BambooFrame(DataFrame):
         if rename_dict:
             self.rename(columns={MONGO_ID_ENCODED: MONGO_ID}, inplace=True)
 
-    def recognize_dates(self):
-        return recognize_dates(self)
-
-    def recognize_dates_from_schema(self, schema):
-        return recognize_dates_from_schema(self, schema)
-
     def remove_bamboo_reserved_keys(self, exclude=[]):
         """Remove reserved internal columns in this DataFrame.
 
@@ -107,44 +139,6 @@ class BambooFrame(DataFrame):
             BAMBOO_RESERVED_KEYS).difference(set(exclude))
 
         return self.drop(reserved_keys, axis=1)
-
-    def join_dataset(self, other, on):
-        """Left join an `other` dataset.
-
-        :param other: Other dataset to join.
-        :param on: Column or 2 comma seperated columns to join on.
-
-        :returns: Joined DataFrame.
-
-        :raises: `KeyError` if join columns not in datasets.
-        """
-        on_lhs, on_rhs = (on.split(',') * 2)[:2]
-
-        right_dframe = other.dframe(padded=True)
-
-        if on_lhs not in self.columns:
-            raise KeyError('no item named "%s" in left hand side dataset' %
-                           on_lhs)
-
-        if on_rhs not in right_dframe.columns:
-            raise KeyError('no item named "%s" in right hand side dataset' %
-                           on_rhs)
-
-        right_dframe = right_dframe.set_index(on_rhs)
-
-        if len(right_dframe.index) != len(right_dframe.index.unique()):
-            raise NonUniqueJoinError('The join column "%s" of the right hand s'
-                                     'ide dataset is not unique' % on_rhs)
-
-        shared_columns = self.columns.intersection(right_dframe.columns)
-
-        if len(shared_columns):
-            rename_map = [{c: '%s.%s' % (c, v) for c in shared_columns} for v
-                          in ['x', 'y']]
-            self.rename(columns=rename_map[0], inplace=True)
-            right_dframe.rename(columns=rename_map[1], inplace=True)
-
-        return self.__class__(self.join(right_dframe, on=on_lhs))
 
     def __column_intersect(self, list_):
         """Return the intersection of `list_` and this DataFrame's columns."""

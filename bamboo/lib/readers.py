@@ -7,8 +7,8 @@ from celery.exceptions import RetryTaskError
 from celery.task import task
 import pandas as pd
 
-from bamboo.core.frame import BambooFrame
 from bamboo.lib.async import call_async
+from bamboo.lib.datetools import recognize_dates
 from bamboo.lib.schema_builder import filter_schema
 
 
@@ -37,15 +37,15 @@ def import_dataset(dataset, file_reader, delete=False):
 
 def csv_file_reader(name, na_values=[], delete=False):
     try:
-        return BambooFrame(pd.read_csv(
-            name, encoding='utf-8', na_values=na_values)).recognize_dates()
+        return recognize_dates(
+            pd.read_csv(name, encoding='utf-8', na_values=na_values))
     finally:
         if delete:
             os.unlink(name)
 
 
 def json_file_reader(content):
-    return BambooFrame(json.loads(content)).recognize_dates()
+    return recognize_dates(json.loads(content))
 
 
 class ImportableDataset(object):
