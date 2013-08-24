@@ -137,9 +137,7 @@ class Datasets(AbstractController):
             if select:
                 select.update(dict(zip(groups, [1] * len(groups))))
 
-            query_args = QueryArgs(query=query,
-                                   select=select,
-                                   limit=limit,
+            query_args = QueryArgs(query=query, select=select, limit=limit,
                                    order_by=order_by)
             dframe = dataset.dframe(query_args)
 
@@ -663,9 +661,5 @@ class Datasets(AbstractController):
             query = self.__parse_query(query)
             select = self.__parse_select(select)
 
-            return QueryArgs(query=query,
-                             select=select,
-                             distinct=distinct,
-                             limit=limit,
-                             order_by=order_by,
-                             dataset=dataset)
+            return QueryArgs(query=query, select=select, distinct=distinct,
+                             limit=limit, order_by=order_by, dataset=dataset)
