@@ -101,9 +101,7 @@ class ImportableDataset(object):
         :param json_file: JSON file to import.
         """
         content = json_file.file.read()
-
-        call_async(import_dataset, self,
-                   partial(json_file_reader, content))
+        call_async(import_dataset, self, partial(json_file_reader, content))
 
         return self
 
