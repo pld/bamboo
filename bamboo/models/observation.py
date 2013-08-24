@@ -74,8 +74,7 @@ class Observation(AbstractModel):
         :param dataset: The dataset to delete the observation from.
         :param index: The index of the observation to delete.
         """
-        query = {INDEX: index,
-                 DATASET_ID: dataset.dataset_id}
+        query = {INDEX: index, DATASET_ID: dataset.dataset_id}
         query = cls.encode(query, dataset=dataset)
 
         cls.__soft_delete(query)
@@ -114,8 +113,7 @@ class Observation(AbstractModel):
     @classmethod
     def encoding(cls, dataset, encoded_dframe=None):
         record = super(cls, cls).find_one({
-            cls.ENCODING_DATASET_ID: dataset.dataset_id
-        }).record
+            cls.ENCODING_DATASET_ID: dataset.dataset_id}).record
 
         if record is None and encoded_dframe is not None:
             encoding = cls.__make_encoding(encoded_dframe)
@@ -312,13 +310,12 @@ class Observation(AbstractModel):
         """
         def command(records, encoding):
             # Encode the reserved key to access the row ID.
-            mongo_reserved_key_id = encoding.get(
-                MONGO_ID_ENCODED, MONGO_ID_ENCODED)
+            mongo_id_key = encoding.get(MONGO_ID_ENCODED, MONGO_ID_ENCODED)
 
             # MongoDB has no batch updates.
             for record in records:
-                spec = {MONGO_ID: record[mongo_reserved_key_id]}
-                del record[mongo_reserved_key_id]
+                spec = {MONGO_ID: record[mongo_id_key]}
+                del record[mongo_id_key]
                 doc = {'$set': record}
                 cls.collection.update(spec, doc)
 
@@ -326,17 +323,16 @@ class Observation(AbstractModel):
                                     cls.DB_SAVE_BATCH_SIZE)
 
     @classmethod
-    def __batch_command_wrapper(cls, command, dframe, encoding, batch_size):
+    def __batch_command_wrapper(cls, command, df, encoding, batch_size):
         try:
-            cls.__batch_command(command, dframe, encoding, batch_size)
+            cls.__batch_command(command, df, encoding, batch_size)
         except AutoReconnect:
             batch_size /= 2
 
             # If batch size drop is less than MIN_BATCH_SIZE, assume the
             # records are too large or there is another error and fail.
             if batch_size >= cls.MIN_BATCH_SIZE:
-                cls.__batch_command_wrapper(
-                    command, dframe, encoding, batch_size)
+                cls.__batch_command_wrapper(command, df, encoding, batch_size)
 
     @classmethod
     def __batch_command(cls, command, dframe, encoding, batch_size):
@@ -350,12 +346,6 @@ class Observation(AbstractModel):
             command(records, encoding)
 
     @classmethod
-    def __make_encoding(cls, dframe, start=0):
-        # Ensure that DATASET_ID is first so that we can guarantee an index.
-        columns = [DATASET_ID] + sorted(dframe.columns - [DATASET_ID])
-        return {v: str(start + i) for (i, v) in enumerate(columns)}
-
-    @classmethod
     def __encode_records(cls, dframe, encoding):
         return [cls.__encode_record(row.to_dict(), encoding)
                 for (_, row) in dframe.iterrows()]
@@ -366,6 +356,12 @@ class Observation(AbstractModel):
         encoded[cls.DELETED_AT] = 0
 
         return encoded
+
+    @classmethod
+    def __make_encoding(cls, dframe, start=0):
+        # Ensure that DATASET_ID is first so that we can guarantee an index.
+        columns = [DATASET_ID] + sorted(dframe.columns - [DATASET_ID])
+        return {v: str(start + i) for (i, v) in enumerate(columns)}
 
     @classmethod
     def __soft_delete(cls, query):
