@@ -122,12 +122,6 @@ Usage
 
     import bamboo as bm
 
-    bf = bm.BambooFrame([{'date': '2012-12-21'}])
-    bff = bf.recognize_dates()
-    bff.to_json()
-
-    >>> '[{"date": {"$date": 1356048000000}}]'
-
     # Turn asyncronous processing off
     bm.set_async(False)
 
