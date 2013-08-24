@@ -3,7 +3,7 @@ from datetime import datetime
 from pandas import Series
 
 from bamboo.core.frame import BAMBOO_RESERVED_KEYS, BambooFrame,\
-    PARENT_DATASET_ID
+    rows_for_parent_id, PARENT_DATASET_ID
 from bamboo.lib.schema_builder import DATETIME, SIMPLETYPE, Schema
 from bamboo.lib.mongo import MONGO_ID
 from bamboo.tests.test_base import TestBase
@@ -84,7 +84,7 @@ class TestFrame(TestBase):
         column.name = PARENT_DATASET_ID
 
         self.bframe = BambooFrame(self.bframe.join(column))
-        bframe_only = self.bframe.only_rows_for_parent_id(parent_id)
+        bframe_only = rows_for_parent_id(self.bframe, parent_id)
 
         self.assertFalse(PARENT_DATASET_ID in bframe_only.columns)
         self.assertEqual(len(bframe_only), len_parent_rows)

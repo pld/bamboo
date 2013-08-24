@@ -1,9 +1,8 @@
 from math import ceil
-
 from pandas import concat, DataFrame
 from pymongo.errors import AutoReconnect
 
-from bamboo.core.frame import BambooFrame, DATASET_ID, INDEX
+from bamboo.core.frame import add_id_column, BambooFrame, DATASET_ID, INDEX
 from bamboo.lib.datetools import now, parse_timestamp_query
 from bamboo.lib.mongo import MONGO_ID, MONGO_ID_ENCODED
 from bamboo.lib.parsing import parse_columns
@@ -29,7 +28,7 @@ def encode(dframe, dataset, add_index=True):
     if add_index:
         dframe = dframe.add_index()
 
-    dframe = dframe.add_id_column(dataset.dataset_id)
+    dframe = add_id_column(dframe, dataset.dataset_id)
     encoded_columns_map = dataset.schema.rename_map_for_dframe(dframe)
 
     return dframe.rename(columns=encoded_columns_map)

@@ -4,7 +4,8 @@ from celery.task import task
 from pandas import concat, DataFrame
 
 from bamboo.core.aggregator import Aggregator
-from bamboo.core.frame import BambooFrame, NonUniqueJoinError
+from bamboo.core.frame import add_parent_column,\
+    BambooFrame, NonUniqueJoinError
 from bamboo.core.parser import Parser
 from bamboo.lib.mongo import MONGO_ID
 from bamboo.lib.parsing import parse_columns
@@ -79,7 +80,7 @@ def calculate_updates(dataset, new_data, new_dframe_raw=None,
 
     # set parent id if provided
     if parent_dataset_id:
-        new_dframe = new_dframe.add_parent_column(parent_dataset_id)
+        new_dframe = add_parent_column(new_dframe, parent_dataset_id)
 
     dataset.append_observations(new_dframe)
     dataset.clear_summary_stats()
@@ -270,8 +271,8 @@ def __propagate_column(dataset, parent_dataset):
     dframe = dataset.dframe(keep_parent_ids=True)
 
     # create new dframe from the upated parent and add parent id
-    parent_dframe = parent_dataset.dframe().add_parent_column(
-        parent_dataset.dataset_id)
+    parent_dframe = add_parent_column(parent_dataset.dframe(),
+                                      parent_dataset.dataset_id)
 
     # merge this new dframe with the existing dframe
     updated_dframe = concat([dframe, parent_dframe])
@@ -342,7 +343,7 @@ def __update_aggregate_dataset(dataset, formula, new_dframe, name, groups,
     new_agg_dframe = aggregator.update(dataset, a_dataset, formula, reducible)
 
     # jsondict from new dframe
-    new_data = new_agg_dframe.to_jsondict()
+    new_data = BambooFrame(new_agg_dframe).to_jsondict()
 
     for merged_dataset in a_dataset.merged_datasets:
         # remove rows in child from this merged dataset

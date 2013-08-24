@@ -1,7 +1,8 @@
 from pandas import concat
 
 from bamboo.core.aggregations import AGGREGATIONS
-from bamboo.core.frame import BambooFrame
+from bamboo.core.frame import add_parent_column, BambooFrame,\
+    rows_for_parent_id
 from bamboo.lib.parsing import parse_columns
 
 
@@ -68,7 +69,7 @@ class Aggregator(object):
 
         """
         new_dframe = BambooFrame(self.aggregation.eval(self.columns))
-        new_dframe = new_dframe.add_parent_column(dataset.dataset_id)
+        new_dframe = add_parent_column(new_dframe, dataset.dataset_id)
 
         a_dataset = dataset.aggregated_dataset(self.groups)
 
@@ -86,9 +87,8 @@ class Aggregator(object):
         parent_dataset_id = dataset.dataset_id
 
         # get dframe only including rows from this parent
-        dframe = child_dataset.dframe(
-            keep_parent_ids=True,
-            reload_=True).only_rows_for_parent_id(parent_dataset_id)
+        dframe = rows_for_parent_id(child_dataset.dframe(
+            keep_parent_ids=True, reload_=True), parent_dataset_id)
 
         # remove rows in child from parent
         child_dataset.remove_parent_observations(parent_dataset_id)
@@ -100,7 +100,7 @@ class Aggregator(object):
             dframe = self.updated_dframe(dataset, formula, dframe)
 
         new_a_dframe = concat([child_dataset.dframe(), dframe])
-        new_a_dframe = new_a_dframe.add_parent_column(parent_dataset_id)
+        new_a_dframe = add_parent_column(new_a_dframe, parent_dataset_id)
         child_dataset.replace_observations(new_a_dframe)
 
         return child_dataset.dframe()

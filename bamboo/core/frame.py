@@ -23,6 +23,32 @@ BAMBOO_RESERVED_KEYS = [
 RESERVED_KEYS = BAMBOO_RESERVED_KEYS + [MONGO_ID_ENCODED]
 
 
+def add_id_column(df, dataset_id):
+    return add_constant_column(df, dataset_id, DATASET_ID) if not\
+        DATASET_ID in df.columns else df
+
+
+def add_parent_column(df, parent_dataset_id):
+    """Add parent ID column to this DataFrame."""
+    return add_constant_column(df, parent_dataset_id, PARENT_DATASET_ID)
+
+
+def add_constant_column(df, value, name):
+    column = Series([value] * len(df), index=df.index, name=name)
+    return df.join(column)
+
+
+def rows_for_parent_id(df, parent_id):
+    """DataFrame with only rows for `parent_id`.
+
+    :param parent_id: The ID to restrict rows to.
+
+    :returns: A DataFrame including only rows with a parent ID equal to
+        that passed in.
+    """
+    return df[df[PARENT_DATASET_ID] == parent_id].drop(PARENT_DATASET_ID, 1)
+
+
 class NonUniqueJoinError(Exception):
     pass
 
@@ -42,18 +68,6 @@ class BambooFrame(DataFrame):
             self.rename(columns={'index': INDEX}, inplace=True)
 
         return self.__class__(self)
-
-    def add_id_column(self, dataset_id):
-        return self.add_constant_column(dataset_id, DATASET_ID) if not\
-            DATASET_ID in self.columns else self
-
-    def add_parent_column(self, parent_dataset_id):
-        """Add parent ID column to this DataFrame."""
-        return self.add_constant_column(parent_dataset_id, PARENT_DATASET_ID)
-
-    def add_constant_column(self, value, name):
-        column = Series([value] * len(self), index=self.index, name=name)
-        return self.__class__(self.join(column))
 
     def decode_mongo_reserved_keys(self, keep_mongo_keys=False):
         """Decode MongoDB reserved keys in this DataFrame."""
@@ -88,17 +102,6 @@ class BambooFrame(DataFrame):
             BAMBOO_RESERVED_KEYS).difference(set(exclude))
 
         return self.drop(reserved_keys, axis=1)
-
-    def only_rows_for_parent_id(self, parent_id):
-        """DataFrame with only rows for `parent_id`.
-
-        :param parent_id: The ID to restrict rows to.
-
-        :returns: A DataFrame including only rows with a parent ID equal to
-            that passed in.
-        """
-        return self[self[PARENT_DATASET_ID] == parent_id].drop(
-            PARENT_DATASET_ID, 1)
 
     def to_jsondict(self):
         """Return DataFrame as a list of dicts for each row."""

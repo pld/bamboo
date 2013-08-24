@@ -400,7 +400,6 @@ class Dataset(AbstractModel, ImportableDataset):
 
         if index:
             dframe.rename(columns={INDEX: 'index'}, inplace=True)
-            dframe = BambooFrame(dframe)
 
         dframe = self.__maybe_pad(dframe, padded)
 
@@ -703,7 +702,7 @@ class Dataset(AbstractModel, ImportableDataset):
             if len(dframe.columns):
                 on = dframe.columns[0]
                 place_holder = self.place_holder_dframe(dframe).set_index(on)
-                dframe = BambooFrame(dframe.join(place_holder, on=on))
+                dframe = dframe.join(place_holder, on=on)
             else:
                 dframe = self.place_holder_dframe()
 
