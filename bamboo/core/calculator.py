@@ -151,8 +151,7 @@ def __add_calculations(dataset, new_dframe):
 
     for calculation in dataset.calculations(include_aggs=False):
         function = Parser.parse_function(calculation.formula)
-        new_column = new_dframe.apply(function, axis=1,
-                                      args=(dataset, ))
+        new_column = new_dframe.apply(function, axis=1, args=(dataset, ))
         potential_name = calculation.name
 
         if potential_name not in dataset.dframe().columns:
@@ -185,11 +184,8 @@ def __calculation_data(dataset):
 
         for calc in calculations_for_dataset:
             calcs_to_data[calc].append((
-                names_to_formulas[calc],
-                labels_to_slugs[calc],
-                group,
-                dataset
-            ))
+                names_to_formulas[calc], labels_to_slugs[calc],  group,
+                dataset))
 
     return flatten(calcs_to_data.values())
 
@@ -212,15 +208,14 @@ def __check_update_is_valid(dataset, new_dframe_raw):
         merged_join_column = concat([new_dframe_raw[on], dframe[on]])
 
         if len(merged_join_column) != merged_join_column.nunique():
-            raise NonUniqueJoinError(
-                'Cannot update. This is the right hand join and the'
-                'column "%s" will become non-unique.' % on)
+            msg = 'Cannot update. This is the right hand join and the column '\
+                  '"%s" will become non-unique.' % on
+            raise NonUniqueJoinError(msg)
 
 
 def __create_aggregator(dataset, formula, name, groups, dframe=None):
     # TODO this should work with index eventually
-    columns = parse_columns(
-        dataset, formula, name, dframe, no_index=True)
+    columns = parse_columns(dataset, formula, name, dframe, no_index=True)
 
     dependent_columns = Parser.dependent_columns(formula, dataset)
     aggregation = Parser.parse_aggregation(formula)
@@ -231,8 +226,7 @@ def __create_aggregator(dataset, formula, name, groups, dframe=None):
 
     # ensure at least one column (MONGO_ID) for the count aggregation
     query_args = QueryArgs(select=select or {MONGO_ID: 1})
-    dframe = dataset.dframe(query_args=query_args,
-                            keep_mongo_keys=not select)
+    dframe = dataset.dframe(query_args=query_args, keep_mongo_keys=not select)
 
     return Aggregator(dframe, groups, aggregation, name, columns)
 
@@ -386,7 +380,6 @@ def __update_joined_datasets(dataset, update):
             j_dataset.delete_observation(update['delete'])
         elif 'edit' in update:
             j_dataset.update_observation(*update['edit'])
-            #print j_dataset.dframe()
 
 
 def __update_merged_datasets(dataset, update):
