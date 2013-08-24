@@ -2,15 +2,15 @@ import simplejson as json
 
 from bamboo.controllers.calculations import Calculations
 from bamboo.controllers.datasets import Datasets
-from bamboo.core.frame import BambooFrame
 from bamboo.core.summary import SUMMARY
+from bamboo.lib.jsontools import df_to_jsondict
 from bamboo.lib.mongo import MONGO_ID
 from bamboo.models.dataset import Dataset
 from bamboo.tests.test_base import TestBase
 
 
 def comparable(dframe):
-    return [reduce_precision(r) for r in BambooFrame(dframe).to_jsondict()]
+    return [reduce_precision(r) for r in df_to_jsondict(dframe)]
 
 
 def reduce_precision(row):

@@ -3,16 +3,17 @@ import uuid
 from time import gmtime, strftime
 
 from celery.task import task
-from pandas import rolling_window
+from pandas import DataFrame, rolling_window
 
 from bamboo.core.calculator import calculate_updates, dframe_from_update,\
     propagate
-from bamboo.core.frame import BambooFrame, BAMBOO_RESERVED_KEY_PREFIX,\
-    DATASET_ID, INDEX, PARENT_DATASET_ID
+from bamboo.core.frame import BAMBOO_RESERVED_KEY_PREFIX,\
+    DATASET_ID, INDEX, join_dataset, PARENT_DATASET_ID, remove_reserved_keys
 from bamboo.core.summary import summarize
 from bamboo.lib.async import call_async
 from bamboo.lib.exceptions import ArgumentError
-from bamboo.lib.io import ImportableDataset
+from bamboo.lib.mongo import df_mongo_decode
+from bamboo.lib.readers import ImportableDataset
 from bamboo.lib.query_args import QueryArgs
 from bamboo.lib.schema_builder import Schema
 from bamboo.lib.utils import combine_dicts, to_list
@@ -342,8 +343,7 @@ class Dataset(AbstractModel, ImportableDataset):
         Observation.delete_columns(self, columns)
         new_schema = self.schema
 
-        for c in columns:
-            del new_schema[c]
+        [new_schema.pop(c) for c in columns]
 
         self.set_schema(new_schema, set_num_columns=True)
 
@@ -373,8 +373,8 @@ class Dataset(AbstractModel, ImportableDataset):
         :param reload_: Force refresh of data, default False.
         :param keep_mongo_keys: Used for updating documents, default False.
 
-        :returns: Return BambooFrame with contents based on query parameters
-            passed to MongoDB. BambooFrame will not have parent ids if
+        :returns: Return DataFrame with contents based on query parameters
+            passed to MongoDB. DataFrame will not have parent ids if
             `keep_parent_ids` is False.
         """
         # bypass cache if we need specific version
@@ -388,18 +388,18 @@ class Dataset(AbstractModel, ImportableDataset):
         observations = self.observations(query_args, as_cursor=True)
 
         if query_args.distinct:
-            return BambooFrame(observations)
+            return DataFrame(observations)
 
         dframe = Observation.batch_read_dframe_from_cursor(
             self, observations, query_args.distinct, query_args.limit)
 
-        dframe.decode_mongo_reserved_keys(keep_mongo_keys=keep_mongo_keys)
+        dframe = df_mongo_decode(dframe, keep_mongo_keys=keep_mongo_keys)
 
         excluded = [keep_parent_ids and PARENT_DATASET_ID, index and INDEX]
-        dframe.remove_bamboo_reserved_keys(filter(bool, excluded))
+        dframe = remove_reserved_keys(dframe, filter(bool, excluded))
 
         if index:
-            dframe = BambooFrame(dframe.rename(columns={INDEX: 'index'}))
+            dframe.rename(columns={INDEX: 'index'}, inplace=True)
 
         dframe = self.__maybe_pad(dframe, padded)
 
@@ -470,7 +470,7 @@ class Dataset(AbstractModel, ImportableDataset):
             # Empty dataset, simulate columns
             merged_dframe = self.place_holder_dframe()
 
-        merged_dframe = merged_dframe.join_dataset(other, on)
+        merged_dframe = join_dataset(merged_dframe, other, on)
         merged_dataset = self.create()
 
         if self.num_rows and other.num_rows:
@@ -497,10 +497,11 @@ class Dataset(AbstractModel, ImportableDataset):
 
     def place_holder_dframe(self, dframe=None):
         columns = self.schema.keys()
-        if dframe is not None:
-            columns = [col for col in columns if col not in dframe.columns[1:]]
 
-        return BambooFrame([[''] * len(columns)], columns=columns)
+        if dframe is not None:
+            columns = [c for c in columns if c not in dframe.columns[1:]]
+
+        return DataFrame([[''] * len(columns)], columns=columns)
 
     def reload(self):
         """Reload the dataset from DB and clear any cache."""
@@ -530,7 +531,7 @@ class Dataset(AbstractModel, ImportableDataset):
         :param set_num_columns: If true update the dataset stored number of
             columns.  Default True.
 
-        :returns: BambooFrame equivalent to the passed in `dframe`.
+        :returns: DataFrame equivalent to the passed in `dframe`.
         """
         self.build_schema(dframe, overwrite=overwrite,
                           set_num_columns=set_num_columns)
@@ -544,12 +545,12 @@ class Dataset(AbstractModel, ImportableDataset):
         :param date_column: The date column use as the index for resampling.
         :param interval: The interval code for resampling.
         :param how: How to aggregate in the resample.
-        :returns: A BambooFrame of the resampled DataFrame for this dataset.
+        :returns: A DataFrame of the resampled DataFrame for this dataset.
         """
         query_args = QueryArgs(query=query)
         dframe = self.dframe(query_args).set_index(date_column)
         resampled = dframe.resample(interval, how=how)
-        return BambooFrame(resampled.reset_index())
+        return resampled.reset_index()
 
     def rolling(self, win_type, window):
         """Calculate a rolling window over all numeric columns.
@@ -557,11 +558,11 @@ class Dataset(AbstractModel, ImportableDataset):
         :param win_type: The type of window, see pandas pandas.rolling_window.
         :param window: The number of observations used for calculating the
             window.
-        :returns: A BambooFrame of the rolling window calculated for this
+        :returns: A DataFrame of the rolling window calculated for this
             dataset.
         """
         dframe = self.dframe(QueryArgs(select=self.schema.numerics_select))
-        return BambooFrame(rolling_window(dframe, window, win_type))
+        return rolling_window(dframe, window, win_type)
 
     def save(self, dataset_id=None):
         """Store dataset with `dataset_id` as the unique internal ID.
@@ -701,7 +702,7 @@ class Dataset(AbstractModel, ImportableDataset):
             if len(dframe.columns):
                 on = dframe.columns[0]
                 place_holder = self.place_holder_dframe(dframe).set_index(on)
-                dframe = BambooFrame(dframe.join(place_holder, on=on))
+                dframe = dframe.join(place_holder, on=on)
             else:
                 dframe = self.place_holder_dframe()
 

@@ -5,7 +5,7 @@ python-dateutil==1.5
 scipy==0.9.0
 bottleneck==0.6.0
 numexpr==2.0.1
-pandas==0.11
+pandas==0.12
 vincent==0.1.6
 
 # for celery

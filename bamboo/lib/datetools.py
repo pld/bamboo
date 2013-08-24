@@ -7,16 +7,7 @@ import numpy as np
 from bamboo.lib.utils import is_float_nan
 
 
-def recognize_dates(dframe):
-    """Convert data columns to datetimes.
-
-    Check if object columns in a dataframe can be parsed as dates.
-    If yes, rewrite column with values parsed as dates.
-
-    :param dframe: The DataFrame to convert columns in.
-
-    :returns: A DataFrame with column values convert to datetime types.
-    """
+def __parse_dates(dframe):
     for i, dtype in enumerate(dframe.dtypes):
         if dtype.type == np.object_:
             column = dframe.columns[i]
@@ -28,25 +19,40 @@ def recognize_dates(dframe):
     return dframe
 
 
-def recognize_dates_from_schema(dframe, schema):
+def __parse_dates_schema(dframe, schema):
     """Convert columes to datetime if column in *schema* is of type datetime.
 
     :param dframe: The DataFrame to convert columns in.
-    :param schema: Schema to define columns of type datetime.
 
     :returns: A DataFrame with column values convert to datetime types.
     """
     dframe_columns = dframe.columns.tolist()
 
     for column, column_schema in schema.items():
-        if column in dframe_columns and\
-                schema.is_date_simpletype(column):
+        if column in dframe_columns and schema.is_date_simpletype(column):
             new_column = _convert_column_to_date(dframe, column)
 
             if not new_column is None:
                 dframe[column] = new_column
 
     return dframe
+
+
+def recognize_dates(df, schema=None):
+    """Convert data columns to datetimes.
+
+    Check if object columns in a dataframe can be parsed as dates.
+    If yes, rewrite column with values parsed as dates.
+
+    If schema is passed, convert columes to datetime if column in *schema* is
+    of type datetime.
+
+    :param df: The DataFrame to convert columns in.
+    :param schema: Schema to define columns of type datetime.
+
+    :returns: A DataFrame with column values convert to datetime types.
+    """
+    return __parse_dates_schema(df, schema) if schema else __parse_dates(df)
 
 
 def _is_potential_date(value):
@@ -57,14 +63,9 @@ def _convert_column_to_date(dframe, column):
     """Inline conversion of column in dframe to date type."""
     try:
         return dframe[column].apply(parse_date)
-    except AttributeError:
-        # it is already a datetime
-        pass
-    except ValueError:
-        # it is not a correctly formatted date
-        pass
-    except OverflowError:
-        # it is a number that is too large to be a date
+    except (AttributeError, OverflowError, ValueError):
+        # It is already a datetime, a number that is too large to be a date, or
+        # not a correctly formatted date.
         pass
 
 

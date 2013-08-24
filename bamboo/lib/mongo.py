@@ -20,6 +20,25 @@ RE_LEGAL_MAP = [(re.compile(r'\%s' % value), ILLEGAL_VALUES[idx]) for
                 idx, value in enumerate(REPLACEMENT_VALUES)]
 
 
+def df_mongo_decode(df, keep_mongo_keys=False):
+    """Decode MongoDB reserved keys in this DataFrame."""
+    rename_dict = {}
+
+    if MONGO_ID in df.columns:
+        if keep_mongo_keys:
+            df.rename(columns={MONGO_ID: MONGO_ID_ENCODED,
+                               MONGO_ID_ENCODED: MONGO_ID}, inplace=True)
+        else:
+            del df[MONGO_ID]
+            if MONGO_ID_ENCODED in df.columns:
+                rename_dict[MONGO_ID_ENCODED] = MONGO_ID
+
+    if rename_dict:
+        df.rename(columns={MONGO_ID_ENCODED: MONGO_ID}, inplace=True)
+
+    return df
+
+
 def dump_mongo_json(obj):
     """Dump JSON using BSON conversion.
 

@@ -11,7 +11,7 @@ CELERY_MONGODB_BACKEND_SETTINGS = {
 }
 CELERY_IMPORTS = (
     'bamboo.core.merge',
-    'bamboo.lib.io',
+    'bamboo.lib.readers',
     'bamboo.models.calculation',
     'bamboo.models.dataset',
 )

@@ -30,11 +30,11 @@ class UniqueCalculationError(Exception):
 
     def __init__(self, name, current_names):
         current_names_str = '", "'.join(current_names)
-        message = ('The calculation name "%s" is not unique for this dataset.'
-                   ' Please choose a name that does not exists.  The current '
-                   'names are: "%s"' % (name, current_names_str))
+        msg = ('The calculation name "%s" is not unique for this dataset. Plea'
+               'se choose a name that does not exists.  The current names are:'
+               '"%s"' % (name, current_names_str))
 
-        Exception.__init__(self, message)
+        Exception.__init__(self, msg)
 
 
 @task(base=CalculateTask, default_retry_delay=5, max_retries=10,
@@ -54,8 +54,7 @@ def calculate_task(calculations, dataset):
 
     for calculation in calculations:
         calculation.add_dependencies(
-            dataset,
-            Parser.dependent_columns(calculation.formula, dataset))
+            dataset, Parser.dependent_columns(calculation.formula, dataset))
 
         if calculation.aggregation is not None:
             aggregated_id = dataset.aggregated_datasets_dict[calculation.group]
@@ -174,9 +173,8 @@ class Calculation(AbstractModel):
                     groups = [groups]
 
                 for group in groups:
-                    parsed_calculations.append([
-                        c[cls.FORMULA],
-                        c[cls.NAME], group])
+                    parsed_calculations.append(
+                        [c[cls.FORMULA], c[cls.NAME], group])
         except KeyError as e:
             raise ArgumentError('Required key %s not found in JSON' % e)
 
@@ -201,24 +199,17 @@ class Calculation(AbstractModel):
         if only_aggs:
             query[cls.AGGREGATION] = {'$ne': None}
 
-        query_args = QueryArgs(query=query,
-                               order_by='name')
+        query_args = QueryArgs(query=query, order_by='name')
         return super(cls, cls).find(query_args)
 
     @classmethod
     def find_one(cls, dataset_id, name, group=None):
-        query = {
-            DATASET_ID: dataset_id,
-            cls.NAME: name,
-        }
+        query = {DATASET_ID: dataset_id, cls.NAME: name}
 
         if group:
             query[cls.GROUP] = group
 
         return super(cls, cls).find_one(query)
-
-    def add_dependency(self, name):
-        self.__add_and_update_set(self.DEPENDENCIES, self.dependencies, name)
 
     def add_dependencies(self, dataset, dependent_columns):
         """Store calculation dependencies."""
@@ -230,6 +221,9 @@ class Calculation(AbstractModel):
             if calc:
                 self.add_dependency(calc.name)
                 calc.add_dependent_calculation(self.name)
+
+    def add_dependency(self, name):
+        self.__add_and_update_set(self.DEPENDENCIES, self.dependencies, name)
 
     def add_dependent_calculation(self, name):
         self.__add_and_update_set(self.DEPENDENT_CALCULATIONS,
@@ -248,18 +242,16 @@ class Calculation(AbstractModel):
             not exist for DataSet.
         """
         if len(self.dependent_calculations):
-            raise DependencyError(
-                'Cannot delete, the calculations %s depend on this calculation'
-                % self.dependent_calculations)
+            msg = 'Cannot delete, calculations %s depend on this calculation.'
+            raise DependencyError(msg % self.dependent_calculations)
 
         if not self.group is None:
             # it is an aggregate calculation
             dataset = dataset.aggregated_dataset(self.group)
 
             if not dataset:
-                raise ArgumentError(
-                    'Aggregation with group "%s" does not exist for '
-                    'dataset' % self.group)
+                msg = 'Aggregation with group "%s" does not exist for dataset.'
+                raise ArgumentError(msg % self.group)
 
         call_async(delete_task, self, dataset)
 
