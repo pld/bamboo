@@ -4,6 +4,10 @@ bamboo
 .. image:: https://secure.travis-ci.org/modilabs/bamboo.png?branch=master
     :target: http://travis-ci.org/modilabs/bamboo
 
+.. image:: https://raw.github.com/modilabs/bamboo/master/docs/images/bamboo_dev2013.png
+   :height: 600
+   :width: 800
+
 *bamboo* is an application that systematizes realtime data analysis. *bamboo*
 provides an interface for merging, aggregating and adding algebraic
 calculations to dynamic datasets.
@@ -20,10 +24,6 @@ per district) from datasets. These are updated as new data is received.
 *bamboo* uses `pandas <http://pandas.pydata.org/>`_ for data analysis,
 `pyparsing <http://pyparsing.wikispaces.com/>`_ to read formulas, and `mongodb
 <http://www.mongodb.org/>`_ to serialize data.
-
-.. image:: https://raw.github.com/modilabs/bamboo/master/docs/images/bamboo_dev2013.png
-   :height: 600
-   :width: 800
 
 *bamboo* is `open source <https://github.com/modilabs/bamboo>`_ software
 released under the 3-clause BSD license, which is also known as the "Modified

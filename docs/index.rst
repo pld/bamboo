@@ -1,6 +1,10 @@
 Welcome to the *bamboo* documentation!
 ======================================
 
+.. image:: https://raw.github.com/modilabs/bamboo/readme-cleanup/docs/images/bamboo_dev2013.png
+   :height: 600
+   :width: 800
+
 *bamboo* is an application that systematizes realtime data analysis. *bamboo*
 provides an interface for merging, aggregating and adding algebraic
 calculations to dynamic datasets.  Clients can interact with *bamboo* through a
@@ -21,19 +25,14 @@ BSD License".
 .. image:: https://secure.travis-ci.org/modilabs/bamboo.png?branch=master
   :target: http://travis-ci.org/modilabs/bamboo
 
-Powered by Bamboo: An Interactive map of the Egyptian election
---------------------------------------------------------------
-
-.. image:: https://raw.github.com/modilabs/bamboo/master/docs/images/egypt-2012.png
-   :width: 800
-
-Plotting
+Examples
 --------
 
 .. toctree::
    :maxdepth: 2
 
-   plotting
+   examples
+
 
 REST API Usage
 --------------
@@ -42,6 +41,7 @@ REST API Usage
    :maxdepth: 2
 
    basic_commands
+   plotting
    manipulating_data
    advanced_commands
 
