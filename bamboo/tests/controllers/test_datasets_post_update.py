@@ -3,6 +3,7 @@ from time import sleep
 import simplejson as json
 
 from bamboo.controllers.datasets import Datasets
+from bamboo.lib.jsontools import df_to_jsondict
 from bamboo.models.dataset import Dataset
 from bamboo.tests.controllers.test_abstract_datasets import\
     TestAbstractDatasets
@@ -79,7 +80,7 @@ class TestDatasetsPostUpdate(TestAbstractDatasets):
         self._check_schema(results)
 
         dataset = Dataset.find_one(self.dataset_id)
-        self.assertEqual(data, dataset.dframe().to_jsondict())
+        self.assertEqual(data, df_to_jsondict(dataset.dframe()))
 
     def test_dataset_update_with_slugs(self):
         self.dataset_id = self._post_file(self._file_name_with_slashes)

@@ -1,9 +1,8 @@
 from math import ceil
-
 from pandas import concat, DataFrame
 from pymongo.errors import AutoReconnect
 
-from bamboo.core.frame import BambooFrame, DATASET_ID, INDEX
+from bamboo.core.frame import add_id_column, DATASET_ID, INDEX
 from bamboo.lib.datetools import now, parse_timestamp_query
 from bamboo.lib.mongo import MONGO_ID, MONGO_ID_ENCODED
 from bamboo.lib.parsing import parse_columns
@@ -12,7 +11,20 @@ from bamboo.lib.utils import combine_dicts, invert_dict, replace_keys
 from bamboo.models.abstract_model import AbstractModel
 
 
-def encode(dframe, dataset, add_index=True):
+def add_index(df):
+    """Add an encoded index to this DataFrame."""
+    if not INDEX in df.columns:
+        # No index, create index for this dframe.
+        if not 'index' in df.columns:
+            # Custom index not supplied, use pandas default index.
+            df.reset_index(inplace=True)
+
+        df.rename(columns={'index': INDEX}, inplace=True)
+
+    return df
+
+
+def encode(dframe, dataset, append_index=True):
     """Encode the columns for `dataset` to slugs and add ID column.
 
     The ID column is the dataset_id for dataset.  This is
@@ -20,16 +32,14 @@ def encode(dframe, dataset, add_index=True):
 
     :param dframe: The DataFrame to encode.
     :param dataset: The Dataset to use a mapping for.
-    :param add_index: Add index to the DataFrame, default True.
+    :param append_index: Add index to the DataFrame, default True.
 
-    :returns: A modified `dframe` as a BambooFrame.
+    :returns: A modified `dframe`.
     """
-    dframe = BambooFrame(dframe)
+    if append_index:
+        dframe = add_index(dframe)
 
-    if add_index:
-        dframe = dframe.add_index()
-
-    dframe = dframe.add_id_column(dataset.dataset_id)
+    dframe = add_id_column(dframe, dataset.dataset_id)
     encoded_columns_map = dataset.schema.rename_map_for_dframe(dframe)
 
     return dframe.rename(columns=encoded_columns_map)
@@ -64,8 +74,7 @@ class Observation(AbstractModel):
         :param dataset: The dataset to delete the observation from.
         :param index: The index of the observation to delete.
         """
-        query = {INDEX: index,
-                 DATASET_ID: dataset.dataset_id}
+        query = {INDEX: index, DATASET_ID: dataset.dataset_id}
         query = cls.encode(query, dataset=dataset)
 
         cls.__soft_delete(query)
@@ -104,8 +113,7 @@ class Observation(AbstractModel):
     @classmethod
     def encoding(cls, dataset, encoded_dframe=None):
         record = super(cls, cls).find_one({
-            cls.ENCODING_DATASET_ID: dataset.dataset_id
-        }).record
+            cls.ENCODING_DATASET_ID: dataset.dataset_id}).record
 
         if record is None and encoded_dframe is not None:
             encoding = cls.__make_encoding(encoded_dframe)
@@ -163,14 +171,14 @@ class Observation(AbstractModel):
             else records
 
     @classmethod
-    def update_from_dframe(cls, dframe, dataset):
-        dataset.build_schema(dframe)
-        encoded_dframe = encode(dframe.reset_index(), dataset, add_index=False)
+    def update_from_dframe(cls, df, dataset):
+        dataset.build_schema(df)
+        encoded_dframe = encode(df.reset_index(), dataset, append_index=False)
         encoding = cls.encoding(dataset)
 
         cls.__batch_update(encoded_dframe, encoding)
         cls.__store_encoding(dataset, encoding)
-        dataset.update_stats(dframe, update=True)
+        dataset.update_stats(df, update=True)
 
     @classmethod
     def find_one(cls, dataset, index, decode=True):
@@ -209,18 +217,20 @@ class Observation(AbstractModel):
         slugs using the dataset's schema.  The dataset is update to store the
         size of the stored data.
 
-        :param dframe: The DataFrame (or BambooFrame) to store.
+        :param dframe: The DataFrame to store.
         :param dataset: The dataset to store the dframe in.
         """
         # Build schema for the dataset after having read it from file.
         if not dataset.schema:
             dataset.build_schema(dframe)
 
+        # Update stats, before inplace encoding.
+        dataset.update_stats(dframe)
+
         encoded_dframe = encode(dframe, dataset)
         encoding = cls.encoding(dataset, encoded_dframe)
 
         cls.__batch_save(encoded_dframe, encoding)
-        dataset.update_stats(dframe)
 
     @classmethod
     def update(cls, dataset, index, record):
@@ -270,14 +280,14 @@ class Observation(AbstractModel):
             if not len(current_observations):
                 break
 
-            dframes.append(BambooFrame(current_observations))
+            dframes.append(DataFrame(current_observations))
 
             if not distinct:
                 observations.rewind()
 
             batch += 1
 
-        return BambooFrame(concat(dframes) if len(dframes) else [])
+        return concat(dframes) if len(dframes) else DataFrame()
 
     @classmethod
     def __batch_save(cls, dframe, encoding):
@@ -302,13 +312,12 @@ class Observation(AbstractModel):
         """
         def command(records, encoding):
             # Encode the reserved key to access the row ID.
-            mongo_reserved_key_id = encoding.get(
-                MONGO_ID_ENCODED, MONGO_ID_ENCODED)
+            mongo_id_key = encoding.get(MONGO_ID_ENCODED, MONGO_ID_ENCODED)
 
             # MongoDB has no batch updates.
             for record in records:
-                spec = {MONGO_ID: record[mongo_reserved_key_id]}
-                del record[mongo_reserved_key_id]
+                spec = {MONGO_ID: record[mongo_id_key]}
+                del record[mongo_id_key]
                 doc = {'$set': record}
                 cls.collection.update(spec, doc)
 
@@ -316,17 +325,16 @@ class Observation(AbstractModel):
                                     cls.DB_SAVE_BATCH_SIZE)
 
     @classmethod
-    def __batch_command_wrapper(cls, command, dframe, encoding, batch_size):
+    def __batch_command_wrapper(cls, command, df, encoding, batch_size):
         try:
-            cls.__batch_command(command, dframe, encoding, batch_size)
+            cls.__batch_command(command, df, encoding, batch_size)
         except AutoReconnect:
             batch_size /= 2
 
             # If batch size drop is less than MIN_BATCH_SIZE, assume the
             # records are too large or there is another error and fail.
             if batch_size >= cls.MIN_BATCH_SIZE:
-                cls.__batch_command_wrapper(
-                    command, dframe, encoding, batch_size)
+                cls.__batch_command_wrapper(command, df, encoding, batch_size)
 
     @classmethod
     def __batch_command(cls, command, dframe, encoding, batch_size):
@@ -340,12 +348,6 @@ class Observation(AbstractModel):
             command(records, encoding)
 
     @classmethod
-    def __make_encoding(cls, dframe, start=0):
-        # Ensure that DATASET_ID is first so that we can guarantee an index.
-        columns = [DATASET_ID] + sorted(dframe.columns - [DATASET_ID])
-        return {v: str(start + i) for (i, v) in enumerate(columns)}
-
-    @classmethod
     def __encode_records(cls, dframe, encoding):
         return [cls.__encode_record(row.to_dict(), encoding)
                 for (_, row) in dframe.iterrows()]
@@ -356,6 +358,12 @@ class Observation(AbstractModel):
         encoded[cls.DELETED_AT] = 0
 
         return encoded
+
+    @classmethod
+    def __make_encoding(cls, dframe, start=0):
+        # Ensure that DATASET_ID is first so that we can guarantee an index.
+        columns = [DATASET_ID] + sorted(dframe.columns - [DATASET_ID])
+        return {v: str(start + i) for (i, v) in enumerate(columns)}
 
     @classmethod
     def __soft_delete(cls, query):

@@ -13,7 +13,7 @@ Aggregator
 
 Calculator
 ----------
-.. autoclass:: bamboo.core.calculator.Calculator
+.. automodule:: bamboo.core.calculator
     :members:
     :private-members:
 

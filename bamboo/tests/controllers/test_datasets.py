@@ -9,6 +9,7 @@ import simplejson as json
 
 from bamboo.controllers.datasets import Datasets
 from bamboo.lib.datetools import now
+from bamboo.lib.jsontools import df_to_jsondict
 from bamboo.lib.query_args import QueryArgs
 from bamboo.lib.schema_builder import CARDINALITY, DATETIME, OLAP_TYPE,\
     SIMPLETYPE
@@ -91,7 +92,7 @@ class TestDatasets(TestAbstractDatasets):
         dframe = dataset.dframe()
 
         self.assertEqual(dframe_length, len(dframe))
-        self.assertEqual(dframe_data, dframe.to_jsondict())
+        self.assertEqual(dframe_data, df_to_jsondict(dframe))
 
         self._test_summary_built(result)
 

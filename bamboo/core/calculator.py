@@ -4,8 +4,11 @@ from celery.task import task
 from pandas import concat, DataFrame
 
 from bamboo.core.aggregator import Aggregator
-from bamboo.core.frame import BambooFrame, NonUniqueJoinError
+from bamboo.core.frame import add_parent_column, join_dataset,\
+    NonUniqueJoinError
 from bamboo.core.parser import Parser
+from bamboo.lib.datetools import recognize_dates
+from bamboo.lib.jsontools import df_to_jsondict
 from bamboo.lib.mongo import MONGO_ID
 from bamboo.lib.parsing import parse_columns
 from bamboo.lib.query_args import QueryArgs
@@ -73,13 +76,13 @@ def calculate_updates(dataset, new_data, new_dframe_raw=None,
     if new_dframe_raw is None:
         new_dframe_raw = dframe_from_update(dataset, new_data)
 
-    new_dframe = new_dframe_raw.recognize_dates_from_schema(dataset.schema)
+    new_dframe = recognize_dates(new_dframe_raw, dataset.schema)
 
     new_dframe = __add_calculations(dataset, new_dframe)
 
     # set parent id if provided
     if parent_dataset_id:
-        new_dframe = new_dframe.add_parent_column(parent_dataset_id)
+        new_dframe = add_parent_column(new_dframe, parent_dataset_id)
 
     dataset.append_observations(new_dframe)
     dataset.clear_summary_stats()
@@ -127,7 +130,7 @@ def dframe_from_update(dataset, new_data):
         filtered_data.append(filtered_row)
 
     index = range(num_rows, num_rows + len(filtered_data))
-    new_dframe = BambooFrame(filtered_data, index=index)
+    new_dframe = DataFrame(filtered_data, index=index)
     __check_update_is_valid(dataset, new_dframe)
 
     return new_dframe
@@ -148,8 +151,7 @@ def __add_calculations(dataset, new_dframe):
 
     for calculation in dataset.calculations(include_aggs=False):
         function = Parser.parse_function(calculation.formula)
-        new_column = new_dframe.apply(function, axis=1,
-                                      args=(dataset, ))
+        new_column = new_dframe.apply(function, axis=1, args=(dataset, ))
         potential_name = calculation.name
 
         if potential_name not in dataset.dframe().columns:
@@ -182,11 +184,8 @@ def __calculation_data(dataset):
 
         for calc in calculations_for_dataset:
             calcs_to_data[calc].append((
-                names_to_formulas[calc],
-                labels_to_slugs[calc],
-                group,
-                dataset
-            ))
+                names_to_formulas[calc], labels_to_slugs[calc],  group,
+                dataset))
 
     return flatten(calcs_to_data.values())
 
@@ -209,15 +208,14 @@ def __check_update_is_valid(dataset, new_dframe_raw):
         merged_join_column = concat([new_dframe_raw[on], dframe[on]])
 
         if len(merged_join_column) != merged_join_column.nunique():
-            raise NonUniqueJoinError(
-                'Cannot update. This is the right hand join and the'
-                'column "%s" will become non-unique.' % on)
+            msg = 'Cannot update. This is the right hand join and the column '\
+                  '"%s" will become non-unique.' % on
+            raise NonUniqueJoinError(msg)
 
 
 def __create_aggregator(dataset, formula, name, groups, dframe=None):
     # TODO this should work with index eventually
-    columns = parse_columns(
-        dataset, formula, name, dframe, no_index=True)
+    columns = parse_columns(dataset, formula, name, dframe, no_index=True)
 
     dependent_columns = Parser.dependent_columns(formula, dataset)
     aggregation = Parser.parse_aggregation(formula)
@@ -228,8 +226,7 @@ def __create_aggregator(dataset, formula, name, groups, dframe=None):
 
     # ensure at least one column (MONGO_ID) for the count aggregation
     query_args = QueryArgs(select=select or {MONGO_ID: 1})
-    dframe = dataset.dframe(query_args=query_args,
-                            keep_mongo_keys=not select)
+    dframe = dataset.dframe(query_args=query_args, keep_mongo_keys=not select)
 
     return Aggregator(dframe, groups, aggregation, name, columns)
 
@@ -270,8 +267,8 @@ def __propagate_column(dataset, parent_dataset):
     dframe = dataset.dframe(keep_parent_ids=True)
 
     # create new dframe from the upated parent and add parent id
-    parent_dframe = parent_dataset.dframe().add_parent_column(
-        parent_dataset.dataset_id)
+    parent_dframe = add_parent_column(parent_dataset.dframe(),
+                                      parent_dataset.dataset_id)
 
     # merge this new dframe with the existing dframe
     updated_dframe = concat([dframe, parent_dframe])
@@ -342,7 +339,7 @@ def __update_aggregate_dataset(dataset, formula, new_dframe, name, groups,
     new_agg_dframe = aggregator.update(dataset, a_dataset, formula, reducible)
 
     # jsondict from new dframe
-    new_data = new_agg_dframe.to_jsondict()
+    new_data = df_to_jsondict(new_agg_dframe)
 
     for merged_dataset in a_dataset.merged_datasets:
         # remove rows in child from this merged dataset
@@ -368,27 +365,26 @@ def __update_joined_datasets(dataset, update):
                     # only proceed if new on value is in on column in lhs
                     if len(set(new_dframe[on]).intersection(
                             set(left_dframe[on]))):
-                        merged_dframe = left_dframe.join_dataset(dataset, on)
+                        merged_dframe = join_dataset(left_dframe, dataset, on)
                         j_dataset.replace_observations(merged_dframe)
 
                         # TODO is it OK not to propagate the join here?
             else:
                 # if on in new data join with existing data
                 if on in new_dframe:
-                    new_dframe = new_dframe.join_dataset(other_dataset, on)
+                    new_dframe = join_dataset(new_dframe, other_dataset, on)
 
-                calculate_updates(j_dataset, new_dframe.to_jsondict(),
+                calculate_updates(j_dataset, df_to_jsondict(new_dframe),
                                   parent_dataset_id=dataset.dataset_id)
         elif 'delete' in update:
             j_dataset.delete_observation(update['delete'])
         elif 'edit' in update:
             j_dataset.update_observation(*update['edit'])
-            #print j_dataset.dframe()
 
 
 def __update_merged_datasets(dataset, update):
     if 'add' in update:
-        data = update['add'].to_jsondict()
+        data = df_to_jsondict(update['add'])
 
         # store slugs as labels for child datasets
         data = __slugify_data(data, dataset.schema.labels_to_slugs)
