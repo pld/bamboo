@@ -283,6 +283,11 @@ class Dataset(AbstractModel, ImportableDataset):
 
         return self
 
+    def clear_pending_updates(self):
+        self.collection.update(
+            {'_id': self.record['_id']},
+            {'$set': {self.PENDING_UPDATES: []}})
+
     def clear_summary_stats(self, group=None, column=None):
         """Remove summary stats for `group` and optional `column`.
 
@@ -450,6 +455,7 @@ class Dataset(AbstractModel, ImportableDataset):
             self.NUM_ROWS: self.num_rows,
             self.STATE: self.state,
             self.PARENT_IDS: self.parent_ids,
+            self.PENDING_UPDATES: self.pending_updates,
         }
 
     def is_dimension(self, col):
@@ -520,6 +526,11 @@ class Dataset(AbstractModel, ImportableDataset):
         Observation.delete_all(self, {PARENT_DATASET_ID: parent_id})
         # clear the cached dframe
         self.__dframe = None
+
+    def remove_pending_update(self, update_id):
+        self.collection.update(
+            {'_id': self.record['_id']},
+            {'$pull': {self.PENDING_UPDATES: update_id}})
 
     def replace_observations(self, dframe, overwrite=False,
                              set_num_columns=True):
