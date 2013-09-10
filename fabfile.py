@@ -52,6 +52,7 @@ def deploy(deployment_name):
     with cd(env.code_src):
         run('git fetch origin %(branch)s' % env)
         run('git reset --hard origin/%(branch)s' % env)
+        run('git pull origin %(branch)s' % env)
         run('find . -name "*.pyc" -delete')
 
     # update docs
