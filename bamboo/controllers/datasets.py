@@ -282,16 +282,19 @@ class Datasets(AbstractController):
         """
         return self.__create_or_update(dataset_id=dataset_id, **kwargs)
 
-    def update(self, dataset_id, update):
+    def update(self, dataset_id, update, clear_pending=False):
         """Update the `dataset_id` with the new rows as JSON.
 
         :param dataset_id: The ID of the dataset to update.
         :param update: The JSON to update the dataset with.
+        :param clear_pending: Remove any pending updates. Default False.
 
         :returns: A JSON dict with the ID of the dataset updated, or with an
             error message.
         """
         def action(dataset, update=update):
+            if clear_pending:
+                dataset.clear_pending_updates()
             update = safe_json_loads(update)
             dataset.add_observations(update)
 

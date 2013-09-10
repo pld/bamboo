@@ -4,8 +4,7 @@ from celery.task import task
 from pandas import concat, DataFrame
 
 from bamboo.core.aggregator import Aggregator
-from bamboo.core.frame import add_parent_column, join_dataset,\
-    NonUniqueJoinError
+from bamboo.core.frame import add_parent_column, join_dataset
 from bamboo.core.parser import Parser
 from bamboo.lib.datetools import recognize_dates
 from bamboo.lib.jsontools import df_to_jsondict
@@ -71,6 +70,10 @@ def calculate_updates(dataset, new_data, new_dframe_raw=None,
     :param parent_dataset_id: If passed add ID as parent ID to column,
         default is None.
     """
+    if not __update_is_valid(dataset, new_dframe_raw):
+        dataset.remove_pending_update(update_id)
+        return
+
     __ensure_ready(dataset, update_id)
 
     if new_dframe_raw is None:
@@ -131,7 +134,6 @@ def dframe_from_update(dataset, new_data):
 
     index = range(num_rows, num_rows + len(filtered_data))
     new_dframe = DataFrame(filtered_data, index=index)
-    __check_update_is_valid(dataset, new_dframe)
 
     return new_dframe
 
@@ -190,27 +192,28 @@ def __calculation_data(dataset):
     return flatten(calcs_to_data.values())
 
 
-def __check_update_is_valid(dataset, new_dframe_raw):
+def __update_is_valid(dataset, new_dframe):
     """Check if the update is valid.
 
     Check whether this is a right-hand side of any joins
     and deny the update if the update would produce an invalid
     join as a result.
 
-    :raises: `NonUniqueJoinError` if update is illegal given joins of
-        dataset.
+    :param dataset: The dataset to check if update valid for.
+    :param new_dframe: The update dframe to check.
+    :returns: True is the update is valid, False otherwise.
     """
     select = {on: 1 for on in dataset.on_columns_for_rhs_of_joins if on in
-              new_dframe_raw.columns and on in dataset.columns}
+              new_dframe.columns and on in dataset.columns}
     dframe = dataset.dframe(query_args=QueryArgs(select=select))
 
     for on in select.keys():
-        merged_join_column = concat([new_dframe_raw[on], dframe[on]])
+        merged_join_column = concat([new_dframe[on], dframe[on]])
 
         if len(merged_join_column) != merged_join_column.nunique():
-            msg = 'Cannot update. This is the right hand join and the column '\
-                  '"%s" will become non-unique.' % on
-            raise NonUniqueJoinError(msg)
+            return False
+
+    return True
 
 
 def __create_aggregator(dataset, formula, name, groups, dframe=None):
