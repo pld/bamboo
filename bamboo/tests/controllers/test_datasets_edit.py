@@ -217,13 +217,18 @@ class TestDatasetsEdit(TestAbstractDatasets):
 
         left_dataset_id = self._post_file()
         right_dataset_id = self._post_file('good_eats_aux.csv')
+        num_rows_before = Dataset.find_one(right_dataset_id).num_rows
         on = 'food_type'
         json.loads(self.controller.join(
             left_dataset_id, right_dataset_id, on=on))
 
         results = json.loads(self.controller.row_update(
             right_dataset_id, index, json.dumps(update)))
-        self.assertTrue(Datasets.ERROR in results.keys())
+        self.assertTrue(Datasets.SUCCESS in results.keys())
+
+        dataset = Dataset.find_one(right_dataset_id)
+        self.assertEqual(num_rows_before, dataset.num_rows)
+        self.assertEqual(dataset.pending_updates, [])
 
     def test_edit_row_with_merge(self):
         index = 0
