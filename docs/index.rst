@@ -1,7 +1,7 @@
 Welcome to the *bamboo* documentation!
 ======================================
 
-.. image:: https://raw.github.com/modilabs/bamboo/readme-cleanup/docs/images/bamboo_dev2013.png
+.. image:: https://raw.github.com/modilabs/bamboo/master/docs/images/bamboo_dev2013.png
    :height: 600
    :width: 800
 
