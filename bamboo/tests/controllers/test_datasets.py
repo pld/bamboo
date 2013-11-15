@@ -748,25 +748,6 @@ class TestDatasets(TestAbstractDatasets):
         summary = results[column]['summary']
         self.assertTrue('count' in summary.keys())
 
-    def test_set_olap_type_fails_for_dimension(self):
-        new_olap_type = 'measure'
-        column = 'food_type'
-
-        dataset_id = self._post_file()
-
-        results = json.loads(self.controller.info(dataset_id))
-        expected_schema = results[Dataset.SCHEMA]
-
-        # set OLAP Type
-        results = json.loads(self.controller.set_olap_type(
-            dataset_id, column, new_olap_type))
-        self.assertTrue(Datasets.ERROR in results.keys())
-
-        # Check schema does not change
-        results = json.loads(self.controller.info(dataset_id))
-        new_schema = results[Dataset.SCHEMA]
-        self.assertEqual(expected_schema, new_schema)
-
     def test_reset(self):
         dataset_id = self._post_file()
         mock_uploaded_file = self._file_mock(self._file_path)
