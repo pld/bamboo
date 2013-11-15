@@ -99,12 +99,6 @@ class Schema(dict):
 
         return col_schema and col_schema[OLAP_TYPE] == DIMENSION
 
-    def is_measurable(self, column):
-        col_schema = self.get(column)
-
-        return col_schema and (
-            SIMPLETYPE_TO_OLAP_TYPE[col_schema[SIMPLETYPE]] == MEASURE)
-
     def rebuild(self, dframe, overwrite=False):
         """Rebuild a schema for a dframe.
 
@@ -147,11 +141,6 @@ class Schema(dict):
         :raises: `ArgumentError` if trying to set the OLAP Type of an column
           whose OLAP Type was not originally a 'measure'.
         """
-        if not self.is_measurable(column):
-            raise ArgumentError(
-                'To set the OLAP Type, column "%s" must be measurable.' %
-                column)
-
         self[column][OLAP_TYPE] = olap_type
 
     def _resluggable_column(self, column, labels_to_slugs, dframe):
