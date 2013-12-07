@@ -1,8 +1,8 @@
 bamboo
 ======
 
-.. image:: https://secure.travis-ci.org/modilabs/bamboo.png?branch=master
-    :target: http://travis-ci.org/modilabs/bamboo
+.. image:: https://secure.travis-ci.org/pld/bamboo.png?branch=master
+   :target: http://travis-ci.org/pld/bamboo
 
 .. image:: https://raw.github.com/modilabs/bamboo/master/docs/images/bamboo_dev2013.png
    :height: 600
