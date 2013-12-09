@@ -74,7 +74,7 @@ are by default interpreted as NA:
 
 * missing values,
 * the string 'NA',
-* the stirng 'NaN',
+* the string 'NaN',
 * the string 'NaT' for datetime columns.
 
 For details see the `pandas docs <http://pandas.pydata.org/pandas-docs/dev/missing_data.html>`_.
