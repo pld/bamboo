@@ -74,7 +74,7 @@ are by default interpreted as NA:
 
 * missing values,
 * the string 'NA',
-* the stirng 'NaN',
+* the string 'NaN',
 * the string 'NaT' for datetime columns.
 
 For details see the `pandas docs <http://pandas.pydata.org/pandas-docs/dev/missing_data.html>`_.
@@ -319,7 +319,7 @@ parameters.
 
 .. code-block:: sh
 
-    curl -g http://bamboo.io/datasets/8a3d74711475d8a51c84484fe73f24bd151242ea?query='{"rating":"delectible"}'
+    curl -g http://bamboo.io/datasets/8a3d74711475d8a51c84484fe73f24bd151242ea?query='{"rating":"delectible"}'&count=True
 
 **returns:**
 
