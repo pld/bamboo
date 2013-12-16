@@ -13,7 +13,7 @@ accepted by the ``plot`` end point.
 Kenyan school teaching staff by province
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. image:: https://raw.github.com/modilabs/bamboo/master/docs/images/kenya_school_staff_by_district.png
+.. image:: https://raw.github.com/pld/bamboo/master/docs/images/kenya_school_staff_by_district.png
   :target: http://bamboo.io/datasets/f4cf7dfe315146388258702bb4cc95a4/plot?select={%22total_teaching_staff%22:1}&group=province&plot_type=bar
 
 Click for an `interactive version <http://bamboo.io/datasets/f4cf7dfe315146388258702bb4cc95a4/plot?select={%22total_teaching_staff%22:1}&group=province&plot_type=bar>`_.
@@ -37,7 +37,7 @@ Click for an `interactive version <http://bamboo.io/datasets/f4cf7dfe31514638825
 Meal cost grouped by rating over time
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. image:: https://raw.github.com/modilabs/bamboo/master/docs/images/good_eats_amount_by_rating.png
+.. image:: https://raw.github.com/pld/bamboo/master/docs/images/good_eats_amount_by_rating.png
   :target: http://bamboo.io/datasets/1c0461bdd4eb486ebe5f6f5f3a179790/plot?select={%22amount%22:1}&group=food_type&index=submit_date&query={%22amount%22:{%22$lt%22:400},%22submit_date%22:{%22$gt%22:1355011200}}&plot_type=area
   
 

@@ -4,7 +4,7 @@ bamboo
 .. image:: https://secure.travis-ci.org/pld/bamboo.png?branch=master
    :target: http://travis-ci.org/pld/bamboo
 
-.. image:: https://raw.github.com/modilabs/bamboo/master/docs/images/bamboo_dev2013.png
+.. image:: https://raw.github.com/pld/bamboo/master/docs/images/bamboo_dev2013.png
    :height: 600
    :width: 800
 
@@ -25,7 +25,7 @@ per district) from datasets. These are updated as new data is received.
 `pyparsing <http://pyparsing.wikispaces.com/>`_ to read formulas, and `mongodb
 <http://www.mongodb.org/>`_ to serialize data.
 
-*bamboo* is `open source <https://github.com/modilabs/bamboo>`_ software
+*bamboo* is `open source <https://github.com/pld/bamboo>`_ software
 released under the 3-clause BSD license, which is also known as the "Modified
 BSD License".
 
@@ -83,7 +83,7 @@ Usage
     # Plot the amount spent per month
     mothly_amounts.plot()
 
-.. image:: https://raw.github.com/modilabs/bamboo/master/docs/images/amount.png
+.. image:: https://raw.github.com/pld/bamboo/master/docs/images/amount.png
 
 Installation
 ------------
@@ -104,7 +104,7 @@ running the example basic commands
 
     $ ./scripts/commands.sh
 
-using `bamboo.JS <http://modilabs.github.com/bamboo_js/>`_
+using `bamboo.JS <http://sel-columbia.github.io/bamboo.js/>`_
 
 .. code-block:: javascript
 
@@ -114,7 +114,7 @@ using `bamboo.JS <http://modilabs.github.com/bamboo_js/>`_
     ...
 
 
-using `pybamboo <https://github.com/modilabs/pybamboo>`_
+using `pybamboo <https://github.com/sel-columbia/pybamboo>`_
 
 .. code-block:: python
 
