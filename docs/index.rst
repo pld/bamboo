@@ -22,6 +22,9 @@ per district) from datasets. These are updated as new data is received.
 released under the 3-clause BSD license, which is also known as the "Modified
 BSD License".
 
+**http://bamboo.io** hosts bamboo for demonstration purposes **only**. Do not put
+critical data here, it may be deleted without notice.
+
 .. image:: https://secure.travis-ci.org/modilabs/bamboo.png?branch=master
   :target: http://travis-ci.org/modilabs/bamboo
 
