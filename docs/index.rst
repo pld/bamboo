@@ -97,7 +97,15 @@ Dependencies
 ^^^^^^^^^^^^
 
 * python (tested on version 2.7)
-* mongodb
+* `mongodb <http://www.mongodb.org/>`_ (make sure to install the latest packages from 10gen, *not what might be in your default pkg manager*):
+  
+  - `Debian <http://docs.mongodb.org/manual/tutorial/install-mongodb-on-debian/>`_
+  - `RedHat/CentOS/Fedora <http://docs.mongodb.org/manual/tutorial/install-mongodb-on-red-hat-centos-or-fedora-linux/>`_
+  - `Ubuntu <http://docs.mongodb.org/manual/tutorial/install-mongodb-on-ubuntu/>`_
+  - `Other Linux <http://docs.mongodb.org/manual/tutorial/install-mongodb-on-linux/>`_
+  - `Mac OSX <http://docs.mongodb.org/manual/tutorial/install-mongodb-on-os-x/>`_
+  - `Windows <http://docs.mongodb.org/manual/tutorial/install-mongodb-on-windows/>`_
+
 
 for numpy, pandas, and scipy:
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
