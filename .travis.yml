@@ -15,8 +15,6 @@ script:
   - ./celeryd/celeryd start
   - pushd bamboo
   - nosetests
-  - popd
-  - ./celeryd/celeryd stop
 services:
   - mongodb
 notifications:
