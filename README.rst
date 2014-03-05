@@ -136,7 +136,7 @@ Documentation
 Viewing Documentation
 ^^^^^^^^^^^^^^^^^^^^^
 
-The latest docs are available at http://bamboo.io/
+The latest docs are available at http://bamboo.readthedocs.org/en/latest/
       
 About
 -----
