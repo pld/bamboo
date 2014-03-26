@@ -11,11 +11,6 @@ Date Tools
 .. automodule:: bamboo.lib.datetools
     :members:
 
-Input/Output
-------------
-.. automodule:: bamboo.lib.io
-    :members:
-
 JSON Tools
 ----------
 .. automodule:: bamboo.lib.jsontools
@@ -26,6 +21,11 @@ Mongo Utilities
 .. automodule:: bamboo.lib.mongo
     :members:
     :private-members:
+
+Readers
+-------
+.. automodule:: bamboo.lib.readers
+    :members:
 
 
 Schema

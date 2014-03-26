@@ -1,7 +1,7 @@
 Welcome to the *bamboo* documentation!
 ======================================
 
-.. image:: https://raw.github.com/modilabs/bamboo/master/docs/images/bamboo_dev2013.png
+.. image:: https://raw.github.com/pld/bamboo/master/docs/images/bamboo_dev2013.png
    :height: 600
    :width: 800
 
@@ -18,15 +18,15 @@ per district) from datasets. These are updated as new data is received.
 `pyparsing <http://pyparsing.wikispaces.com/>`_ to read formulas, and `mongodb
 <http://www.mongodb.org/>`_ to serialize data.
 
-*bamboo* is `open source <https://github.com/modilabs/bamboo>`_ software
+*bamboo* is `open source <https://github.com/pld/bamboo>`_ software
 released under the 3-clause BSD license, which is also known as the "Modified
 BSD License".
 
 **http://bamboo.io** hosts bamboo for demonstration purposes **only**. Do not put
 critical data here, it may be deleted without notice.
 
-.. image:: https://secure.travis-ci.org/modilabs/bamboo.png?branch=master
-  :target: http://travis-ci.org/modilabs/bamboo
+.. image:: https://secure.travis-ci.org/pld/bamboo.png?branch=master
+  :target: http://travis-ci.org/pld/bamboo
 
 Examples
 --------
@@ -83,12 +83,12 @@ Libraries that connect to *bamboo*
 JavaScript
 ^^^^^^^^^^
 
-`bamboo.JS <http://modilabs.github.com/bamboo.js/>`_
+`bamboo.JS <http://sel-columbia.github.com/bamboo.js/>`_
 
 Python
 ^^^^^^
 
-`PyBamboo <https://github.com/modilabs/pybamboo>`_
+`PyBamboo <https://github.com/sel-columbia/pybamboo>`_
 
 Python Library Usage
 --------------------
@@ -151,7 +151,7 @@ Usage
     # Plot the amount spent per month
     mothly_amounts.plot()
 
-.. image:: https://raw.github.com/modilabs/bamboo/master/docs/images/amount.png
+.. image:: https://raw.github.com/pld/bamboo/master/docs/images/amount.png
 
 Server Setup and Contributing Code
 ----------------------------------

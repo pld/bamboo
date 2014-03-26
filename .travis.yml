@@ -10,13 +10,9 @@ install:
   - pip install -r deploy/requirements/requirements-test.pip --use-mirrors
   - pip freeze # list our pip library versions
 script:
-  - sudo rmdir /dev/shm
-  - sudo ln -Tsf /{run,dev}/shm
   - ./celeryd/celeryd start
   - pushd bamboo
   - nosetests
-  - popd
-  - ./celeryd/celeryd stop
 services:
   - mongodb
 notifications:
