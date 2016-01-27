@@ -1,0 +1,665 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Advanced Commands &mdash; bamboo 0.6.3 alpha documentation</title>
+    
+    <link rel="stylesheet" href="_static/nature.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '0.6.3 alpha',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="top" title="bamboo 0.6.3 alpha documentation" href="index.html" />
+    <link rel="next" title="Calculations" href="calculations.html" />
+    <link rel="prev" title="Manipulating Data" href="manipulating_data.html" /> 
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="calculations.html" title="Calculations"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="manipulating_data.html" title="Manipulating Data"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">bamboo 0.6.3 alpha documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="advanced-commands">
+<h1>Advanced Commands<a class="headerlink" href="#advanced-commands" title="Permalink to this headline">¶</a></h1>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">On the command line some special characters may need to be escaped for
+the commands to function correctly.  E.g. <code class="docutils literal"><span class="pre">&amp;</span></code> as <code class="docutils literal"><span class="pre">\&amp;</span></code>, <code class="docutils literal"><span class="pre">?</span></code> as <code class="docutils literal"><span class="pre">\?</span></code>,
+<code class="docutils literal"><span class="pre">=</span></code> as <code class="docutils literal"><span class="pre">\=</span></code>.</p>
+</div>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">[<em>SIC</em>] all spelling errors in the example dataset.</p>
+</div>
+<div class="section" id="creating-a-dataset-from-a-schema">
+<h2>Creating a Dataset from a Schema<a class="headerlink" href="#creating-a-dataset-from-a-schema" title="Permalink to this headline">¶</a></h2>
+<p>You can create a dataset from a schema. Your schema must be written in the
+<a class="reference external" href="http://www.dataprotocols.org/en/latest/simple-data-format.html">Simple Data Format (SDF)</a>.</p>
+<p>Below is an example SDF schema file:</p>
+<div class="highlight-javascript"><div class="highlight"><pre><span class="p">{</span>
+    <span class="s2">&quot;_id&quot;</span><span class="o">:</span> <span class="p">{</span>
+        <span class="s2">&quot;label&quot;</span><span class="o">:</span> <span class="s2">&quot;_id&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;olap_type&quot;</span><span class="o">:</span> <span class="s2">&quot;measure&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;simpletype&quot;</span><span class="o">:</span> <span class="s2">&quot;float&quot;</span>
+    <span class="p">},</span>
+    <span class="s2">&quot;_percentage_complete&quot;</span><span class="o">:</span> <span class="p">{</span>
+        <span class="s2">&quot;label&quot;</span><span class="o">:</span> <span class="s2">&quot;_percentage_complete&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;olap_type&quot;</span><span class="o">:</span> <span class="s2">&quot;measure&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;simpletype&quot;</span><span class="o">:</span> <span class="s2">&quot;float&quot;</span>
+    <span class="p">},</span>
+    <span class="s2">&quot;amount&quot;</span><span class="o">:</span> <span class="p">{</span>
+        <span class="s2">&quot;label&quot;</span><span class="o">:</span> <span class="s2">&quot;amount&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;olap_type&quot;</span><span class="o">:</span> <span class="s2">&quot;measure&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;simpletype&quot;</span><span class="o">:</span> <span class="s2">&quot;float&quot;</span>
+    <span class="p">},</span>
+    <span class="s2">&quot;comments&quot;</span><span class="o">:</span> <span class="p">{</span>
+        <span class="s2">&quot;label&quot;</span><span class="o">:</span> <span class="s2">&quot;comments&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;olap_type&quot;</span><span class="o">:</span> <span class="s2">&quot;dimension&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;simpletype&quot;</span><span class="o">:</span> <span class="s2">&quot;string&quot;</span>
+    <span class="p">},</span>
+    <span class="s2">&quot;food_photo&quot;</span><span class="o">:</span> <span class="p">{</span>
+        <span class="s2">&quot;label&quot;</span><span class="o">:</span> <span class="s2">&quot;food_photo&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;olap_type&quot;</span><span class="o">:</span> <span class="s2">&quot;dimension&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;simpletype&quot;</span><span class="o">:</span> <span class="s2">&quot;string&quot;</span>
+    <span class="p">},</span>
+    <span class="s2">&quot;food_type&quot;</span><span class="o">:</span> <span class="p">{</span>
+        <span class="s2">&quot;label&quot;</span><span class="o">:</span> <span class="s2">&quot;food_type&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;olap_type&quot;</span><span class="o">:</span> <span class="s2">&quot;dimension&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;simpletype&quot;</span><span class="o">:</span> <span class="s2">&quot;string&quot;</span>
+    <span class="p">},</span>
+    <span class="s2">&quot;gps&quot;</span><span class="o">:</span> <span class="p">{</span>
+        <span class="s2">&quot;cardinality&quot;</span><span class="o">:</span> <span class="mi">18</span><span class="p">,</span>
+        <span class="s2">&quot;label&quot;</span><span class="o">:</span> <span class="s2">&quot;gps&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;olap_type&quot;</span><span class="o">:</span> <span class="s2">&quot;dimension&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;simpletype&quot;</span><span class="o">:</span> <span class="s2">&quot;string&quot;</span>
+    <span class="p">},</span>
+    <span class="s2">&quot;gps_alt&quot;</span><span class="o">:</span> <span class="p">{</span>
+        <span class="s2">&quot;label&quot;</span><span class="o">:</span> <span class="s2">&quot;gps_alt&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;olap_type&quot;</span><span class="o">:</span> <span class="s2">&quot;measure&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;simpletype&quot;</span><span class="o">:</span> <span class="s2">&quot;float&quot;</span>
+    <span class="p">},</span>
+    <span class="s2">&quot;gps_latitude&quot;</span><span class="o">:</span> <span class="p">{</span>
+        <span class="s2">&quot;label&quot;</span><span class="o">:</span> <span class="s2">&quot;gps_latitude&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;olap_type&quot;</span><span class="o">:</span> <span class="s2">&quot;measure&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;simpletype&quot;</span><span class="o">:</span> <span class="s2">&quot;float&quot;</span>
+    <span class="p">},</span>
+    <span class="s2">&quot;gps_longitude&quot;</span><span class="o">:</span> <span class="p">{</span>
+        <span class="s2">&quot;label&quot;</span><span class="o">:</span> <span class="s2">&quot;gps_longitude&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;olap_type&quot;</span><span class="o">:</span> <span class="s2">&quot;measure&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;simpletype&quot;</span><span class="o">:</span> <span class="s2">&quot;float&quot;</span>
+    <span class="p">},</span>
+    <span class="s2">&quot;gps_precision&quot;</span><span class="o">:</span> <span class="p">{</span>
+        <span class="s2">&quot;label&quot;</span><span class="o">:</span> <span class="s2">&quot;gps_precision&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;olap_type&quot;</span><span class="o">:</span> <span class="s2">&quot;measure&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;simpletype&quot;</span><span class="o">:</span> <span class="s2">&quot;float&quot;</span>
+    <span class="p">},</span>
+    <span class="s2">&quot;location_name&quot;</span><span class="o">:</span> <span class="p">{</span>
+        <span class="s2">&quot;label&quot;</span><span class="o">:</span> <span class="s2">&quot;location_name&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;olap_type&quot;</span><span class="o">:</span> <span class="s2">&quot;dimension&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;simpletype&quot;</span><span class="o">:</span> <span class="s2">&quot;string&quot;</span>
+    <span class="p">},</span>
+    <span class="s2">&quot;rating&quot;</span><span class="o">:</span> <span class="p">{</span>
+        <span class="s2">&quot;label&quot;</span><span class="o">:</span> <span class="s2">&quot;rating&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;olap_type&quot;</span><span class="o">:</span> <span class="s2">&quot;dimension&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;simpletype&quot;</span><span class="o">:</span> <span class="s2">&quot;string&quot;</span>
+    <span class="p">},</span>
+    <span class="s2">&quot;risk_factor&quot;</span><span class="o">:</span> <span class="p">{</span>
+        <span class="s2">&quot;label&quot;</span><span class="o">:</span> <span class="s2">&quot;risk_factor&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;olap_type&quot;</span><span class="o">:</span> <span class="s2">&quot;dimension&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;simpletype&quot;</span><span class="o">:</span> <span class="s2">&quot;string&quot;</span>
+    <span class="p">},</span>
+    <span class="s2">&quot;submit_date&quot;</span><span class="o">:</span> <span class="p">{</span>
+        <span class="s2">&quot;label&quot;</span><span class="o">:</span> <span class="s2">&quot;submit_date&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;olap_type&quot;</span><span class="o">:</span> <span class="s2">&quot;measure&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;simpletype&quot;</span><span class="o">:</span> <span class="s2">&quot;datetime&quot;</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>Supposing this file is saved locally as <code class="docutils literal"><span class="pre">/home/modilabs/good_eats.schema.json</span></code>,
+you can create a dataset from this scema using:</p>
+<div class="highlight-sh"><div class="highlight"><pre>curl -X POST -F <span class="nv">schema</span><span class="o">=</span>@/home/modilabs/good_eats.schema.json http://bamboo.io/datasets
+</pre></div>
+</div>
+<p><strong>returns:</strong></p>
+<div class="highlight-javascript"><div class="highlight"><pre><span class="p">{</span>
+    <span class="s2">&quot;id&quot;</span><span class="o">:</span> <span class="s2">&quot;8a3d74711475d8a51c84484fe73f24bd151242ea&quot;</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<div class="section" id="create-a-dataset-with-data-from-a-schema">
+<h3>Create a Dataset with data from a Schema<a class="headerlink" href="#create-a-dataset-with-data-from-a-schema" title="Permalink to this headline">¶</a></h3>
+<p>To create a dataset from a schema and upload a CSV file for it, use the
+following command:</p>
+<div class="highlight-sh"><div class="highlight"><pre>curl -X POST -F <span class="nv">schema</span><span class="o">=</span>@/home/modilabs/good_eats.schema.json -F <span class="nv">csv_file</span><span class="o">=</span>@/home/modilabs/good_eats.csv http://bamboo.io/datasets
+</pre></div>
+</div>
+<p>And similarly for a JSON file:</p>
+<div class="highlight-sh"><div class="highlight"><pre>curl -X POST -F <span class="nv">schema</span><span class="o">=</span>@/home/modilabs/good_eats.schema.json -F <span class="nv">json_file</span><span class="o">=</span>@/home/modilabs/good_eats.json http://bamboo.io/datasets
+</pre></div>
+</div>
+<p><strong>returns:</strong></p>
+<div class="highlight-javascript"><div class="highlight"><pre><span class="p">{</span>
+    <span class="s2">&quot;id&quot;</span><span class="o">:</span> <span class="s2">&quot;8a3d74711475d8a51c84484fe73f24bd151242ea&quot;</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="creating-multiple-calculations-via-json">
+<h2>Creating Multiple Calculations via JSON<a class="headerlink" href="#creating-multiple-calculations-via-json" title="Permalink to this headline">¶</a></h2>
+<p>You can create multiple calculations by uploading a properly formatted JSON
+file to the create calculations endpoint.</p>
+<p>Below is an example calculations JSON file:</p>
+<div class="highlight-javascript"><div class="highlight"><pre><span class="p">[</span>
+    <span class="p">{</span>
+        <span class="s2">&quot;name&quot;</span><span class="o">:</span> <span class="s2">&quot;sweet foods&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;formula&quot;</span><span class="o">:</span> <span class="s2">&quot;food_type in [\&quot;deserts\&quot;, \&quot;streat_sweets\&quot;]&quot;</span>
+    <span class="p">},</span>
+    <span class="p">{</span>
+        <span class="s2">&quot;name&quot;</span><span class="o">:</span> <span class="s2">&quot;in northern hemisphere&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;formula&quot;</span><span class="o">:</span> <span class="s2">&quot;gps_latitude &gt; 0&quot;</span>
+    <span class="p">},</span>
+    <span class="p">{</span>
+        <span class="s2">&quot;name&quot;</span><span class="o">:</span> <span class="s2">&quot;sum of amount&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;formula&quot;</span><span class="o">:</span> <span class="s2">&quot;sum(amount)&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;groups&quot;</span><span class="o">:</span> <span class="s2">&quot;risk_factor&quot;</span>
+    <span class="p">},</span>
+    <span class="p">{</span>
+        <span class="s2">&quot;name&quot;</span><span class="o">:</span> <span class="s2">&quot;mean of amount&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;formula&quot;</span><span class="o">:</span> <span class="s2">&quot;mean(amount)&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;groups&quot;</span><span class="o">:</span> <span class="s2">&quot;risk_factor,food_type&quot;</span>
+    <span class="p">},</span>
+    <span class="p">{</span>
+        <span class="s2">&quot;name&quot;</span><span class="o">:</span> <span class="s2">&quot;mean of amount&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;formula&quot;</span><span class="o">:</span> <span class="s2">&quot;mean(amount)&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;groups&quot;</span><span class="o">:</span> <span class="p">[</span><span class="s2">&quot;risk_factor&quot;</span><span class="p">,</span> <span class="s2">&quot;food_type&quot;</span><span class="p">]</span>
+    <span class="p">}</span>
+<span class="p">]</span>
+</pre></div>
+</div>
+<p>Supposing this file is saved locally as <code class="docutils literal"><span class="pre">/home/modilabs/good_eats.calculations.json</span></code>,
+you can create a dataset from this json file using:</p>
+<div class="highlight-sh"><div class="highlight"><pre>curl -X POST -F <span class="nv">json_file</span><span class="o">=</span>@/home/modilabs/good_eats.calculations.json http://bamboo.io/calculations/8a3d74711475d8a51c84484fe73f24bd151242ea
+</pre></div>
+</div>
+<p><strong>returns:</strong></p>
+<div class="highlight-javascript"><div class="highlight"><pre><span class="p">{</span>
+    <span class="s2">&quot;success&quot;</span><span class="o">:</span> <span class="s2">&quot;created calculations from JSON&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;id&quot;</span><span class="o">:</span> <span class="s2">&quot;8a3d74711475d8a51c84484fe73f24bd151242ea&quot;</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">The file can also contain a single dictionary, for example:</p>
+</div>
+<div class="highlight-javascript"><div class="highlight"><pre><span class="p">{</span>
+    <span class="s2">&quot;name&quot;</span><span class="o">:</span> <span class="s2">&quot;in northern hemisphere&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;formula&quot;</span><span class="o">:</span> <span class="s2">&quot;gps_latitude &gt; 0&quot;</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<div class="section" id="replicating-a-calculation-across-groups">
+<h3>Replicating a Calculation Across Groups<a class="headerlink" href="#replicating-a-calculation-across-groups" title="Permalink to this headline">¶</a></h3>
+<p>To create the same calculation with multiple groups you may include a
+<code class="docutils literal"><span class="pre">groups</span></code> key in your JSON file with the value as a list of groups to create
+the calculation for.</p>
+<p>The <code class="docutils literal"><span class="pre">groups</span></code> key can also be set to a string, in which case bamboo will
+create a single calculation with the value as the group.</p>
+<p>For example, below the second to third calculation is created with the group
+<em>risk_factor</em>, and the fourth with the single multi-group <em>risk_factor</em> and
+<em>food_type</em>.  The final calculation is create twice, once for the group
+<em>risk_factor</em>, and once for the group <em>food_type</em>.</p>
+<div class="highlight-javascript"><div class="highlight"><pre><span class="p">[</span>
+    <span class="p">{</span>
+        <span class="s2">&quot;name&quot;</span><span class="o">:</span> <span class="s2">&quot;sweet foods&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;formula&quot;</span><span class="o">:</span> <span class="s2">&quot;food_type in [\&quot;deserts\&quot;, \&quot;streat_sweets\&quot;]&quot;</span>
+    <span class="p">},</span>
+    <span class="p">{</span>
+        <span class="s2">&quot;name&quot;</span><span class="o">:</span> <span class="s2">&quot;in northern hemisphere&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;formula&quot;</span><span class="o">:</span> <span class="s2">&quot;gps_latitude &gt; 0&quot;</span>
+    <span class="p">},</span>
+    <span class="p">{</span>
+        <span class="s2">&quot;name&quot;</span><span class="o">:</span> <span class="s2">&quot;sum of amount&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;formula&quot;</span><span class="o">:</span> <span class="s2">&quot;sum(amount)&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;groups&quot;</span><span class="o">:</span> <span class="s2">&quot;risk_factor&quot;</span>
+    <span class="p">},</span>
+    <span class="p">{</span>
+        <span class="s2">&quot;name&quot;</span><span class="o">:</span> <span class="s2">&quot;mean of amount&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;formula&quot;</span><span class="o">:</span> <span class="s2">&quot;mean(amount)&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;groups&quot;</span><span class="o">:</span> <span class="s2">&quot;risk_factor,food_type&quot;</span>
+    <span class="p">},</span>
+    <span class="p">{</span>
+        <span class="s2">&quot;name&quot;</span><span class="o">:</span> <span class="s2">&quot;mean of amount&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;formula&quot;</span><span class="o">:</span> <span class="s2">&quot;mean(amount)&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;groups&quot;</span><span class="o">:</span> <span class="p">[</span><span class="s2">&quot;risk_factor&quot;</span><span class="p">,</span> <span class="s2">&quot;food_type&quot;</span><span class="p">]</span>
+    <span class="p">}</span>
+<span class="p">]</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="create-a-perishable-dataset">
+<h2>Create a &#8220;perishable&#8221; dataset<a class="headerlink" href="#create-a-perishable-dataset" title="Permalink to this headline">¶</a></h2>
+<p>Suppose you want to upload a dataset, perform some calculations, and use the
+results, but you do not want your data to be permanently stored.  To
+accommodate this use case dataset creation supports on optional <code class="docutils literal"><span class="pre">perish</span></code>
+parameter.  The <code class="docutils literal"><span class="pre">perish</span></code> parameter is an integer which specifies the number
+of seconds after which to delete the dataset.  For example, to create a dataset
+that will be deleted after one day:</p>
+<div class="highlight-sh"><div class="highlight"><pre>curl -X POST -d <span class="s2">&quot;url=http://formhub.org/mberg/forms/good_eats/data.csv&amp;perish=86400&quot;</span> http://bamboo.io/datasets
+</pre></div>
+</div>
+<p><strong>returns:</strong></p>
+<div class="highlight-javascript"><div class="highlight"><pre><span class="p">{</span>
+    <span class="s2">&quot;id&quot;</span><span class="o">:</span> <span class="s2">&quot;8a3d74711475d8a51c84484fe73f24bd151242ea&quot;</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="additional-dataset-query-parameters">
+<h2>Additional dataset query parameters<a class="headerlink" href="#additional-dataset-query-parameters" title="Permalink to this headline">¶</a></h2>
+<p>Dataset queries may take the following optional parameters:</p>
+<ul>
+<li><dl class="first docutils">
+<dt><code class="docutils literal"><span class="pre">select</span></code>: This is a required argument, it can be &#8216;all&#8217; or a</dt>
+<dd><p class="first last">MongoDB JSON query</p>
+</dd>
+</dl>
+</li>
+<li><p class="first"><code class="docutils literal"><span class="pre">distinct</span></code>: A field to return distinct results for.</p>
+</li>
+<li><p class="first"><code class="docutils literal"><span class="pre">query</span></code>: If passed restrict results to rows matching this query.</p>
+</li>
+<li><p class="first"><code class="docutils literal"><span class="pre">limit</span></code>: If passed limit the rows to this number.</p>
+</li>
+<li><p class="first"><code class="docutils literal"><span class="pre">order_by</span></code>: If passed order the result using this column.</p>
+</li>
+<li><p class="first"><code class="docutils literal"><span class="pre">format</span></code>: Format of output data, &#8216;json&#8217; or &#8216;csv&#8217;</p>
+</li>
+<li><p class="first"><code class="docutils literal"><span class="pre">callback</span></code>: A JSONP callback function to wrap the result in.</p>
+</li>
+<li><p class="first"><code class="docutils literal"><span class="pre">index</span></code>: Boolean, if true also return the index.  Default false.</p>
+</li>
+<li><p class="first"><code class="docutils literal"><span class="pre">count</span></code>: Boolean, if true returns only the number of results.  Default false.</p>
+</li>
+</ul>
+<div class="section" id="export-data-using-the-format-parameter">
+<h3>Export data using the format parameter<a class="headerlink" href="#export-data-using-the-format-parameter" title="Permalink to this headline">¶</a></h3>
+<p>You may use the <code class="docutils literal"><span class="pre">format</span></code> parameter as an alternative to file extension
+notation.</p>
+<p>To export the data as CSV:</p>
+<div class="highlight-sh"><div class="highlight"><pre>curl http://bamboo.io/datasets/8a3d74711475d8a51c84484fe73f24bd151242ea?format<span class="o">=</span>CSV
+</pre></div>
+</div>
+<p>To export the data as JSON:</p>
+<div class="highlight-sh"><div class="highlight"><pre>curl http://bamboo.io/datasets/8a3d74711475d8a51c84484fe73f24bd151242ea?format<span class="o">=</span>JSON
+</pre></div>
+</div>
+</div>
+<div class="section" id="ordering-the-results-of-a-query">
+<h3>Ordering the results of a query<a class="headerlink" href="#ordering-the-results-of-a-query" title="Permalink to this headline">¶</a></h3>
+<p>The <code class="docutils literal"><span class="pre">order_by</span></code> parameter sorts the resulting rows according to a column value
+and a sign indicating to order ascending (default) or descending
+(the <code class="docutils literal"><span class="pre">-</span></code> sign).</p>
+<p>For example:</p>
+<div class="highlight-sh"><div class="highlight"><pre>curl http://bamboo.io/datasets/8a3d74711475d8a51c84484fe73f24bd151242ea<span class="p">&amp;</span><span class="nv">order_by</span><span class="o">=</span>amount
+curl http://bamboo.io/datasets/8a3d74711475d8a51c84484fe73f24bd151242ea<span class="p">&amp;</span><span class="nv">order_by</span><span class="o">=</span>-amount
+</pre></div>
+</div>
+</div>
+<div class="section" id="using-a-jsonp-callback">
+<h3>Using a JSONP callback<a class="headerlink" href="#using-a-jsonp-callback" title="Permalink to this headline">¶</a></h3>
+<p>If you would like to retrieve your dataset from bamboo.io and process the
+result using JavaScript, you can define a JavaScript callback to do so.</p>
+<p>Suppose you have defined the JavaScript callback function
+<code class="docutils literal"><span class="pre">handleBambooDataset(json)</span></code> to process the JSON dataset.</p>
+<p>You can pass this to bamboo using the <code class="docutils literal"><span class="pre">json</span></code> parameter as follows:</p>
+<div class="highlight-sh"><div class="highlight"><pre>curl http://bamboo.io/datasets/8a3d74711475d8a51c84484fe73f24bd151242ea<span class="p">&amp;</span><span class="nv">callback</span><span class="o">=</span>handleBambooDataset
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="updating-dataset-metadata">
+<h2>Updating Dataset Metadata<a class="headerlink" href="#updating-dataset-metadata" title="Permalink to this headline">¶</a></h2>
+<p>The following metadata fields can be added to a dataset:</p>
+<ul class="simple">
+<li><code class="docutils literal"><span class="pre">attribution</span></code>: attribution and original of this dataset.</li>
+<li><code class="docutils literal"><span class="pre">description</span></code>: a text description of the dataset.</li>
+<li><code class="docutils literal"><span class="pre">label</span></code>: a label or name for this dataset.</li>
+<li><code class="docutils literal"><span class="pre">license</span></code>: the license this dataset is under.</li>
+</ul>
+<p>The fieldname is in bold with suggested uses to the right.</p>
+<p>To set the metadata on a dataset, make a PUT request to <code class="docutils literal"><span class="pre">info</span></code>, this will
+also return the update dataset info.</p>
+<div class="highlight-sh"><div class="highlight"><pre>curl -X PUT -d <span class="s2">&quot;description=Good%20eats%20description&amp;license=public&amp;attribution=mlberg&amp;label=goodeats&quot;</span> http://bamboo.io/datasets/8a3d74711475d8a51c84484fe73f24bd151242ea/info
+</pre></div>
+</div>
+<p><strong>returns:</strong></p>
+<div class="highlight-javascript"><div class="highlight"><pre><span class="p">{</span>
+    <span class="s2">&quot;attribution&quot;</span><span class="o">:</span> <span class="s2">&quot;mlberg&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;description&quot;</span><span class="o">:</span> <span class="s2">&quot;Good eats description&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;id&quot;</span><span class="o">:</span> <span class="s2">&quot;8a3d74711475d8a51c84484fe73f24bd151242ea&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;label&quot;</span><span class="o">:</span> <span class="s2">&quot;goodeats&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;license&quot;</span><span class="o">:</span> <span class="s2">&quot;public&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;schema&quot;</span><span class="o">:</span> <span class="p">{</span>
+        <span class="s2">&quot;amount&quot;</span><span class="o">:</span> <span class="p">{</span>
+            <span class="s2">&quot;label&quot;</span><span class="o">:</span> <span class="s2">&quot;Amount&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;olap_type&quot;</span><span class="o">:</span> <span class="s2">&quot;measure&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;simpletype&quot;</span><span class="o">:</span> <span class="s2">&quot;float&quot;</span>
+        <span class="p">},</span>
+        <span class="s2">&quot;rating&quot;</span><span class="o">:</span> <span class="p">{</span>
+            <span class="s2">&quot;label&quot;</span><span class="o">:</span> <span class="s2">&quot;Rating&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;olap_type&quot;</span><span class="o">:</span> <span class="s2">&quot;dimension&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;simpletype&quot;</span><span class="o">:</span> <span class="s2">&quot;string&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;cardinality&quot;</span><span class="o">:</span> <span class="mi">2</span>
+        <span class="p">},</span>
+        <span class="s2">&quot;food_type&quot;</span><span class="o">:</span> <span class="p">{</span>
+            <span class="s2">&quot;label&quot;</span><span class="o">:</span> <span class="s2">&quot;Food Type&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;olap_type&quot;</span><span class="o">:</span> <span class="s2">&quot;dimension&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;simpletype&quot;</span><span class="o">:</span> <span class="s2">&quot;string&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;cardinality&quot;</span><span class="o">:</span> <span class="mi">8</span>
+        <span class="p">},</span>
+        <span class="p">...</span>
+    <span class="p">},</span>
+    <span class="s2">&quot;created_at&quot;</span><span class="o">:</span> <span class="s2">&quot;2012-6-18 14:43:32&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;updated_at&quot;</span><span class="o">:</span> <span class="s2">&quot;2012-6-18 14:43:32&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;num_rows&quot;</span><span class="o">:</span> <span class="s2">&quot;500&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;num_columns&quot;</span><span class="o">:</span> <span class="s2">&quot;30&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;state&quot;</span><span class="o">:</span> <span class="s2">&quot;ready&quot;</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<div class="section" id="setting-the-olap-type">
+<h3>Setting the OLAP Type<a class="headerlink" href="#setting-the-olap-type" title="Permalink to this headline">¶</a></h3>
+<p>By default columns with numeric data are treated as measures and return summary
+statistics.  However, if your numeric data represents indentifiers it may be
+semantically dimensional.  You can use set OLAP Type to treat numeric data
+dimensionally.</p>
+<p>Any numeric column can be converted to a dimension and back.  Dimension columns
+cannot be modified.  For example, to convert the numeric column <code class="docutils literal"><span class="pre">amount</span></code> to a
+dimension:</p>
+<div class="highlight-sh"><div class="highlight"><pre>curl -X PUT -d <span class="s2">&quot;column=amount&amp;olap_type=dimension&quot;</span> http://bamboo.io/datasets/8a3d74711475d8a51c84484fe73f24bd151242ea/set_olap_type
+</pre></div>
+</div>
+<p><strong>returns:</strong></p>
+<div class="highlight-javascript"><div class="highlight"><pre>{&quot;success&quot;: &quot;set OLAP Type for column &#39;amount&#39; to &#39;dimension&#39;}
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="timeseries-operations-on-a-dataset">
+<h2>Timeseries operations on a dataset<a class="headerlink" href="#timeseries-operations-on-a-dataset" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="resampling-a-dataset">
+<h3>Resampling a dataset<a class="headerlink" href="#resampling-a-dataset" title="Permalink to this headline">¶</a></h3>
+<p>If your dataset contains any date columns, you can resample numeric columns in
+your data based on any of these date columns.</p>
+<p>Any options that can be passed to the pandas <code class="docutils literal"><span class="pre">resample</span></code> functions
+(<a class="reference external" href="http://pandas.pydata.org/pandas-docs/stable/timeseries.html#time-series-date-functionality">pandas docs</a>)
+function can be passed as parameters to bamboo.</p>
+<p>The parameters are</p>
+<ul>
+<li><p class="first"><code class="docutils literal"><span class="pre">date_column</span></code>: The date column to resample on.</p>
+</li>
+<li><dl class="first docutils">
+<dt><code class="docutils literal"><span class="pre">interval</span></code>: A code for the interval to use, any pandas codes are accepted,</dt>
+<dd><p class="first last">e.g. &#8216;D&#8217; for daily, &#8216;W&#8217; for weekly, &#8216;M&#8217; for monthly.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt><code class="docutils literal"><span class="pre">how</span></code>: (Optional) How to calculate the grouped samples.  The default is</dt>
+<dd><p class="first last">&#8216;mean&#8217;.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt><code class="docutils literal"><span class="pre">query</span></code>: (Optional) A MongoDB query to restrict the dataset, only data</dt>
+<dd><p class="first last">matching the query will be resampled.</p>
+</dd>
+</dl>
+</li>
+<li><p class="first"><code class="docutils literal"><span class="pre">format</span></code>: (Optional) Set to &#8216;csv&#8217; to return a CSV of the resampled data.</p>
+</li>
+</ul>
+<p>For example, to resample a dataset at monthly intervals by mean use the
+following command:</p>
+<div class="highlight-sh"><div class="highlight"><pre>curl http://bamboo.io/datasets/8a3d74711475d8a51c84484fe73f24bd151242ea/resample?date_column<span class="o">=</span>submit_date<span class="p">&amp;</span><span class="nv">interval</span><span class="o">=</span>M<span class="p">&amp;</span><span class="nv">how</span><span class="o">=</span>mean
+</pre></div>
+</div>
+<p><strong>returns:</strong></p>
+<div class="highlight-javascript"><div class="highlight"><pre><span class="p">[</span>
+    <span class="p">{</span>
+        <span class="s1">&#39;_percentage_complete&#39;</span><span class="o">:</span> <span class="s1">&#39;null&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;submit_date&#39;</span><span class="o">:</span> <span class="p">{</span><span class="s1">&#39;$date&#39;</span><span class="o">:</span> <span class="mi">1325289600000</span><span class="p">},</span>
+        <span class="s1">&#39;gps_alt&#39;</span><span class="o">:</span> <span class="mf">36.78334554038333</span><span class="p">,</span>
+        <span class="s1">&#39;amount&#39;</span><span class="o">:</span> <span class="mf">7.107142857142857</span><span class="p">,</span>
+        <span class="s1">&#39;gps_latitude&#39;</span><span class="o">:</span> <span class="mf">40.622100085116664</span><span class="p">,</span>
+        <span class="s1">&#39;_id&#39;</span><span class="o">:</span> <span class="mf">358490042584000.0</span><span class="p">,</span>
+        <span class="s1">&#39;gps_precision&#39;</span><span class="o">:</span> <span class="mf">43.333333333333336</span><span class="p">,</span>
+        <span class="s1">&#39;gps_longitude&#39;</span><span class="o">:</span> <span class="mf">29.94870928221667</span>
+    <span class="p">},</span>
+    <span class="p">{</span>
+        <span class="s1">&#39;_percentage_complete&#39;</span><span class="o">:</span> <span class="s1">&#39;null&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;submit_date&#39;</span><span class="o">:</span> <span class="p">{</span><span class="s1">&#39;$date&#39;</span><span class="o">:</span> <span class="mi">1327968000000</span><span class="p">},</span>
+        <span class="s1">&#39;gps_alt&#39;</span><span class="o">:</span> <span class="mf">168.11249542212502</span><span class="p">,</span>
+        <span class="s1">&#39;amount&#39;</span><span class="o">:</span> <span class="mf">233.5625</span><span class="p">,</span>
+        <span class="s1">&#39;gps_latitude&#39;</span><span class="o">:</span> <span class="mf">29.618330361937502</span><span class="p">,</span>
+        <span class="s1">&#39;_id&#39;</span><span class="o">:</span> <span class="mf">358490042584000.0</span><span class="p">,</span>
+        <span class="s1">&#39;gps_precision&#39;</span><span class="o">:</span> <span class="mf">47.0</span><span class="p">,</span>
+        <span class="s1">&#39;gps_longitude&#39;</span><span class="o">:</span> <span class="mf">18.21789164405</span><span class="p">},</span>
+    <span class="p">{</span>
+        <span class="s1">&#39;_percentage_complete&#39;</span><span class="o">:</span> <span class="s1">&#39;null&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;submit_date&#39;</span><span class="o">:</span> <span class="p">{</span><span class="s1">&#39;$date&#39;</span><span class="o">:</span> <span class="mi">1330473600000</span><span class="p">},</span>
+        <span class="s1">&#39;gps_alt&#39;</span><span class="o">:</span> <span class="mf">0.0</span><span class="p">,</span>
+        <span class="s1">&#39;amount&#39;</span><span class="o">:</span> <span class="mf">45.0</span><span class="p">,</span>
+        <span class="s1">&#39;gps_latitude&#39;</span><span class="o">:</span> <span class="mf">40.8076961</span><span class="p">,</span>
+        <span class="s1">&#39;_id&#39;</span><span class="o">:</span> <span class="mf">358490042584000.0</span><span class="p">,</span>
+        <span class="s1">&#39;gps_precision&#39;</span><span class="o">:</span> <span class="mf">588.0</span><span class="p">,</span>
+        <span class="s1">&#39;gps_longitude&#39;</span><span class="o">:</span> <span class="o">-</span><span class="mf">73.95805440000001</span>
+    <span class="p">},</span>
+    <span class="p">{</span>
+        <span class="s1">&#39;_percentage_complete&#39;</span><span class="o">:</span> <span class="s1">&#39;null&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;submit_date&#39;</span><span class="o">:</span> <span class="p">{</span><span class="s1">&#39;$date&#39;</span><span class="o">:</span> <span class="mi">1333152000000</span><span class="p">},</span>
+        <span class="s1">&#39;gps_alt&#39;</span><span class="o">:</span> <span class="mf">0.0</span><span class="p">,</span>
+        <span class="s1">&#39;amount&#39;</span><span class="o">:</span> <span class="mf">12.0</span><span class="p">,</span>
+        <span class="s1">&#39;gps_latitude&#39;</span><span class="o">:</span> <span class="mf">49.26994343</span><span class="p">,</span>
+        <span class="s1">&#39;_id&#39;</span><span class="o">:</span> <span class="mf">358490042584000.0</span><span class="p">,</span>
+        <span class="s1">&#39;gps_precision&#39;</span><span class="o">:</span> <span class="mf">56.0</span><span class="p">,</span>
+        <span class="s1">&#39;gps_longitude&#39;</span><span class="o">:</span> <span class="o">-</span><span class="mf">123.15297941</span>
+    <span class="p">},</span>
+    <span class="p">{</span>
+        <span class="s1">&#39;_percentage_complete&#39;</span><span class="o">:</span> <span class="s1">&#39;null&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;submit_date&#39;</span><span class="o">:</span> <span class="p">{</span><span class="s1">&#39;$date&#39;</span><span class="o">:</span> <span class="mi">1335744000000</span><span class="p">},</span>
+        <span class="s1">&#39;gps_alt&#39;</span><span class="o">:</span> <span class="mf">281.30000305175</span><span class="p">,</span>
+        <span class="s1">&#39;amount&#39;</span><span class="o">:</span> <span class="mf">16.125</span><span class="p">,</span>
+        <span class="s1">&#39;gps_latitude&#39;</span><span class="o">:</span> <span class="mf">26.66630736555</span><span class="p">,</span>
+        <span class="s1">&#39;_id&#39;</span><span class="o">:</span> <span class="mf">358490042584000.0</span><span class="p">,</span>
+        <span class="s1">&#39;gps_precision&#39;</span><span class="o">:</span> <span class="mf">22.5</span><span class="p">,</span>
+        <span class="s1">&#39;gps_longitude&#39;</span><span class="o">:</span> <span class="mf">1.530683878799998</span>
+    <span class="p">}</span>
+<span class="p">]</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="calculating-rolling-statistics">
+<h3>Calculating rolling statistics<a class="headerlink" href="#calculating-rolling-statistics" title="Permalink to this headline">¶</a></h3>
+<p>To compute <em>moving</em> or <em>rolling</em> statistics / moments you can use the
+<code class="docutils literal"><span class="pre">rolling</span></code> request.</p>
+<p>Any options that can be passed to the pandas <code class="docutils literal"><span class="pre">rolling_window</span></code> function
+(<a class="reference external" href="http://pandas.pydata.org/pandas-docs/dev/computation.html#moving-rolling-statistics-moments">pandas docs</a>)
+can be passed as parameters to bamboo.</p>
+<p>Window types are passed as the <code class="docutils literal"><span class="pre">win_type</span></code> parameter. See
+<a class="reference external" href="https://en.wikipedia.org/wiki/Window_function#Window_examples">here</a> for
+window type definitions and examples.</p>
+<p>For example, to calculating a rolling mean with a window of 3 values, use the
+following command:</p>
+<div class="highlight-sh"><div class="highlight"><pre>curl http://bamboo.io/datasets/8a3d74711475d8a51c84484fe73f24bd151242ea/rolling?win_type<span class="o">=</span>boxcar<span class="p">&amp;</span><span class="nv">window</span><span class="o">=</span>3
+</pre></div>
+</div>
+<p><strong>returns:</strong></p>
+<div class="highlight-javascript"><div class="highlight"><pre><span class="p">[</span>
+    <span class="p">{</span>
+        <span class="s1">&#39;gps_longitude&#39;</span><span class="o">:</span> <span class="s1">&#39;null&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;_percentage_complete&#39;</span><span class="o">:</span> <span class="s1">&#39;null&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;gps_latitude&#39;</span><span class="o">:</span> <span class="s1">&#39;null&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;amount&#39;</span><span class="o">:</span> <span class="s1">&#39;null&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;gps_alt&#39;</span><span class="o">:</span> <span class="s1">&#39;null&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;_id&#39;</span><span class="o">:</span> <span class="s1">&#39;null&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;gps_precision&#39;</span><span class="o">:</span> <span class="s1">&#39;null&#39;</span>
+    <span class="p">},</span>
+    <span class="p">{</span>
+        <span class="s1">&#39;gps_longitude&#39;</span><span class="o">:</span> <span class="s1">&#39;null&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;_percentage_complete&#39;</span><span class="o">:</span> <span class="s1">&#39;null&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;gps_latitude&#39;</span><span class="o">:</span> <span class="s1">&#39;null&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;amount&#39;</span><span class="o">:</span> <span class="s1">&#39;null&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;gps_alt&#39;</span><span class="o">:</span> <span class="s1">&#39;null&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;_id&#39;</span><span class="o">:</span> <span class="s1">&#39;null&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;gps_precision&#39;</span><span class="o">:</span> <span class="s1">&#39;null&#39;</span>
+    <span class="p">},</span>
+    <span class="p">{</span>
+        <span class="s1">&#39;gps_longitude&#39;</span><span class="o">:</span> <span class="mf">28.97413979283333</span><span class="p">,</span>
+        <span class="s1">&#39;_percentage_complete&#39;</span><span class="o">:</span> <span class="s1">&#39;null&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;gps_latitude&#39;</span><span class="o">:</span> <span class="mf">41.018141275299996</span><span class="p">,</span>
+        <span class="s1">&#39;amount&#39;</span><span class="o">:</span> <span class="mf">4.583333333333333</span><span class="p">,</span>
+        <span class="s1">&#39;gps_alt&#39;</span><span class="o">:</span> <span class="mf">45.60001627606666</span><span class="p">,</span>
+        <span class="s1">&#39;_id&#39;</span><span class="o">:</span> <span class="s1">&#39;null&#39;</span><span class="p">,</span> <span class="s1">&#39;gps_precision&#39;</span><span class="o">:</span> <span class="mf">41.666666666666664</span>
+    <span class="p">},</span>
+    <span class="p">...</span>
+<span class="p">]</span>
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">The first <code class="docutils literal"><span class="pre">window</span> <span class="pre">-</span> <span class="pre">1</span></code> rows will be null, because not enough
+data will have been seen to calculate rolling statistics for those rows.</p>
+</div>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Advanced Commands</a><ul>
+<li><a class="reference internal" href="#creating-a-dataset-from-a-schema">Creating a Dataset from a Schema</a><ul>
+<li><a class="reference internal" href="#create-a-dataset-with-data-from-a-schema">Create a Dataset with data from a Schema</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#creating-multiple-calculations-via-json">Creating Multiple Calculations via JSON</a><ul>
+<li><a class="reference internal" href="#replicating-a-calculation-across-groups">Replicating a Calculation Across Groups</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#create-a-perishable-dataset">Create a &#8220;perishable&#8221; dataset</a></li>
+<li><a class="reference internal" href="#additional-dataset-query-parameters">Additional dataset query parameters</a><ul>
+<li><a class="reference internal" href="#export-data-using-the-format-parameter">Export data using the format parameter</a></li>
+<li><a class="reference internal" href="#ordering-the-results-of-a-query">Ordering the results of a query</a></li>
+<li><a class="reference internal" href="#using-a-jsonp-callback">Using a JSONP callback</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#updating-dataset-metadata">Updating Dataset Metadata</a><ul>
+<li><a class="reference internal" href="#setting-the-olap-type">Setting the OLAP Type</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#timeseries-operations-on-a-dataset">Timeseries operations on a dataset</a><ul>
+<li><a class="reference internal" href="#resampling-a-dataset">Resampling a dataset</a></li>
+<li><a class="reference internal" href="#calculating-rolling-statistics">Calculating rolling statistics</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="manipulating_data.html"
+                        title="previous chapter">Manipulating Data</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="calculations.html"
+                        title="next chapter">Calculations</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/advanced_commands.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="calculations.html" title="Calculations"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="manipulating_data.html" title="Manipulating Data"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">bamboo 0.6.3 alpha documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &copy; Copyright 2013, Peter Lubell-Doughtie, Mark Johnston.
+    </div>
+  </body>
+</html>

@@ -1,0 +1,170 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>bamboo.core.merge &mdash; bamboo 0.6.3 alpha documentation</title>
+    
+    <link rel="stylesheet" href="../../../_static/nature.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../',
+        VERSION:     '0.6.3 alpha',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="top" title="bamboo 0.6.3 alpha documentation" href="../../../index.html" />
+    <link rel="up" title="Module code" href="../../index.html" /> 
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">bamboo 0.6.3 alpha documentation</a> &raquo;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" accesskey="U">Module code</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for bamboo.core.merge</h1><div class="highlight"><pre>
+<span class="kn">from</span> <span class="nn">celery.task</span> <span class="kn">import</span> <span class="n">task</span>
+<span class="kn">from</span> <span class="nn">pandas</span> <span class="kn">import</span> <span class="n">concat</span>
+
+<span class="kn">from</span> <span class="nn">bamboo.core.frame</span> <span class="kn">import</span> <span class="n">add_parent_column</span>
+<span class="kn">from</span> <span class="nn">bamboo.lib.async</span> <span class="kn">import</span> <span class="n">call_async</span>
+<span class="kn">from</span> <span class="nn">bamboo.models.dataset</span> <span class="kn">import</span> <span class="n">Dataset</span>
+
+
+<div class="viewcode-block" id="MergeError"><a class="viewcode-back" href="../../../core.html#bamboo.core.merge.MergeError">[docs]</a><span class="k">class</span> <span class="nc">MergeError</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;For errors while merging datasets.&quot;&quot;&quot;</span>
+    <span class="k">pass</span>
+
+</div>
+<div class="viewcode-block" id="merge_dataset_ids"><a class="viewcode-back" href="../../../core.html#bamboo.core.merge.merge_dataset_ids">[docs]</a><span class="k">def</span> <span class="nf">merge_dataset_ids</span><span class="p">(</span><span class="n">dataset_ids</span><span class="p">,</span> <span class="n">mapping</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Load a JSON array of dataset IDs and start a background merge task.</span>
+
+<span class="sd">    :param dataset_ids: An array of dataset IDs to merge.</span>
+
+<span class="sd">    :raises: `MergeError` if less than 2 datasets are provided. If a dataset</span>
+<span class="sd">        cannot be found for a dataset ID it is ignored. Therefore if 2 dataset</span>
+<span class="sd">        IDs are provided and one of them is bad an error is raised.  However,</span>
+<span class="sd">        if three dataset IDs are provided and one of them is bad, an error is</span>
+<span class="sd">        not raised.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">datasets</span> <span class="o">=</span> <span class="p">[</span><span class="n">Dataset</span><span class="o">.</span><span class="n">find_one</span><span class="p">(</span><span class="n">dataset_id</span><span class="p">)</span> <span class="k">for</span> <span class="n">dataset_id</span> <span class="ow">in</span> <span class="n">dataset_ids</span><span class="p">]</span>
+    <span class="n">datasets</span> <span class="o">=</span> <span class="p">[</span><span class="n">dataset</span> <span class="k">for</span> <span class="n">dataset</span> <span class="ow">in</span> <span class="n">datasets</span> <span class="k">if</span> <span class="n">dataset</span><span class="o">.</span><span class="n">record</span><span class="p">]</span>
+
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">datasets</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">2</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">MergeError</span><span class="p">(</span>
+            <span class="s">&#39;merge requires 2 datasets (found </span><span class="si">%s</span><span class="s">)&#39;</span> <span class="o">%</span> <span class="nb">len</span><span class="p">(</span><span class="n">datasets</span><span class="p">))</span>
+
+    <span class="n">new_dataset</span> <span class="o">=</span> <span class="n">Dataset</span><span class="o">.</span><span class="n">create</span><span class="p">()</span>
+
+    <span class="n">call_async</span><span class="p">(</span><span class="n">__merge_datasets_task</span><span class="p">,</span> <span class="n">new_dataset</span><span class="p">,</span> <span class="n">datasets</span><span class="p">,</span> <span class="n">mapping</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">new_dataset</span>
+
+</div>
+<span class="nd">@task</span><span class="p">(</span><span class="n">default_retry_delay</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">ignore_result</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">__merge_datasets_task</span><span class="p">(</span><span class="n">new_dataset</span><span class="p">,</span> <span class="n">datasets</span><span class="p">,</span> <span class="n">mapping</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Merge datasets specified by dataset_ids.</span>
+
+<span class="sd">    :param new_dataset: The dataset store the merged dataset in.</span>
+<span class="sd">    :param dataset_ids: A list of IDs to merge into `new_dataset`.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c"># check that all datasets are in a &#39;ready&#39; state</span>
+    <span class="k">while</span> <span class="nb">any</span><span class="p">([</span><span class="ow">not</span> <span class="n">dataset</span><span class="o">.</span><span class="n">record_ready</span> <span class="k">for</span> <span class="n">dataset</span> <span class="ow">in</span> <span class="n">datasets</span><span class="p">]):</span>
+        <span class="p">[</span><span class="n">dataset</span><span class="o">.</span><span class="n">reload</span><span class="p">()</span> <span class="k">for</span> <span class="n">dataset</span> <span class="ow">in</span> <span class="n">datasets</span><span class="p">]</span>
+        <span class="k">raise</span> <span class="n">__merge_datasets_task</span><span class="o">.</span><span class="n">retry</span><span class="p">(</span><span class="n">countdown</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
+    <span class="n">new_dframe</span> <span class="o">=</span> <span class="n">__merge_datasets</span><span class="p">(</span><span class="n">datasets</span><span class="p">,</span> <span class="n">mapping</span><span class="p">)</span>
+
+    <span class="c"># save the resulting dframe as a new dataset</span>
+    <span class="n">new_dataset</span><span class="o">.</span><span class="n">save_observations</span><span class="p">(</span><span class="n">new_dframe</span><span class="p">)</span>
+
+    <span class="c"># store the child dataset ID with each parent</span>
+    <span class="k">for</span> <span class="n">dataset</span> <span class="ow">in</span> <span class="n">datasets</span><span class="p">:</span>
+        <span class="n">dataset</span><span class="o">.</span><span class="n">add_merged_dataset</span><span class="p">(</span><span class="n">mapping</span><span class="p">,</span> <span class="n">new_dataset</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">__merge_datasets</span><span class="p">(</span><span class="n">datasets</span><span class="p">,</span> <span class="n">mapping</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Merge two or more datasets.&quot;&quot;&quot;</span>
+    <span class="n">dframes</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">mapping</span><span class="p">:</span>
+        <span class="n">mapping</span> <span class="o">=</span> <span class="p">{}</span>
+
+    <span class="k">for</span> <span class="n">dataset</span> <span class="ow">in</span> <span class="n">datasets</span><span class="p">:</span>
+        <span class="n">dframe</span> <span class="o">=</span> <span class="n">dataset</span><span class="o">.</span><span class="n">dframe</span><span class="p">()</span>
+        <span class="n">column_map</span> <span class="o">=</span> <span class="n">mapping</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">dataset</span><span class="o">.</span><span class="n">dataset_id</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">column_map</span><span class="p">:</span>
+            <span class="n">dframe</span> <span class="o">=</span> <span class="n">dframe</span><span class="o">.</span><span class="n">rename</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="n">column_map</span><span class="p">)</span>
+
+        <span class="n">dframe</span> <span class="o">=</span> <span class="n">add_parent_column</span><span class="p">(</span><span class="n">dframe</span><span class="p">,</span> <span class="n">dataset</span><span class="o">.</span><span class="n">dataset_id</span><span class="p">)</span>
+        <span class="n">dframes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">dframe</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">concat</span><span class="p">(</span><span class="n">dframes</span><span class="p">,</span> <span class="n">ignore_index</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">bamboo 0.6.3 alpha documentation</a> &raquo;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Module code</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &copy; Copyright 2013, Peter Lubell-Doughtie, Mark Johnston.
+    </div>
+  </body>
+</html>

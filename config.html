@@ -1,0 +1,185 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Config &mdash; bamboo 0.6.3 alpha documentation</title>
+    
+    <link rel="stylesheet" href="_static/nature.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '0.6.3 alpha',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="top" title="bamboo 0.6.3 alpha documentation" href="index.html" />
+    <link rel="next" title="Controllers" href="controllers.html" />
+    <link rel="prev" title="Class Structure" href="class_structure.html" /> 
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="controllers.html" title="Controllers"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="class_structure.html" title="Class Structure"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">bamboo 0.6.3 alpha documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="config">
+<h1>Config<a class="headerlink" href="#config" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="module-bamboo.config.db">
+<span id="database"></span><h2>Database<a class="headerlink" href="#module-bamboo.config.db" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="bamboo.config.db.Database">
+<em class="property">class </em><code class="descclassname">bamboo.config.db.</code><code class="descname">Database</code><a class="reference internal" href="_modules/bamboo/config/db.html#Database"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bamboo.config.db.Database" title="Permalink to this definition">¶</a></dt>
+<dd><p>Container for the MongoDB client.</p>
+<dl class="classmethod">
+<dt id="bamboo.config.db.Database.client">
+<em class="property">classmethod </em><code class="descname">client</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/bamboo/config/db.html#Database.client"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bamboo.config.db.Database.client" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the database client.</p>
+</dd></dl>
+
+<dl class="classmethod">
+<dt id="bamboo.config.db.Database.create_db">
+<em class="property">classmethod </em><code class="descname">create_db</code><span class="sig-paren">(</span><em>db_name</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bamboo/config/db.html#Database.create_db"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bamboo.config.db.Database.create_db" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a database <cite>db_name</cite>.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>cls</strong> &#8211; The class to set a client on.</li>
+<li><strong>db_name</strong> &#8211; The name of the collection to create.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="classmethod">
+<dt id="bamboo.config.db.Database.db">
+<em class="property">classmethod </em><code class="descname">db</code><span class="sig-paren">(</span><em>name=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bamboo/config/db.html#Database.db"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bamboo.config.db.Database.db" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create the database if it has not been created.</p>
+<p>If name is provided, create a new database.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>cls</strong> &#8211; The class to set the database for.</li>
+<li><strong>name</strong> &#8211; The name of the database to create, default None.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">The created database.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="routes">
+<h2>Routes<a class="headerlink" href="#routes" title="Permalink to this headline">¶</a></h2>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Config</a><ul>
+<li><a class="reference internal" href="#module-bamboo.config.db">Database</a></li>
+<li><a class="reference internal" href="#routes">Routes</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="class_structure.html"
+                        title="previous chapter">Class Structure</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="controllers.html"
+                        title="next chapter">Controllers</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/config.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="controllers.html" title="Controllers"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="class_structure.html" title="Class Structure"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">bamboo 0.6.3 alpha documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &copy; Copyright 2013, Peter Lubell-Doughtie, Mark Johnston.
+    </div>
+  </body>
+</html>

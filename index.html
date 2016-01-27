@@ -1,0 +1,389 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Welcome to the bamboo documentation! &mdash; bamboo 0.6.3 alpha documentation</title>
+    
+    <link rel="stylesheet" href="_static/nature.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '0.6.3 alpha',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="top" title="bamboo 0.6.3 alpha documentation" href="#" />
+    <link rel="next" title="Examples" href="examples.html" /> 
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="examples.html" title="Examples"
+             accesskey="N">next</a> |</li>
+        <li class="nav-item nav-item-0"><a href="#">bamboo 0.6.3 alpha documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="welcome-to-the-bamboo-documentation">
+<h1>Welcome to the <em>bamboo</em> documentation!<a class="headerlink" href="#welcome-to-the-bamboo-documentation" title="Permalink to this headline">¶</a></h1>
+<a class="reference internal image-reference" href="https://raw.github.com/pld/bamboo/master/docs/images/bamboo_dev2013.png"><img alt="https://raw.github.com/pld/bamboo/master/docs/images/bamboo_dev2013.png" src="https://raw.github.com/pld/bamboo/master/docs/images/bamboo_dev2013.png" style="width: 800px; height: 600px;" /></a>
+<p><em>bamboo</em> is an application that systematizes realtime data analysis. <em>bamboo</em>
+provides an interface for merging, aggregating and adding algebraic
+calculations to dynamic datasets.  Clients can interact with <em>bamboo</em> through a
+REST web interface and through Python.</p>
+<p><em>bamboo</em> supports a simple querying language to build calculations
+(e.g. student teacher ratio) and aggregations (e.g. average number of students
+per district) from datasets. These are updated as new data is received.</p>
+<p><em>bamboo</em> uses <a class="reference external" href="http://pandas.pydata.org/">pandas</a> for data analysis,
+<a class="reference external" href="http://pyparsing.wikispaces.com/">pyparsing</a> to read formulas, and <a class="reference external" href="http://www.mongodb.org/">mongodb</a> to serialize data.</p>
+<p><em>bamboo</em> is <a class="reference external" href="https://github.com/pld/bamboo">open source</a> software
+released under the 3-clause BSD license, which is also known as the &#8220;Modified
+BSD License&#8221;.</p>
+<p><strong>http://bamboo.io</strong> hosts bamboo for demonstration purposes <strong>only</strong>. Do not put
+critical data here, it may be deleted without notice.</p>
+<a class="reference external image-reference" href="http://travis-ci.org/pld/bamboo"><img alt="https://secure.travis-ci.org/pld/bamboo.png?branch=master" src="https://secure.travis-ci.org/pld/bamboo.png?branch=master" /></a>
+<div class="section" id="examples">
+<h2>Examples<a class="headerlink" href="#examples" title="Permalink to this headline">¶</a></h2>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="examples.html">Examples</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="examples.html#an-interactive-map-of-the-egyptian-election">An Interactive map of the Egyptian election</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</div>
+<div class="section" id="rest-api-usage">
+<h2>REST API Usage<a class="headerlink" href="#rest-api-usage" title="Permalink to this headline">¶</a></h2>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="basic_commands.html">Basic Commands</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="basic_commands.html#storing-data-in-bamboo">Storing data in <em>bamboo</em></a></li>
+<li class="toctree-l2"><a class="reference internal" href="basic_commands.html#retrieve-information-about-a-dataset">Retrieve information about a dataset</a></li>
+<li class="toctree-l2"><a class="reference internal" href="basic_commands.html#retrieve-data">Retrieve data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="basic_commands.html#retrieve-summary-statistics-for-dataset">Retrieve summary statistics for dataset</a></li>
+<li class="toctree-l2"><a class="reference internal" href="basic_commands.html#calculation-formulas">Calculation formulas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="basic_commands.html#check-the-bamboo-version">Check the <em>bamboo</em> version</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="plotting.html">Plotting</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="plotting.html#kenyan-school-teaching-staff-by-province">Kenyan school teaching staff by province</a></li>
+<li class="toctree-l2"><a class="reference internal" href="plotting.html#meal-cost-grouped-by-rating-over-time">Meal cost grouped by rating over time</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="manipulating_data.html">Manipulating Data</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="manipulating_data.html#updating-your-data">Updating your data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="manipulating_data.html#modifying-your-data">Modifying your data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="manipulating_data.html#merging-multiple-datasets">Merging multiple Datasets</a></li>
+<li class="toctree-l2"><a class="reference internal" href="manipulating_data.html#joining-multiple-datasets">Joining multiple Datasets</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="advanced_commands.html">Advanced Commands</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="advanced_commands.html#creating-a-dataset-from-a-schema">Creating a Dataset from a Schema</a></li>
+<li class="toctree-l2"><a class="reference internal" href="advanced_commands.html#creating-multiple-calculations-via-json">Creating Multiple Calculations via JSON</a></li>
+<li class="toctree-l2"><a class="reference internal" href="advanced_commands.html#create-a-perishable-dataset">Create a &#8220;perishable&#8221; dataset</a></li>
+<li class="toctree-l2"><a class="reference internal" href="advanced_commands.html#additional-dataset-query-parameters">Additional dataset query parameters</a></li>
+<li class="toctree-l2"><a class="reference internal" href="advanced_commands.html#updating-dataset-metadata">Updating Dataset Metadata</a></li>
+<li class="toctree-l2"><a class="reference internal" href="advanced_commands.html#timeseries-operations-on-a-dataset">Timeseries operations on a dataset</a></li>
+</ul>
+</li>
+</ul>
+</div>
+<div class="section" id="formula-reference">
+<h3>Formula Reference<a class="headerlink" href="#formula-reference" title="Permalink to this headline">¶</a></h3>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="calculations.html">Calculations</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="calculations.html#arithmetic">Arithmetic</a></li>
+<li class="toctree-l2"><a class="reference internal" href="calculations.html#precedence">Precedence</a></li>
+<li class="toctree-l2"><a class="reference internal" href="calculations.html#comparison">Comparison</a></li>
+<li class="toctree-l2"><a class="reference internal" href="calculations.html#propositional-formulas">Propositional Formulas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="calculations.html#membership">Membership</a></li>
+<li class="toctree-l2"><a class="reference internal" href="calculations.html#date-arithmetic">Date Arithmetic</a></li>
+<li class="toctree-l2"><a class="reference internal" href="calculations.html#case-statements">Case Statements</a></li>
+<li class="toctree-l2"><a class="reference internal" href="calculations.html#transformations">Transformations</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="aggregations.html">Aggregations</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="aggregations.html#argmax-formula"><code class="docutils literal"><span class="pre">argmax(formula)</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="aggregations.html#count-formula"><code class="docutils literal"><span class="pre">count([formula])</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="aggregations.html#max-formula"><code class="docutils literal"><span class="pre">max(formula)</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="aggregations.html#min-formula"><code class="docutils literal"><span class="pre">min(formula)</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="aggregations.html#mean-formula"><code class="docutils literal"><span class="pre">mean(formula)</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="aggregations.html#median-formula"><code class="docutils literal"><span class="pre">median(formula)</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="aggregations.html#newest-index-formula-value-formula"><code class="docutils literal"><span class="pre">newest(index_formula,</span> <span class="pre">value_formula)</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="aggregations.html#pearson-formula1-formula2"><code class="docutils literal"><span class="pre">pearson(formula1,</span> <span class="pre">formula2)</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="aggregations.html#ratio-numerator-formula-denominator-formula"><code class="docutils literal"><span class="pre">ratio(numerator_formula,</span> <span class="pre">denominator_formula)</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="aggregations.html#std-formula"><code class="docutils literal"><span class="pre">std(formula)</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="aggregations.html#sum-formula"><code class="docutils literal"><span class="pre">sum(formula)</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="aggregations.html#var-formula"><code class="docutils literal"><span class="pre">var(formula)</span></code></a></li>
+</ul>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="section" id="code-structure">
+<h2>Code Structure<a class="headerlink" href="#code-structure" title="Permalink to this headline">¶</a></h2>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="class_structure.html">Class Structure</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="class_structure.html#core">Core</a></li>
+<li class="toctree-l2"><a class="reference internal" href="class_structure.html#controllers">Controllers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="class_structure.html#models">Models</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</div>
+<div class="section" id="code-documentation">
+<h2>Code Documentation<a class="headerlink" href="#code-documentation" title="Permalink to this headline">¶</a></h2>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="config.html">Config</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="config.html#module-bamboo.config.db">Database</a></li>
+<li class="toctree-l2"><a class="reference internal" href="config.html#routes">Routes</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="controllers.html">Controllers</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="controllers.html#abstractcontroller">AbstractController</a></li>
+<li class="toctree-l2"><a class="reference internal" href="controllers.html#calculations">Calculations</a></li>
+<li class="toctree-l2"><a class="reference internal" href="controllers.html#datasets">Datasets</a></li>
+<li class="toctree-l2"><a class="reference internal" href="controllers.html#root">Root</a></li>
+<li class="toctree-l2"><a class="reference internal" href="controllers.html#version">Version</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="core.html">Core</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="core.html#module-bamboo.core.aggregations">Aggregation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="core.html#aggregator">Aggregator</a></li>
+<li class="toctree-l2"><a class="reference internal" href="core.html#module-bamboo.core.calculator">Calculator</a></li>
+<li class="toctree-l2"><a class="reference internal" href="core.html#module-bamboo.core.frame">Frame</a></li>
+<li class="toctree-l2"><a class="reference internal" href="core.html#module-bamboo.core.merge">Merge</a></li>
+<li class="toctree-l2"><a class="reference internal" href="core.html#module-bamboo.core.operations">Parsing Operations</a></li>
+<li class="toctree-l2"><a class="reference internal" href="core.html#formula-parser">Formula Parser</a></li>
+<li class="toctree-l2"><a class="reference internal" href="core.html#module-bamboo.core.summary">Summary Statistic Utilities</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="lib.html">Lib</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="lib.html#module-bamboo.lib.async">Async Tools</a></li>
+<li class="toctree-l2"><a class="reference internal" href="lib.html#module-bamboo.lib.datetools">Date Tools</a></li>
+<li class="toctree-l2"><a class="reference internal" href="lib.html#module-bamboo.lib.jsontools">JSON Tools</a></li>
+<li class="toctree-l2"><a class="reference internal" href="lib.html#module-bamboo.lib.mongo">Mongo Utilities</a></li>
+<li class="toctree-l2"><a class="reference internal" href="lib.html#module-bamboo.lib.readers">Readers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="lib.html#schema">Schema</a></li>
+<li class="toctree-l2"><a class="reference internal" href="lib.html#module-bamboo.lib.schema_builder">Schema Builder</a></li>
+<li class="toctree-l2"><a class="reference internal" href="lib.html#module-bamboo.lib.utils">Utilities</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="models.html">Models</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="models.html#abstractmodel">AbstractModel</a></li>
+<li class="toctree-l2"><a class="reference internal" href="models.html#calculation">Calculation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="models.html#dataset">Dataset</a></li>
+<li class="toctree-l2"><a class="reference internal" href="models.html#observation">Observation</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</div>
+<div class="section" id="libraries-that-connect-to-bamboo">
+<h2>Libraries that connect to <em>bamboo</em><a class="headerlink" href="#libraries-that-connect-to-bamboo" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="javascript">
+<h3>JavaScript<a class="headerlink" href="#javascript" title="Permalink to this headline">¶</a></h3>
+<p><a class="reference external" href="http://sel-columbia.github.com/bamboo.js/">bamboo.JS</a></p>
+</div>
+<div class="section" id="python">
+<h3>Python<a class="headerlink" href="#python" title="Permalink to this headline">¶</a></h3>
+<p><a class="reference external" href="https://github.com/sel-columbia/pybamboo">PyBamboo</a></p>
+</div>
+</div>
+<div class="section" id="python-library-usage">
+<h2>Python Library Usage<a class="headerlink" href="#python-library-usage" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="dependencies">
+<h3>Dependencies<a class="headerlink" href="#dependencies" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li>python (tested on version 2.7)</li>
+<li><a class="reference external" href="http://www.mongodb.org/">mongodb</a> (make sure to install the latest packages from 10gen, <em>not what might be in your default pkg manager</em>):<ul>
+<li><a class="reference external" href="http://docs.mongodb.org/manual/tutorial/install-mongodb-on-debian/">Debian</a></li>
+<li><a class="reference external" href="http://docs.mongodb.org/manual/tutorial/install-mongodb-on-red-hat-centos-or-fedora-linux/">RedHat/CentOS/Fedora</a></li>
+<li><a class="reference external" href="http://docs.mongodb.org/manual/tutorial/install-mongodb-on-ubuntu/">Ubuntu</a></li>
+<li><a class="reference external" href="http://docs.mongodb.org/manual/tutorial/install-mongodb-on-linux/">Other Linux</a></li>
+<li><a class="reference external" href="http://docs.mongodb.org/manual/tutorial/install-mongodb-on-os-x/">Mac OSX</a></li>
+<li><a class="reference external" href="http://docs.mongodb.org/manual/tutorial/install-mongodb-on-windows/">Windows</a></li>
+</ul>
+</li>
+</ul>
+</div>
+<div class="section" id="for-numpy-pandas-and-scipy">
+<h3>for numpy, pandas, and scipy:<a class="headerlink" href="#for-numpy-pandas-and-scipy" title="Permalink to this headline">¶</a></h3>
+<p>On Arch Linux: <code class="docutils literal"><span class="pre">#</span> <span class="pre">pacman</span> <span class="pre">-S</span> <span class="pre">blas</span> <span class="pre">lapack</span> <span class="pre">gcc-fortran</span></code>.</p>
+<p>On Debian based: <code class="docutils literal"><span class="pre">#</span> <span class="pre">apt-get</span> <span class="pre">install</span> <span class="pre">gfortran</span> <span class="pre">libatlas-base-dev</span></code>.</p>
+</div>
+<div class="section" id="installation">
+<h3>Installation<a class="headerlink" href="#installation" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-sh"><div class="highlight"><pre><span class="nv">$ </span>pip install bamboo-server
+</pre></div>
+</div>
+<p>Python pip package for <a class="reference external" href="http://pypi.python.org/pypi/bamboo-data/0.5.4.1">bamboo</a>.</p>
+<p>For creating plots: <code class="docutils literal"><span class="pre">$</span> <span class="pre">pip</span> <span class="pre">install</span> <span class="pre">matplotlib</span></code>.</p>
+</div>
+<div class="section" id="usage">
+<h3>Usage<a class="headerlink" href="#usage" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">import</span> <span class="nn">bamboo</span> <span class="kn">as</span> <span class="nn">bm</span>
+
+<span class="c"># Turn asyncronous processing off</span>
+<span class="n">bm</span><span class="o">.</span><span class="n">set_async</span><span class="p">(</span><span class="bp">False</span><span class="p">)</span>
+
+<span class="n">url</span> <span class="o">=</span> <span class="s">&#39;http://formhub.org/mberg/forms/good_eats/data.csv&#39;</span>
+<span class="n">dataset</span> <span class="o">=</span> <span class="n">bm</span><span class="o">.</span><span class="n">Dataset</span><span class="o">.</span><span class="n">create</span><span class="p">()</span>
+<span class="n">dataset</span><span class="o">.</span><span class="n">import_from_url</span><span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="n">na_values</span><span class="o">=</span><span class="p">[</span><span class="s">&#39;n/a&#39;</span><span class="p">])</span>
+<span class="n">dataset</span><span class="o">.</span><span class="n">schema</span>
+
+<span class="o">&gt;&gt;&gt;</span> <span class="p">{</span><span class="s">u&#39;_gps_altitude&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s">u&#39;cardinality&#39;</span><span class="p">:</span> <span class="mi">14</span><span class="p">,</span> <span class="s">u&#39;label&#39;</span><span class="p">:</span> <span class="s">u&#39;_gps_altitude&#39;</span><span class="p">,</span> <span class="o">...</span>
+
+<span class="c"># Resample monthly, &#39;M&#39;, aggregating by mean</span>
+<span class="n">date_column</span> <span class="o">=</span> <span class="s">&#39;submit_date&#39;</span>
+<span class="n">monthly</span> <span class="o">=</span> <span class="n">ds</span><span class="o">.</span><span class="n">resample</span><span class="p">(</span><span class="n">date_column</span><span class="p">,</span> <span class="s">&#39;M&#39;</span><span class="p">,</span> <span class="s">&#39;mean&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">set_index</span><span class="p">(</span><span class="n">date_column</span><span class="p">)</span>
+<span class="n">monthly_amounts</span> <span class="o">=</span> <span class="n">monthly</span><span class="o">.</span><span class="n">amount</span><span class="o">.</span><span class="n">dropna</span><span class="p">()</span>
+
+<span class="c"># Plot the amount spent per month</span>
+<span class="n">mothly_amounts</span><span class="o">.</span><span class="n">plot</span><span class="p">()</span>
+</pre></div>
+</div>
+<img alt="https://raw.github.com/pld/bamboo/master/docs/images/amount.png" src="https://raw.github.com/pld/bamboo/master/docs/images/amount.png" />
+</div>
+</div>
+<div class="section" id="server-setup-and-contributing-code">
+<h2>Server Setup and Contributing Code<a class="headerlink" href="#server-setup-and-contributing-code" title="Permalink to this headline">¶</a></h2>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="server_setup.html">Server Setup</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="server_setup.html#running-the-server-in-the-foreground">Running the server in the foreground</a></li>
+<li class="toctree-l2"><a class="reference internal" href="server_setup.html#running-the-server-as-a-daemon">Running the server as a daemon</a></li>
+<li class="toctree-l2"><a class="reference internal" href="server_setup.html#example-usage">Example Usage</a></li>
+<li class="toctree-l2"><a class="reference internal" href="server_setup.html#global-configuration-notes">Global Configuration Notes</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="contributing.html">Contributing Code</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="contributing.html#testing">Testing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="contributing.html#documentation">Documentation</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="section" id="indices-and-tables">
+<h1>Indices and tables<a class="headerlink" href="#indices-and-tables" title="Permalink to this headline">¶</a></h1>
+<ul class="simple">
+<li><a class="reference internal" href="genindex.html"><span>Index</span></a></li>
+<li><a class="reference internal" href="py-modindex.html"><span>Module Index</span></a></li>
+<li><a class="reference internal" href="search.html"><span>Search Page</span></a></li>
+</ul>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="#">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Welcome to the <em>bamboo</em> documentation!</a><ul>
+<li><a class="reference internal" href="#examples">Examples</a></li>
+<li><a class="reference internal" href="#rest-api-usage">REST API Usage</a><ul>
+<li><a class="reference internal" href="#formula-reference">Formula Reference</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#code-structure">Code Structure</a></li>
+<li><a class="reference internal" href="#code-documentation">Code Documentation</a></li>
+<li><a class="reference internal" href="#libraries-that-connect-to-bamboo">Libraries that connect to <em>bamboo</em></a><ul>
+<li><a class="reference internal" href="#javascript">JavaScript</a></li>
+<li><a class="reference internal" href="#python">Python</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#python-library-usage">Python Library Usage</a><ul>
+<li><a class="reference internal" href="#dependencies">Dependencies</a></li>
+<li><a class="reference internal" href="#for-numpy-pandas-and-scipy">for numpy, pandas, and scipy:</a></li>
+<li><a class="reference internal" href="#installation">Installation</a></li>
+<li><a class="reference internal" href="#usage">Usage</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#server-setup-and-contributing-code">Server Setup and Contributing Code</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#indices-and-tables">Indices and tables</a></li>
+</ul>
+
+  <h4>Next topic</h4>
+  <p class="topless"><a href="examples.html"
+                        title="next chapter">Examples</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/index.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="examples.html" title="Examples"
+             >next</a> |</li>
+        <li class="nav-item nav-item-0"><a href="#">bamboo 0.6.3 alpha documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &copy; Copyright 2013, Peter Lubell-Doughtie, Mark Johnston.
+    </div>
+  </body>
+</html>

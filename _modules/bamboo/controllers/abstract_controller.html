@@ -1,0 +1,228 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>bamboo.controllers.abstract_controller &mdash; bamboo 0.6.3 alpha documentation</title>
+    
+    <link rel="stylesheet" href="../../../_static/nature.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../',
+        VERSION:     '0.6.3 alpha',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="top" title="bamboo 0.6.3 alpha documentation" href="../../../index.html" />
+    <link rel="up" title="Module code" href="../../index.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../../index.html">bamboo 0.6.3 alpha documentation</a> &raquo;</li>
+          <li><a href="../../index.html" accesskey="U">Module code</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <h1>Source code for bamboo.controllers.abstract_controller</h1><div class="highlight"><pre>
+<span class="kn">import</span> <span class="nn">cherrypy</span>
+
+<span class="kn">from</span> <span class="nn">bamboo.lib.exceptions</span> <span class="kn">import</span> <span class="n">ArgumentError</span>
+<span class="kn">from</span> <span class="nn">bamboo.lib.jsontools</span> <span class="kn">import</span> <span class="n">JSONError</span>
+<span class="kn">from</span> <span class="nn">bamboo.lib.mongo</span> <span class="kn">import</span> <span class="n">dump_mongo_json</span>
+<span class="kn">from</span> <span class="nn">bamboo.models.dataset</span> <span class="kn">import</span> <span class="n">Dataset</span>
+
+
+<div class="viewcode-block" id="AbstractController"><a class="viewcode-back" href="../../../controllers.html#bamboo.controllers.abstract_controller.AbstractController">[docs]</a><span class="k">class</span> <span class="nc">AbstractController</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Abstract controller class for web facing controllers.</span>
+
+<span class="sd">    Attributes:</span>
+
+<span class="sd">    - ERROR: constant string for error messages.</span>
+<span class="sd">    - SUCCESS: constant string for success messages.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">exposed</span> <span class="o">=</span> <span class="bp">True</span>
+
+    <span class="n">CSV</span> <span class="o">=</span> <span class="s">&#39;application/csv&#39;</span>
+    <span class="n">JSON</span> <span class="o">=</span> <span class="s">&#39;application/json&#39;</span>
+
+    <span class="n">ERROR</span> <span class="o">=</span> <span class="s">&#39;error&#39;</span>
+    <span class="n">SUCCESS</span> <span class="o">=</span> <span class="s">&#39;success&#39;</span>
+
+    <span class="n">DEFAULT_ERROR_MESSAGE</span> <span class="o">=</span> <span class="s">&#39;id not found&#39;</span>
+    <span class="n">DEFAULT_SUCCESS_STATUS_CODE</span> <span class="o">=</span> <span class="mi">200</span>
+    <span class="n">ERROR_STATUS_CODE</span> <span class="o">=</span> <span class="mi">400</span>
+    <span class="n">NO_CONTENT_STATUS_CODE</span> <span class="o">=</span> <span class="mi">204</span>
+
+<div class="viewcode-block" id="AbstractController.options"><a class="viewcode-back" href="../../../controllers.html#bamboo.controllers.abstract_controller.AbstractController.options">[docs]</a>    <span class="k">def</span> <span class="nf">options</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dataset_id</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Set Cross Origin Resource Sharing (CORS) headers.</span>
+
+<span class="sd">        Set the CORS headers required for AJAX non-GET requests.</span>
+
+<span class="sd">        :param dataset_id: Ignored argument so signature maps requests from</span>
+<span class="sd">            clients.</span>
+
+<span class="sd">        :returns: An empty string with the proper response headers for CORS.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__add_cors_headers</span><span class="p">()</span>
+        <span class="n">cherrypy</span><span class="o">.</span><span class="n">response</span><span class="o">.</span><span class="n">headers</span><span class="p">[</span><span class="s">&#39;Content-Length&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">cherrypy</span><span class="o">.</span><span class="n">response</span><span class="o">.</span><span class="n">status</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">NO_CONTENT_STATUS_CODE</span>
+
+        <span class="k">return</span> <span class="s">&#39;&#39;</span>
+</div>
+<div class="viewcode-block" id="AbstractController.set_response_params"><a class="viewcode-back" href="../../../controllers.html#bamboo.controllers.abstract_controller.AbstractController.set_response_params">[docs]</a>    <span class="k">def</span> <span class="nf">set_response_params</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obj</span><span class="p">,</span>
+                            <span class="n">success_status_code</span><span class="o">=</span><span class="n">DEFAULT_SUCCESS_STATUS_CODE</span><span class="p">,</span>
+                            <span class="n">content_type</span><span class="o">=</span><span class="n">JSON</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Set response parameters.</span>
+
+<span class="sd">        :param obj: The object to set the response for.</span>
+<span class="sd">        :param content_type: The content type.</span>
+<span class="sd">        :param success_status_code: The HTTP status code to return, default is</span>
+<span class="sd">            DEFAULT_SUCCESS_STATUS_CODE.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">cherrypy</span><span class="o">.</span><span class="n">response</span><span class="o">.</span><span class="n">headers</span><span class="p">[</span><span class="s">&#39;Content-Type&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">content_type</span>
+        <span class="n">cherrypy</span><span class="o">.</span><span class="n">response</span><span class="o">.</span><span class="n">status</span> <span class="o">=</span> <span class="n">success_status_code</span> <span class="k">if</span> <span class="n">obj</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span> <span class="k">else</span>\
+            <span class="bp">self</span><span class="o">.</span><span class="n">ERROR_STATUS_CODE</span>
+</div>
+<div class="viewcode-block" id="AbstractController._dump_or_error"><a class="viewcode-back" href="../../../controllers.html#bamboo.controllers.abstract_controller.AbstractController._dump_or_error">[docs]</a>    <span class="k">def</span> <span class="nf">_dump_or_error</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obj</span><span class="p">,</span> <span class="n">error_message</span><span class="o">=</span><span class="n">DEFAULT_ERROR_MESSAGE</span><span class="p">,</span>
+                       <span class="n">callback</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Dump JSON or return error message, potentially with callback.</span>
+
+<span class="sd">        If `obj` is None `error_message` is returned and the HTTP status code</span>
+<span class="sd">        is set to 400. Otherwise the HTTP status code is set to</span>
+<span class="sd">        `success_status_code`. If `callback` exists, the returned string is</span>
+<span class="sd">        wrapped in the callback for JSONP.</span>
+
+<span class="sd">        :param obj: Data to dump as JSON using BSON encoder.</span>
+<span class="sd">        :param error_message: Error message to return is object is None.</span>
+<span class="sd">        :param callback: Callback string to wrap obj in for JSONP.</span>
+
+<span class="sd">        :returns: A JSON string wrapped with callback if callback is not False.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">obj</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">obj</span> <span class="o">=</span> <span class="p">{</span><span class="bp">self</span><span class="o">.</span><span class="n">ERROR</span><span class="p">:</span> <span class="n">error_message</span><span class="p">}</span>
+
+        <span class="n">result</span> <span class="o">=</span> <span class="n">obj</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="nb">basestring</span><span class="p">)</span> <span class="k">else</span> <span class="n">dump_mongo_json</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__add_cors_headers</span><span class="p">()</span>
+
+        <span class="k">return</span> <span class="s">&#39;</span><span class="si">%s</span><span class="s">(</span><span class="si">%s</span><span class="s">)&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">callback</span><span class="p">),</span> <span class="n">result</span><span class="p">)</span> <span class="k">if</span> <span class="n">callback</span> <span class="k">else</span> <span class="n">result</span>
+</div>
+<div class="viewcode-block" id="AbstractController._safe_get_and_call"><a class="viewcode-back" href="../../../controllers.html#bamboo.controllers.abstract_controller.AbstractController._safe_get_and_call">[docs]</a>    <span class="k">def</span> <span class="nf">_safe_get_and_call</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dataset_id</span><span class="p">,</span> <span class="n">action</span><span class="p">,</span> <span class="n">callback</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
+                           <span class="n">exceptions</span><span class="o">=</span><span class="p">(),</span>
+                           <span class="n">success_status_code</span><span class="o">=</span><span class="n">DEFAULT_SUCCESS_STATUS_CODE</span><span class="p">,</span>
+                           <span class="n">error</span><span class="o">=</span><span class="n">DEFAULT_ERROR_MESSAGE</span><span class="p">,</span>
+                           <span class="n">content_type</span><span class="o">=</span><span class="n">JSON</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Find dataset and call action with it and kwargs.</span>
+
+<span class="sd">        Finds the dataset by `dataset_id` then calls function `action` and</span>
+<span class="sd">        catches any passed in exceptions as well as a set of standard</span>
+<span class="sd">        exceptions. Passes the result, error and callback to dump_or_error and</span>
+<span class="sd">        returns the resulting string.</span>
+
+<span class="sd">        :param dataset_id: The dataset ID to fetch.</span>
+<span class="sd">        :param action: A function to call within a try block that takes a</span>
+<span class="sd">            dataset any kwargs.</span>
+<span class="sd">        :param callback: A JSONP callback that is passed through to</span>
+<span class="sd">            dump_or_error.</span>
+<span class="sd">        :param exceptions: A set of exceptions to additionally catch.</span>
+<span class="sd">        :param success_status_code: The HTTP status code to return, default is</span>
+<span class="sd">            DEFAULT_SUCCESS_STATUS_CODE.</span>
+<span class="sd">        :param error: Default error string.</span>
+<span class="sd">        :param kwargs: A set of keyword arguments that are passed to the</span>
+<span class="sd">            action.</span>
+
+<span class="sd">        :returns: A string that is the result of calling action or an error</span>
+<span class="sd">            caught when calling action.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">exceptions</span> <span class="o">+=</span> <span class="p">(</span><span class="n">ArgumentError</span><span class="p">,</span> <span class="n">JSONError</span><span class="p">,</span> <span class="ne">ValueError</span><span class="p">)</span>
+
+        <span class="n">dataset</span> <span class="o">=</span> <span class="n">Dataset</span><span class="o">.</span><span class="n">find_one</span><span class="p">(</span><span class="n">dataset_id</span><span class="p">)</span> <span class="k">if</span> <span class="n">dataset_id</span> <span class="k">else</span> <span class="bp">None</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="bp">None</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">dataset</span> <span class="ow">is</span> <span class="bp">None</span> <span class="ow">or</span> <span class="n">dataset</span><span class="o">.</span><span class="n">record</span><span class="p">:</span>
+                <span class="n">result</span> <span class="o">=</span> <span class="n">action</span><span class="p">(</span><span class="n">dataset</span><span class="p">)</span>
+        <span class="k">except</span> <span class="n">exceptions</span> <span class="k">as</span> <span class="n">err</span><span class="p">:</span>
+            <span class="n">error</span> <span class="o">=</span> <span class="n">err</span><span class="o">.</span><span class="n">__str__</span><span class="p">()</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">set_response_params</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="n">success_status_code</span><span class="p">,</span> <span class="n">content_type</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dump_or_error</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="n">error</span><span class="p">,</span> <span class="n">callback</span><span class="p">)</span>
+</div>
+    <span class="k">def</span> <span class="nf">_success</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">msg</span><span class="p">,</span> <span class="n">dataset_id</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">{</span><span class="bp">self</span><span class="o">.</span><span class="n">SUCCESS</span><span class="p">:</span> <span class="n">msg</span><span class="p">,</span> <span class="n">Dataset</span><span class="o">.</span><span class="n">ID</span><span class="p">:</span> <span class="n">dataset_id</span><span class="p">}</span>
+
+    <span class="k">def</span> <span class="nf">__add_cors_headers</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">cherrypy</span><span class="o">.</span><span class="n">response</span><span class="o">.</span><span class="n">headers</span><span class="p">[</span><span class="s">&#39;Access-Control-Allow-Origin&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s">&#39;*&#39;</span>
+        <span class="n">cherrypy</span><span class="o">.</span><span class="n">response</span><span class="o">.</span><span class="n">headers</span><span class="p">[</span><span class="s">&#39;Access-Control-Allow-Methods&#39;</span><span class="p">]</span> <span class="o">=</span>\
+            <span class="s">&#39;GET, POST, PUT, DELETE, OPTIONS&#39;</span>
+        <span class="n">cherrypy</span><span class="o">.</span><span class="n">response</span><span class="o">.</span><span class="n">headers</span><span class="p">[</span><span class="s">&#39;Access-Control-Allow-Headers&#39;</span><span class="p">]</span> <span class="o">=</span>\
+            <span class="s">&#39;Content-Type, Accept&#39;</span></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../../index.html">bamboo 0.6.3 alpha documentation</a> &raquo;</li>
+          <li><a href="../../index.html" >Module code</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2013, Peter Lubell-Doughtie, Mark Johnston.
+    </div>
+  </body>
+</html>

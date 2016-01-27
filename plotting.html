@@ -1,0 +1,188 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Plotting &mdash; bamboo 0.6.3 alpha documentation</title>
+    
+    <link rel="stylesheet" href="_static/nature.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '0.6.3 alpha',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="top" title="bamboo 0.6.3 alpha documentation" href="index.html" />
+    <link rel="next" title="Manipulating Data" href="manipulating_data.html" />
+    <link rel="prev" title="Basic Commands" href="basic_commands.html" /> 
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="manipulating_data.html" title="Manipulating Data"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="basic_commands.html" title="Basic Commands"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">bamboo 0.6.3 alpha documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="plotting">
+<h1>Plotting<a class="headerlink" href="#plotting" title="Permalink to this headline">¶</a></h1>
+<p>REST end-point:</p>
+<div class="highlight-sh"><div class="highlight"><pre>http://bamboo.io/datasets/<span class="o">[</span>DATASET ID<span class="o">]</span>/plot
+</pre></div>
+</div>
+<p>View the documentation for the <a class="reference external" href="http://bamboo.io/docs/controllers.html#bamboo.controllers.datasets.Datasets.plot">query parameters</a>
+accepted by the <code class="docutils literal"><span class="pre">plot</span></code> end point.</p>
+<div class="section" id="kenyan-school-teaching-staff-by-province">
+<h2>Kenyan school teaching staff by province<a class="headerlink" href="#kenyan-school-teaching-staff-by-province" title="Permalink to this headline">¶</a></h2>
+<a class="reference external image-reference" href="http://bamboo.io/datasets/f4cf7dfe315146388258702bb4cc95a4/plot?select={%22total_teaching_staff%22:1}&amp;group=province&amp;plot_type=bar"><img alt="https://raw.github.com/pld/bamboo/master/docs/images/kenya_school_staff_by_district.png" src="https://raw.github.com/pld/bamboo/master/docs/images/kenya_school_staff_by_district.png" /></a>
+<p>Click for an <a class="reference external" href="http://bamboo.io/datasets/f4cf7dfe315146388258702bb4cc95a4/plot?select={%22total_teaching_staff%22:1}&amp;group=province&amp;plot_type=bar">interactive version</a>.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p><em>Chart parameters</em></p>
+<ul class="last simple">
+<li><strong>select</strong> = <code class="docutils literal"><span class="pre">{&quot;total_teaching_staff&quot;:1}</span></code><ul>
+<li>Choose only the column <code class="docutils literal"><span class="pre">total_teaching_staff</span></code>.</li>
+</ul>
+</li>
+<li><strong>group</strong> = <code class="docutils literal"><span class="pre">province</span></code><ul>
+<li>Group on the dimensional column <code class="docutils literal"><span class="pre">province</span></code>.</li>
+</ul>
+</li>
+<li><strong>plot_type</strong> = <code class="docutils literal"><span class="pre">bar</span></code><ul>
+<li>Format the plot as a bar plot.</li>
+</ul>
+</li>
+</ul>
+</div>
+</div>
+<div class="section" id="meal-cost-grouped-by-rating-over-time">
+<h2>Meal cost grouped by rating over time<a class="headerlink" href="#meal-cost-grouped-by-rating-over-time" title="Permalink to this headline">¶</a></h2>
+<a class="reference external image-reference" href="http://bamboo.io/datasets/1c0461bdd4eb486ebe5f6f5f3a179790/plot?select={%22amount%22:1}&amp;group=food_type&amp;index=submit_date&amp;query={%22amount%22:{%22$lt%22:400},%22submit_date%22:{%22$gt%22:1355011200}}&amp;plot_type=area"><img alt="https://raw.github.com/pld/bamboo/master/docs/images/good_eats_amount_by_rating.png" src="https://raw.github.com/pld/bamboo/master/docs/images/good_eats_amount_by_rating.png" /></a>
+<p>Click for an <a class="reference external" href="http://bamboo.io/datasets/1c0461bdd4eb486ebe5f6f5f3a179790/plot?select={%22amount%22:1}&amp;group=food_type&amp;index=submit_date&amp;query={%22amount%22:{%22$lt%22:400},%22submit_date%22:{%22$gt%22:&quot;2012-12-09&quot;}}&amp;plot_type=area">interactive version</a>.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p><em>Chart parameters</em></p>
+<ul class="last simple">
+<li><strong>select</strong> = <code class="docutils literal"><span class="pre">{&quot;amount&quot;:1}</span></code><ul>
+<li>Choose only the column <code class="docutils literal"><span class="pre">amount</span></code>.</li>
+</ul>
+</li>
+<li><strong>group</strong> = <code class="docutils literal"><span class="pre">food_type</span></code><ul>
+<li>Group on the dimensional column <code class="docutils literal"><span class="pre">food_type</span></code>.</li>
+</ul>
+</li>
+<li><strong>index</strong> = <code class="docutils literal"><span class="pre">submit_date</span></code><ul>
+<li>Set the date column <code class="docutils literal"><span class="pre">submit_date</span></code> as the temporal index column.</li>
+</ul>
+</li>
+<li><strong>query</strong> = <code class="docutils literal"><span class="pre">{&quot;amount&quot;:</span> <span class="pre">{&quot;$lt&quot;:</span> <span class="pre">400},</span> <span class="pre">&quot;submit_date&quot;:</span> <span class="pre">{&quot;$gt&quot;:</span> <span class="pre">&quot;2012-12-09&quot;}}</span></code><ul>
+<li>Restrict the data to dates after December 9th 2012, and to amounts less
+than 400.</li>
+</ul>
+</li>
+<li><strong>plot_type</strong> = <code class="docutils literal"><span class="pre">area</span></code><ul>
+<li>Format the plot as an area plot.</li>
+</ul>
+</li>
+</ul>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Plotting</a><ul>
+<li><a class="reference internal" href="#kenyan-school-teaching-staff-by-province">Kenyan school teaching staff by province</a></li>
+<li><a class="reference internal" href="#meal-cost-grouped-by-rating-over-time">Meal cost grouped by rating over time</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="basic_commands.html"
+                        title="previous chapter">Basic Commands</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="manipulating_data.html"
+                        title="next chapter">Manipulating Data</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/plotting.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="manipulating_data.html" title="Manipulating Data"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="basic_commands.html" title="Basic Commands"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">bamboo 0.6.3 alpha documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &copy; Copyright 2013, Peter Lubell-Doughtie, Mark Johnston.
+    </div>
+  </body>
+</html>

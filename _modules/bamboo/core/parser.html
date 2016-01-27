@@ -1,0 +1,458 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>bamboo.core.parser &mdash; bamboo 0.6.3 alpha documentation</title>
+    
+    <link rel="stylesheet" href="../../../_static/nature.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../',
+        VERSION:     '0.6.3 alpha',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="top" title="bamboo 0.6.3 alpha documentation" href="../../../index.html" />
+    <link rel="up" title="Module code" href="../../index.html" /> 
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">bamboo 0.6.3 alpha documentation</a> &raquo;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" accesskey="U">Module code</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for bamboo.core.parser</h1><div class="highlight"><pre>
+<span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">partial</span>
+
+<span class="kn">from</span> <span class="nn">pyparsing</span> <span class="kn">import</span> <span class="n">alphanums</span><span class="p">,</span> <span class="n">nums</span><span class="p">,</span> <span class="n">oneOf</span><span class="p">,</span> <span class="n">opAssoc</span><span class="p">,</span> <span class="n">operatorPrecedence</span><span class="p">,</span>\
+    <span class="n">CaselessLiteral</span><span class="p">,</span> <span class="n">Combine</span><span class="p">,</span> <span class="n">Keyword</span><span class="p">,</span> <span class="n">Literal</span><span class="p">,</span> <span class="n">MatchFirst</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span>\
+    <span class="n">ParseException</span><span class="p">,</span> <span class="n">Regex</span><span class="p">,</span> <span class="n">Word</span><span class="p">,</span> <span class="n">ZeroOrMore</span>
+
+<span class="kn">from</span> <span class="nn">bamboo.core.aggregations</span> <span class="kn">import</span> <span class="n">AGGREGATIONS</span>
+<span class="kn">from</span> <span class="nn">bamboo.core.operations</span> <span class="kn">import</span> <span class="n">EvalAndOp</span><span class="p">,</span> <span class="n">EvalCaseOp</span><span class="p">,</span> <span class="n">EvalComparisonOp</span><span class="p">,</span>\
+    <span class="n">EvalConstant</span><span class="p">,</span> <span class="n">EvalExpOp</span><span class="p">,</span> <span class="n">EvalDate</span><span class="p">,</span> <span class="n">EvalInOp</span><span class="p">,</span> <span class="n">EvalMapOp</span><span class="p">,</span> <span class="n">EvalMultOp</span><span class="p">,</span>\
+    <span class="n">EvalNotOp</span><span class="p">,</span> <span class="n">EvalOrOp</span><span class="p">,</span> <span class="n">EvalPercentile</span><span class="p">,</span> <span class="n">EvalPlusOp</span><span class="p">,</span> <span class="n">EvalSignOp</span><span class="p">,</span> <span class="n">EvalString</span><span class="p">,</span>\
+    <span class="n">EvalToday</span>
+
+
+<span class="k">def</span> <span class="nf">build_caseless_or_expression</span><span class="p">(</span><span class="n">strings</span><span class="p">):</span>
+    <span class="n">literals</span> <span class="o">=</span> <span class="p">[</span><span class="n">CaselessLiteral</span><span class="p">(</span><span class="n">aggregation</span><span class="p">)</span> <span class="k">for</span> <span class="n">aggregation</span> <span class="ow">in</span> <span class="n">strings</span><span class="p">]</span>
+    <span class="k">return</span> <span class="nb">reduce</span><span class="p">(</span><span class="k">lambda</span> <span class="n">or_expr</span><span class="p">,</span> <span class="n">literal</span><span class="p">:</span> <span class="n">or_expr</span> <span class="o">|</span> <span class="n">literal</span><span class="p">,</span> <span class="n">literals</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">get_dependent_columns</span><span class="p">(</span><span class="n">parsed_expr</span><span class="p">,</span> <span class="n">dataset</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">__find_dependent_columns</span><span class="p">(</span><span class="n">dataset</span><span class="p">,</span> <span class="n">parsed_expr</span><span class="p">,</span> <span class="p">[])</span>
+
+
+<span class="k">def</span> <span class="nf">__find_dependent_columns</span><span class="p">(</span><span class="n">dataset</span><span class="p">,</span> <span class="n">parsed_expr</span><span class="p">,</span> <span class="n">result</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Find dependent columns for a dataset and parsed expression.</span>
+
+<span class="sd">    :param dataset: The dataset to find dependent columns for.</span>
+<span class="sd">    :param parsed_expr: The parsed formula expression.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">dependent_columns</span> <span class="o">=</span> <span class="n">parsed_expr</span><span class="o">.</span><span class="n">dependent_columns</span><span class="p">(</span><span class="n">dataset</span><span class="p">)</span>
+    <span class="n">result</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">dependent_columns</span><span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">child</span> <span class="ow">in</span> <span class="n">parsed_expr</span><span class="o">.</span><span class="n">get_children</span><span class="p">():</span>
+        <span class="n">__find_dependent_columns</span><span class="p">(</span><span class="n">dataset</span><span class="p">,</span> <span class="n">child</span><span class="p">,</span> <span class="n">result</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">result</span>
+
+
+<span class="k">class</span> <span class="nc">ParseError</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;For errors while parsing formulas.&quot;&quot;&quot;</span>
+    <span class="k">pass</span>
+
+
+<div class="viewcode-block" id="Parser"><a class="viewcode-back" href="../../../core.html#bamboo.core.parser.Parser">[docs]</a><span class="k">class</span> <span class="nc">Parser</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Class for parsing and evaluating formula.</span>
+
+<span class="sd">    Attributes:</span>
+
+<span class="sd">    - aggregation: Aggregation parsed from formula.</span>
+<span class="sd">    - aggregation_names: Possible aggregations.</span>
+<span class="sd">    - bnf: Cached Backus-Naur Form of formula.</span>
+<span class="sd">    - column_functions: Cached additional columns as aggregation parameters.</span>
+<span class="sd">    - function_names: Names of possible functions in formulas.</span>
+<span class="sd">    - operator_names: Names of possible operators in formulas.</span>
+<span class="sd">    - parsed_expr: Cached parsed expression.</span>
+<span class="sd">    - special_names: Names of possible reserved names in formulas.</span>
+<span class="sd">    - reserved_words: List of all possible reserved words that may be used in</span>
+<span class="sd">      formulas.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">aggregation</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="n">aggregation_names</span> <span class="o">=</span> <span class="n">AGGREGATIONS</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span>
+    <span class="n">bnf</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="n">column_functions</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="n">function_names</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;date&#39;</span><span class="p">,</span> <span class="s">&#39;percentile&#39;</span><span class="p">,</span> <span class="s">&#39;today&#39;</span><span class="p">]</span>
+    <span class="n">operator_names</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;and&#39;</span><span class="p">,</span> <span class="s">&#39;or&#39;</span><span class="p">,</span> <span class="s">&#39;not&#39;</span><span class="p">,</span> <span class="s">&#39;in&#39;</span><span class="p">]</span>
+    <span class="n">parsed_expr</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="n">special_names</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;default&#39;</span><span class="p">]</span>
+
+    <span class="n">reserved_words</span> <span class="o">=</span> <span class="n">aggregation_names</span> <span class="o">+</span> <span class="n">function_names</span> <span class="o">+</span> <span class="n">operator_names</span> <span class="o">+</span>\
+        <span class="n">special_names</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">bnf</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__build_bnf</span><span class="p">()</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">dependent_columns</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">formula</span><span class="p">,</span> <span class="n">dataset</span><span class="p">):</span>
+        <span class="n">functions</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">cls</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="n">formula</span><span class="p">)</span>
+        <span class="n">columns</span> <span class="o">=</span> <span class="p">[</span><span class="n">get_dependent_columns</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">dataset</span><span class="p">)</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">functions</span><span class="p">]</span>
+
+        <span class="k">return</span> <span class="nb">set</span><span class="o">.</span><span class="n">union</span><span class="p">(</span><span class="nb">set</span><span class="p">(),</span> <span class="o">*</span><span class="n">columns</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">functions</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">column_functions</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">aggregation</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">parsed_expr</span>
+
+<div class="viewcode-block" id="Parser.store_aggregation"><a class="viewcode-back" href="../../../core.html#bamboo.core.parser.Parser.store_aggregation">[docs]</a>    <span class="k">def</span> <span class="nf">store_aggregation</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">__</span><span class="p">,</span> <span class="n">tokens</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Cached a parsed aggregation.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">aggregation</span> <span class="o">=</span> <span class="n">tokens</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">column_functions</span> <span class="o">=</span> <span class="n">tokens</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span>
+</div>
+    <span class="k">def</span> <span class="nf">__build_bnf</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Parse formula to function based on language definition.</span>
+
+<span class="sd">        Backus-Naur Form of formula language:</span>
+
+<span class="sd">        =========   ==========</span>
+<span class="sd">        Operation   Expression</span>
+<span class="sd">        =========   ==========</span>
+<span class="sd">        addop       &#39;+&#39; | &#39;-&#39;</span>
+<span class="sd">        multop      &#39;*&#39; | &#39;/&#39;</span>
+<span class="sd">        expop       &#39;^&#39;</span>
+<span class="sd">        compop      &#39;==&#39; | &#39;&lt;&#39; | &#39;&gt;&#39; | &#39;&lt;=&#39; | &#39;&gt;=&#39;</span>
+<span class="sd">        notop       &#39;not&#39;</span>
+<span class="sd">        andop       &#39;and&#39;</span>
+<span class="sd">        orop        &#39;or&#39;</span>
+<span class="sd">        real        \d+(.\d+)</span>
+<span class="sd">        integer     \d+</span>
+<span class="sd">        variable    \w+</span>
+<span class="sd">        string      &quot;.+&quot;</span>
+<span class="sd">        atom        real | integer | variable</span>
+<span class="sd">        func        func ( atom )</span>
+<span class="sd">        factor      atom [ expop factor]*</span>
+<span class="sd">        term        factor [ multop factor ]*</span>
+<span class="sd">        expr        term [ addop term ]*</span>
+<span class="sd">        equation    expr [compop expr]*</span>
+<span class="sd">        in          string in &#39;[&#39; &quot;string&quot;[, &quot;string&quot;]* &#39;]&#39;</span>
+<span class="sd">        neg         [notop]* equation | in</span>
+<span class="sd">        conj        neg [andop neg]*</span>
+<span class="sd">        disj        conj [orop conj]*</span>
+<span class="sd">        case        &#39;case&#39; disj: atom[, disj: atom]*[, &#39;default&#39;: atom]</span>
+<span class="sd">        trans       trans ( case )</span>
+<span class="sd">        agg         agg ( trans[, trans]* )</span>
+<span class="sd">        =========   ==========</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">bnf</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">bnf</span>
+
+        <span class="c"># literal operators</span>
+        <span class="n">exp_op</span> <span class="o">=</span> <span class="n">Literal</span><span class="p">(</span><span class="s">&#39;^&#39;</span><span class="p">)</span>
+        <span class="n">sign_op</span> <span class="o">=</span> <span class="n">oneOf</span><span class="p">(</span><span class="s">&#39;+ -&#39;</span><span class="p">)</span>
+        <span class="n">mult_op</span> <span class="o">=</span> <span class="n">oneOf</span><span class="p">(</span><span class="s">&#39;* /&#39;</span><span class="p">)</span>
+        <span class="n">plus_op</span> <span class="o">=</span> <span class="n">oneOf</span><span class="p">(</span><span class="s">&#39;+ -&#39;</span><span class="p">)</span>
+        <span class="n">not_op</span> <span class="o">=</span> <span class="n">CaselessLiteral</span><span class="p">(</span><span class="s">&#39;not&#39;</span><span class="p">)</span>
+        <span class="n">and_op</span> <span class="o">=</span> <span class="n">CaselessLiteral</span><span class="p">(</span><span class="s">&#39;and&#39;</span><span class="p">)</span>
+        <span class="n">or_op</span> <span class="o">=</span> <span class="n">CaselessLiteral</span><span class="p">(</span><span class="s">&#39;or&#39;</span><span class="p">)</span>
+        <span class="n">in_op</span> <span class="o">=</span> <span class="n">CaselessLiteral</span><span class="p">(</span><span class="s">&#39;in&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">suppress</span><span class="p">()</span>
+        <span class="n">comparison_op</span> <span class="o">=</span> <span class="n">oneOf</span><span class="p">(</span><span class="s">&#39;&lt; &lt;= &gt; &gt;= != ==&#39;</span><span class="p">)</span>
+        <span class="n">case_op</span> <span class="o">=</span> <span class="n">CaselessLiteral</span><span class="p">(</span><span class="s">&#39;case&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">suppress</span><span class="p">()</span>
+
+        <span class="c"># aggregation functions</span>
+        <span class="n">aggregations</span> <span class="o">=</span> <span class="n">build_caseless_or_expression</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">aggregation_names</span><span class="p">)</span>
+
+        <span class="c"># literal syntactic</span>
+        <span class="n">open_bracket</span> <span class="o">=</span> <span class="n">Literal</span><span class="p">(</span><span class="s">&#39;[&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">suppress</span><span class="p">()</span>
+        <span class="n">close_bracket</span> <span class="o">=</span> <span class="n">Literal</span><span class="p">(</span><span class="s">&#39;]&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">suppress</span><span class="p">()</span>
+        <span class="n">open_paren</span> <span class="o">=</span> <span class="n">Literal</span><span class="p">(</span><span class="s">&#39;(&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">suppress</span><span class="p">()</span>
+        <span class="n">close_paren</span> <span class="o">=</span> <span class="n">Literal</span><span class="p">(</span><span class="s">&#39;)&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">suppress</span><span class="p">()</span>
+        <span class="n">comma</span> <span class="o">=</span> <span class="n">Literal</span><span class="p">(</span><span class="s">&#39;,&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">suppress</span><span class="p">()</span>
+        <span class="n">dquote</span> <span class="o">=</span> <span class="n">Literal</span><span class="p">(</span><span class="s">&#39;&quot;&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">suppress</span><span class="p">()</span>
+        <span class="n">colon</span> <span class="o">=</span> <span class="n">Literal</span><span class="p">(</span><span class="s">&#39;:&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">suppress</span><span class="p">()</span>
+
+        <span class="c"># functions</span>
+        <span class="n">date_func</span> <span class="o">=</span> <span class="n">CaselessLiteral</span><span class="p">(</span><span class="s">&#39;date&#39;</span><span class="p">)</span>
+        <span class="n">percentile_func</span> <span class="o">=</span> <span class="n">CaselessLiteral</span><span class="p">(</span><span class="s">&#39;percentile&#39;</span><span class="p">)</span>
+        <span class="n">today_func</span> <span class="o">=</span> <span class="n">CaselessLiteral</span><span class="p">(</span><span class="s">&#39;today()&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">setParseAction</span><span class="p">(</span><span class="n">EvalToday</span><span class="p">)</span>
+
+        <span class="c"># case statment</span>
+        <span class="n">default</span> <span class="o">=</span> <span class="n">CaselessLiteral</span><span class="p">(</span><span class="s">&#39;default&#39;</span><span class="p">)</span>
+
+        <span class="n">reserved_words</span> <span class="o">=</span> <span class="n">MatchFirst</span><span class="p">(</span>
+            <span class="p">[</span><span class="n">Keyword</span><span class="p">(</span><span class="n">word</span><span class="p">)</span> <span class="k">for</span> <span class="n">word</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">reserved_words</span><span class="p">])</span>
+
+        <span class="c"># atoms</span>
+        <span class="n">integer</span> <span class="o">=</span> <span class="n">Word</span><span class="p">(</span><span class="n">nums</span><span class="p">)</span>
+        <span class="n">real</span> <span class="o">=</span> <span class="n">Combine</span><span class="p">(</span><span class="n">Word</span><span class="p">(</span><span class="n">nums</span><span class="p">)</span> <span class="o">+</span> <span class="s">&#39;.&#39;</span> <span class="o">+</span> <span class="n">Word</span><span class="p">(</span><span class="n">nums</span><span class="p">))</span>
+        <span class="n">variable</span> <span class="o">=</span> <span class="o">~</span><span class="n">reserved_words</span> <span class="o">+</span> <span class="n">Word</span><span class="p">(</span><span class="n">alphanums</span> <span class="o">+</span> <span class="s">&#39;_&#39;</span><span class="p">)</span>
+        <span class="n">atom</span> <span class="o">=</span> <span class="n">real</span> <span class="o">|</span> <span class="n">integer</span> <span class="o">|</span> <span class="n">variable</span>
+        <span class="n">atom</span><span class="o">.</span><span class="n">setParseAction</span><span class="p">(</span><span class="n">EvalConstant</span><span class="p">)</span>
+
+        <span class="c"># everything between pairs of double quotes is a string</span>
+        <span class="n">string</span> <span class="o">=</span> <span class="n">dquote</span> <span class="o">+</span> <span class="n">Regex</span><span class="p">(</span><span class="s">&#39;[^&quot;]+&#39;</span><span class="p">)</span> <span class="o">+</span> <span class="n">dquote</span>
+        <span class="n">string</span><span class="o">.</span><span class="n">setParseAction</span><span class="p">(</span><span class="n">EvalString</span><span class="p">)</span>
+
+        <span class="c"># expressions</span>
+        <span class="n">in_list</span> <span class="o">=</span> <span class="n">open_bracket</span> <span class="o">+</span> <span class="n">string</span> <span class="o">+</span>\
+            <span class="n">ZeroOrMore</span><span class="p">(</span><span class="n">comma</span> <span class="o">+</span> <span class="n">string</span><span class="p">)</span> <span class="o">+</span> <span class="n">close_bracket</span>
+
+        <span class="n">func_expr</span> <span class="o">=</span> <span class="n">operatorPrecedence</span><span class="p">(</span><span class="n">string</span><span class="p">,</span> <span class="p">[</span>
+            <span class="p">(</span><span class="n">date_func</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">opAssoc</span><span class="o">.</span><span class="n">RIGHT</span><span class="p">,</span> <span class="n">EvalDate</span><span class="p">),</span>
+        <span class="p">])</span> <span class="o">|</span> <span class="n">today_func</span>
+
+        <span class="n">arith_expr</span> <span class="o">=</span> <span class="n">operatorPrecedence</span><span class="p">(</span><span class="n">atom</span> <span class="o">|</span> <span class="n">func_expr</span><span class="p">,</span> <span class="p">[</span>
+            <span class="p">(</span><span class="n">sign_op</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">opAssoc</span><span class="o">.</span><span class="n">RIGHT</span><span class="p">,</span> <span class="n">EvalSignOp</span><span class="p">),</span>
+            <span class="p">(</span><span class="n">exp_op</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="n">opAssoc</span><span class="o">.</span><span class="n">RIGHT</span><span class="p">,</span> <span class="n">EvalExpOp</span><span class="p">),</span>
+            <span class="p">(</span><span class="n">mult_op</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="n">opAssoc</span><span class="o">.</span><span class="n">LEFT</span><span class="p">,</span> <span class="n">EvalMultOp</span><span class="p">),</span>
+            <span class="p">(</span><span class="n">plus_op</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="n">opAssoc</span><span class="o">.</span><span class="n">LEFT</span><span class="p">,</span> <span class="n">EvalPlusOp</span><span class="p">),</span>
+        <span class="p">])</span>
+
+        <span class="n">comp_expr</span> <span class="o">=</span> <span class="n">operatorPrecedence</span><span class="p">(</span><span class="n">arith_expr</span><span class="p">,</span> <span class="p">[</span>
+            <span class="p">(</span><span class="n">comparison_op</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="n">opAssoc</span><span class="o">.</span><span class="n">LEFT</span><span class="p">,</span> <span class="n">EvalComparisonOp</span><span class="p">),</span>
+        <span class="p">])</span>
+
+        <span class="n">prop_expr</span> <span class="o">=</span> <span class="n">operatorPrecedence</span><span class="p">(</span><span class="n">comp_expr</span> <span class="o">|</span> <span class="n">in_list</span><span class="p">,</span> <span class="p">[</span>
+            <span class="p">(</span><span class="n">in_op</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="n">opAssoc</span><span class="o">.</span><span class="n">RIGHT</span><span class="p">,</span> <span class="n">EvalInOp</span><span class="p">),</span>
+            <span class="p">(</span><span class="n">not_op</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">opAssoc</span><span class="o">.</span><span class="n">RIGHT</span><span class="p">,</span> <span class="n">EvalNotOp</span><span class="p">),</span>
+            <span class="p">(</span><span class="n">and_op</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="n">opAssoc</span><span class="o">.</span><span class="n">LEFT</span><span class="p">,</span> <span class="n">EvalAndOp</span><span class="p">),</span>
+            <span class="p">(</span><span class="n">or_op</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="n">opAssoc</span><span class="o">.</span><span class="n">LEFT</span><span class="p">,</span> <span class="n">EvalOrOp</span><span class="p">),</span>
+        <span class="p">])</span>
+
+        <span class="n">default_statement</span> <span class="o">=</span> <span class="p">(</span><span class="n">default</span> <span class="o">+</span> <span class="n">colon</span> <span class="o">+</span> <span class="n">atom</span><span class="p">)</span><span class="o">.</span><span class="n">setParseAction</span><span class="p">(</span><span class="n">EvalMapOp</span><span class="p">)</span>
+        <span class="n">map_statement</span> <span class="o">=</span> <span class="p">(</span><span class="n">prop_expr</span> <span class="o">+</span> <span class="n">colon</span> <span class="o">+</span> <span class="n">atom</span><span class="p">)</span><span class="o">.</span><span class="n">setParseAction</span><span class="p">(</span><span class="n">EvalMapOp</span><span class="p">)</span>
+
+        <span class="n">case_list</span> <span class="o">=</span> <span class="n">map_statement</span> <span class="o">+</span> <span class="n">ZeroOrMore</span><span class="p">(</span>
+            <span class="n">comma</span> <span class="o">+</span> <span class="n">map_statement</span><span class="p">)</span> <span class="o">+</span> <span class="n">Optional</span><span class="p">(</span><span class="n">comma</span> <span class="o">+</span> <span class="n">default_statement</span><span class="p">)</span>
+
+        <span class="n">case_expr</span> <span class="o">=</span> <span class="n">operatorPrecedence</span><span class="p">(</span><span class="n">case_list</span><span class="p">,</span> <span class="p">[</span>
+            <span class="p">(</span><span class="n">case_op</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">opAssoc</span><span class="o">.</span><span class="n">RIGHT</span><span class="p">,</span> <span class="n">EvalCaseOp</span><span class="p">),</span>
+        <span class="p">])</span> <span class="o">|</span> <span class="n">prop_expr</span>
+
+        <span class="n">trans_expr</span> <span class="o">=</span> <span class="n">operatorPrecedence</span><span class="p">(</span><span class="n">case_expr</span><span class="p">,</span> <span class="p">[</span>
+            <span class="p">(</span><span class="n">percentile_func</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">opAssoc</span><span class="o">.</span><span class="n">RIGHT</span><span class="p">,</span> <span class="n">EvalPercentile</span><span class="p">),</span>
+        <span class="p">])</span>
+
+        <span class="k">return</span> <span class="p">((</span><span class="n">aggregations</span> <span class="o">+</span> <span class="n">open_paren</span> <span class="o">+</span> <span class="n">Optional</span><span class="p">(</span>
+            <span class="n">trans_expr</span> <span class="o">+</span> <span class="n">ZeroOrMore</span><span class="p">(</span><span class="n">comma</span> <span class="o">+</span> <span class="n">trans_expr</span><span class="p">)))</span>
+            <span class="o">.</span><span class="n">setParseAction</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">store_aggregation</span><span class="p">)</span> <span class="o">+</span> <span class="n">close_paren</span><span class="p">)</span>\
+            <span class="o">|</span> <span class="n">trans_expr</span>
+
+    <span class="nd">@classmethod</span>
+<div class="viewcode-block" id="Parser.parse"><a class="viewcode-back" href="../../../core.html#bamboo.core.parser.Parser.parse">[docs]</a>    <span class="k">def</span> <span class="nf">parse</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">formula</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Parse formula and return evaluation function.</span>
+
+<span class="sd">        Parse `formula` into an aggregation name and functions.</span>
+<span class="sd">        There will be multiple functions is the aggregation takes multiple</span>
+<span class="sd">        arguments, e.g. ratio which takes a numerator and denominator formula.</span>
+
+<span class="sd">        Examples:</span>
+
+<span class="sd">        - constants</span>
+<span class="sd">            - ``9 + 5``,</span>
+<span class="sd">        - aliases</span>
+<span class="sd">            - ``rating``,</span>
+<span class="sd">            - ``gps``,</span>
+<span class="sd">        - arithmetic</span>
+<span class="sd">            - ``amount + gps_alt``,</span>
+<span class="sd">            - ``amount - gps_alt``,</span>
+<span class="sd">            - ``amount + 5``,</span>
+<span class="sd">            - ``amount - gps_alt + 2.5``,</span>
+<span class="sd">            - ``amount * gps_alt``,</span>
+<span class="sd">            - ``amount / gps_alt``,</span>
+<span class="sd">            - ``amount * gps_alt / 2.5``,</span>
+<span class="sd">            - ``amount + gps_alt * gps_precision``,</span>
+<span class="sd">        - precedence</span>
+<span class="sd">            - ``(amount + gps_alt) * gps_precision``,</span>
+<span class="sd">        - comparison</span>
+<span class="sd">            - ``amount == 2``,</span>
+<span class="sd">            - ``10 &lt; amount``,</span>
+<span class="sd">            - ``10 &lt; amount + gps_alt``,</span>
+<span class="sd">        - logical</span>
+<span class="sd">            - ``not amount == 2``,</span>
+<span class="sd">            - ``not(amount == 2)``,</span>
+<span class="sd">            - ``amount == 2 and 10 &lt; amount``,</span>
+<span class="sd">            - ``amount == 2 or 10 &lt; amount``,</span>
+<span class="sd">            - ``not not amount == 2 or 10 &lt; amount``,</span>
+<span class="sd">            - ``not amount == 2 or 10 &lt; amount``,</span>
+<span class="sd">            - ``not amount == 2) or 10 &lt; amount``,</span>
+<span class="sd">            - ``not(amount == 2 or 10 &lt; amount)``,</span>
+<span class="sd">            - ``amount ^ 3``,</span>
+<span class="sd">            - ``amount + gps_alt) ^ 2 + 100``,</span>
+<span class="sd">            - ``amount``,</span>
+<span class="sd">            - ``amount &lt; gps_alt - 100``,</span>
+<span class="sd">        - membership</span>
+<span class="sd">            - ``rating in [&quot;delectible&quot;]``,</span>
+<span class="sd">            - ``risk_factor in [&quot;low_risk&quot;]``,</span>
+<span class="sd">            - ``amount in [&quot;9.0&quot;, &quot;2.0&quot;, &quot;20.0&quot;]``,</span>
+<span class="sd">            - ``risk_factor in [&quot;low_risk&quot;]) and (amount in [&quot;9.0&quot;, &quot;20.0&quot;])``,</span>
+<span class="sd">        - dates</span>
+<span class="sd">            - ``date(&quot;09-04-2012&quot;) - submit_date &gt; 21078000``,</span>
+<span class="sd">        - cases</span>
+<span class="sd">            - ``case food_type in [&quot;morning_food&quot;]: 1, default: 3``</span>
+<span class="sd">        - transformations: row-wise column based aggregations</span>
+<span class="sd">            - ``percentile(amount)``</span>
+
+<span class="sd">        :param formula: The string to parse.</span>
+
+<span class="sd">        :returns: A tuple with the name of the aggregation in the formula, if</span>
+<span class="sd">           any and a list of functions built from the input string.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">parser</span> <span class="o">=</span> <span class="n">cls</span><span class="p">()</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">parser</span><span class="o">.</span><span class="n">parsed_expr</span> <span class="o">=</span> <span class="n">parser</span><span class="o">.</span><span class="n">bnf</span><span class="o">.</span><span class="n">parseString</span><span class="p">(</span><span class="n">formula</span><span class="p">,</span> <span class="n">parseAll</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+        <span class="k">except</span> <span class="n">ParseException</span><span class="p">,</span> <span class="n">err</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">ParseError</span><span class="p">(</span><span class="s">&#39;Parse Failure for string &quot;</span><span class="si">%s</span><span class="s">&quot;: </span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span>
+                             <span class="n">formula</span><span class="p">,</span> <span class="n">err</span><span class="p">))</span>
+
+        <span class="k">return</span> <span class="p">[</span><span class="n">parser</span><span class="o">.</span><span class="n">functions</span><span class="p">,</span> <span class="n">parser</span><span class="o">.</span><span class="n">aggregation</span><span class="p">]</span>
+</div>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">parse_aggregation</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">formula</span><span class="p">):</span>
+        <span class="n">_</span><span class="p">,</span> <span class="n">a</span> <span class="o">=</span> <span class="n">cls</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="n">formula</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">a</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">parse_function</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">formula</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">cls</span><span class="o">.</span><span class="n">parse_functions</span><span class="p">(</span><span class="n">formula</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">parse_functions</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">formula</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">partial</span><span class="p">(</span><span class="n">f</span><span class="o">.</span><span class="n">eval</span><span class="p">)</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">cls</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="n">formula</span><span class="p">)[</span><span class="mi">0</span><span class="p">]]</span>
+
+    <span class="nd">@classmethod</span>
+<div class="viewcode-block" id="Parser.validate"><a class="viewcode-back" href="../../../core.html#bamboo.core.parser.Parser.validate">[docs]</a>    <span class="k">def</span> <span class="nf">validate</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">dataset</span><span class="p">,</span> <span class="n">formula</span><span class="p">,</span> <span class="n">groups</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Validate `formula` and `groups` for dataset.</span>
+
+<span class="sd">        Validate the formula and group string by attempting to get a row from</span>
+<span class="sd">        the dframe for the dataset and then running parser validation on this</span>
+<span class="sd">        row. Additionally, ensure that the groups in the group string are</span>
+<span class="sd">        columns in the dataset.</span>
+
+<span class="sd">        :param dataset: The dataset to validate for.</span>
+<span class="sd">        :param formula: The formula to validate.</span>
+<span class="sd">        :param groups: A list of columns to group by.</span>
+
+<span class="sd">        :returns: The aggregation (or None) for the formula.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">cls</span><span class="o">.</span><span class="n">validate_formula</span><span class="p">(</span><span class="n">formula</span><span class="p">,</span> <span class="n">dataset</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">group</span> <span class="ow">in</span> <span class="n">groups</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">group</span> <span class="ow">in</span> <span class="n">dataset</span><span class="o">.</span><span class="n">schema</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+                <span class="k">raise</span> <span class="n">ParseError</span><span class="p">(</span>
+                    <span class="s">&#39;Group </span><span class="si">%s</span><span class="s"> not in dataset columns.&#39;</span> <span class="o">%</span> <span class="n">group</span><span class="p">)</span>
+</div>
+    <span class="nd">@classmethod</span>
+<div class="viewcode-block" id="Parser.validate_formula"><a class="viewcode-back" href="../../../core.html#bamboo.core.parser.Parser.validate_formula">[docs]</a>    <span class="k">def</span> <span class="nf">validate_formula</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">formula</span><span class="p">,</span> <span class="n">dataset</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Validate the *formula* on an example *row* of data.</span>
+
+<span class="sd">        Rebuild the BNF then parse the `formula` given the sample `row`.</span>
+
+<span class="sd">        :param formula: The formula to validate.</span>
+<span class="sd">        :param dataset: The dataset to validate against.</span>
+
+<span class="sd">        :returns: The aggregation for the formula.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c"># check valid formula</span>
+        <span class="n">cls</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="n">formula</span><span class="p">)</span>
+        <span class="n">schema</span> <span class="o">=</span> <span class="n">dataset</span><span class="o">.</span><span class="n">schema</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">schema</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">ParseError</span><span class="p">(</span>
+                <span class="s">&#39;No schema for dataset, please add data or wait for it to &#39;</span>
+                <span class="s">&#39;finish processing&#39;</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">column</span> <span class="ow">in</span> <span class="n">cls</span><span class="o">.</span><span class="n">dependent_columns</span><span class="p">(</span><span class="n">formula</span><span class="p">,</span> <span class="n">dataset</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">column</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">schema</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+                <span class="k">raise</span> <span class="n">ParseError</span><span class="p">(</span><span class="s">&#39;Missing column reference: </span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="n">column</span><span class="p">)</span>
+</div>
+    <span class="k">def</span> <span class="nf">__getstate__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Get state for pickle.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="p">[</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">aggregation</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">aggregation_names</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">function_names</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">operator_names</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">special_names</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">reserved_words</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">special_names</span><span class="p">,</span>
+        <span class="p">]</span>
+
+    <span class="k">def</span> <span class="nf">__setstate__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">state</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Set internal variables from pickled state.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">aggregation</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">aggregation_names</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">function_names</span><span class="p">,</span>\
+            <span class="bp">self</span><span class="o">.</span><span class="n">operator_names</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">special_names</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">reserved_words</span><span class="p">,</span>\
+            <span class="bp">self</span><span class="o">.</span><span class="n">special_names</span> <span class="o">=</span> <span class="n">state</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__build_bnf</span><span class="p">()</span></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">bamboo 0.6.3 alpha documentation</a> &raquo;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Module code</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &copy; Copyright 2013, Peter Lubell-Doughtie, Mark Johnston.
+    </div>
+  </body>
+</html>

@@ -1,4 +1,0 @@
-[run]
-omit =
-    config/*
-    tests/test_profile.py

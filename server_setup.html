@@ -1,0 +1,193 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Server Setup &mdash; bamboo 0.6.3 alpha documentation</title>
+    
+    <link rel="stylesheet" href="_static/nature.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '0.6.3 alpha',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="top" title="bamboo 0.6.3 alpha documentation" href="index.html" />
+    <link rel="next" title="Contributing Code" href="contributing.html" />
+    <link rel="prev" title="Models" href="models.html" /> 
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="contributing.html" title="Contributing Code"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="models.html" title="Models"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">bamboo 0.6.3 alpha documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="server-setup">
+<h1>Server Setup<a class="headerlink" href="#server-setup" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="running-the-server-in-the-foreground">
+<h2>Running the server in the foreground<a class="headerlink" href="#running-the-server-in-the-foreground" title="Permalink to this headline">¶</a></h2>
+<ol class="arabic">
+<li><p class="first">start mongodb on localhost and standard port</p>
+</li>
+<li><p class="first">start a celery worker</p>
+<blockquote>
+<div><div class="highlight-sh"><div class="highlight"><pre><span class="nv">$ </span>celery worker --config<span class="o">=</span>bamboo.config.celeryconfig
+</pre></div>
+</div>
+</div></blockquote>
+</li>
+<li><p class="first">start the server</p>
+<blockquote>
+<div><div class="highlight-sh"><div class="highlight"><pre><span class="nv">$ </span>python ./scripts/run_server.py
+</pre></div>
+</div>
+</div></blockquote>
+</li>
+</ol>
+</div>
+<div class="section" id="running-the-server-as-a-daemon">
+<h2>Running the server as a daemon<a class="headerlink" href="#running-the-server-as-a-daemon" title="Permalink to this headline">¶</a></h2>
+<p>start mongodb on localhost and standard port</p>
+<ol class="arabic simple">
+<li>create a user named &#8216;bamboo&#8217;, with home directory <code class="docutils literal"><span class="pre">/home/bamboo</span></code></li>
+<li>create a virtualenv using virtualenvwrapper called &#8216;bamboo&#8217;</li>
+<li>place the bamboo root directory in <code class="docutils literal"><span class="pre">/var/www/bamboo/current</span></code></li>
+</ol>
+<p>start the daemon using:</p>
+<div class="highlight-sh"><div class="highlight"><pre><span class="nv">$ </span>/var/www/bamboo/current/scripts/bamboo.sh start
+</pre></div>
+</div>
+<p>stop the daemon using:</p>
+<div class="highlight-sh"><div class="highlight"><pre><span class="nv">$ </span>/var/www/bamboo/current/scripts/bamboo.sh stop
+</pre></div>
+</div>
+</div>
+<div class="section" id="example-usage">
+<h2>Example Usage<a class="headerlink" href="#example-usage" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="on-your-local-server">
+<h3>On your local server<a class="headerlink" href="#on-your-local-server" title="Permalink to this headline">¶</a></h3>
+<p>start the bamboo server as above, then</p>
+<p>run the example basic commands</p>
+<div class="highlight-sh"><div class="highlight"><pre><span class="nv">$ </span>./scripts/commands.sh -l
+</pre></div>
+</div>
+<p>make requests to your local server</p>
+<div class="highlight-sh"><div class="highlight"><pre><span class="nv">$ </span>curl -X POST -d <span class="s2">&quot;url=http://formhub.org/mberg/forms/good_eats/data.csv&quot;</span> http://localhost:8080/datasets
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="global-configuration-notes">
+<h2>Global Configuration Notes<a class="headerlink" href="#global-configuration-notes" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li>Summarization on factor columns is disallowed based upon the number of
+unique entries.  This is controlled by a parameter in the
+<code class="docutils literal"><span class="pre">core/summary</span></code> module.</li>
+</ul>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Server Setup</a><ul>
+<li><a class="reference internal" href="#running-the-server-in-the-foreground">Running the server in the foreground</a></li>
+<li><a class="reference internal" href="#running-the-server-as-a-daemon">Running the server as a daemon</a></li>
+<li><a class="reference internal" href="#example-usage">Example Usage</a><ul>
+<li><a class="reference internal" href="#on-your-local-server">On your local server</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#global-configuration-notes">Global Configuration Notes</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="models.html"
+                        title="previous chapter">Models</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="contributing.html"
+                        title="next chapter">Contributing Code</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/server_setup.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="contributing.html" title="Contributing Code"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="models.html" title="Models"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">bamboo 0.6.3 alpha documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &copy; Copyright 2013, Peter Lubell-Doughtie, Mark Johnston.
+    </div>
+  </body>
+</html>

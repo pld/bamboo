@@ -1,0 +1,185 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>bamboo.core.summary &mdash; bamboo 0.6.3 alpha documentation</title>
+    
+    <link rel="stylesheet" href="../../../_static/nature.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../',
+        VERSION:     '0.6.3 alpha',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="top" title="bamboo 0.6.3 alpha documentation" href="../../../index.html" />
+    <link rel="up" title="Module code" href="../../index.html" /> 
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">bamboo 0.6.3 alpha documentation</a> &raquo;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" accesskey="U">Module code</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for bamboo.core.summary</h1><div class="highlight"><pre>
+<span class="kn">from</span> <span class="nn">bamboo.lib.jsontools</span> <span class="kn">import</span> <span class="n">series_to_jsondict</span>
+<span class="kn">from</span> <span class="nn">bamboo.lib.mongo</span> <span class="kn">import</span> <span class="n">dict_from_mongo</span><span class="p">,</span> <span class="n">dict_for_mongo</span>
+<span class="kn">from</span> <span class="nn">bamboo.lib.utils</span> <span class="kn">import</span> <span class="n">combine_dicts</span>
+
+
+<span class="n">MAX_CARDINALITY_FOR_COUNT</span> <span class="o">=</span> <span class="mi">10000</span>
+<span class="n">SUMMARY</span> <span class="o">=</span> <span class="s">&#39;summary&#39;</span>
+
+
+<div class="viewcode-block" id="ColumnTypeError"><a class="viewcode-back" href="../../../core.html#bamboo.core.summary.ColumnTypeError">[docs]</a><span class="k">class</span> <span class="nc">ColumnTypeError</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Exception when grouping on a non-dimensional column.&quot;&quot;&quot;</span>
+    <span class="k">pass</span>
+
+</div>
+<div class="viewcode-block" id="summarize_series"><a class="viewcode-back" href="../../../core.html#bamboo.core.summary.summarize_series">[docs]</a><span class="k">def</span> <span class="nf">summarize_series</span><span class="p">(</span><span class="n">is_factor</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Call summary function dependent on dtype type.</span>
+
+<span class="sd">    :param dtype: The dtype of the column to be summarized.</span>
+<span class="sd">    :param data: The data to be summarized.</span>
+
+<span class="sd">    :returns: The appropriate summarization for the type of `dtype`.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">data</span><span class="o">.</span><span class="n">value_counts</span><span class="p">()</span> <span class="k">if</span> <span class="n">is_factor</span> <span class="k">else</span> <span class="n">data</span><span class="o">.</span><span class="n">describe</span><span class="p">()</span>
+
+</div>
+<div class="viewcode-block" id="summarizable"><a class="viewcode-back" href="../../../core.html#bamboo.core.summary.summarizable">[docs]</a><span class="k">def</span> <span class="nf">summarizable</span><span class="p">(</span><span class="n">dframe</span><span class="p">,</span> <span class="n">col</span><span class="p">,</span> <span class="n">groups</span><span class="p">,</span> <span class="n">dataset</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Check if column should be summarized.</span>
+
+<span class="sd">    :param dframe: DataFrame to check unique values in.</span>
+<span class="sd">    :param col: Column to check for factor and number of uniques.</span>
+<span class="sd">    :param groups: List of groups if summarizing with group, can be empty.</span>
+<span class="sd">    :param dataset: Dataset to pull schema from.</span>
+
+<span class="sd">    :returns: True if column, with parameters should be summarized, otherwise</span>
+<span class="sd">        False.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">dataset</span><span class="o">.</span><span class="n">is_dimension</span><span class="p">(</span><span class="n">col</span><span class="p">):</span>
+        <span class="n">cardinality</span> <span class="o">=</span> <span class="n">dframe</span><span class="p">[</span><span class="n">col</span><span class="p">]</span><span class="o">.</span><span class="n">nunique</span><span class="p">()</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">groups</span><span class="p">)</span> <span class="k">else</span>\
+            <span class="n">dataset</span><span class="o">.</span><span class="n">cardinality</span><span class="p">(</span><span class="n">col</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">cardinality</span> <span class="o">&gt;</span> <span class="n">MAX_CARDINALITY_FOR_COUNT</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">False</span>
+
+    <span class="k">return</span> <span class="ow">not</span> <span class="n">col</span> <span class="ow">in</span> <span class="n">groups</span>
+
+</div>
+<div class="viewcode-block" id="summarize_df"><a class="viewcode-back" href="../../../core.html#bamboo.core.summary.summarize_df">[docs]</a><span class="k">def</span> <span class="nf">summarize_df</span><span class="p">(</span><span class="n">dframe</span><span class="p">,</span> <span class="n">dataset</span><span class="p">,</span> <span class="n">groups</span><span class="o">=</span><span class="p">[]):</span>
+    <span class="sd">&quot;&quot;&quot;Calculate summary statistics.&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="p">{</span>
+        <span class="n">col</span><span class="p">:</span> <span class="p">{</span>
+            <span class="n">SUMMARY</span><span class="p">:</span> <span class="n">series_to_jsondict</span><span class="p">(</span>
+                <span class="n">summarize_series</span><span class="p">(</span><span class="n">dataset</span><span class="o">.</span><span class="n">is_dimension</span><span class="p">(</span><span class="n">col</span><span class="p">),</span> <span class="n">data</span><span class="p">))</span>
+        <span class="p">}</span> <span class="k">for</span> <span class="n">col</span><span class="p">,</span> <span class="n">data</span> <span class="ow">in</span> <span class="n">dframe</span><span class="o">.</span><span class="n">iteritems</span><span class="p">()</span> <span class="k">if</span> <span class="n">summarizable</span><span class="p">(</span>
+            <span class="n">dframe</span><span class="p">,</span> <span class="n">col</span><span class="p">,</span> <span class="n">groups</span><span class="p">,</span> <span class="n">dataset</span><span class="p">)</span>
+    <span class="p">}</span>
+
+</div>
+<div class="viewcode-block" id="summarize_with_groups"><a class="viewcode-back" href="../../../core.html#bamboo.core.summary.summarize_with_groups">[docs]</a><span class="k">def</span> <span class="nf">summarize_with_groups</span><span class="p">(</span><span class="n">dframe</span><span class="p">,</span> <span class="n">groups</span><span class="p">,</span> <span class="n">dataset</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Calculate summary statistics for group.&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">series_to_jsondict</span><span class="p">(</span>
+        <span class="n">dframe</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="n">groups</span><span class="p">)</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">summarize_df</span><span class="p">,</span> <span class="n">dataset</span><span class="p">,</span> <span class="n">groups</span><span class="p">))</span>
+
+</div>
+<div class="viewcode-block" id="summarize"><a class="viewcode-back" href="../../../core.html#bamboo.core.summary.summarize">[docs]</a><span class="k">def</span> <span class="nf">summarize</span><span class="p">(</span><span class="n">dataset</span><span class="p">,</span> <span class="n">dframe</span><span class="p">,</span> <span class="n">groups</span><span class="p">,</span> <span class="n">no_cache</span><span class="p">,</span> <span class="n">update</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Raises a ColumnTypeError if grouping on a non-dimensional column.&quot;&quot;&quot;</span>
+    <span class="c"># do not allow group by numeric types</span>
+    <span class="k">for</span> <span class="n">group</span> <span class="ow">in</span> <span class="n">groups</span><span class="p">:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">dataset</span><span class="o">.</span><span class="n">is_factor</span><span class="p">(</span><span class="n">group</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="n">ColumnTypeError</span><span class="p">(</span><span class="s">&quot;group: &#39;</span><span class="si">%s</span><span class="s">&#39; is not a dimension.&quot;</span> <span class="o">%</span> <span class="n">group</span><span class="p">)</span>
+
+    <span class="n">group_str</span> <span class="o">=</span> <span class="n">dataset</span><span class="o">.</span><span class="n">join_groups</span><span class="p">(</span><span class="n">groups</span><span class="p">)</span> <span class="ow">or</span> <span class="n">dataset</span><span class="o">.</span><span class="n">ALL</span>
+
+    <span class="c"># check cached stats for group and update as necessary</span>
+    <span class="n">stats</span> <span class="o">=</span> <span class="n">dataset</span><span class="o">.</span><span class="n">stats</span>
+    <span class="n">group_stats</span> <span class="o">=</span> <span class="n">stats</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">group_str</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">no_cache</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">group_stats</span> <span class="ow">or</span> <span class="n">update</span><span class="p">:</span>
+        <span class="n">group_stats</span> <span class="o">=</span> <span class="n">summarize_with_groups</span><span class="p">(</span><span class="n">dframe</span><span class="p">,</span> <span class="n">groups</span><span class="p">,</span> <span class="n">dataset</span><span class="p">)</span> <span class="k">if</span>\
+            <span class="n">groups</span> <span class="k">else</span> <span class="n">summarize_df</span><span class="p">(</span><span class="n">dframe</span><span class="p">,</span> <span class="n">dataset</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">no_cache</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">update</span><span class="p">:</span>
+                <span class="n">original_group_stats</span> <span class="o">=</span> <span class="n">stats</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">group_str</span><span class="p">,</span> <span class="p">{})</span>
+                <span class="n">group_stats</span> <span class="o">=</span> <span class="n">combine_dicts</span><span class="p">(</span><span class="n">original_group_stats</span><span class="p">,</span> <span class="n">group_stats</span><span class="p">)</span>
+
+            <span class="n">stats</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="n">group_str</span><span class="p">:</span> <span class="n">group_stats</span><span class="p">})</span>
+            <span class="n">dataset</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="n">dataset</span><span class="o">.</span><span class="n">STATS</span><span class="p">:</span> <span class="n">dict_for_mongo</span><span class="p">(</span><span class="n">stats</span><span class="p">)})</span>
+
+    <span class="n">stats_dict</span> <span class="o">=</span> <span class="n">dict_from_mongo</span><span class="p">(</span><span class="n">group_stats</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">groups</span><span class="p">:</span>
+        <span class="n">stats_dict</span> <span class="o">=</span> <span class="p">{</span><span class="n">group_str</span><span class="p">:</span> <span class="n">stats_dict</span><span class="p">}</span>
+
+    <span class="k">return</span> <span class="n">stats_dict</span></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">bamboo 0.6.3 alpha documentation</a> &raquo;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Module code</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &copy; Copyright 2013, Peter Lubell-Doughtie, Mark Johnston.
+    </div>
+  </body>
+</html>

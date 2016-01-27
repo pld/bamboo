@@ -1,0 +1,447 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>bamboo.core.aggregations &mdash; bamboo 0.6.3 alpha documentation</title>
+    
+    <link rel="stylesheet" href="../../../_static/nature.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../',
+        VERSION:     '0.6.3 alpha',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="top" title="bamboo 0.6.3 alpha documentation" href="../../../index.html" />
+    <link rel="up" title="Module code" href="../../index.html" /> 
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">bamboo 0.6.3 alpha documentation</a> &raquo;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" accesskey="U">Module code</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for bamboo.core.aggregations</h1><div class="highlight"><pre>
+<span class="kn">from</span> <span class="nn">math</span> <span class="kn">import</span> <span class="n">isnan</span>
+
+<span class="kn">from</span> <span class="nn">pandas</span> <span class="kn">import</span> <span class="n">concat</span><span class="p">,</span> <span class="n">DataFrame</span><span class="p">,</span> <span class="n">Series</span>
+<span class="kn">from</span> <span class="nn">scipy.stats.stats</span> <span class="kn">import</span> <span class="n">pearsonr</span>
+
+<span class="kn">from</span> <span class="nn">bamboo.lib.utils</span> <span class="kn">import</span> <span class="n">minint</span><span class="p">,</span> <span class="n">parse_float</span>
+
+
+<div class="viewcode-block" id="Aggregation"><a class="viewcode-back" href="../../../core.html#bamboo.core.aggregations.Aggregation">[docs]</a><span class="k">class</span> <span class="nc">Aggregation</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Abstract class for all aggregations.</span>
+
+<span class="sd">    :param column: Column to aggregate.</span>
+<span class="sd">    :param columns: List of columns to aggregate.</span>
+<span class="sd">    :param formula_name: The string to refer to this aggregation.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">column</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="n">columns</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="n">formula_name</span> <span class="o">=</span> <span class="bp">None</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">groups</span><span class="p">,</span> <span class="n">dframe</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">name</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">groups</span> <span class="o">=</span> <span class="n">groups</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dframe</span> <span class="o">=</span> <span class="n">dframe</span>
+
+    <span class="k">def</span> <span class="nf">eval</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">columns</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">columns</span> <span class="o">=</span> <span class="n">columns</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">column</span> <span class="o">=</span> <span class="n">columns</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">columns</span><span class="p">)</span> <span class="k">else</span> <span class="bp">None</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">group</span><span class="p">()</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">groups</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">agg</span><span class="p">()</span>
+
+<div class="viewcode-block" id="Aggregation.group"><a class="viewcode-back" href="../../../core.html#bamboo.core.aggregations.Aggregation.group">[docs]</a>    <span class="k">def</span> <span class="nf">group</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;For when aggregation is called with a group parameter.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_groupby</span><span class="p">()</span><span class="o">.</span><span class="n">agg</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">formula_name</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="Aggregation.agg"><a class="viewcode-back" href="../../../core.html#bamboo.core.aggregations.Aggregation.agg">[docs]</a>    <span class="k">def</span> <span class="nf">agg</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;For when aggregation is called without a group parameter.&quot;&quot;&quot;</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">column</span><span class="o">.</span><span class="n">__getattribute__</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">formula_name</span><span class="p">)())</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_value_to_dframe</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
+</div>
+    <span class="k">def</span> <span class="nf">_value_to_dframe</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">DataFrame</span><span class="p">({</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">:</span> <span class="n">Series</span><span class="p">([</span><span class="n">value</span><span class="p">])})</span>
+
+    <span class="k">def</span> <span class="nf">_groupby</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">dframe</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">groups</span><span class="p">]</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">concat</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">columns</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">))</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">groups</span><span class="p">,</span> <span class="n">as_index</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+
+</div>
+<div class="viewcode-block" id="CountAggregation"><a class="viewcode-back" href="../../../core.html#bamboo.core.aggregations.CountAggregation">[docs]</a><span class="k">class</span> <span class="nc">CountAggregation</span><span class="p">(</span><span class="n">Aggregation</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Calculate the count of rows fulfilling the criteria in the formula.</span>
+
+<span class="sd">    N/A values are ignored unless there are no arguments to the function, in</span>
+<span class="sd">    which case it returns the number of rows in the dataset.</span>
+
+<span class="sd">    Written as ``count(CRITERIA)``. Where `CRITERIA` is an optional boolean</span>
+<span class="sd">    expression that signifies which rows are to be counted.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">formula_name</span> <span class="o">=</span> <span class="s">&#39;count&#39;</span>
+
+    <span class="k">def</span> <span class="nf">group</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">column</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">joined</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dframe</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">groups</span><span class="p">]</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">column</span><span class="p">)</span>
+            <span class="n">joined</span> <span class="o">=</span> <span class="n">joined</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">column</span><span class="p">]</span>
+            <span class="n">groupby</span> <span class="o">=</span> <span class="n">joined</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">groups</span><span class="p">,</span> <span class="n">as_index</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="n">groupby</span><span class="o">.</span><span class="n">agg</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">formula_name</span><span class="p">)[</span><span class="bp">self</span><span class="o">.</span><span class="n">column</span><span class="o">.</span><span class="n">name</span><span class="p">]</span><span class="o">.</span><span class="n">reset_index</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dframe</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">groups</span><span class="p">]</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">groups</span><span class="p">)</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="p">))</span><span class="o">.</span>\
+                <span class="n">reset_index</span><span class="p">()</span><span class="o">.</span><span class="n">rename</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="p">{</span><span class="mi">0</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">})</span>
+
+        <span class="k">return</span> <span class="n">result</span>
+
+    <span class="k">def</span> <span class="nf">agg</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">column</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">column</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">column</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">column</span><span class="p">]</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">column</span><span class="o">.</span><span class="n">__getattribute__</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">formula_name</span><span class="p">)())</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dframe</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_value_to_dframe</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
+
+</div>
+<div class="viewcode-block" id="RatioAggregation"><a class="viewcode-back" href="../../../core.html#bamboo.core.aggregations.RatioAggregation">[docs]</a><span class="k">class</span> <span class="nc">RatioAggregation</span><span class="p">(</span><span class="n">Aggregation</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Calculate the ratio.</span>
+
+<span class="sd">    Columns with N/A for either the numerator or denominator are ignored.  This</span>
+<span class="sd">    will store associated numerator and denominator columns.  Written as</span>
+<span class="sd">    ``ratio(NUMERATOR, DENOMINATOR)``. Where `NUMERATOR` and `DENOMINATOR` are</span>
+<span class="sd">    both valid formulas.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">formula_name</span> <span class="o">=</span> <span class="s">&#39;ratio&#39;</span>
+
+    <span class="k">def</span> <span class="nf">group</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_group</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">columns</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_group</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">columns</span><span class="p">):</span>
+        <span class="n">dframe</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dframe</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">groups</span><span class="p">]</span>
+        <span class="n">dframe</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_build_dframe</span><span class="p">(</span><span class="n">dframe</span><span class="p">,</span> <span class="n">columns</span><span class="p">)</span>
+        <span class="n">groupby</span> <span class="o">=</span> <span class="n">dframe</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">groups</span><span class="p">,</span> <span class="n">as_index</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_add_calculated_column</span><span class="p">(</span><span class="n">groupby</span><span class="o">.</span><span class="n">sum</span><span class="p">())</span>
+
+    <span class="k">def</span> <span class="nf">agg</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">dframe</span> <span class="o">=</span> <span class="n">DataFrame</span><span class="p">(</span><span class="n">index</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">column</span><span class="o">.</span><span class="n">index</span><span class="p">)</span>
+
+        <span class="n">dframe</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_build_dframe</span><span class="p">(</span><span class="n">dframe</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">columns</span><span class="p">)</span>
+        <span class="n">column_names</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">__name_for_idx</span><span class="p">(</span><span class="n">i</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">xrange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">)]</span>
+        <span class="n">dframe</span> <span class="o">=</span> <span class="n">dframe</span><span class="o">.</span><span class="n">dropna</span><span class="p">(</span><span class="n">subset</span><span class="o">=</span><span class="n">column_names</span><span class="p">)</span>
+
+        <span class="n">dframe</span> <span class="o">=</span> <span class="n">DataFrame</span><span class="p">([</span><span class="n">dframe</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span><span class="o">.</span><span class="n">to_dict</span><span class="p">()])</span>
+
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_add_calculated_column</span><span class="p">(</span><span class="n">dframe</span><span class="p">)</span>
+
+<div class="viewcode-block" id="RatioAggregation.reduce"><a class="viewcode-back" href="../../../core.html#bamboo.core.aggregations.RatioAggregation.reduce">[docs]</a>    <span class="k">def</span> <span class="nf">reduce</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dframe</span><span class="p">,</span> <span class="n">columns</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Reduce the columns and store in `dframe`.</span>
+
+<span class="sd">        :param dframe: The DataFrame to reduce.</span>
+<span class="sd">        :param columns: Columns in the DataFrame to reduce on.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">columns</span> <span class="o">=</span> <span class="n">columns</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">column</span> <span class="o">=</span> <span class="n">columns</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">new_dframe</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">agg</span><span class="p">()</span>
+
+        <span class="k">for</span> <span class="n">column</span> <span class="ow">in</span> <span class="n">new_dframe</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
+            <span class="n">dframe</span><span class="p">[</span><span class="n">column</span><span class="p">]</span> <span class="o">+=</span> <span class="n">new_dframe</span><span class="p">[</span><span class="n">column</span><span class="p">]</span>
+
+        <span class="n">dframe</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__agg_dframe</span><span class="p">(</span><span class="n">dframe</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">dframe</span>
+</div>
+    <span class="k">def</span> <span class="nf">__name_for_idx</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">idx</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s">&#39;</span><span class="si">%s</span><span class="s">_</span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="p">{</span>
+            <span class="mi">0</span><span class="p">:</span> <span class="s">&#39;numerator&#39;</span><span class="p">,</span>
+            <span class="mi">1</span><span class="p">:</span> <span class="s">&#39;denominator&#39;</span><span class="p">,</span>
+        <span class="p">}[</span><span class="n">idx</span><span class="p">])</span>
+
+    <span class="k">def</span> <span class="nf">_build_dframe</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dframe</span><span class="p">,</span> <span class="n">columns</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">column</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">columns</span><span class="p">):</span>
+            <span class="n">column</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__name_for_idx</span><span class="p">(</span><span class="n">idx</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">concat</span><span class="p">([</span><span class="n">dframe</span><span class="p">]</span> <span class="o">+</span> <span class="p">[</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">col</span><span class="p">)</span> <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="n">columns</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_add_calculated_column</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dframe</span><span class="p">):</span>
+        <span class="n">column</span> <span class="o">=</span> <span class="n">dframe</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">__name_for_idx</span><span class="p">(</span><span class="mi">0</span><span class="p">)]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="nb">float</span><span class="p">)</span> <span class="o">/</span>\
+            <span class="n">dframe</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">__name_for_idx</span><span class="p">(</span><span class="mi">1</span><span class="p">)]</span>
+        <span class="n">column</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span>
+
+        <span class="k">return</span> <span class="n">dframe</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">column</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__agg_dframe</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dframe</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">dframe</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">__name_for_idx</span><span class="p">(</span><span class="mi">0</span><span class="p">)]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="nb">float</span><span class="p">)</span> <span class="o">/</span>\
+            <span class="n">dframe</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">__name_for_idx</span><span class="p">(</span><span class="mi">1</span><span class="p">)]</span>
+
+</div>
+<div class="viewcode-block" id="ArgMaxAggregation"><a class="viewcode-back" href="../../../core.html#bamboo.core.aggregations.ArgMaxAggregation">[docs]</a><span class="k">class</span> <span class="nc">ArgMaxAggregation</span><span class="p">(</span><span class="n">Aggregation</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Return the index for the maximum of a column.</span>
+
+<span class="sd">    Written as ``argmax(FORMULA)``. Where `FORMULA` is a valid formula.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">formula_name</span> <span class="o">=</span> <span class="s">&#39;argmax&#39;</span>
+
+<div class="viewcode-block" id="ArgMaxAggregation.group"><a class="viewcode-back" href="../../../core.html#bamboo.core.aggregations.ArgMaxAggregation.group">[docs]</a>    <span class="k">def</span> <span class="nf">group</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;For when aggregation is called with a group parameter.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">column</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">column</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="k">lambda</span> <span class="n">value</span><span class="p">:</span> <span class="n">parse_float</span><span class="p">(</span><span class="n">value</span><span class="p">))</span>
+        <span class="n">group_dframe</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dframe</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">groups</span><span class="p">]</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">column</span><span class="p">)</span>
+        <span class="n">indices</span> <span class="o">=</span> <span class="n">group_dframe</span><span class="o">.</span><span class="n">reset_index</span><span class="p">()</span><span class="o">.</span><span class="n">set_index</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">groups</span> <span class="o">+</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">])</span>
+
+        <span class="k">def</span> <span class="nf">max_index_for_row</span><span class="p">(</span><span class="n">row</span><span class="p">):</span>
+            <span class="n">groups</span> <span class="o">=</span> <span class="n">row</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">groups</span><span class="p">]</span>
+            <span class="n">value</span> <span class="o">=</span> <span class="n">row</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">]</span>
+
+            <span class="n">xsection</span> <span class="o">=</span> <span class="n">indices</span><span class="o">.</span><span class="n">xs</span><span class="p">(</span><span class="n">groups</span><span class="p">,</span> <span class="n">level</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">groups</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="n">isnan</span><span class="p">(</span><span class="n">value</span><span class="p">):</span>
+                <span class="k">return</span> <span class="n">minint</span><span class="p">()</span>
+
+            <span class="n">max_index</span> <span class="o">=</span> <span class="n">xsection</span><span class="o">.</span><span class="n">get_value</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="s">&#39;index&#39;</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">max_index</span><span class="p">,</span> <span class="n">Series</span><span class="p">):</span>
+                <span class="n">max_index</span> <span class="o">=</span> <span class="n">max_index</span><span class="o">.</span><span class="n">max</span><span class="p">()</span>
+
+            <span class="k">return</span> <span class="n">max_index</span>
+
+        <span class="n">groupby_max</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_groupby</span><span class="p">()</span><span class="o">.</span><span class="n">max</span><span class="p">()</span><span class="o">.</span><span class="n">reset_index</span><span class="p">()</span>
+        <span class="n">column</span> <span class="o">=</span> <span class="n">groupby_max</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">max_index_for_row</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
+        <span class="n">column</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span>
+
+        <span class="k">return</span> <span class="n">DataFrame</span><span class="p">(</span><span class="n">column</span><span class="p">)</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">groupby_max</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">groups</span><span class="p">])</span>
+
+</div></div>
+<div class="viewcode-block" id="MaxAggregation"><a class="viewcode-back" href="../../../core.html#bamboo.core.aggregations.MaxAggregation">[docs]</a><span class="k">class</span> <span class="nc">MaxAggregation</span><span class="p">(</span><span class="n">Aggregation</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Calculate the maximum.</span>
+
+<span class="sd">    Written as ``max(FORMULA)``. Where `FORMULA` is a valid formula.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">formula_name</span> <span class="o">=</span> <span class="s">&#39;max&#39;</span>
+
+</div>
+<div class="viewcode-block" id="MeanAggregation"><a class="viewcode-back" href="../../../core.html#bamboo.core.aggregations.MeanAggregation">[docs]</a><span class="k">class</span> <span class="nc">MeanAggregation</span><span class="p">(</span><span class="n">RatioAggregation</span><span class="p">,</span> <span class="n">Aggregation</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Calculate the arithmetic mean.</span>
+
+<span class="sd">    Written as ``mean(FORMULA)``. Where `FORMULA` is a valid formula.</span>
+
+<span class="sd">    Because mean is a ratio this inherits from `RatioAggregation` to</span>
+<span class="sd">    use its generic reduce implementation.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">formula_name</span> <span class="o">=</span> <span class="s">&#39;mean&#39;</span>
+
+    <span class="k">def</span> <span class="nf">group</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_group</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">column</span><span class="p">,</span> <span class="n">Series</span><span class="p">([</span><span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">column</span><span class="p">))])</span>
+
+    <span class="k">def</span> <span class="nf">agg</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">dframe</span> <span class="o">=</span> <span class="n">DataFrame</span><span class="p">(</span><span class="n">index</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+
+        <span class="n">columns</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">Series</span><span class="p">([</span><span class="n">col</span><span class="p">])</span> <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">column</span><span class="o">.</span><span class="n">sum</span><span class="p">(),</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">column</span><span class="p">)]]</span>
+
+        <span class="n">dframe</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_build_dframe</span><span class="p">(</span><span class="n">dframe</span><span class="p">,</span> <span class="n">columns</span><span class="p">)</span>
+        <span class="n">dframe</span> <span class="o">=</span> <span class="n">DataFrame</span><span class="p">([</span><span class="n">dframe</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span><span class="o">.</span><span class="n">to_dict</span><span class="p">()])</span>
+
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_add_calculated_column</span><span class="p">(</span><span class="n">dframe</span><span class="p">)</span>
+
+</div>
+<div class="viewcode-block" id="MedianAggregation"><a class="viewcode-back" href="../../../core.html#bamboo.core.aggregations.MedianAggregation">[docs]</a><span class="k">class</span> <span class="nc">MedianAggregation</span><span class="p">(</span><span class="n">Aggregation</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Calculate the median. Written as ``median(FORMULA)``.</span>
+
+<span class="sd">    Where `FORMULA` is a valid formula.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">formula_name</span> <span class="o">=</span> <span class="s">&#39;median&#39;</span>
+
+</div>
+<div class="viewcode-block" id="MinAggregation"><a class="viewcode-back" href="../../../core.html#bamboo.core.aggregations.MinAggregation">[docs]</a><span class="k">class</span> <span class="nc">MinAggregation</span><span class="p">(</span><span class="n">Aggregation</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Calculate the minimum.</span>
+
+<span class="sd">    Written as ``min(FORMULA)``. Where `FORMULA` is a valid formula.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">formula_name</span> <span class="o">=</span> <span class="s">&#39;min&#39;</span>
+
+</div>
+<div class="viewcode-block" id="NewestAggregation"><a class="viewcode-back" href="../../../core.html#bamboo.core.aggregations.NewestAggregation">[docs]</a><span class="k">class</span> <span class="nc">NewestAggregation</span><span class="p">(</span><span class="n">Aggregation</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Return the second column&#39;s value at the newest row in the first column.</span>
+
+<span class="sd">    Find the maximum value for the first column and return the entry at that</span>
+<span class="sd">    row from the second column.</span>
+
+<span class="sd">    Written as ``newest(INDEX_FORMULA, VALUE_FORMULA)`` where ``INDEX_FORMULA``</span>
+<span class="sd">    and ``VALUE_FORMULA`` are valid formulae.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">formula_name</span> <span class="o">=</span> <span class="s">&#39;newest&#39;</span>
+    <span class="n">value_column</span> <span class="o">=</span> <span class="mi">1</span>
+
+    <span class="k">def</span> <span class="nf">agg</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">index</span><span class="p">,</span> <span class="n">values</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">columns</span>
+        <span class="n">index</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="s">&#39;index&#39;</span>
+        <span class="n">values</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span>
+
+        <span class="n">idframe</span> <span class="o">=</span> <span class="n">DataFrame</span><span class="p">(</span><span class="n">values</span><span class="p">)</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">index</span><span class="p">)</span><span class="o">.</span><span class="n">dropna</span><span class="p">()</span><span class="o">.</span><span class="n">reset_index</span><span class="p">()</span>
+        <span class="n">idx</span> <span class="o">=</span> <span class="n">idframe</span><span class="p">[</span><span class="s">&#39;index&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">argmax</span><span class="p">()</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="n">idframe</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">]</span><span class="o">.</span><span class="n">get_value</span><span class="p">(</span><span class="n">idx</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_value_to_dframe</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">group</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">argmax_agg</span> <span class="o">=</span> <span class="n">ArgMaxAggregation</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">groups</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">dframe</span><span class="p">)</span>
+        <span class="n">argmax_df</span> <span class="o">=</span> <span class="n">argmax_agg</span><span class="o">.</span><span class="n">eval</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">columns</span><span class="p">)</span>
+        <span class="n">indices</span> <span class="o">=</span> <span class="n">argmax_df</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+
+        <span class="n">newest_col</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">columns</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">value_column</span><span class="p">][</span><span class="n">indices</span><span class="p">]</span>
+        <span class="n">newest_col</span><span class="o">.</span><span class="n">index</span> <span class="o">=</span> <span class="n">argmax_df</span><span class="o">.</span><span class="n">index</span>
+        <span class="n">newest_col</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span>
+
+        <span class="k">return</span> <span class="n">argmax_df</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">newest_col</span><span class="p">)</span>
+
+</div>
+<div class="viewcode-block" id="PearsonAggregation"><a class="viewcode-back" href="../../../core.html#bamboo.core.aggregations.PearsonAggregation">[docs]</a><span class="k">class</span> <span class="nc">PearsonAggregation</span><span class="p">(</span><span class="n">Aggregation</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Calculate the Pearson correlation and associatd p-value.</span>
+
+<span class="sd">    Calculate the Pearson correlation coefficient between two columns and the</span>
+<span class="sd">    p-value for that correlation coefficient.</span>
+
+<span class="sd">    Written as ``pearson(FORMULA1, FORMULA2)``. Where ``FORMULA1`` and</span>
+<span class="sd">    ``FORMULA2`` are valid formulae.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">formula_name</span> <span class="o">=</span> <span class="s">&#39;pearson&#39;</span>
+
+    <span class="k">def</span> <span class="nf">agg</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">coor</span><span class="p">,</span> <span class="n">pvalue</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__pearsonr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">columns</span><span class="p">)</span>
+        <span class="n">pvalue_column</span> <span class="o">=</span> <span class="n">Series</span><span class="p">([</span><span class="n">pvalue</span><span class="p">],</span> <span class="n">name</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">__pvalue_name</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_value_to_dframe</span><span class="p">(</span><span class="n">coor</span><span class="p">)</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">pvalue_column</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">group</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">def</span> <span class="nf">pearson</span><span class="p">(</span><span class="n">dframe</span><span class="p">):</span>
+            <span class="n">columns</span> <span class="o">=</span> <span class="p">[</span><span class="n">dframe</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">dframe</span><span class="o">.</span><span class="n">columns</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">:]]</span>
+
+            <span class="k">return</span> <span class="n">DataFrame</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">__pearsonr</span><span class="p">(</span><span class="n">columns</span><span class="p">)],</span>
+                             <span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">__pvalue_name</span><span class="p">])</span>
+
+        <span class="n">groupby</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_groupby</span><span class="p">()</span>
+        <span class="n">dframe</span> <span class="o">=</span> <span class="n">groupby</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">pearson</span><span class="p">)</span><span class="o">.</span><span class="n">reset_index</span><span class="p">()</span>
+
+        <span class="c"># remove extra index column</span>
+        <span class="k">del</span> <span class="n">dframe</span><span class="p">[</span><span class="n">dframe</span><span class="o">.</span><span class="n">columns</span><span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">groups</span><span class="p">)]]</span>
+        <span class="k">return</span> <span class="n">dframe</span>
+
+    <span class="k">def</span> <span class="nf">__pearsonr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">columns</span><span class="p">):</span>
+        <span class="n">columns</span> <span class="o">=</span> <span class="p">[</span><span class="n">c</span><span class="o">.</span><span class="n">dropna</span><span class="p">()</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">columns</span><span class="p">]</span>
+        <span class="n">shared_index</span> <span class="o">=</span> <span class="nb">reduce</span><span class="p">(</span>
+            <span class="k">lambda</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">:</span> <span class="n">x</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">intersection</span><span class="p">(</span><span class="n">y</span><span class="o">.</span><span class="n">index</span><span class="p">),</span> <span class="n">columns</span><span class="p">)</span>
+        <span class="n">columns</span> <span class="o">=</span> <span class="p">[</span><span class="n">c</span><span class="o">.</span><span class="n">ix</span><span class="p">[</span><span class="n">shared_index</span><span class="p">]</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">columns</span><span class="p">]</span>
+
+        <span class="k">return</span> <span class="n">pearsonr</span><span class="p">(</span><span class="o">*</span><span class="n">columns</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">__pvalue_name</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s">&#39;</span><span class="si">%s</span><span class="s">_pvalue&#39;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span>
+
+</div>
+<div class="viewcode-block" id="StandardDeviationAggregation"><a class="viewcode-back" href="../../../core.html#bamboo.core.aggregations.StandardDeviationAggregation">[docs]</a><span class="k">class</span> <span class="nc">StandardDeviationAggregation</span><span class="p">(</span><span class="n">Aggregation</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Calculate the standard deviation. Written as ``std(FORMULA)``.</span>
+
+<span class="sd">    Where `FORMULA` is a valid formula.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">formula_name</span> <span class="o">=</span> <span class="s">&#39;std&#39;</span>
+
+</div>
+<div class="viewcode-block" id="SumAggregation"><a class="viewcode-back" href="../../../core.html#bamboo.core.aggregations.SumAggregation">[docs]</a><span class="k">class</span> <span class="nc">SumAggregation</span><span class="p">(</span><span class="n">Aggregation</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Calculate the sum.</span>
+
+<span class="sd">    Written as ``sum(FORMULA)``. Where `FORMULA` is a valid formula.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">formula_name</span> <span class="o">=</span> <span class="s">&#39;sum&#39;</span>
+
+    <span class="k">def</span> <span class="nf">reduce</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dframe</span><span class="p">,</span> <span class="n">columns</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">columns</span> <span class="o">=</span> <span class="n">columns</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">column</span> <span class="o">=</span> <span class="n">columns</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">dframe</span> <span class="o">=</span> <span class="n">dframe</span><span class="o">.</span><span class="n">reset_index</span><span class="p">()</span>
+        <span class="n">dframe</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">]</span> <span class="o">+=</span> <span class="bp">self</span><span class="o">.</span><span class="n">agg</span><span class="p">()[</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">]</span>
+
+        <span class="k">return</span> <span class="n">dframe</span>
+
+</div>
+<div class="viewcode-block" id="VarianceAggregation"><a class="viewcode-back" href="../../../core.html#bamboo.core.aggregations.VarianceAggregation">[docs]</a><span class="k">class</span> <span class="nc">VarianceAggregation</span><span class="p">(</span><span class="n">Aggregation</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Calculate the variance. Written as ``var(FORMULA)``.</span>
+
+<span class="sd">    Where `FORMULA` is a valid formula.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">formula_name</span> <span class="o">=</span> <span class="s">&#39;var&#39;</span>
+
+
+<span class="c"># dict of formula names to aggregation classes</span></div>
+<span class="n">AGGREGATIONS</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="n">cls</span><span class="o">.</span><span class="n">formula_name</span><span class="p">:</span> <span class="n">cls</span> <span class="k">for</span> <span class="n">cls</span> <span class="ow">in</span>
+    <span class="n">Aggregation</span><span class="o">.</span><span class="n">__subclasses__</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">cls</span><span class="o">.</span><span class="n">formula_name</span>
+<span class="p">}</span>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">bamboo 0.6.3 alpha documentation</a> &raquo;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Module code</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &copy; Copyright 2013, Peter Lubell-Doughtie, Mark Johnston.
+    </div>
+  </body>
+</html>

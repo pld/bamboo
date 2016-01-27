@@ -1,0 +1,204 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Calculations &mdash; bamboo 0.6.3 alpha documentation</title>
+    
+    <link rel="stylesheet" href="_static/nature.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '0.6.3 alpha',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="top" title="bamboo 0.6.3 alpha documentation" href="index.html" />
+    <link rel="next" title="Aggregations" href="aggregations.html" />
+    <link rel="prev" title="Advanced Commands" href="advanced_commands.html" /> 
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="aggregations.html" title="Aggregations"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="advanced_commands.html" title="Advanced Commands"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">bamboo 0.6.3 alpha documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="calculations">
+<h1>Calculations<a class="headerlink" href="#calculations" title="Permalink to this headline">¶</a></h1>
+<p>Below is a list of valid calculations which can be included in a formula.</p>
+<p>The arguments to the aggregation are column names, e.g. <code class="docutils literal"><span class="pre">amount</span></code>, or formulas
+themselves, e.g. <code class="docutils literal"><span class="pre">risk_factor</span> <span class="pre">in</span> <span class="pre">[&quot;low_risk&quot;]</span></code>.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">Calculations can also be passed into aggregations.</p>
+</div>
+<div class="section" id="arithmetic">
+<h2>Arithmetic<a class="headerlink" href="#arithmetic" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-sh"><div class="highlight"><pre>radius * 2
+length ^ 3
+female_students + male_students
+gross_revenue - liabilities
+net_revenue / 12
+total_students / total_teachers
+</pre></div>
+</div>
+</div>
+<div class="section" id="precedence">
+<h2>Precedence<a class="headerlink" href="#precedence" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-sh"><div class="highlight"><pre><span class="o">(</span>gross_revenue - liabilities<span class="o">)</span> / 12
+</pre></div>
+</div>
+</div>
+<div class="section" id="comparison">
+<h2>Comparison<a class="headerlink" href="#comparison" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-sh"><div class="highlight"><pre>female_students &gt; male_students
+<span class="nv">average_age</span> <span class="o">==</span> 18
+</pre></div>
+</div>
+</div>
+<div class="section" id="propositional-formulas">
+<h2>Propositional Formulas<a class="headerlink" href="#propositional-formulas" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-sh"><div class="highlight"><pre>age &gt; <span class="m">17</span> age &lt; 22
+not <span class="o">(</span><span class="nv">month</span> <span class="o">==</span> <span class="m">7</span> or <span class="nv">month</span> <span class="o">==</span> 12<span class="o">)</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="membership">
+<h2>Membership<a class="headerlink" href="#membership" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-sh"><div class="highlight"><pre>risk_factor in <span class="o">[</span><span class="s2">&quot;low_risk&quot;</span>, <span class="s2">&quot;medium_risk&quot;</span><span class="o">]</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="date-arithmetic">
+<h2>Date Arithmetic<a class="headerlink" href="#date-arithmetic" title="Permalink to this headline">¶</a></h2>
+<p>For the time being all date arithmetic is performed in seconds.</p>
+<div class="highlight-sh"><div class="highlight"><pre>date<span class="o">(</span><span class="s2">&quot;09-04-2012&quot;</span><span class="o">)</span> - submit_date &gt; 21078000
+</pre></div>
+</div>
+<p>To calculate dynamic time periods, such as age, you can use the <cite>today</cite>
+function:</p>
+<div class="highlight-sh"><div class="highlight"><pre>today<span class="o">()</span> - submit_date &gt; 21078000
+</pre></div>
+</div>
+</div>
+<div class="section" id="case-statements">
+<h2>Case Statements<a class="headerlink" href="#case-statements" title="Permalink to this headline">¶</a></h2>
+<p>Analogous to the case or switch statement in other programming languages.</p>
+<div class="highlight-sh"><div class="highlight"><pre><span class="k">case</span> student_teacher_ratio &gt; 0.6: <span class="s2">&quot;good&quot;</span>, student_teacher_ratio &gt; 0.3: <span class="s2">&quot;moderate&quot;</span>, default: <span class="s2">&quot;poor&quot;</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="transformations">
+<h2>Transformations<a class="headerlink" href="#transformations" title="Permalink to this headline">¶</a></h2>
+<p>Transformations are functions that convert a scalar into another scalar
+based on a vector.</p>
+<div class="highlight-sh"><div class="highlight"><pre>percentile<span class="o">(</span>amount<span class="o">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Calculations</a><ul>
+<li><a class="reference internal" href="#arithmetic">Arithmetic</a></li>
+<li><a class="reference internal" href="#precedence">Precedence</a></li>
+<li><a class="reference internal" href="#comparison">Comparison</a></li>
+<li><a class="reference internal" href="#propositional-formulas">Propositional Formulas</a></li>
+<li><a class="reference internal" href="#membership">Membership</a></li>
+<li><a class="reference internal" href="#date-arithmetic">Date Arithmetic</a></li>
+<li><a class="reference internal" href="#case-statements">Case Statements</a></li>
+<li><a class="reference internal" href="#transformations">Transformations</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="advanced_commands.html"
+                        title="previous chapter">Advanced Commands</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="aggregations.html"
+                        title="next chapter">Aggregations</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/calculations.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="aggregations.html" title="Aggregations"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="advanced_commands.html" title="Advanced Commands"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">bamboo 0.6.3 alpha documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &copy; Copyright 2013, Peter Lubell-Doughtie, Mark Johnston.
+    </div>
+  </body>
+</html>

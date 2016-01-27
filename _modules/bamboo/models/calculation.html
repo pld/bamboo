@@ -1,0 +1,425 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>bamboo.models.calculation &mdash; bamboo 0.6.3 alpha documentation</title>
+    
+    <link rel="stylesheet" href="../../../_static/nature.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../',
+        VERSION:     '0.6.3 alpha',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="top" title="bamboo 0.6.3 alpha documentation" href="../../../index.html" />
+    <link rel="up" title="Module code" href="../../index.html" /> 
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">bamboo 0.6.3 alpha documentation</a> &raquo;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" accesskey="U">Module code</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for bamboo.models.calculation</h1><div class="highlight"><pre>
+<span class="kn">import</span> <span class="nn">traceback</span>
+
+<span class="kn">from</span> <span class="nn">celery.task</span> <span class="kn">import</span> <span class="n">Task</span><span class="p">,</span> <span class="n">task</span>
+
+<span class="kn">from</span> <span class="nn">bamboo.core.calculator</span> <span class="kn">import</span> <span class="n">calculate_columns</span>
+<span class="kn">from</span> <span class="nn">bamboo.core.frame</span> <span class="kn">import</span> <span class="n">DATASET_ID</span>
+<span class="kn">from</span> <span class="nn">bamboo.core.parser</span> <span class="kn">import</span> <span class="n">Parser</span>
+<span class="kn">from</span> <span class="nn">bamboo.lib.async</span> <span class="kn">import</span> <span class="n">call_async</span>
+<span class="kn">from</span> <span class="nn">bamboo.lib.exceptions</span> <span class="kn">import</span> <span class="n">ArgumentError</span>
+<span class="kn">from</span> <span class="nn">bamboo.lib.query_args</span> <span class="kn">import</span> <span class="n">QueryArgs</span>
+<span class="kn">from</span> <span class="nn">bamboo.lib.schema_builder</span> <span class="kn">import</span> <span class="n">make_unique</span>
+<span class="kn">from</span> <span class="nn">bamboo.lib.utils</span> <span class="kn">import</span> <span class="n">to_list</span>
+<span class="kn">from</span> <span class="nn">bamboo.models.abstract_model</span> <span class="kn">import</span> <span class="n">AbstractModel</span>
+
+
+<span class="k">class</span> <span class="nc">CalculateTask</span><span class="p">(</span><span class="n">Task</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">after_return</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">status</span><span class="p">,</span> <span class="n">retval</span><span class="p">,</span> <span class="n">task_id</span><span class="p">,</span> <span class="n">args</span><span class="p">,</span> <span class="n">kwargs</span><span class="p">,</span> <span class="n">einfo</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">status</span> <span class="o">==</span> <span class="s">&#39;FAILURE&#39;</span><span class="p">:</span>
+            <span class="n">calculations</span> <span class="o">=</span> <span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+            <span class="k">for</span> <span class="n">calculation</span> <span class="ow">in</span> <span class="n">calculations</span><span class="p">:</span>
+                <span class="n">calculation</span><span class="o">.</span><span class="n">failed</span><span class="p">(</span><span class="n">traceback</span><span class="o">.</span><span class="n">format_exc</span><span class="p">())</span>
+
+
+<span class="k">class</span> <span class="nc">DependencyError</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
+    <span class="k">pass</span>
+
+
+<span class="k">class</span> <span class="nc">UniqueCalculationError</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">current_names</span><span class="p">):</span>
+        <span class="n">current_names_str</span> <span class="o">=</span> <span class="s">&#39;&quot;, &quot;&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">current_names</span><span class="p">)</span>
+        <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span><span class="s">&#39;The calculation name &quot;</span><span class="si">%s</span><span class="s">&quot; is not unique for this dataset. Plea&#39;</span>
+               <span class="s">&#39;se choose a name that does not exists.  The current names are:&#39;</span>
+               <span class="s">&#39;&quot;</span><span class="si">%s</span><span class="s">&quot;&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">current_names_str</span><span class="p">))</span>
+
+        <span class="ne">Exception</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">msg</span><span class="p">)</span>
+
+
+<span class="nd">@task</span><span class="p">(</span><span class="n">base</span><span class="o">=</span><span class="n">CalculateTask</span><span class="p">,</span> <span class="n">default_retry_delay</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">max_retries</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>
+      <span class="n">ignore_result</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">calculate_task</span><span class="p">(</span><span class="n">calculations</span><span class="p">,</span> <span class="n">dataset</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Background task to run a calculation.</span>
+
+<span class="sd">    Set calculation to failed and raise if an exception occurs.</span>
+
+<span class="sd">    :param calculation: Calculation to run.</span>
+<span class="sd">    :param dataset: Dataset to run calculation on.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c"># block until other calculations for this dataset are finished</span>
+    <span class="n">calculations</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">restart_if_has_pending</span><span class="p">(</span><span class="n">dataset</span><span class="p">,</span> <span class="n">calculations</span><span class="p">[</span><span class="mi">1</span><span class="p">:])</span>
+
+    <span class="n">calculate_columns</span><span class="p">(</span><span class="n">dataset</span><span class="o">.</span><span class="n">reload</span><span class="p">(),</span> <span class="n">calculations</span><span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">calculation</span> <span class="ow">in</span> <span class="n">calculations</span><span class="p">:</span>
+        <span class="n">calculation</span><span class="o">.</span><span class="n">add_dependencies</span><span class="p">(</span>
+            <span class="n">dataset</span><span class="p">,</span> <span class="n">Parser</span><span class="o">.</span><span class="n">dependent_columns</span><span class="p">(</span><span class="n">calculation</span><span class="o">.</span><span class="n">formula</span><span class="p">,</span> <span class="n">dataset</span><span class="p">))</span>
+
+        <span class="k">if</span> <span class="n">calculation</span><span class="o">.</span><span class="n">aggregation</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">aggregated_id</span> <span class="o">=</span> <span class="n">dataset</span><span class="o">.</span><span class="n">aggregated_datasets_dict</span><span class="p">[</span><span class="n">calculation</span><span class="o">.</span><span class="n">group</span><span class="p">]</span>
+            <span class="n">calculation</span><span class="o">.</span><span class="n">set_aggregation_id</span><span class="p">(</span><span class="n">aggregated_id</span><span class="p">)</span>
+
+        <span class="n">calculation</span><span class="o">.</span><span class="n">ready</span><span class="p">()</span>
+
+
+<span class="k">def</span> <span class="nf">_check_name_and_make_unique</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">dataset</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Check that the name is valid and make unique if valid.</span>
+
+<span class="sd">    :param name: The name to make unique.</span>
+<span class="sd">    :param dataset: The dataset to make unique for.</span>
+<span class="sd">    :raises: `UniqueCalculationError` if not unique.</span>
+<span class="sd">    :returns: A unique name.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">current_names</span> <span class="o">=</span> <span class="n">dataset</span><span class="o">.</span><span class="n">labels</span>
+
+    <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">current_names</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">UniqueCalculationError</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">current_names</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">make_unique</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">dataset</span><span class="o">.</span><span class="n">schema</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+
+
+<span class="nd">@task</span><span class="p">(</span><span class="n">ignore_result</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">delete_task</span><span class="p">(</span><span class="n">calculation</span><span class="p">,</span> <span class="n">dataset</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Background task to delete `calculation` and columns in its dataset.</span>
+
+<span class="sd">    :param calculation: Calculation to delete.</span>
+<span class="sd">    :param dataset: Dataset for this calculation.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">slug</span> <span class="o">=</span> <span class="n">dataset</span><span class="o">.</span><span class="n">schema</span><span class="o">.</span><span class="n">labels_to_slugs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">calculation</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">slug</span><span class="p">:</span>
+        <span class="n">dataset</span><span class="o">.</span><span class="n">delete_columns</span><span class="p">(</span><span class="n">slug</span><span class="p">)</span>
+        <span class="n">dataset</span><span class="o">.</span><span class="n">clear_summary_stats</span><span class="p">(</span><span class="n">column</span><span class="o">=</span><span class="n">slug</span><span class="p">)</span>
+
+    <span class="n">calculation</span><span class="o">.</span><span class="n">remove_dependencies</span><span class="p">()</span>
+
+    <span class="nb">super</span><span class="p">(</span><span class="n">calculation</span><span class="o">.</span><span class="n">__class__</span><span class="p">,</span> <span class="n">calculation</span><span class="p">)</span><span class="o">.</span><span class="n">delete</span><span class="p">({</span>
+        <span class="n">DATASET_ID</span><span class="p">:</span> <span class="n">calculation</span><span class="o">.</span><span class="n">dataset_id</span><span class="p">,</span>
+        <span class="n">calculation</span><span class="o">.</span><span class="n">NAME</span><span class="p">:</span> <span class="n">calculation</span><span class="o">.</span><span class="n">name</span><span class="p">})</span>
+
+
+<div class="viewcode-block" id="Calculation"><a class="viewcode-back" href="../../../models.html#bamboo.models.calculation.Calculation">[docs]</a><span class="k">class</span> <span class="nc">Calculation</span><span class="p">(</span><span class="n">AbstractModel</span><span class="p">):</span>
+
+    <span class="n">__collectionname__</span> <span class="o">=</span> <span class="s">&#39;calculations&#39;</span>
+
+    <span class="n">AGGREGATION</span> <span class="o">=</span> <span class="s">&#39;aggregation&#39;</span>
+    <span class="n">AGGREGATION_ID</span> <span class="o">=</span> <span class="s">&#39;aggregation_id&#39;</span>
+    <span class="n">DEPENDENCIES</span> <span class="o">=</span> <span class="s">&#39;dependencies&#39;</span>
+    <span class="n">DEPENDENT_CALCULATIONS</span> <span class="o">=</span> <span class="s">&#39;dependent_calculations&#39;</span>
+    <span class="n">FORMULA</span> <span class="o">=</span> <span class="s">&#39;formula&#39;</span>
+    <span class="n">GROUP</span> <span class="o">=</span> <span class="s">&#39;group&#39;</span>
+    <span class="n">NAME</span> <span class="o">=</span> <span class="s">&#39;name&#39;</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">aggregation</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">record</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">AGGREGATION</span><span class="p">]</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">aggregation_id</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">record</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">AGGREGATION_ID</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">dataset_id</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">record</span><span class="p">[</span><span class="n">DATASET_ID</span><span class="p">]</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">dependencies</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">record</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">DEPENDENCIES</span><span class="p">,</span> <span class="p">[])</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">dependent_calculations</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">record</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">DEPENDENT_CALCULATIONS</span><span class="p">,</span> <span class="p">[])</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">formula</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">record</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">FORMULA</span><span class="p">]</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">group</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">record</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">GROUP</span><span class="p">]</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">groups_as_list</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">split_groups</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">group</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">name</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">record</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">NAME</span><span class="p">]</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">create</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">dataset</span><span class="p">,</span> <span class="n">formula</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">group</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="n">calculation</span> <span class="o">=</span> <span class="nb">super</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">cls</span><span class="p">)</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="n">dataset</span><span class="p">,</span> <span class="n">formula</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">group</span><span class="p">)</span>
+        <span class="n">call_async</span><span class="p">(</span><span class="n">calculate_task</span><span class="p">,</span> <span class="p">[</span><span class="n">calculation</span><span class="p">],</span> <span class="n">dataset</span><span class="o">.</span><span class="n">clear_cache</span><span class="p">())</span>
+
+        <span class="k">return</span> <span class="n">calculation</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">create_from_list_or_dict</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">dataset</span><span class="p">,</span> <span class="n">calculations</span><span class="p">):</span>
+        <span class="n">calculations</span> <span class="o">=</span> <span class="n">to_list</span><span class="p">(</span><span class="n">calculations</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">len</span><span class="p">(</span><span class="n">calculations</span><span class="p">)</span> <span class="ow">or</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">calculations</span><span class="p">,</span> <span class="nb">list</span><span class="p">)</span> <span class="ow">or</span>\
+                <span class="nb">any</span><span class="p">([</span><span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">e</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">calculations</span><span class="p">]):</span>
+            <span class="k">raise</span> <span class="n">ArgumentError</span><span class="p">(</span><span class="s">&#39;Improper format for JSON calculations.&#39;</span><span class="p">)</span>
+
+        <span class="n">parsed_calculations</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="c"># Pull out args to check JSON format</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">calculations</span><span class="p">:</span>
+                <span class="n">groups</span> <span class="o">=</span> <span class="n">c</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&quot;groups&quot;</span><span class="p">)</span>
+
+                <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">groups</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+                    <span class="n">groups</span> <span class="o">=</span> <span class="p">[</span><span class="n">groups</span><span class="p">]</span>
+
+                <span class="k">for</span> <span class="n">group</span> <span class="ow">in</span> <span class="n">groups</span><span class="p">:</span>
+                    <span class="n">parsed_calculations</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                        <span class="p">[</span><span class="n">c</span><span class="p">[</span><span class="n">cls</span><span class="o">.</span><span class="n">FORMULA</span><span class="p">],</span> <span class="n">c</span><span class="p">[</span><span class="n">cls</span><span class="o">.</span><span class="n">NAME</span><span class="p">],</span> <span class="n">group</span><span class="p">])</span>
+        <span class="k">except</span> <span class="ne">KeyError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">ArgumentError</span><span class="p">(</span><span class="s">&#39;Required key </span><span class="si">%s</span><span class="s"> not found in JSON&#39;</span> <span class="o">%</span> <span class="n">e</span><span class="p">)</span>
+
+        <span class="c"># Save instead of create so that we calculate on all at once.</span>
+        <span class="n">calculations</span> <span class="o">=</span> <span class="p">[</span><span class="n">cls</span><span class="p">()</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">dataset</span><span class="p">,</span> <span class="n">formula</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">group</span><span class="p">)</span>
+                        <span class="k">for</span> <span class="n">formula</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">group</span> <span class="ow">in</span> <span class="n">parsed_calculations</span><span class="p">]</span>
+        <span class="n">call_async</span><span class="p">(</span><span class="n">calculate_task</span><span class="p">,</span> <span class="n">calculations</span><span class="p">,</span> <span class="n">dataset</span><span class="o">.</span><span class="n">clear_cache</span><span class="p">())</span>
+
+    <span class="nd">@classmethod</span>
+<div class="viewcode-block" id="Calculation.find"><a class="viewcode-back" href="../../../models.html#bamboo.models.calculation.Calculation.find">[docs]</a>    <span class="k">def</span> <span class="nf">find</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">dataset</span><span class="p">,</span> <span class="n">include_aggs</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">only_aggs</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Return the calculations for`dataset`.</span>
+
+<span class="sd">        :param dataset: The dataset to retrieve the calculations for.</span>
+<span class="sd">        :param include_aggs: Include aggregations, default True.</span>
+<span class="sd">        :param only_aggs: Exclude non-aggregations, default False.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">query</span> <span class="o">=</span> <span class="p">{</span><span class="n">DATASET_ID</span><span class="p">:</span> <span class="n">dataset</span><span class="o">.</span><span class="n">dataset_id</span><span class="p">}</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">include_aggs</span><span class="p">:</span>
+            <span class="n">query</span><span class="p">[</span><span class="n">cls</span><span class="o">.</span><span class="n">AGGREGATION</span><span class="p">]</span> <span class="o">=</span> <span class="bp">None</span>
+
+        <span class="k">if</span> <span class="n">only_aggs</span><span class="p">:</span>
+            <span class="n">query</span><span class="p">[</span><span class="n">cls</span><span class="o">.</span><span class="n">AGGREGATION</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s">&#39;$ne&#39;</span><span class="p">:</span> <span class="bp">None</span><span class="p">}</span>
+
+        <span class="n">query_args</span> <span class="o">=</span> <span class="n">QueryArgs</span><span class="p">(</span><span class="n">query</span><span class="o">=</span><span class="n">query</span><span class="p">,</span> <span class="n">order_by</span><span class="o">=</span><span class="s">&#39;name&#39;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="nb">super</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">cls</span><span class="p">)</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="n">query_args</span><span class="p">)</span>
+</div>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">find_one</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">dataset_id</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">group</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="n">query</span> <span class="o">=</span> <span class="p">{</span><span class="n">DATASET_ID</span><span class="p">:</span> <span class="n">dataset_id</span><span class="p">,</span> <span class="n">cls</span><span class="o">.</span><span class="n">NAME</span><span class="p">:</span> <span class="n">name</span><span class="p">}</span>
+
+        <span class="k">if</span> <span class="n">group</span><span class="p">:</span>
+            <span class="n">query</span><span class="p">[</span><span class="n">cls</span><span class="o">.</span><span class="n">GROUP</span><span class="p">]</span> <span class="o">=</span> <span class="n">group</span>
+
+        <span class="k">return</span> <span class="nb">super</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">cls</span><span class="p">)</span><span class="o">.</span><span class="n">find_one</span><span class="p">(</span><span class="n">query</span><span class="p">)</span>
+
+<div class="viewcode-block" id="Calculation.add_dependencies"><a class="viewcode-back" href="../../../models.html#bamboo.models.calculation.Calculation.add_dependencies">[docs]</a>    <span class="k">def</span> <span class="nf">add_dependencies</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dataset</span><span class="p">,</span> <span class="n">dependent_columns</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Store calculation dependencies.&quot;&quot;&quot;</span>
+        <span class="n">calculations</span> <span class="o">=</span> <span class="n">dataset</span><span class="o">.</span><span class="n">calculations</span><span class="p">()</span>
+        <span class="n">names_to_calcs</span> <span class="o">=</span> <span class="p">{</span><span class="n">calc</span><span class="o">.</span><span class="n">name</span><span class="p">:</span> <span class="n">calc</span> <span class="k">for</span> <span class="n">calc</span> <span class="ow">in</span> <span class="n">calculations</span><span class="p">}</span>
+
+        <span class="k">for</span> <span class="n">column_name</span> <span class="ow">in</span> <span class="n">dependent_columns</span><span class="p">:</span>
+            <span class="n">calc</span> <span class="o">=</span> <span class="n">names_to_calcs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">column_name</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">calc</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">add_dependency</span><span class="p">(</span><span class="n">calc</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+                <span class="n">calc</span><span class="o">.</span><span class="n">add_dependent_calculation</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+</div>
+    <span class="k">def</span> <span class="nf">add_dependency</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__add_and_update_set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">DEPENDENCIES</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">dependencies</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">add_dependent_calculation</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__add_and_update_set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">DEPENDENT_CALCULATIONS</span><span class="p">,</span>
+                                  <span class="bp">self</span><span class="o">.</span><span class="n">dependent_calculations</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
+
+<div class="viewcode-block" id="Calculation.delete"><a class="viewcode-back" href="../../../models.html#bamboo.models.calculation.Calculation.delete">[docs]</a>    <span class="k">def</span> <span class="nf">delete</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dataset</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Delete this calculation.</span>
+
+<span class="sd">        First ensure that there are no other calculations which depend on this</span>
+<span class="sd">        one. If not, start a background task to delete the calculation.</span>
+
+<span class="sd">        :param dataset: Dataset for this calculation.</span>
+
+<span class="sd">        :raises: `DependencyError` if dependent calculations exist.</span>
+<span class="sd">        :raises: `ArgumentError` if group is not in DataSet or calculation does</span>
+<span class="sd">            not exist for DataSet.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dependent_calculations</span><span class="p">):</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="s">&#39;Cannot delete, calculations </span><span class="si">%s</span><span class="s"> depend on this calculation.&#39;</span>
+            <span class="k">raise</span> <span class="n">DependencyError</span><span class="p">(</span><span class="n">msg</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">dependent_calculations</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">group</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="c"># it is an aggregate calculation</span>
+            <span class="n">dataset</span> <span class="o">=</span> <span class="n">dataset</span><span class="o">.</span><span class="n">aggregated_dataset</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">group</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">dataset</span><span class="p">:</span>
+                <span class="n">msg</span> <span class="o">=</span> <span class="s">&#39;Aggregation with group &quot;</span><span class="si">%s</span><span class="s">&quot; does not exist for dataset.&#39;</span>
+                <span class="k">raise</span> <span class="n">ArgumentError</span><span class="p">(</span><span class="n">msg</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">group</span><span class="p">)</span>
+
+        <span class="n">call_async</span><span class="p">(</span><span class="n">delete_task</span><span class="p">,</span> <span class="bp">self</span><span class="p">,</span> <span class="n">dataset</span><span class="p">)</span>
+</div>
+    <span class="k">def</span> <span class="nf">remove_dependent_calculation</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
+        <span class="n">new_dependent_calcs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dependent_calculations</span>
+        <span class="n">new_dependent_calcs</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="bp">self</span><span class="o">.</span><span class="n">DEPENDENT_CALCULATIONS</span><span class="p">:</span> <span class="n">new_dependent_calcs</span><span class="p">})</span>
+
+    <span class="k">def</span> <span class="nf">remove_dependencies</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">dependencies</span><span class="p">:</span>
+            <span class="n">calculation</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">find_one</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dataset_id</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
+            <span class="n">calculation</span><span class="o">.</span><span class="n">remove_dependent_calculation</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">restart_if_has_pending</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dataset</span><span class="p">,</span> <span class="n">current_calcs</span><span class="o">=</span><span class="p">[]):</span>
+        <span class="n">current_names</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">]</span> <span class="o">+</span> <span class="p">[</span><span class="n">c</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">current_calcs</span><span class="p">])</span>
+        <span class="n">unfinished</span> <span class="o">=</span> <span class="p">[</span><span class="n">c</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">dataset</span><span class="o">.</span><span class="n">calculations</span><span class="p">()</span> <span class="k">if</span> <span class="n">c</span><span class="o">.</span><span class="n">is_pending</span><span class="p">]</span>
+        <span class="n">unfinished_names</span> <span class="o">=</span> <span class="p">[</span><span class="n">c</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">unfinished</span><span class="p">[:</span><span class="nb">len</span><span class="p">(</span><span class="n">current_names</span><span class="p">)]]</span>
+
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">unfinished</span><span class="p">)</span> <span class="ow">and</span> <span class="n">current_names</span> <span class="o">!=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">unfinished_names</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="n">calculate_task</span><span class="o">.</span><span class="n">retry</span><span class="p">()</span>
+
+<div class="viewcode-block" id="Calculation.save"><a class="viewcode-back" href="../../../models.html#bamboo.models.calculation.Calculation.save">[docs]</a>    <span class="k">def</span> <span class="nf">save</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dataset</span><span class="p">,</span> <span class="n">formula</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">group_str</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Parse, save, and calculate a formula.</span>
+
+<span class="sd">        Validate `formula` and `group_str` for the given `dataset`. If the</span>
+<span class="sd">        formula and group are valid for the dataset, then save a new</span>
+<span class="sd">        calculation for them under `name`. Finally, create a background task</span>
+<span class="sd">        to compute the calculation.</span>
+
+<span class="sd">        Calculations are initially saved in a **pending** state, after the</span>
+<span class="sd">        calculation has finished processing it will be in a **ready** state.</span>
+
+<span class="sd">        :param dataset: The DataSet to save.</span>
+<span class="sd">        :param formula: The formula to save.</span>
+<span class="sd">        :param name: The name of the formula.</span>
+<span class="sd">        :param group_str: Columns to group on.</span>
+<span class="sd">        :type group_str: String, list or strings, or None.</span>
+
+<span class="sd">        :raises: `ParseError` if an invalid formula was supplied.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c"># ensure that the formula is parsable</span>
+        <span class="n">groups</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">split_groups</span><span class="p">(</span><span class="n">group_str</span><span class="p">)</span> <span class="k">if</span> <span class="n">group_str</span> <span class="k">else</span> <span class="p">[]</span>
+        <span class="n">Parser</span><span class="o">.</span><span class="n">validate</span><span class="p">(</span><span class="n">dataset</span><span class="p">,</span> <span class="n">formula</span><span class="p">,</span> <span class="n">groups</span><span class="p">)</span>
+        <span class="n">aggregation</span> <span class="o">=</span> <span class="n">Parser</span><span class="o">.</span><span class="n">parse_aggregation</span><span class="p">(</span><span class="n">formula</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">aggregation</span><span class="p">:</span>
+            <span class="c"># set group if aggregation and group unset</span>
+            <span class="n">group_str</span> <span class="o">=</span> <span class="n">group_str</span> <span class="ow">or</span> <span class="s">&#39;&#39;</span>
+
+            <span class="c"># check that name is unique for aggregation</span>
+            <span class="n">aggregated_dataset</span> <span class="o">=</span> <span class="n">dataset</span><span class="o">.</span><span class="n">aggregated_dataset</span><span class="p">(</span><span class="n">groups</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="n">aggregated_dataset</span><span class="p">:</span>
+                <span class="n">name</span> <span class="o">=</span> <span class="n">_check_name_and_make_unique</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">aggregated_dataset</span><span class="p">)</span>
+
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c"># set group if aggregation and group unset</span>
+            <span class="n">name</span> <span class="o">=</span> <span class="n">_check_name_and_make_unique</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">dataset</span><span class="p">)</span>
+
+        <span class="n">record</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="n">DATASET_ID</span><span class="p">:</span> <span class="n">dataset</span><span class="o">.</span><span class="n">dataset_id</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">AGGREGATION</span><span class="p">:</span> <span class="n">aggregation</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">FORMULA</span><span class="p">:</span> <span class="n">formula</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">GROUP</span><span class="p">:</span> <span class="n">group_str</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">NAME</span><span class="p">:</span> <span class="n">name</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">STATE</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">STATE_PENDING</span><span class="p">,</span>
+        <span class="p">}</span>
+        <span class="nb">super</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">__class__</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">record</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="bp">self</span>
+</div>
+    <span class="k">def</span> <span class="nf">set_aggregation_id</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">_id</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="bp">self</span><span class="o">.</span><span class="n">AGGREGATION_ID</span><span class="p">:</span> <span class="n">_id</span><span class="p">})</span>
+
+    <span class="k">def</span> <span class="nf">__add_and_update_set</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">link_key</span><span class="p">,</span> <span class="n">existing</span><span class="p">,</span> <span class="n">new</span><span class="p">):</span>
+        <span class="n">new_list</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">existing</span> <span class="o">+</span> <span class="p">[</span><span class="n">new</span><span class="p">]))</span>
+
+        <span class="k">if</span> <span class="n">new_list</span> <span class="o">!=</span> <span class="n">existing</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="n">link_key</span><span class="p">:</span> <span class="n">new_list</span><span class="p">})</span></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">bamboo 0.6.3 alpha documentation</a> &raquo;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Module code</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &copy; Copyright 2013, Peter Lubell-Doughtie, Mark Johnston.
+    </div>
+  </body>
+</html>

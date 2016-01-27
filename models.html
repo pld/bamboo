@@ -1,0 +1,1026 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Models &mdash; bamboo 0.6.3 alpha documentation</title>
+    
+    <link rel="stylesheet" href="_static/nature.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '0.6.3 alpha',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="top" title="bamboo 0.6.3 alpha documentation" href="index.html" />
+    <link rel="next" title="Server Setup" href="server_setup.html" />
+    <link rel="prev" title="Lib" href="lib.html" /> 
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="server_setup.html" title="Server Setup"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="lib.html" title="Lib"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">bamboo 0.6.3 alpha documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="models">
+<h1>Models<a class="headerlink" href="#models" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="abstractmodel">
+<h2>AbstractModel<a class="headerlink" href="#abstractmodel" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="bamboo.models.abstract_model.AbstractModel">
+<em class="property">class </em><code class="descclassname">bamboo.models.abstract_model.</code><code class="descname">AbstractModel</code><span class="sig-paren">(</span><em>record=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bamboo/models/abstract_model.html#AbstractModel"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bamboo.models.abstract_model.AbstractModel" title="Permalink to this definition">¶</a></dt>
+<dd><p>An abstact class for all MongoDB models.</p>
+<p>Attributes:</p>
+<ul class="simple">
+<li>__collection__: The MongoDB collection to communicate with.</li>
+<li>STATE: A key with which to store state.</li>
+<li>STATE_PENDING: A value for the pending state.</li>
+<li>STATE_READY: A value for the ready state.</li>
+</ul>
+<dl class="attribute">
+<dt id="bamboo.models.abstract_model.AbstractModel.clean_record">
+<code class="descname">clean_record</code><a class="headerlink" href="#bamboo.models.abstract_model.AbstractModel.clean_record" title="Permalink to this definition">¶</a></dt>
+<dd><p>Remove reserved keys from records.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="bamboo.models.abstract_model.AbstractModel.delete">
+<code class="descname">delete</code><span class="sig-paren">(</span><em>query</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bamboo/models/abstract_model.html#AbstractModel.delete"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bamboo.models.abstract_model.AbstractModel.delete" title="Permalink to this definition">¶</a></dt>
+<dd><p>Delete rows matching query.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>query</strong> &#8211; The query for rows to delete.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="bamboo.models.abstract_model.AbstractModel.failed">
+<code class="descname">failed</code><span class="sig-paren">(</span><em>message=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bamboo/models/abstract_model.html#AbstractModel.failed"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bamboo.models.abstract_model.AbstractModel.failed" title="Permalink to this definition">¶</a></dt>
+<dd><p>Perist the state of the current instance to <cite>STATE_FAILED</cite>.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Params message:</th><td class="field-body">A string store as the error message, default None.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="classmethod">
+<dt id="bamboo.models.abstract_model.AbstractModel.find">
+<em class="property">classmethod </em><code class="descname">find</code><span class="sig-paren">(</span><em>query_args</em>, <em>as_dict=False</em>, <em>as_cursor=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bamboo/models/abstract_model.html#AbstractModel.find"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bamboo.models.abstract_model.AbstractModel.find" title="Permalink to this definition">¶</a></dt>
+<dd><p>An interface to MongoDB&#8217;s find functionality.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>query_args</strong> &#8211; An optional QueryArgs to hold the query arguments.</li>
+<li><strong>as_cursor</strong> &#8211; If True, return the cursor.</li>
+<li><strong>as_dict</strong> &#8211; If True, return dicts and not model instances.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">A list of dicts or model instances for each row returned.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="classmethod">
+<dt id="bamboo.models.abstract_model.AbstractModel.find_one">
+<em class="property">classmethod </em><code class="descname">find_one</code><span class="sig-paren">(</span><em>query</em>, <em>select=None</em>, <em>as_dict=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bamboo/models/abstract_model.html#AbstractModel.find_one"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bamboo.models.abstract_model.AbstractModel.find_one" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the first row matching <cite>query</cite> and <cite>select</cite> from MongoDB.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>query</strong> &#8211; A query to pass to MongoDB.</li>
+<li><strong>select</strong> &#8211; An optional select to pass to MongoDB.</li>
+<li><strong>as_dict</strong> &#8211; If true, return dicts and not model instances.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">A model instance of the row returned for this query and
+select.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="bamboo.models.abstract_model.AbstractModel.pending">
+<code class="descname">pending</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/bamboo/models/abstract_model.html#AbstractModel.pending"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bamboo.models.abstract_model.AbstractModel.pending" title="Permalink to this definition">¶</a></dt>
+<dd><p>Perist the state of the current instance to <cite>STATE_PENDING</cite></p>
+</dd></dl>
+
+<dl class="method">
+<dt id="bamboo.models.abstract_model.AbstractModel.ready">
+<code class="descname">ready</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/bamboo/models/abstract_model.html#AbstractModel.ready"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bamboo.models.abstract_model.AbstractModel.ready" title="Permalink to this definition">¶</a></dt>
+<dd><p>Perist the state of the current instance to <cite>STATE_READY</cite></p>
+</dd></dl>
+
+<dl class="method">
+<dt id="bamboo.models.abstract_model.AbstractModel.save">
+<code class="descname">save</code><span class="sig-paren">(</span><em>record</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bamboo/models/abstract_model.html#AbstractModel.save"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bamboo.models.abstract_model.AbstractModel.save" title="Permalink to this definition">¶</a></dt>
+<dd><p>Save <cite>record</cite> in this model&#8217;s collection.</p>
+<p>Save the record in the model instance&#8217;s collection and set the internal
+record of this instance to the passed in record.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>record</strong> &#8211; The dict to save in the model&#8217;s collection.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">The record passed in.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="classmethod">
+<dt id="bamboo.models.abstract_model.AbstractModel.set_collection">
+<em class="property">classmethod </em><code class="descname">set_collection</code><span class="sig-paren">(</span><em>collection_name</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bamboo/models/abstract_model.html#AbstractModel.set_collection"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bamboo.models.abstract_model.AbstractModel.set_collection" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return a MongoDB collection for the passed name.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>collection_name</strong> &#8211; The name of collection to return.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">A MongoDB collection from the current database.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="bamboo.models.abstract_model.AbstractModel.split_groups">
+<code class="descname">split_groups</code><span class="sig-paren">(</span><em>groups</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bamboo/models/abstract_model.html#AbstractModel.split_groups"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bamboo.models.abstract_model.AbstractModel.split_groups" title="Permalink to this definition">¶</a></dt>
+<dd><p>Split a string based on the group delimiter</p>
+</dd></dl>
+
+<dl class="classmethod">
+<dt id="bamboo.models.abstract_model.AbstractModel.unset">
+<em class="property">classmethod </em><code class="descname">unset</code><span class="sig-paren">(</span><em>query</em>, <em>unset_query</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bamboo/models/abstract_model.html#AbstractModel.unset"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bamboo.models.abstract_model.AbstractModel.unset" title="Permalink to this definition">¶</a></dt>
+<dd><p>Call unset with the spec <cite>query</cite> the unset document <cite>unset_query</cite>.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>query</strong> &#8211; The spec restrict updates to.</li>
+<li><strong>unset_query</strong> &#8211; The query to pass to unset.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="bamboo.models.abstract_model.AbstractModel.update">
+<code class="descname">update</code><span class="sig-paren">(</span><em>record</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bamboo/models/abstract_model.html#AbstractModel.update"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bamboo.models.abstract_model.AbstractModel.update" title="Permalink to this definition">¶</a></dt>
+<dd><p>Update the current instance with <cite>record</cite>.</p>
+<p>Update the current model instance based on its <cite>_id</cite>, set it to the
+passed in <cite>record</cite>.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>record</strong> &#8211; The record to replace the instance&#8217;s data with.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="calculation">
+<h2>Calculation<a class="headerlink" href="#calculation" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="bamboo.models.calculation.Calculation">
+<em class="property">class </em><code class="descclassname">bamboo.models.calculation.</code><code class="descname">Calculation</code><span class="sig-paren">(</span><em>record=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bamboo/models/calculation.html#Calculation"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bamboo.models.calculation.Calculation" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="method">
+<dt id="bamboo.models.calculation.Calculation.add_dependencies">
+<code class="descname">add_dependencies</code><span class="sig-paren">(</span><em>dataset</em>, <em>dependent_columns</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bamboo/models/calculation.html#Calculation.add_dependencies"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bamboo.models.calculation.Calculation.add_dependencies" title="Permalink to this definition">¶</a></dt>
+<dd><p>Store calculation dependencies.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="bamboo.models.calculation.Calculation.delete">
+<code class="descname">delete</code><span class="sig-paren">(</span><em>dataset</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bamboo/models/calculation.html#Calculation.delete"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bamboo.models.calculation.Calculation.delete" title="Permalink to this definition">¶</a></dt>
+<dd><p>Delete this calculation.</p>
+<p>First ensure that there are no other calculations which depend on this
+one. If not, start a background task to delete the calculation.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>dataset</strong> &#8211; Dataset for this calculation.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Raises:</th><td class="field-body"><cite>DependencyError</cite> if dependent calculations exist.</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Raises:</th><td class="field-body"><cite>ArgumentError</cite> if group is not in DataSet or calculation does
+not exist for DataSet.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="classmethod">
+<dt id="bamboo.models.calculation.Calculation.find">
+<em class="property">classmethod </em><code class="descname">find</code><span class="sig-paren">(</span><em>dataset</em>, <em>include_aggs=True</em>, <em>only_aggs=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bamboo/models/calculation.html#Calculation.find"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bamboo.models.calculation.Calculation.find" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the calculations for`dataset`.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>dataset</strong> &#8211; The dataset to retrieve the calculations for.</li>
+<li><strong>include_aggs</strong> &#8211; Include aggregations, default True.</li>
+<li><strong>only_aggs</strong> &#8211; Exclude non-aggregations, default False.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="bamboo.models.calculation.Calculation.save">
+<code class="descname">save</code><span class="sig-paren">(</span><em>dataset</em>, <em>formula</em>, <em>name</em>, <em>group_str=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bamboo/models/calculation.html#Calculation.save"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bamboo.models.calculation.Calculation.save" title="Permalink to this definition">¶</a></dt>
+<dd><p>Parse, save, and calculate a formula.</p>
+<p>Validate <cite>formula</cite> and <cite>group_str</cite> for the given <cite>dataset</cite>. If the
+formula and group are valid for the dataset, then save a new
+calculation for them under <cite>name</cite>. Finally, create a background task
+to compute the calculation.</p>
+<p>Calculations are initially saved in a <strong>pending</strong> state, after the
+calculation has finished processing it will be in a <strong>ready</strong> state.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>dataset</strong> &#8211; The DataSet to save.</li>
+<li><strong>formula</strong> &#8211; The formula to save.</li>
+<li><strong>name</strong> &#8211; The name of the formula.</li>
+<li><strong>group_str</strong> (<em>String, list or strings, or None.</em>) &#8211; Columns to group on.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Raises:</th><td class="field-body"><p class="first last"><cite>ParseError</cite> if an invalid formula was supplied.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="dataset">
+<h2>Dataset<a class="headerlink" href="#dataset" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="bamboo.models.dataset.Dataset">
+<em class="property">class </em><code class="descclassname">bamboo.models.dataset.</code><code class="descname">Dataset</code><span class="sig-paren">(</span><em>record=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bamboo/models/dataset.html#Dataset"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bamboo.models.dataset.Dataset" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="method">
+<dt id="bamboo.models.dataset.Dataset.add_joined_dataset">
+<code class="descname">add_joined_dataset</code><span class="sig-paren">(</span><em>new_data</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bamboo/models/dataset.html#Dataset.add_joined_dataset"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bamboo.models.dataset.Dataset.add_joined_dataset" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add the ID of <cite>new_dataset</cite> to the list of joined datasets.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="bamboo.models.dataset.Dataset.add_merged_dataset">
+<code class="descname">add_merged_dataset</code><span class="sig-paren">(</span><em>mapping</em>, <em>new_dataset</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bamboo/models/dataset.html#Dataset.add_merged_dataset"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bamboo.models.dataset.Dataset.add_merged_dataset" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add the ID of <cite>new_dataset</cite> to the list of merged datasets.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="bamboo.models.dataset.Dataset.add_observations">
+<code class="descname">add_observations</code><span class="sig-paren">(</span><em>new_data</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bamboo/models/dataset.html#Dataset.add_observations"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bamboo.models.dataset.Dataset.add_observations" title="Permalink to this definition">¶</a></dt>
+<dd><p>Update <cite>dataset</cite> with <cite>new_data</cite>.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="bamboo.models.dataset.Dataset.build_schema">
+<code class="descname">build_schema</code><span class="sig-paren">(</span><em>dframe</em>, <em>overwrite=False</em>, <em>set_num_columns=True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bamboo/models/dataset.html#Dataset.build_schema"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bamboo.models.dataset.Dataset.build_schema" title="Permalink to this definition">¶</a></dt>
+<dd><p>Build schema for a dataset.</p>
+<p>If no schema exists, build a schema from the passed <cite>dframe</cite> and store
+that schema for this dataset.  Otherwise, if a schema does exist, build
+a schema for the passed <cite>dframe</cite> and merge this schema with the current
+schema.  Keys in the new schema replace keys in the current schema but
+keys in the current schema not in the new schema are retained.</p>
+<p>If <cite>set_num_columns</cite> is True the number of columns will be set to the
+number of keys (columns) in the new schema.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>dframe</strong> &#8211; The DataFrame whose schema to merge with the current
+schema.</li>
+<li><strong>overwrite</strong> &#8211; If true replace schema, otherwise update.</li>
+<li><strong>set_num_columns</strong> &#8211; If True also set the number of columns.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="bamboo.models.dataset.Dataset.calculations">
+<code class="descname">calculations</code><span class="sig-paren">(</span><em>include_aggs=True</em>, <em>only_aggs=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bamboo/models/dataset.html#Dataset.calculations"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bamboo.models.dataset.Dataset.calculations" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the calculations for this dataset.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>include_aggs</strong> &#8211; Include aggregations, default True.</li>
+<li><strong>only_aggs</strong> &#8211; Exclude non-aggregations, default False.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="bamboo.models.dataset.Dataset.clear_summary_stats">
+<code class="descname">clear_summary_stats</code><span class="sig-paren">(</span><em>group=None</em>, <em>column=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bamboo/models/dataset.html#Dataset.clear_summary_stats"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bamboo.models.dataset.Dataset.clear_summary_stats" title="Permalink to this definition">¶</a></dt>
+<dd><p>Remove summary stats for <cite>group</cite> and optional <cite>column</cite>.</p>
+<p>By default will remove all stats.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>group</strong> &#8211; The group to remove stats for, default None.</li>
+<li><strong>column</strong> &#8211; The column to remove stats for, default None.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="bamboo.models.dataset.Dataset.count">
+<code class="descname">count</code><span class="sig-paren">(</span><em>query_args=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bamboo/models/dataset.html#Dataset.count"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bamboo.models.dataset.Dataset.count" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the count of rows matching query in dataset.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>query_args</strong> &#8211; An optional QueryArgs to hold the query arguments.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="bamboo.models.dataset.Dataset.delete">
+<code class="descname">delete</code><span class="sig-paren">(</span><em>query=None</em>, <em>countdown=0</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bamboo/models/dataset.html#Dataset.delete"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bamboo.models.dataset.Dataset.delete" title="Permalink to this definition">¶</a></dt>
+<dd><p>Delete this dataset.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>countdown</strong> &#8211; Delete dataset after this number of seconds.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="bamboo.models.dataset.Dataset.delete_columns">
+<code class="descname">delete_columns</code><span class="sig-paren">(</span><em>columns</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bamboo/models/dataset.html#Dataset.delete_columns"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bamboo.models.dataset.Dataset.delete_columns" title="Permalink to this definition">¶</a></dt>
+<dd><p>Delete column <cite>column</cite> from this dataset.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>column</strong> &#8211; The column to delete.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="bamboo.models.dataset.Dataset.delete_observation">
+<code class="descname">delete_observation</code><span class="sig-paren">(</span><em>index</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bamboo/models/dataset.html#Dataset.delete_observation"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bamboo.models.dataset.Dataset.delete_observation" title="Permalink to this definition">¶</a></dt>
+<dd><p>Delete observation at index.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Params index:</th><td class="field-body">The index of an observation to delete.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="bamboo.models.dataset.Dataset.dframe">
+<code class="descname">dframe</code><span class="sig-paren">(</span><em>query_args=None</em>, <em>keep_parent_ids=False</em>, <em>padded=False</em>, <em>index=False</em>, <em>reload_=False</em>, <em>keep_mongo_keys=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bamboo/models/dataset.html#Dataset.dframe"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bamboo.models.dataset.Dataset.dframe" title="Permalink to this definition">¶</a></dt>
+<dd><p>Fetch the dframe for this dataset.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>query_args</strong> &#8211; An optional QueryArgs to hold the query arguments.</li>
+<li><strong>keep_parent_ids</strong> &#8211; Do not remove parent IDs from the dframe,
+default False.</li>
+<li><strong>padded</strong> &#8211; Used for joining, default False.</li>
+<li><strong>index</strong> &#8211; Return the index with dframe, default False.</li>
+<li><strong>reload</strong> &#8211; Force refresh of data, default False.</li>
+<li><strong>keep_mongo_keys</strong> &#8211; Used for updating documents, default False.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">Return DataFrame with contents based on query parameters
+passed to MongoDB. DataFrame will not have parent ids if
+<cite>keep_parent_ids</cite> is False.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="classmethod">
+<dt id="bamboo.models.dataset.Dataset.find">
+<em class="property">classmethod </em><code class="descname">find</code><span class="sig-paren">(</span><em>dataset_id</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bamboo/models/dataset.html#Dataset.find"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bamboo.models.dataset.Dataset.find" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return datasets for <cite>dataset_id</cite>.</p>
+</dd></dl>
+
+<dl class="classmethod">
+<dt id="bamboo.models.dataset.Dataset.find_one">
+<em class="property">classmethod </em><code class="descname">find_one</code><span class="sig-paren">(</span><em>dataset_id</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bamboo/models/dataset.html#Dataset.find_one"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bamboo.models.dataset.Dataset.find_one" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return dataset for <cite>dataset_id</cite>.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="bamboo.models.dataset.Dataset.has_pending_updates">
+<code class="descname">has_pending_updates</code><span class="sig-paren">(</span><em>update_id</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bamboo/models/dataset.html#Dataset.has_pending_updates"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bamboo.models.dataset.Dataset.has_pending_updates" title="Permalink to this definition">¶</a></dt>
+<dd><p>Check if this dataset has pending updates.</p>
+<p>Call the update identfied by <cite>update_id</cite> the current update. A dataset
+has pending updates if, not including the current update, there are any
+pending updates and the update at the top of the queue is not the
+current update.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>update_id</strong> &#8211; An update to exclude when checking for pending
+updates.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">True if there are pending updates, False otherwise.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="bamboo.models.dataset.Dataset.info">
+<code class="descname">info</code><span class="sig-paren">(</span><em>update=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bamboo/models/dataset.html#Dataset.info"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bamboo.models.dataset.Dataset.info" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return or update meta-data for this dataset.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>update</strong> &#8211; Dictionary to update info with, default None.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">Dictionary of info for this dataset.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="bamboo.models.dataset.Dataset.join">
+<code class="descname">join</code><span class="sig-paren">(</span><em>other</em>, <em>on</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bamboo/models/dataset.html#Dataset.join"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bamboo.models.dataset.Dataset.join" title="Permalink to this definition">¶</a></dt>
+<dd><p>Join with dataset <cite>other</cite> on the passed columns.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>other</strong> &#8211; The other dataset to join.</li>
+<li><strong>on</strong> &#8211; The column in this and the <cite>other</cite> dataset to join on.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="bamboo.models.dataset.Dataset.observations">
+<code class="descname">observations</code><span class="sig-paren">(</span><em>query_args=None</em>, <em>as_cursor=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bamboo/models/dataset.html#Dataset.observations"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bamboo.models.dataset.Dataset.observations" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return observations for this dataset.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>query_args</strong> &#8211; An optional QueryArgs to hold the query arguments.</li>
+<li><strong>as_cursor</strong> &#8211; Return the observations as a cursor.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="bamboo.models.dataset.Dataset.reload">
+<code class="descname">reload</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/bamboo/models/dataset.html#Dataset.reload"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bamboo.models.dataset.Dataset.reload" title="Permalink to this definition">¶</a></dt>
+<dd><p>Reload the dataset from DB and clear any cache.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="bamboo.models.dataset.Dataset.remove_parent_observations">
+<code class="descname">remove_parent_observations</code><span class="sig-paren">(</span><em>parent_id</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bamboo/models/dataset.html#Dataset.remove_parent_observations"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bamboo.models.dataset.Dataset.remove_parent_observations" title="Permalink to this definition">¶</a></dt>
+<dd><p>Remove obervations for this dataset with the passed <cite>parent_id</cite>.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>parent_id</strong> &#8211; Remove observations with this ID as their parent
+dataset ID.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="bamboo.models.dataset.Dataset.replace_observations">
+<code class="descname">replace_observations</code><span class="sig-paren">(</span><em>dframe</em>, <em>overwrite=False</em>, <em>set_num_columns=True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bamboo/models/dataset.html#Dataset.replace_observations"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bamboo.models.dataset.Dataset.replace_observations" title="Permalink to this definition">¶</a></dt>
+<dd><p>Remove all rows for this dataset and save the rows in <cite>dframe</cite>.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>dframe</strong> &#8211; Replace rows in this dataset with this DataFrame&#8217;s rows.</li>
+<li><strong>overwrite</strong> &#8211; If true replace the schema, otherwise update it.
+Default False.</li>
+<li><strong>set_num_columns</strong> &#8211; If true update the dataset stored number of
+columns.  Default True.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">DataFrame equivalent to the passed in <cite>dframe</cite>.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="bamboo.models.dataset.Dataset.resample">
+<code class="descname">resample</code><span class="sig-paren">(</span><em>date_column</em>, <em>interval</em>, <em>how</em>, <em>query=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bamboo/models/dataset.html#Dataset.resample"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bamboo.models.dataset.Dataset.resample" title="Permalink to this definition">¶</a></dt>
+<dd><p>Resample a dataset given a new time frame.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>date_column</strong> &#8211; The date column use as the index for resampling.</li>
+<li><strong>interval</strong> &#8211; The interval code for resampling.</li>
+<li><strong>how</strong> &#8211; How to aggregate in the resample.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">A DataFrame of the resampled DataFrame for this dataset.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="bamboo.models.dataset.Dataset.rolling">
+<code class="descname">rolling</code><span class="sig-paren">(</span><em>win_type</em>, <em>window</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bamboo/models/dataset.html#Dataset.rolling"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bamboo.models.dataset.Dataset.rolling" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate a rolling window over all numeric columns.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>win_type</strong> &#8211; The type of window, see pandas pandas.rolling_window.</li>
+<li><strong>window</strong> &#8211; The number of observations used for calculating the
+window.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">A DataFrame of the rolling window calculated for this
+dataset.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="bamboo.models.dataset.Dataset.save">
+<code class="descname">save</code><span class="sig-paren">(</span><em>dataset_id=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bamboo/models/dataset.html#Dataset.save"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bamboo.models.dataset.Dataset.save" title="Permalink to this definition">¶</a></dt>
+<dd><p>Store dataset with <cite>dataset_id</cite> as the unique internal ID.</p>
+<p>Store a new dataset with an ID given by <cite>dataset_id</cite> is exists,
+otherwise reate a random UUID for this dataset. Additionally, set the
+created at time to the current time and the state to pending.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>dataset_id</strong> &#8211; The ID to store for this dataset, default is None.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">A dict representing this dataset.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="bamboo.models.dataset.Dataset.save_observations">
+<code class="descname">save_observations</code><span class="sig-paren">(</span><em>dframe</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bamboo/models/dataset.html#Dataset.save_observations"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bamboo.models.dataset.Dataset.save_observations" title="Permalink to this definition">¶</a></dt>
+<dd><p>Save rows in <cite>dframe</cite> for this dataset.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>dframe</strong> &#8211; DataFrame to save rows from.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="bamboo.models.dataset.Dataset.set_olap_type">
+<code class="descname">set_olap_type</code><span class="sig-paren">(</span><em>column</em>, <em>olap_type</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bamboo/models/dataset.html#Dataset.set_olap_type"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bamboo.models.dataset.Dataset.set_olap_type" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set the OLAP Type for this <cite>column</cite> of dataset.</p>
+<p>Only columns with an original OLAP Type of &#8216;measure&#8217; can be modified.
+This includes columns with Simple Type integer, float, and datetime.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>column</strong> &#8211; The column to set the OLAP Type for.</li>
+<li><strong>olap_type</strong> &#8211; The OLAP Type to set. Must be &#8216;dimension&#8217; or
+&#8216;measure&#8217;.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="bamboo.models.dataset.Dataset.set_schema">
+<code class="descname">set_schema</code><span class="sig-paren">(</span><em>schema</em>, <em>set_num_columns=True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bamboo/models/dataset.html#Dataset.set_schema"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bamboo.models.dataset.Dataset.set_schema" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set the schema from an existing one.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="bamboo.models.dataset.Dataset.summarize">
+<code class="descname">summarize</code><span class="sig-paren">(</span><em>dframe</em>, <em>groups=[]</em>, <em>no_cache=False</em>, <em>update=False</em>, <em>flat=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bamboo/models/dataset.html#Dataset.summarize"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bamboo.models.dataset.Dataset.summarize" title="Permalink to this definition">¶</a></dt>
+<dd><p>Build and return a summary of the data in this dataset.</p>
+<p>Return a summary of dframe grouped by <cite>groups</cite>, or the overall
+summary if no groups are specified.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>dframe</strong> &#8211; dframe to summarize</li>
+<li><strong>groups</strong> &#8211; A list of columns to group on.</li>
+<li><strong>no_cache</strong> &#8211; Do not fetch a cached summary.</li>
+<li><strong>flat</strong> &#8211; Return a flattened list of groups.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">A summary of the dataset as a dict. Numeric columns will be
+summarized by the arithmetic mean, standard deviation, and
+percentiles. Dimensional columns will be summarized by counts.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="bamboo.models.dataset.Dataset.update">
+<code class="descname">update</code><span class="sig-paren">(</span><em>record</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bamboo/models/dataset.html#Dataset.update"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bamboo.models.dataset.Dataset.update" title="Permalink to this definition">¶</a></dt>
+<dd><p>Update dataset <cite>dataset</cite> with <cite>record</cite>.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="bamboo.models.dataset.Dataset.update_complete">
+<code class="descname">update_complete</code><span class="sig-paren">(</span><em>update_id</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bamboo/models/dataset.html#Dataset.update_complete"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bamboo.models.dataset.Dataset.update_complete" title="Permalink to this definition">¶</a></dt>
+<dd><p>Remove <cite>update_id</cite> from this datasets list of pending updates.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>update_id</strong> &#8211; The ID of the completed update.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="bamboo.models.dataset.Dataset.update_stats">
+<code class="descname">update_stats</code><span class="sig-paren">(</span><em>dframe</em>, <em>update=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bamboo/models/dataset.html#Dataset.update_stats"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bamboo.models.dataset.Dataset.update_stats" title="Permalink to this definition">¶</a></dt>
+<dd><p>Update store statistics for this dataset.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>dframe</strong> &#8211; Use this DataFrame for summary statistics.</li>
+<li><strong>update</strong> &#8211; Update or replace summary statistics, default False.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="observation">
+<h2>Observation<a class="headerlink" href="#observation" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="bamboo.models.observation.Observation">
+<em class="property">class </em><code class="descclassname">bamboo.models.observation.</code><code class="descname">Observation</code><span class="sig-paren">(</span><em>record=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bamboo/models/observation.html#Observation"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bamboo.models.observation.Observation" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="classmethod">
+<dt id="bamboo.models.observation.Observation.append">
+<em class="property">classmethod </em><code class="descname">append</code><span class="sig-paren">(</span><em>dframe</em>, <em>dataset</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bamboo/models/observation.html#Observation.append"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bamboo.models.observation.Observation.append" title="Permalink to this definition">¶</a></dt>
+<dd><p>Append an additional dframe to an existing dataset.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Params dframe:</th><td class="field-body">The DataFrame to append.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Params dataset:</th><td class="field-body">The DataSet to add <cite>dframe</cite> to.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="classmethod">
+<dt id="bamboo.models.observation.Observation.batch_read_dframe_from_cursor">
+<em class="property">classmethod </em><code class="descname">batch_read_dframe_from_cursor</code><span class="sig-paren">(</span><em>dataset</em>, <em>observations</em>, <em>distinct</em>, <em>limit</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bamboo/models/observation.html#Observation.batch_read_dframe_from_cursor"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bamboo.models.observation.Observation.batch_read_dframe_from_cursor" title="Permalink to this definition">¶</a></dt>
+<dd><p>Read a DataFrame from a MongoDB Cursor in batches.</p>
+</dd></dl>
+
+<dl class="classmethod">
+<dt id="bamboo.models.observation.Observation.delete">
+<em class="property">classmethod </em><code class="descname">delete</code><span class="sig-paren">(</span><em>dataset</em>, <em>index</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bamboo/models/observation.html#Observation.delete"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bamboo.models.observation.Observation.delete" title="Permalink to this definition">¶</a></dt>
+<dd><p>Delete observation at index for dataset.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>dataset</strong> &#8211; The dataset to delete the observation from.</li>
+<li><strong>index</strong> &#8211; The index of the observation to delete.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="classmethod">
+<dt id="bamboo.models.observation.Observation.delete_all">
+<em class="property">classmethod </em><code class="descname">delete_all</code><span class="sig-paren">(</span><em>dataset</em>, <em>query=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bamboo/models/observation.html#Observation.delete_all"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bamboo.models.observation.Observation.delete_all" title="Permalink to this definition">¶</a></dt>
+<dd><p>Delete the observations for <cite>dataset</cite>.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>dataset</strong> &#8211; The dataset to delete observations for.</li>
+<li><strong>query</strong> &#8211; An optional query to restrict deletion.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="classmethod">
+<dt id="bamboo.models.observation.Observation.delete_columns">
+<em class="property">classmethod </em><code class="descname">delete_columns</code><span class="sig-paren">(</span><em>dataset</em>, <em>columns</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bamboo/models/observation.html#Observation.delete_columns"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bamboo.models.observation.Observation.delete_columns" title="Permalink to this definition">¶</a></dt>
+<dd><p>Delete a column from the dataset.</p>
+</dd></dl>
+
+<dl class="classmethod">
+<dt id="bamboo.models.observation.Observation.find">
+<em class="property">classmethod </em><code class="descname">find</code><span class="sig-paren">(</span><em>dataset</em>, <em>query_args=None</em>, <em>as_cursor=False</em>, <em>include_deleted=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bamboo/models/observation.html#Observation.find"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bamboo.models.observation.Observation.find" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return observation rows matching parameters.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>dataset</strong> &#8211; Dataset to return rows for.</li>
+<li><strong>include_deleted</strong> &#8211; If True, return delete records, default False.</li>
+<li><strong>query_args</strong> &#8211; An optional QueryArgs to hold the query arguments.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Raises:</th><td class="field-body"><p class="first"><cite>JSONError</cite> if the query could not be parsed.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">A list of dictionaries matching the passed in <cite>query</cite> and
+other parameters.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="classmethod">
+<dt id="bamboo.models.observation.Observation.find_one">
+<em class="property">classmethod </em><code class="descname">find_one</code><span class="sig-paren">(</span><em>dataset</em>, <em>index</em>, <em>decode=True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bamboo/models/observation.html#Observation.find_one"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bamboo.models.observation.Observation.find_one" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return row by index.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>dataset</strong> &#8211; The dataset to find the row for.</li>
+<li><strong>index</strong> &#8211; The index of the row to find.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="classmethod">
+<dt id="bamboo.models.observation.Observation.save">
+<em class="property">classmethod </em><code class="descname">save</code><span class="sig-paren">(</span><em>dframe</em>, <em>dataset</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bamboo/models/observation.html#Observation.save"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bamboo.models.observation.Observation.save" title="Permalink to this definition">¶</a></dt>
+<dd><p>Save data in <cite>dframe</cite> with the <cite>dataset</cite>.</p>
+<p>Encode <cite>dframe</cite> for MongoDB, and add fields to identify it with the
+passed in <cite>dataset</cite>. All column names in <cite>dframe</cite> are converted to
+slugs using the dataset&#8217;s schema.  The dataset is update to store the
+size of the stored data.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>dframe</strong> &#8211; The DataFrame to store.</li>
+<li><strong>dataset</strong> &#8211; The dataset to store the dframe in.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="classmethod">
+<dt id="bamboo.models.observation.Observation.update">
+<em class="property">classmethod </em><code class="descname">update</code><span class="sig-paren">(</span><em>dataset</em>, <em>index</em>, <em>record</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bamboo/models/observation.html#Observation.update"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bamboo.models.observation.Observation.update" title="Permalink to this definition">¶</a></dt>
+<dd><p>Update a dataset row by index.</p>
+<p>The record dictionary will update, not replace, the data in the row at
+index.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>dataset</strong> &#8211; The dataset to update a row for.</li>
+<li><strong>dex</strong> &#8211; The index of the row to update.</li>
+<li><strong>record</strong> &#8211; The dictionary to update the row with.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Models</a><ul>
+<li><a class="reference internal" href="#abstractmodel">AbstractModel</a></li>
+<li><a class="reference internal" href="#calculation">Calculation</a></li>
+<li><a class="reference internal" href="#dataset">Dataset</a></li>
+<li><a class="reference internal" href="#observation">Observation</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="lib.html"
+                        title="previous chapter">Lib</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="server_setup.html"
+                        title="next chapter">Server Setup</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/models.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="server_setup.html" title="Server Setup"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="lib.html" title="Lib"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">bamboo 0.6.3 alpha documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &copy; Copyright 2013, Peter Lubell-Doughtie, Mark Johnston.
+    </div>
+  </body>
+</html>

@@ -1,0 +1,1047 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Core &mdash; bamboo 0.6.3 alpha documentation</title>
+    
+    <link rel="stylesheet" href="_static/nature.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '0.6.3 alpha',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="top" title="bamboo 0.6.3 alpha documentation" href="index.html" />
+    <link rel="next" title="Lib" href="lib.html" />
+    <link rel="prev" title="Controllers" href="controllers.html" /> 
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="lib.html" title="Lib"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="controllers.html" title="Controllers"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">bamboo 0.6.3 alpha documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="core">
+<h1>Core<a class="headerlink" href="#core" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="module-bamboo.core.aggregations">
+<span id="aggregation"></span><h2>Aggregation<a class="headerlink" href="#module-bamboo.core.aggregations" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="bamboo.core.aggregations.Aggregation">
+<em class="property">class </em><code class="descclassname">bamboo.core.aggregations.</code><code class="descname">Aggregation</code><span class="sig-paren">(</span><em>name</em>, <em>groups</em>, <em>dframe</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bamboo/core/aggregations.html#Aggregation"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bamboo.core.aggregations.Aggregation" title="Permalink to this definition">¶</a></dt>
+<dd><p>Abstract class for all aggregations.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>column</strong> &#8211; Column to aggregate.</li>
+<li><strong>columns</strong> &#8211; List of columns to aggregate.</li>
+<li><strong>formula_name</strong> &#8211; The string to refer to this aggregation.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<dl class="method">
+<dt id="bamboo.core.aggregations.Aggregation.agg">
+<code class="descname">agg</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/bamboo/core/aggregations.html#Aggregation.agg"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bamboo.core.aggregations.Aggregation.agg" title="Permalink to this definition">¶</a></dt>
+<dd><p>For when aggregation is called without a group parameter.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="bamboo.core.aggregations.Aggregation.group">
+<code class="descname">group</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/bamboo/core/aggregations.html#Aggregation.group"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bamboo.core.aggregations.Aggregation.group" title="Permalink to this definition">¶</a></dt>
+<dd><p>For when aggregation is called with a group parameter.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="bamboo.core.aggregations.ArgMaxAggregation">
+<em class="property">class </em><code class="descclassname">bamboo.core.aggregations.</code><code class="descname">ArgMaxAggregation</code><span class="sig-paren">(</span><em>name</em>, <em>groups</em>, <em>dframe</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bamboo/core/aggregations.html#ArgMaxAggregation"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bamboo.core.aggregations.ArgMaxAggregation" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the index for the maximum of a column.</p>
+<p>Written as <code class="docutils literal"><span class="pre">argmax(FORMULA)</span></code>. Where <cite>FORMULA</cite> is a valid formula.</p>
+<dl class="method">
+<dt id="bamboo.core.aggregations.ArgMaxAggregation.group">
+<code class="descname">group</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/bamboo/core/aggregations.html#ArgMaxAggregation.group"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bamboo.core.aggregations.ArgMaxAggregation.group" title="Permalink to this definition">¶</a></dt>
+<dd><p>For when aggregation is called with a group parameter.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="bamboo.core.aggregations.CountAggregation">
+<em class="property">class </em><code class="descclassname">bamboo.core.aggregations.</code><code class="descname">CountAggregation</code><span class="sig-paren">(</span><em>name</em>, <em>groups</em>, <em>dframe</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bamboo/core/aggregations.html#CountAggregation"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bamboo.core.aggregations.CountAggregation" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate the count of rows fulfilling the criteria in the formula.</p>
+<p>N/A values are ignored unless there are no arguments to the function, in
+which case it returns the number of rows in the dataset.</p>
+<p>Written as <code class="docutils literal"><span class="pre">count(CRITERIA)</span></code>. Where <cite>CRITERIA</cite> is an optional boolean
+expression that signifies which rows are to be counted.</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="bamboo.core.aggregations.MaxAggregation">
+<em class="property">class </em><code class="descclassname">bamboo.core.aggregations.</code><code class="descname">MaxAggregation</code><span class="sig-paren">(</span><em>name</em>, <em>groups</em>, <em>dframe</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bamboo/core/aggregations.html#MaxAggregation"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bamboo.core.aggregations.MaxAggregation" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate the maximum.</p>
+<p>Written as <code class="docutils literal"><span class="pre">max(FORMULA)</span></code>. Where <cite>FORMULA</cite> is a valid formula.</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="bamboo.core.aggregations.MeanAggregation">
+<em class="property">class </em><code class="descclassname">bamboo.core.aggregations.</code><code class="descname">MeanAggregation</code><span class="sig-paren">(</span><em>name</em>, <em>groups</em>, <em>dframe</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bamboo/core/aggregations.html#MeanAggregation"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bamboo.core.aggregations.MeanAggregation" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate the arithmetic mean.</p>
+<p>Written as <code class="docutils literal"><span class="pre">mean(FORMULA)</span></code>. Where <cite>FORMULA</cite> is a valid formula.</p>
+<p>Because mean is a ratio this inherits from <cite>RatioAggregation</cite> to
+use its generic reduce implementation.</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="bamboo.core.aggregations.MedianAggregation">
+<em class="property">class </em><code class="descclassname">bamboo.core.aggregations.</code><code class="descname">MedianAggregation</code><span class="sig-paren">(</span><em>name</em>, <em>groups</em>, <em>dframe</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bamboo/core/aggregations.html#MedianAggregation"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bamboo.core.aggregations.MedianAggregation" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate the median. Written as <code class="docutils literal"><span class="pre">median(FORMULA)</span></code>.</p>
+<p>Where <cite>FORMULA</cite> is a valid formula.</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="bamboo.core.aggregations.MinAggregation">
+<em class="property">class </em><code class="descclassname">bamboo.core.aggregations.</code><code class="descname">MinAggregation</code><span class="sig-paren">(</span><em>name</em>, <em>groups</em>, <em>dframe</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bamboo/core/aggregations.html#MinAggregation"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bamboo.core.aggregations.MinAggregation" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate the minimum.</p>
+<p>Written as <code class="docutils literal"><span class="pre">min(FORMULA)</span></code>. Where <cite>FORMULA</cite> is a valid formula.</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="bamboo.core.aggregations.NewestAggregation">
+<em class="property">class </em><code class="descclassname">bamboo.core.aggregations.</code><code class="descname">NewestAggregation</code><span class="sig-paren">(</span><em>name</em>, <em>groups</em>, <em>dframe</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bamboo/core/aggregations.html#NewestAggregation"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bamboo.core.aggregations.NewestAggregation" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the second column&#8217;s value at the newest row in the first column.</p>
+<p>Find the maximum value for the first column and return the entry at that
+row from the second column.</p>
+<p>Written as <code class="docutils literal"><span class="pre">newest(INDEX_FORMULA,</span> <span class="pre">VALUE_FORMULA)</span></code> where <code class="docutils literal"><span class="pre">INDEX_FORMULA</span></code>
+and <code class="docutils literal"><span class="pre">VALUE_FORMULA</span></code> are valid formulae.</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="bamboo.core.aggregations.PearsonAggregation">
+<em class="property">class </em><code class="descclassname">bamboo.core.aggregations.</code><code class="descname">PearsonAggregation</code><span class="sig-paren">(</span><em>name</em>, <em>groups</em>, <em>dframe</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bamboo/core/aggregations.html#PearsonAggregation"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bamboo.core.aggregations.PearsonAggregation" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate the Pearson correlation and associatd p-value.</p>
+<p>Calculate the Pearson correlation coefficient between two columns and the
+p-value for that correlation coefficient.</p>
+<p>Written as <code class="docutils literal"><span class="pre">pearson(FORMULA1,</span> <span class="pre">FORMULA2)</span></code>. Where <code class="docutils literal"><span class="pre">FORMULA1</span></code> and
+<code class="docutils literal"><span class="pre">FORMULA2</span></code> are valid formulae.</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="bamboo.core.aggregations.RatioAggregation">
+<em class="property">class </em><code class="descclassname">bamboo.core.aggregations.</code><code class="descname">RatioAggregation</code><span class="sig-paren">(</span><em>name</em>, <em>groups</em>, <em>dframe</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bamboo/core/aggregations.html#RatioAggregation"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bamboo.core.aggregations.RatioAggregation" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate the ratio.</p>
+<p>Columns with N/A for either the numerator or denominator are ignored.  This
+will store associated numerator and denominator columns.  Written as
+<code class="docutils literal"><span class="pre">ratio(NUMERATOR,</span> <span class="pre">DENOMINATOR)</span></code>. Where <cite>NUMERATOR</cite> and <cite>DENOMINATOR</cite> are
+both valid formulas.</p>
+<dl class="method">
+<dt id="bamboo.core.aggregations.RatioAggregation.reduce">
+<code class="descname">reduce</code><span class="sig-paren">(</span><em>dframe</em>, <em>columns</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bamboo/core/aggregations.html#RatioAggregation.reduce"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bamboo.core.aggregations.RatioAggregation.reduce" title="Permalink to this definition">¶</a></dt>
+<dd><p>Reduce the columns and store in <cite>dframe</cite>.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>dframe</strong> &#8211; The DataFrame to reduce.</li>
+<li><strong>columns</strong> &#8211; Columns in the DataFrame to reduce on.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="bamboo.core.aggregations.StandardDeviationAggregation">
+<em class="property">class </em><code class="descclassname">bamboo.core.aggregations.</code><code class="descname">StandardDeviationAggregation</code><span class="sig-paren">(</span><em>name</em>, <em>groups</em>, <em>dframe</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bamboo/core/aggregations.html#StandardDeviationAggregation"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bamboo.core.aggregations.StandardDeviationAggregation" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate the standard deviation. Written as <code class="docutils literal"><span class="pre">std(FORMULA)</span></code>.</p>
+<p>Where <cite>FORMULA</cite> is a valid formula.</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="bamboo.core.aggregations.SumAggregation">
+<em class="property">class </em><code class="descclassname">bamboo.core.aggregations.</code><code class="descname">SumAggregation</code><span class="sig-paren">(</span><em>name</em>, <em>groups</em>, <em>dframe</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bamboo/core/aggregations.html#SumAggregation"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bamboo.core.aggregations.SumAggregation" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate the sum.</p>
+<p>Written as <code class="docutils literal"><span class="pre">sum(FORMULA)</span></code>. Where <cite>FORMULA</cite> is a valid formula.</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="bamboo.core.aggregations.VarianceAggregation">
+<em class="property">class </em><code class="descclassname">bamboo.core.aggregations.</code><code class="descname">VarianceAggregation</code><span class="sig-paren">(</span><em>name</em>, <em>groups</em>, <em>dframe</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bamboo/core/aggregations.html#VarianceAggregation"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bamboo.core.aggregations.VarianceAggregation" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate the variance. Written as <code class="docutils literal"><span class="pre">var(FORMULA)</span></code>.</p>
+<p>Where <cite>FORMULA</cite> is a valid formula.</p>
+</dd></dl>
+
+</div>
+<div class="section" id="aggregator">
+<h2>Aggregator<a class="headerlink" href="#aggregator" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="bamboo.core.aggregator.Aggregator">
+<em class="property">class </em><code class="descclassname">bamboo.core.aggregator.</code><code class="descname">Aggregator</code><span class="sig-paren">(</span><em>dframe</em>, <em>groups</em>, <em>_type</em>, <em>name</em>, <em>columns</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bamboo/core/aggregator.html#Aggregator"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bamboo.core.aggregator.Aggregator" title="Permalink to this definition">¶</a></dt>
+<dd><p>Perform a aggregations on datasets.</p>
+<p>Apply the <cite>aggregation</cite> to group columns by <cite>groups</cite> and the <cite>columns</cite>
+of the <cite>dframe</cite>. Store the resulting <cite>dframe</cite> as a linked dataset for
+<cite>dataset</cite>. If a linked dataset with the same groups already exists update
+this dataset.  Otherwise create a new linked dataset.</p>
+<dl class="method">
+<dt id="bamboo.core.aggregator.Aggregator.save">
+<code class="descname">save</code><span class="sig-paren">(</span><em>dataset</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bamboo/core/aggregator.html#Aggregator.save"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bamboo.core.aggregator.Aggregator.save" title="Permalink to this definition">¶</a></dt>
+<dd><p>Save this aggregation.</p>
+<p>If an aggregated dataset for this aggregations group already exists
+store in this dataset, if not create a new aggregated dataset and store
+the aggregation in this new aggregated dataset.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="bamboo.core.aggregator.Aggregator.update">
+<code class="descname">update</code><span class="sig-paren">(</span><em>dataset</em>, <em>child_dataset</em>, <em>formula</em>, <em>reducible</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bamboo/core/aggregator.html#Aggregator.update"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bamboo.core.aggregator.Aggregator.update" title="Permalink to this definition">¶</a></dt>
+<dd><p>Attempt to reduce an update and store.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="bamboo.core.aggregator.Aggregator.updated_dframe">
+<code class="descname">updated_dframe</code><span class="sig-paren">(</span><em>dataset</em>, <em>formula</em>, <em>dframe</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bamboo/core/aggregator.html#Aggregator.updated_dframe"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bamboo.core.aggregator.Aggregator.updated_dframe" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a new aggregation and update return updated dframe.</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-bamboo.core.calculator">
+<span id="calculator"></span><h2>Calculator<a class="headerlink" href="#module-bamboo.core.calculator" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="bamboo.core.calculator.__calculation_data">
+<code class="descclassname">bamboo.core.calculator.</code><code class="descname">__calculation_data</code><span class="sig-paren">(</span><em>dataset</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bamboo/core/calculator.html#__calculation_data"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bamboo.core.calculator.__calculation_data" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a list of aggregate calculation information.</p>
+<p>Builds a list of calculation information from the current datasets
+aggregated datasets and aggregate calculations.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="bamboo.core.calculator.__propagate_column">
+<code class="descclassname">bamboo.core.calculator.</code><code class="descname">__propagate_column</code><span class="sig-paren">(</span><em>dataset</em>, <em>parent_dataset</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bamboo/core/calculator.html#__propagate_column"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bamboo.core.calculator.__propagate_column" title="Permalink to this definition">¶</a></dt>
+<dd><p>Propagate columns in <cite>parent_dataset</cite> to <cite>dataset</cite>.</p>
+<p>When a new calculation is added to a dataset this will propagate the
+new column to all child (merged) datasets.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>dataset</strong> &#8211; THe child dataet.</li>
+<li><strong>parent_dataset</strong> &#8211; The dataset to propagate.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="bamboo.core.calculator.__update_aggregate_dataset">
+<code class="descclassname">bamboo.core.calculator.</code><code class="descname">__update_aggregate_dataset</code><span class="sig-paren">(</span><em>dataset</em>, <em>formula</em>, <em>new_dframe</em>, <em>name</em>, <em>groups</em>, <em>a_dataset</em>, <em>reducible</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bamboo/core/calculator.html#__update_aggregate_dataset"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bamboo.core.calculator.__update_aggregate_dataset" title="Permalink to this definition">¶</a></dt>
+<dd><p>Update the aggregated dataset built for <cite>dataset</cite> with <cite>calculation</cite>.</p>
+<p>Proceed with the following steps:</p>
+<blockquote>
+<div><ul class="simple">
+<li>delete the rows in this dataset from the parent</li>
+<li>recalculate aggregated dataframe from aggregation</li>
+<li>update aggregated dataset with new dataframe and add parent id</li>
+<li>recur on all merged datasets descending from the aggregated
+dataset</li>
+</ul>
+</div></blockquote>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>formula</strong> &#8211; The formula to execute.</li>
+<li><strong>new_dframe</strong> &#8211; The DataFrame to aggregate on.</li>
+<li><strong>name</strong> &#8211; The name of the aggregation.</li>
+<li><strong>groups</strong> &#8211; A column or columns to group on.</li>
+<li><strong>a_dataset</strong> &#8211; The DataSet to store the aggregation in.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="bamboo.core.calculator.__update_is_valid">
+<code class="descclassname">bamboo.core.calculator.</code><code class="descname">__update_is_valid</code><span class="sig-paren">(</span><em>dataset</em>, <em>new_dframe</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bamboo/core/calculator.html#__update_is_valid"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bamboo.core.calculator.__update_is_valid" title="Permalink to this definition">¶</a></dt>
+<dd><p>Check if the update is valid.</p>
+<p>Check whether this is a right-hand side of any joins
+and deny the update if the update would produce an invalid
+join as a result.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>dataset</strong> &#8211; The dataset to check if update valid for.</li>
+<li><strong>new_dframe</strong> &#8211; The update dframe to check.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">True is the update is valid, False otherwise.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="bamboo.core.calculator.__update_joined_datasets">
+<code class="descclassname">bamboo.core.calculator.</code><code class="descname">__update_joined_datasets</code><span class="sig-paren">(</span><em>dataset</em>, <em>update</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bamboo/core/calculator.html#__update_joined_datasets"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bamboo.core.calculator.__update_joined_datasets" title="Permalink to this definition">¶</a></dt>
+<dd><p>Update any joined datasets.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="bamboo.core.calculator.calculate_columns">
+<code class="descclassname">bamboo.core.calculator.</code><code class="descname">calculate_columns</code><span class="sig-paren">(</span><em>dataset</em>, <em>calculations</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bamboo/core/calculator.html#calculate_columns"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bamboo.core.calculator.calculate_columns" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate and store new columns for <cite>calculations</cite>.</p>
+<p>The new columns are join t othe Calculation dframe and replace the
+dataset&#8217;s observations.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p>This can result in race-conditions when:</p>
+<ul class="simple">
+<li>deleting <code class="docutils literal"><span class="pre">controllers.Datasets.DELETE</span></code></li>
+<li>updating <code class="docutils literal"><span class="pre">controllers.Datasets.POST([dataset_id])</span></code></li>
+</ul>
+<p class="last">Therefore, perform these actions asychronously.</p>
+</div>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>dataset</strong> &#8211; The dataset to calculate for.</li>
+<li><strong>calculations</strong> &#8211; A list of calculations.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="bamboo.core.calculator.dframe_from_update">
+<code class="descclassname">bamboo.core.calculator.</code><code class="descname">dframe_from_update</code><span class="sig-paren">(</span><em>dataset</em>, <em>new_data</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bamboo/core/calculator.html#dframe_from_update"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bamboo.core.calculator.dframe_from_update" title="Permalink to this definition">¶</a></dt>
+<dd><p>Make a DataFrame for the <cite>new_data</cite>.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>new_data</strong> (<em>List.</em>) &#8211; Data to add to dframe.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+<div class="section" id="module-bamboo.core.frame">
+<span id="frame"></span><h2>Frame<a class="headerlink" href="#module-bamboo.core.frame" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="bamboo.core.frame.add_parent_column">
+<code class="descclassname">bamboo.core.frame.</code><code class="descname">add_parent_column</code><span class="sig-paren">(</span><em>df</em>, <em>parent_dataset_id</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bamboo/core/frame.html#add_parent_column"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bamboo.core.frame.add_parent_column" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add parent ID column to this DataFrame.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="bamboo.core.frame.join_dataset">
+<code class="descclassname">bamboo.core.frame.</code><code class="descname">join_dataset</code><span class="sig-paren">(</span><em>left</em>, <em>other</em>, <em>on</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bamboo/core/frame.html#join_dataset"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bamboo.core.frame.join_dataset" title="Permalink to this definition">¶</a></dt>
+<dd><p>Left join an <cite>other</cite> dataset.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>other</strong> &#8211; Other dataset to join.</li>
+<li><strong>on</strong> &#8211; Column or 2 comma seperated columns to join on.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">Joined DataFrame.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Raises:</th><td class="field-body"><p class="first last"><cite>KeyError</cite> if join columns not in datasets.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="bamboo.core.frame.remove_reserved_keys">
+<code class="descclassname">bamboo.core.frame.</code><code class="descname">remove_reserved_keys</code><span class="sig-paren">(</span><em>df</em>, <em>exclude=[]</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bamboo/core/frame.html#remove_reserved_keys"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bamboo.core.frame.remove_reserved_keys" title="Permalink to this definition">¶</a></dt>
+<dd><p>Remove reserved internal columns in this DataFrame.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>keep_parent_ids</strong> &#8211; Keep parent column if True, default False.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="bamboo.core.frame.rows_for_parent_id">
+<code class="descclassname">bamboo.core.frame.</code><code class="descname">rows_for_parent_id</code><span class="sig-paren">(</span><em>df</em>, <em>parent_id</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bamboo/core/frame.html#rows_for_parent_id"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bamboo.core.frame.rows_for_parent_id" title="Permalink to this definition">¶</a></dt>
+<dd><p>DataFrame with only rows for <cite>parent_id</cite>.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>parent_id</strong> &#8211; The ID to restrict rows to.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">A DataFrame including only rows with a parent ID equal to
+that passed in.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+<div class="section" id="module-bamboo.core.merge">
+<span id="merge"></span><h2>Merge<a class="headerlink" href="#module-bamboo.core.merge" title="Permalink to this headline">¶</a></h2>
+<dl class="exception">
+<dt id="bamboo.core.merge.MergeError">
+<em class="property">exception </em><code class="descclassname">bamboo.core.merge.</code><code class="descname">MergeError</code><a class="reference internal" href="_modules/bamboo/core/merge.html#MergeError"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bamboo.core.merge.MergeError" title="Permalink to this definition">¶</a></dt>
+<dd><p>For errors while merging datasets.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="bamboo.core.merge.merge_dataset_ids">
+<code class="descclassname">bamboo.core.merge.</code><code class="descname">merge_dataset_ids</code><span class="sig-paren">(</span><em>dataset_ids</em>, <em>mapping</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bamboo/core/merge.html#merge_dataset_ids"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bamboo.core.merge.merge_dataset_ids" title="Permalink to this definition">¶</a></dt>
+<dd><p>Load a JSON array of dataset IDs and start a background merge task.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>dataset_ids</strong> &#8211; An array of dataset IDs to merge.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Raises:</th><td class="field-body"><cite>MergeError</cite> if less than 2 datasets are provided. If a dataset
+cannot be found for a dataset ID it is ignored. Therefore if 2 dataset
+IDs are provided and one of them is bad an error is raised.  However,
+if three dataset IDs are provided and one of them is bad, an error is
+not raised.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+<div class="section" id="module-bamboo.core.operations">
+<span id="parsing-operations"></span><h2>Parsing Operations<a class="headerlink" href="#module-bamboo.core.operations" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="bamboo.core.operations.EvalAndOp">
+<em class="property">class </em><code class="descclassname">bamboo.core.operations.</code><code class="descname">EvalAndOp</code><span class="sig-paren">(</span><em>tokens</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bamboo/core/operations.html#EvalAndOp"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bamboo.core.operations.EvalAndOp" title="Permalink to this definition">¶</a></dt>
+<dd><p>Class to distinguish precedence of and expressions.</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="bamboo.core.operations.EvalBinaryArithOp">
+<em class="property">class </em><code class="descclassname">bamboo.core.operations.</code><code class="descname">EvalBinaryArithOp</code><span class="sig-paren">(</span><em>tokens</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bamboo/core/operations.html#EvalBinaryArithOp"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bamboo.core.operations.EvalBinaryArithOp" title="Permalink to this definition">¶</a></dt>
+<dd><p>Class for evaluating binary arithmetic operations.</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="bamboo.core.operations.EvalBinaryBooleanOp">
+<em class="property">class </em><code class="descclassname">bamboo.core.operations.</code><code class="descname">EvalBinaryBooleanOp</code><span class="sig-paren">(</span><em>tokens</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bamboo/core/operations.html#EvalBinaryBooleanOp"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bamboo.core.operations.EvalBinaryBooleanOp" title="Permalink to this definition">¶</a></dt>
+<dd><p>Class for evaluating binary boolean operations.</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="bamboo.core.operations.EvalCaseOp">
+<em class="property">class </em><code class="descclassname">bamboo.core.operations.</code><code class="descname">EvalCaseOp</code><span class="sig-paren">(</span><em>tokens</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bamboo/core/operations.html#EvalCaseOp"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bamboo.core.operations.EvalCaseOp" title="Permalink to this definition">¶</a></dt>
+<dd><p>Class to eval case statements.</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="bamboo.core.operations.EvalComparisonOp">
+<em class="property">class </em><code class="descclassname">bamboo.core.operations.</code><code class="descname">EvalComparisonOp</code><span class="sig-paren">(</span><em>tokens</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bamboo/core/operations.html#EvalComparisonOp"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bamboo.core.operations.EvalComparisonOp" title="Permalink to this definition">¶</a></dt>
+<dd><p>Class to evaluate comparison expressions.</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="bamboo.core.operations.EvalConstant">
+<em class="property">class </em><code class="descclassname">bamboo.core.operations.</code><code class="descname">EvalConstant</code><span class="sig-paren">(</span><em>tokens</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bamboo/core/operations.html#EvalConstant"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bamboo.core.operations.EvalConstant" title="Permalink to this definition">¶</a></dt>
+<dd><p>Class to evaluate a parsed constant or variable.</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="bamboo.core.operations.EvalDate">
+<em class="property">class </em><code class="descclassname">bamboo.core.operations.</code><code class="descname">EvalDate</code><span class="sig-paren">(</span><em>tokens</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bamboo/core/operations.html#EvalDate"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bamboo.core.operations.EvalDate" title="Permalink to this definition">¶</a></dt>
+<dd><p>Class to evaluate date expressions.</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="bamboo.core.operations.EvalExpOp">
+<em class="property">class </em><code class="descclassname">bamboo.core.operations.</code><code class="descname">EvalExpOp</code><span class="sig-paren">(</span><em>tokens</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bamboo/core/operations.html#EvalExpOp"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bamboo.core.operations.EvalExpOp" title="Permalink to this definition">¶</a></dt>
+<dd><p>Class to distinguish precedence of exponentiation expressions.</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="bamboo.core.operations.EvalFunction">
+<em class="property">class </em><code class="descclassname">bamboo.core.operations.</code><code class="descname">EvalFunction</code><span class="sig-paren">(</span><em>tokens</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bamboo/core/operations.html#EvalFunction"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bamboo.core.operations.EvalFunction" title="Permalink to this definition">¶</a></dt>
+<dd><p>Class to eval functions.</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="bamboo.core.operations.EvalInOp">
+<em class="property">class </em><code class="descclassname">bamboo.core.operations.</code><code class="descname">EvalInOp</code><span class="sig-paren">(</span><em>tokens</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bamboo/core/operations.html#EvalInOp"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bamboo.core.operations.EvalInOp" title="Permalink to this definition">¶</a></dt>
+<dd><p>Class to eval in expressions.</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="bamboo.core.operations.EvalMapOp">
+<em class="property">class </em><code class="descclassname">bamboo.core.operations.</code><code class="descname">EvalMapOp</code><span class="sig-paren">(</span><em>tokens</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bamboo/core/operations.html#EvalMapOp"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bamboo.core.operations.EvalMapOp" title="Permalink to this definition">¶</a></dt>
+<dd><p>Class to eval map statements.</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="bamboo.core.operations.EvalMultOp">
+<em class="property">class </em><code class="descclassname">bamboo.core.operations.</code><code class="descname">EvalMultOp</code><span class="sig-paren">(</span><em>tokens</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bamboo/core/operations.html#EvalMultOp"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bamboo.core.operations.EvalMultOp" title="Permalink to this definition">¶</a></dt>
+<dd><p>Class to distinguish precedence of multiplication/division expressions.</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="bamboo.core.operations.EvalNotOp">
+<em class="property">class </em><code class="descclassname">bamboo.core.operations.</code><code class="descname">EvalNotOp</code><span class="sig-paren">(</span><em>tokens</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bamboo/core/operations.html#EvalNotOp"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bamboo.core.operations.EvalNotOp" title="Permalink to this definition">¶</a></dt>
+<dd><p>Class to evaluate not expressions.</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="bamboo.core.operations.EvalOrOp">
+<em class="property">class </em><code class="descclassname">bamboo.core.operations.</code><code class="descname">EvalOrOp</code><span class="sig-paren">(</span><em>tokens</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bamboo/core/operations.html#EvalOrOp"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bamboo.core.operations.EvalOrOp" title="Permalink to this definition">¶</a></dt>
+<dd><p>Class to distinguish precedence of or expressions.</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="bamboo.core.operations.EvalPercentile">
+<em class="property">class </em><code class="descclassname">bamboo.core.operations.</code><code class="descname">EvalPercentile</code><span class="sig-paren">(</span><em>tokens</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bamboo/core/operations.html#EvalPercentile"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bamboo.core.operations.EvalPercentile" title="Permalink to this definition">¶</a></dt>
+<dd><p>Class to evaluate percentile expressions.</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="bamboo.core.operations.EvalPlusOp">
+<em class="property">class </em><code class="descclassname">bamboo.core.operations.</code><code class="descname">EvalPlusOp</code><span class="sig-paren">(</span><em>tokens</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bamboo/core/operations.html#EvalPlusOp"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bamboo.core.operations.EvalPlusOp" title="Permalink to this definition">¶</a></dt>
+<dd><p>Class to distinguish precedence of addition/subtraction expressions.</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="bamboo.core.operations.EvalSignOp">
+<em class="property">class </em><code class="descclassname">bamboo.core.operations.</code><code class="descname">EvalSignOp</code><span class="sig-paren">(</span><em>tokens</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bamboo/core/operations.html#EvalSignOp"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bamboo.core.operations.EvalSignOp" title="Permalink to this definition">¶</a></dt>
+<dd><p>Class to evaluate expressions with a leading + or - sign.</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="bamboo.core.operations.EvalString">
+<em class="property">class </em><code class="descclassname">bamboo.core.operations.</code><code class="descname">EvalString</code><span class="sig-paren">(</span><em>tokens</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bamboo/core/operations.html#EvalString"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bamboo.core.operations.EvalString" title="Permalink to this definition">¶</a></dt>
+<dd><p>Class to evaluate a parsed string.</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="bamboo.core.operations.EvalTerm">
+<em class="property">class </em><code class="descclassname">bamboo.core.operations.</code><code class="descname">EvalTerm</code><span class="sig-paren">(</span><em>tokens</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bamboo/core/operations.html#EvalTerm"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bamboo.core.operations.EvalTerm" title="Permalink to this definition">¶</a></dt>
+<dd><p>Base class for evaluation.</p>
+<dl class="method">
+<dt id="bamboo.core.operations.EvalTerm.operator_operands">
+<code class="descname">operator_operands</code><span class="sig-paren">(</span><em>tokenlist</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bamboo/core/operations.html#EvalTerm.operator_operands"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bamboo.core.operations.EvalTerm.operator_operands" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generator to extract operators and operands in pairs.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="bamboo.core.operations.EvalToday">
+<em class="property">class </em><code class="descclassname">bamboo.core.operations.</code><code class="descname">EvalToday</code><span class="sig-paren">(</span><em>tokens</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bamboo/core/operations.html#EvalToday"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bamboo.core.operations.EvalToday" title="Permalink to this definition">¶</a></dt>
+<dd><p>Class to produce te current date time.</p>
+</dd></dl>
+
+</div>
+<div class="section" id="formula-parser">
+<h2>Formula Parser<a class="headerlink" href="#formula-parser" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="bamboo.core.parser.Parser">
+<em class="property">class </em><code class="descclassname">bamboo.core.parser.</code><code class="descname">Parser</code><a class="reference internal" href="_modules/bamboo/core/parser.html#Parser"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bamboo.core.parser.Parser" title="Permalink to this definition">¶</a></dt>
+<dd><p>Class for parsing and evaluating formula.</p>
+<p>Attributes:</p>
+<ul class="simple">
+<li>aggregation: Aggregation parsed from formula.</li>
+<li>aggregation_names: Possible aggregations.</li>
+<li>bnf: Cached Backus-Naur Form of formula.</li>
+<li>column_functions: Cached additional columns as aggregation parameters.</li>
+<li>function_names: Names of possible functions in formulas.</li>
+<li>operator_names: Names of possible operators in formulas.</li>
+<li>parsed_expr: Cached parsed expression.</li>
+<li>special_names: Names of possible reserved names in formulas.</li>
+<li>reserved_words: List of all possible reserved words that may be used in
+formulas.</li>
+</ul>
+<dl class="method">
+<dt id="bamboo.core.parser.Parser._Parser__build_bnf">
+<code class="descname">_Parser__build_bnf</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#bamboo.core.parser.Parser._Parser__build_bnf" title="Permalink to this definition">¶</a></dt>
+<dd><p>Parse formula to function based on language definition.</p>
+<p>Backus-Naur Form of formula language:</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="15%" />
+<col width="85%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Operation</th>
+<th class="head">Expression</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>addop</td>
+<td>&#8216;+&#8217; | &#8216;-&#8216;</td>
+</tr>
+<tr class="row-odd"><td>multop</td>
+<td>&#8216;*&#8217; | &#8216;/&#8217;</td>
+</tr>
+<tr class="row-even"><td>expop</td>
+<td>&#8216;^&#8217;</td>
+</tr>
+<tr class="row-odd"><td>compop</td>
+<td>&#8216;==&#8217; | &#8216;&lt;&#8217; | &#8216;&gt;&#8217; | &#8216;&lt;=&#8217; | &#8216;&gt;=&#8217;</td>
+</tr>
+<tr class="row-even"><td>notop</td>
+<td>&#8216;not&#8217;</td>
+</tr>
+<tr class="row-odd"><td>andop</td>
+<td>&#8216;and&#8217;</td>
+</tr>
+<tr class="row-even"><td>orop</td>
+<td>&#8216;or&#8217;</td>
+</tr>
+<tr class="row-odd"><td>real</td>
+<td>d+(.d+)</td>
+</tr>
+<tr class="row-even"><td>integer</td>
+<td>d+</td>
+</tr>
+<tr class="row-odd"><td>variable</td>
+<td>w+</td>
+</tr>
+<tr class="row-even"><td>string</td>
+<td>&#8221;.+&#8221;</td>
+</tr>
+<tr class="row-odd"><td>atom</td>
+<td>real | integer | variable</td>
+</tr>
+<tr class="row-even"><td>func</td>
+<td>func ( atom )</td>
+</tr>
+<tr class="row-odd"><td>factor</td>
+<td>atom [ expop factor]*</td>
+</tr>
+<tr class="row-even"><td>term</td>
+<td>factor [ multop factor ]*</td>
+</tr>
+<tr class="row-odd"><td>expr</td>
+<td>term [ addop term ]*</td>
+</tr>
+<tr class="row-even"><td>equation</td>
+<td>expr [compop expr]*</td>
+</tr>
+<tr class="row-odd"><td>in</td>
+<td>string in &#8216;[&#8216; &#8220;string&#8221;[, &#8220;string&#8221;]* &#8216;]&#8217;</td>
+</tr>
+<tr class="row-even"><td>neg</td>
+<td>[notop]* equation | in</td>
+</tr>
+<tr class="row-odd"><td>conj</td>
+<td>neg [andop neg]*</td>
+</tr>
+<tr class="row-even"><td>disj</td>
+<td>conj [orop conj]*</td>
+</tr>
+<tr class="row-odd"><td>case</td>
+<td>&#8216;case&#8217; disj: atom[, disj: atom]*[, &#8216;default&#8217;: atom]</td>
+</tr>
+<tr class="row-even"><td>trans</td>
+<td>trans ( case )</td>
+</tr>
+<tr class="row-odd"><td>agg</td>
+<td>agg ( trans[, trans]* )</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="classmethod">
+<dt id="bamboo.core.parser.Parser.parse">
+<em class="property">classmethod </em><code class="descname">parse</code><span class="sig-paren">(</span><em>formula</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bamboo/core/parser.html#Parser.parse"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bamboo.core.parser.Parser.parse" title="Permalink to this definition">¶</a></dt>
+<dd><p>Parse formula and return evaluation function.</p>
+<p>Parse <cite>formula</cite> into an aggregation name and functions.
+There will be multiple functions is the aggregation takes multiple
+arguments, e.g. ratio which takes a numerator and denominator formula.</p>
+<p>Examples:</p>
+<ul>
+<li><dl class="first docutils">
+<dt>constants</dt>
+<dd><ul class="first last simple">
+<li><code class="docutils literal"><span class="pre">9</span> <span class="pre">+</span> <span class="pre">5</span></code>,</li>
+</ul>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt>aliases</dt>
+<dd><ul class="first last simple">
+<li><code class="docutils literal"><span class="pre">rating</span></code>,</li>
+<li><code class="docutils literal"><span class="pre">gps</span></code>,</li>
+</ul>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt>arithmetic</dt>
+<dd><ul class="first last simple">
+<li><code class="docutils literal"><span class="pre">amount</span> <span class="pre">+</span> <span class="pre">gps_alt</span></code>,</li>
+<li><code class="docutils literal"><span class="pre">amount</span> <span class="pre">-</span> <span class="pre">gps_alt</span></code>,</li>
+<li><code class="docutils literal"><span class="pre">amount</span> <span class="pre">+</span> <span class="pre">5</span></code>,</li>
+<li><code class="docutils literal"><span class="pre">amount</span> <span class="pre">-</span> <span class="pre">gps_alt</span> <span class="pre">+</span> <span class="pre">2.5</span></code>,</li>
+<li><code class="docutils literal"><span class="pre">amount</span> <span class="pre">*</span> <span class="pre">gps_alt</span></code>,</li>
+<li><code class="docutils literal"><span class="pre">amount</span> <span class="pre">/</span> <span class="pre">gps_alt</span></code>,</li>
+<li><code class="docutils literal"><span class="pre">amount</span> <span class="pre">*</span> <span class="pre">gps_alt</span> <span class="pre">/</span> <span class="pre">2.5</span></code>,</li>
+<li><code class="docutils literal"><span class="pre">amount</span> <span class="pre">+</span> <span class="pre">gps_alt</span> <span class="pre">*</span> <span class="pre">gps_precision</span></code>,</li>
+</ul>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt>precedence</dt>
+<dd><ul class="first last simple">
+<li><code class="docutils literal"><span class="pre">(amount</span> <span class="pre">+</span> <span class="pre">gps_alt)</span> <span class="pre">*</span> <span class="pre">gps_precision</span></code>,</li>
+</ul>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt>comparison</dt>
+<dd><ul class="first last simple">
+<li><code class="docutils literal"><span class="pre">amount</span> <span class="pre">==</span> <span class="pre">2</span></code>,</li>
+<li><code class="docutils literal"><span class="pre">10</span> <span class="pre">&lt;</span> <span class="pre">amount</span></code>,</li>
+<li><code class="docutils literal"><span class="pre">10</span> <span class="pre">&lt;</span> <span class="pre">amount</span> <span class="pre">+</span> <span class="pre">gps_alt</span></code>,</li>
+</ul>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt>logical</dt>
+<dd><ul class="first last simple">
+<li><code class="docutils literal"><span class="pre">not</span> <span class="pre">amount</span> <span class="pre">==</span> <span class="pre">2</span></code>,</li>
+<li><code class="docutils literal"><span class="pre">not(amount</span> <span class="pre">==</span> <span class="pre">2)</span></code>,</li>
+<li><code class="docutils literal"><span class="pre">amount</span> <span class="pre">==</span> <span class="pre">2</span> <span class="pre">and</span> <span class="pre">10</span> <span class="pre">&lt;</span> <span class="pre">amount</span></code>,</li>
+<li><code class="docutils literal"><span class="pre">amount</span> <span class="pre">==</span> <span class="pre">2</span> <span class="pre">or</span> <span class="pre">10</span> <span class="pre">&lt;</span> <span class="pre">amount</span></code>,</li>
+<li><code class="docutils literal"><span class="pre">not</span> <span class="pre">not</span> <span class="pre">amount</span> <span class="pre">==</span> <span class="pre">2</span> <span class="pre">or</span> <span class="pre">10</span> <span class="pre">&lt;</span> <span class="pre">amount</span></code>,</li>
+<li><code class="docutils literal"><span class="pre">not</span> <span class="pre">amount</span> <span class="pre">==</span> <span class="pre">2</span> <span class="pre">or</span> <span class="pre">10</span> <span class="pre">&lt;</span> <span class="pre">amount</span></code>,</li>
+<li><code class="docutils literal"><span class="pre">not</span> <span class="pre">amount</span> <span class="pre">==</span> <span class="pre">2)</span> <span class="pre">or</span> <span class="pre">10</span> <span class="pre">&lt;</span> <span class="pre">amount</span></code>,</li>
+<li><code class="docutils literal"><span class="pre">not(amount</span> <span class="pre">==</span> <span class="pre">2</span> <span class="pre">or</span> <span class="pre">10</span> <span class="pre">&lt;</span> <span class="pre">amount)</span></code>,</li>
+<li><code class="docutils literal"><span class="pre">amount</span> <span class="pre">^</span> <span class="pre">3</span></code>,</li>
+<li><code class="docutils literal"><span class="pre">amount</span> <span class="pre">+</span> <span class="pre">gps_alt)</span> <span class="pre">^</span> <span class="pre">2</span> <span class="pre">+</span> <span class="pre">100</span></code>,</li>
+<li><code class="docutils literal"><span class="pre">amount</span></code>,</li>
+<li><code class="docutils literal"><span class="pre">amount</span> <span class="pre">&lt;</span> <span class="pre">gps_alt</span> <span class="pre">-</span> <span class="pre">100</span></code>,</li>
+</ul>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt>membership</dt>
+<dd><ul class="first last simple">
+<li><code class="docutils literal"><span class="pre">rating</span> <span class="pre">in</span> <span class="pre">[&quot;delectible&quot;]</span></code>,</li>
+<li><code class="docutils literal"><span class="pre">risk_factor</span> <span class="pre">in</span> <span class="pre">[&quot;low_risk&quot;]</span></code>,</li>
+<li><code class="docutils literal"><span class="pre">amount</span> <span class="pre">in</span> <span class="pre">[&quot;9.0&quot;,</span> <span class="pre">&quot;2.0&quot;,</span> <span class="pre">&quot;20.0&quot;]</span></code>,</li>
+<li><code class="docutils literal"><span class="pre">risk_factor</span> <span class="pre">in</span> <span class="pre">[&quot;low_risk&quot;])</span> <span class="pre">and</span> <span class="pre">(amount</span> <span class="pre">in</span> <span class="pre">[&quot;9.0&quot;,</span> <span class="pre">&quot;20.0&quot;])</span></code>,</li>
+</ul>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt>dates</dt>
+<dd><ul class="first last simple">
+<li><code class="docutils literal"><span class="pre">date(&quot;09-04-2012&quot;)</span> <span class="pre">-</span> <span class="pre">submit_date</span> <span class="pre">&gt;</span> <span class="pre">21078000</span></code>,</li>
+</ul>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt>cases</dt>
+<dd><ul class="first last simple">
+<li><code class="docutils literal"><span class="pre">case</span> <span class="pre">food_type</span> <span class="pre">in</span> <span class="pre">[&quot;morning_food&quot;]:</span> <span class="pre">1,</span> <span class="pre">default:</span> <span class="pre">3</span></code></li>
+</ul>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt>transformations: row-wise column based aggregations</dt>
+<dd><ul class="first last simple">
+<li><code class="docutils literal"><span class="pre">percentile(amount)</span></code></li>
+</ul>
+</dd>
+</dl>
+</li>
+</ul>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>formula</strong> &#8211; The string to parse.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">A tuple with the name of the aggregation in the formula, if
+any and a list of functions built from the input string.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="bamboo.core.parser.Parser.store_aggregation">
+<code class="descname">store_aggregation</code><span class="sig-paren">(</span><em>_</em>, <em>__</em>, <em>tokens</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bamboo/core/parser.html#Parser.store_aggregation"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bamboo.core.parser.Parser.store_aggregation" title="Permalink to this definition">¶</a></dt>
+<dd><p>Cached a parsed aggregation.</p>
+</dd></dl>
+
+<dl class="classmethod">
+<dt id="bamboo.core.parser.Parser.validate">
+<em class="property">classmethod </em><code class="descname">validate</code><span class="sig-paren">(</span><em>dataset</em>, <em>formula</em>, <em>groups</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bamboo/core/parser.html#Parser.validate"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bamboo.core.parser.Parser.validate" title="Permalink to this definition">¶</a></dt>
+<dd><p>Validate <cite>formula</cite> and <cite>groups</cite> for dataset.</p>
+<p>Validate the formula and group string by attempting to get a row from
+the dframe for the dataset and then running parser validation on this
+row. Additionally, ensure that the groups in the group string are
+columns in the dataset.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>dataset</strong> &#8211; The dataset to validate for.</li>
+<li><strong>formula</strong> &#8211; The formula to validate.</li>
+<li><strong>groups</strong> &#8211; A list of columns to group by.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">The aggregation (or None) for the formula.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="classmethod">
+<dt id="bamboo.core.parser.Parser.validate_formula">
+<em class="property">classmethod </em><code class="descname">validate_formula</code><span class="sig-paren">(</span><em>formula</em>, <em>dataset</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bamboo/core/parser.html#Parser.validate_formula"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bamboo.core.parser.Parser.validate_formula" title="Permalink to this definition">¶</a></dt>
+<dd><p>Validate the <em>formula</em> on an example <em>row</em> of data.</p>
+<p>Rebuild the BNF then parse the <cite>formula</cite> given the sample <cite>row</cite>.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>formula</strong> &#8211; The formula to validate.</li>
+<li><strong>dataset</strong> &#8211; The dataset to validate against.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">The aggregation for the formula.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-bamboo.core.summary">
+<span id="summary-statistic-utilities"></span><h2>Summary Statistic Utilities<a class="headerlink" href="#module-bamboo.core.summary" title="Permalink to this headline">¶</a></h2>
+<dl class="exception">
+<dt id="bamboo.core.summary.ColumnTypeError">
+<em class="property">exception </em><code class="descclassname">bamboo.core.summary.</code><code class="descname">ColumnTypeError</code><a class="reference internal" href="_modules/bamboo/core/summary.html#ColumnTypeError"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bamboo.core.summary.ColumnTypeError" title="Permalink to this definition">¶</a></dt>
+<dd><p>Exception when grouping on a non-dimensional column.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="bamboo.core.summary.summarizable">
+<code class="descclassname">bamboo.core.summary.</code><code class="descname">summarizable</code><span class="sig-paren">(</span><em>dframe</em>, <em>col</em>, <em>groups</em>, <em>dataset</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bamboo/core/summary.html#summarizable"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bamboo.core.summary.summarizable" title="Permalink to this definition">¶</a></dt>
+<dd><p>Check if column should be summarized.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>dframe</strong> &#8211; DataFrame to check unique values in.</li>
+<li><strong>col</strong> &#8211; Column to check for factor and number of uniques.</li>
+<li><strong>groups</strong> &#8211; List of groups if summarizing with group, can be empty.</li>
+<li><strong>dataset</strong> &#8211; Dataset to pull schema from.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">True if column, with parameters should be summarized, otherwise
+False.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="bamboo.core.summary.summarize">
+<code class="descclassname">bamboo.core.summary.</code><code class="descname">summarize</code><span class="sig-paren">(</span><em>dataset</em>, <em>dframe</em>, <em>groups</em>, <em>no_cache</em>, <em>update=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bamboo/core/summary.html#summarize"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bamboo.core.summary.summarize" title="Permalink to this definition">¶</a></dt>
+<dd><p>Raises a ColumnTypeError if grouping on a non-dimensional column.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="bamboo.core.summary.summarize_df">
+<code class="descclassname">bamboo.core.summary.</code><code class="descname">summarize_df</code><span class="sig-paren">(</span><em>dframe</em>, <em>dataset</em>, <em>groups=[]</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bamboo/core/summary.html#summarize_df"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bamboo.core.summary.summarize_df" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate summary statistics.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="bamboo.core.summary.summarize_series">
+<code class="descclassname">bamboo.core.summary.</code><code class="descname">summarize_series</code><span class="sig-paren">(</span><em>is_factor</em>, <em>data</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bamboo/core/summary.html#summarize_series"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bamboo.core.summary.summarize_series" title="Permalink to this definition">¶</a></dt>
+<dd><p>Call summary function dependent on dtype type.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>dtype</strong> &#8211; The dtype of the column to be summarized.</li>
+<li><strong>data</strong> &#8211; The data to be summarized.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">The appropriate summarization for the type of <cite>dtype</cite>.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="bamboo.core.summary.summarize_with_groups">
+<code class="descclassname">bamboo.core.summary.</code><code class="descname">summarize_with_groups</code><span class="sig-paren">(</span><em>dframe</em>, <em>groups</em>, <em>dataset</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bamboo/core/summary.html#summarize_with_groups"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bamboo.core.summary.summarize_with_groups" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate summary statistics for group.</p>
+</dd></dl>
+
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Core</a><ul>
+<li><a class="reference internal" href="#module-bamboo.core.aggregations">Aggregation</a></li>
+<li><a class="reference internal" href="#aggregator">Aggregator</a></li>
+<li><a class="reference internal" href="#module-bamboo.core.calculator">Calculator</a></li>
+<li><a class="reference internal" href="#module-bamboo.core.frame">Frame</a></li>
+<li><a class="reference internal" href="#module-bamboo.core.merge">Merge</a></li>
+<li><a class="reference internal" href="#module-bamboo.core.operations">Parsing Operations</a></li>
+<li><a class="reference internal" href="#formula-parser">Formula Parser</a></li>
+<li><a class="reference internal" href="#module-bamboo.core.summary">Summary Statistic Utilities</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="controllers.html"
+                        title="previous chapter">Controllers</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="lib.html"
+                        title="next chapter">Lib</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/core.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="lib.html" title="Lib"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="controllers.html" title="Controllers"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">bamboo 0.6.3 alpha documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &copy; Copyright 2013, Peter Lubell-Doughtie, Mark Johnston.
+    </div>
+  </body>
+</html>

@@ -1,0 +1,247 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Aggregations &mdash; bamboo 0.6.3 alpha documentation</title>
+    
+    <link rel="stylesheet" href="_static/nature.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '0.6.3 alpha',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="top" title="bamboo 0.6.3 alpha documentation" href="index.html" />
+    <link rel="next" title="Class Structure" href="class_structure.html" />
+    <link rel="prev" title="Calculations" href="calculations.html" /> 
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="class_structure.html" title="Class Structure"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="calculations.html" title="Calculations"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">bamboo 0.6.3 alpha documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="aggregations">
+<h1>Aggregations<a class="headerlink" href="#aggregations" title="Permalink to this headline">¶</a></h1>
+<p>Below is a list of valid aggregations which can be included in a formula.</p>
+<p>The arguments to the aggregation are column names, e.g. <code class="docutils literal"><span class="pre">amount</span></code>, or formulas
+themselves, e.g. <code class="docutils literal"><span class="pre">risk_factor</span> <span class="pre">in</span> <span class="pre">[&quot;low_risk&quot;]</span></code>.</p>
+<div class="section" id="argmax-formula">
+<h2><code class="docutils literal"><span class="pre">argmax(formula)</span></code><a class="headerlink" href="#argmax-formula" title="Permalink to this headline">¶</a></h2>
+<p>Calculate the row index at which the value of formula occurs.  If used with a
+group by the index is relative to the ungrouped dataframe.</p>
+<div class="highlight-sh"><div class="highlight"><pre>argmax<span class="o">(</span>submit_date<span class="o">)</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="count-formula">
+<h2><code class="docutils literal"><span class="pre">count([formula])</span></code><a class="headerlink" href="#count-formula" title="Permalink to this headline">¶</a></h2>
+<p>Calculate the number of rows in the dataset, or if a formula is passed, the
+number of rows in which the formula is true.</p>
+<div class="highlight-sh"><div class="highlight"><pre>count<span class="o">()</span>
+count<span class="o">(</span>risk_factor in <span class="o">[</span><span class="s2">&quot;low_risk&quot;</span><span class="o">])</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="max-formula">
+<h2><code class="docutils literal"><span class="pre">max(formula)</span></code><a class="headerlink" href="#max-formula" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-sh"><div class="highlight"><pre>max<span class="o">(</span>amount<span class="o">)</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="min-formula">
+<h2><code class="docutils literal"><span class="pre">min(formula)</span></code><a class="headerlink" href="#min-formula" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-sh"><div class="highlight"><pre>min<span class="o">(</span>amount<span class="o">)</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="mean-formula">
+<h2><code class="docutils literal"><span class="pre">mean(formula)</span></code><a class="headerlink" href="#mean-formula" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-sh"><div class="highlight"><pre>mean<span class="o">(</span>amount<span class="o">)</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="median-formula">
+<h2><code class="docutils literal"><span class="pre">median(formula)</span></code><a class="headerlink" href="#median-formula" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-sh"><div class="highlight"><pre>median<span class="o">(</span>amount<span class="o">)</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="newest-index-formula-value-formula">
+<h2><code class="docutils literal"><span class="pre">newest(index_formula,</span> <span class="pre">value_formula)</span></code><a class="headerlink" href="#newest-index-formula-value-formula" title="Permalink to this headline">¶</a></h2>
+<p>Calculate the row with the newest (maximum) value of <code class="docutils literal"><span class="pre">index_formula</span></code>
+(internally using argmax) and return the value of the <code class="docutils literal"><span class="pre">value_formula</span></code> for
+that row.</p>
+<p>Given <span class="math">\(n\)</span> is the number of rows, <span class="math">\(x\)</span> is a vector of the calculated
+index formula, and <span class="math">\(y\)</span> is a vector of the calculated value formula, this
+is equivalent to:</p>
+<div class="math">
+\[newest(x, y) = y_{{\operatorname{argmax}}(x)}\]</div>
+<div class="highlight-sh"><div class="highlight"><pre>newest<span class="o">(</span>submit_date, amount<span class="o">)</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="pearson-formula1-formula2">
+<h2><code class="docutils literal"><span class="pre">pearson(formula1,</span> <span class="pre">formula2)</span></code><a class="headerlink" href="#pearson-formula1-formula2" title="Permalink to this headline">¶</a></h2>
+<p>Calculate the Pearson correlation coefficient and p-value for two columns
+defined by <cite>formula1</cite> and <cite>formula2</cite>.  The p-value is stored in a column named
+after the original name with the suffix &#8220;_pvalue&#8221;.</p>
+<p>For example, we may expect that the number of teachers is correlated with the
+number of students:</p>
+<div class="highlight-sh"><div class="highlight"><pre>pearson<span class="o">(</span>num_teachers, num_students<span class="o">)</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="ratio-numerator-formula-denominator-formula">
+<h2><code class="docutils literal"><span class="pre">ratio(numerator_formula,</span> <span class="pre">denominator_formula)</span></code><a class="headerlink" href="#ratio-numerator-formula-denominator-formula" title="Permalink to this headline">¶</a></h2>
+<p>Calculate the ratio of the sum of values in the numerator divided by the sum of
+values in the denominator, where any rows containing a missing value in the
+numerator or denominator, or having a denominator of zero, are ignored.  Given
+<span class="math">\(n\)</span> is the number of rows, <span class="math">\(x\)</span> is a vector of the calculated
+numerator, and <span class="math">\(y\)</span> is a vector of the calculated denominator, this is
+equivalent to:</p>
+<div class="math">
+\[\begin{split}ratio(x, y) = \sum_{i=1}^n \left\{
+    \begin{array}{l l}
+        0 &amp; \quad \text{if $x_i$ or $y_i$ is NaN, or $y_i$ = 0}\\
+        \frac{x_i}{y_i} &amp; \quad \text{otherwise}
+    \end{array} \right.\end{split}\]</div>
+<div class="highlight-sh"><div class="highlight"><pre>ratio<span class="o">(</span>amount, number_of_guests<span class="o">)</span>
+ratio<span class="o">(</span>risk_factor in <span class="o">[</span><span class="s2">&quot;low_risk&quot;</span><span class="o">]</span>, risk_factor in <span class="o">[</span><span class="s2">&quot;low_risk&quot;</span>, <span class="s2">&quot;medium_risk&quot;</span><span class="o">])</span>
+ratio<span class="o">(</span>risk_factor in <span class="o">[</span><span class="s2">&quot;low_risk&quot;</span><span class="o">]</span>, 1<span class="o">)</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="std-formula">
+<h2><code class="docutils literal"><span class="pre">std(formula)</span></code><a class="headerlink" href="#std-formula" title="Permalink to this headline">¶</a></h2>
+<p>Standard deviation:</p>
+<div class="highlight-sh"><div class="highlight"><pre>std<span class="o">(</span>amount<span class="o">)</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="sum-formula">
+<h2><code class="docutils literal"><span class="pre">sum(formula)</span></code><a class="headerlink" href="#sum-formula" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-sh"><div class="highlight"><pre>sum<span class="o">(</span>amount<span class="o">)</span>
+sum<span class="o">(</span>risk_factor in <span class="o">[</span><span class="s2">&quot;low_risk&quot;</span><span class="o">])</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="var-formula">
+<h2><code class="docutils literal"><span class="pre">var(formula)</span></code><a class="headerlink" href="#var-formula" title="Permalink to this headline">¶</a></h2>
+<p>Variance:</p>
+<div class="highlight-sh"><div class="highlight"><pre>var<span class="o">(</span>amount<span class="o">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Aggregations</a><ul>
+<li><a class="reference internal" href="#argmax-formula"><code class="docutils literal"><span class="pre">argmax(formula)</span></code></a></li>
+<li><a class="reference internal" href="#count-formula"><code class="docutils literal"><span class="pre">count([formula])</span></code></a></li>
+<li><a class="reference internal" href="#max-formula"><code class="docutils literal"><span class="pre">max(formula)</span></code></a></li>
+<li><a class="reference internal" href="#min-formula"><code class="docutils literal"><span class="pre">min(formula)</span></code></a></li>
+<li><a class="reference internal" href="#mean-formula"><code class="docutils literal"><span class="pre">mean(formula)</span></code></a></li>
+<li><a class="reference internal" href="#median-formula"><code class="docutils literal"><span class="pre">median(formula)</span></code></a></li>
+<li><a class="reference internal" href="#newest-index-formula-value-formula"><code class="docutils literal"><span class="pre">newest(index_formula,</span> <span class="pre">value_formula)</span></code></a></li>
+<li><a class="reference internal" href="#pearson-formula1-formula2"><code class="docutils literal"><span class="pre">pearson(formula1,</span> <span class="pre">formula2)</span></code></a></li>
+<li><a class="reference internal" href="#ratio-numerator-formula-denominator-formula"><code class="docutils literal"><span class="pre">ratio(numerator_formula,</span> <span class="pre">denominator_formula)</span></code></a></li>
+<li><a class="reference internal" href="#std-formula"><code class="docutils literal"><span class="pre">std(formula)</span></code></a></li>
+<li><a class="reference internal" href="#sum-formula"><code class="docutils literal"><span class="pre">sum(formula)</span></code></a></li>
+<li><a class="reference internal" href="#var-formula"><code class="docutils literal"><span class="pre">var(formula)</span></code></a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="calculations.html"
+                        title="previous chapter">Calculations</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="class_structure.html"
+                        title="next chapter">Class Structure</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/aggregations.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="class_structure.html" title="Class Structure"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="calculations.html" title="Calculations"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">bamboo 0.6.3 alpha documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &copy; Copyright 2013, Peter Lubell-Doughtie, Mark Johnston.
+    </div>
+  </body>
+</html>

@@ -1,0 +1,541 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Lib &mdash; bamboo 0.6.3 alpha documentation</title>
+    
+    <link rel="stylesheet" href="_static/nature.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '0.6.3 alpha',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="top" title="bamboo 0.6.3 alpha documentation" href="index.html" />
+    <link rel="next" title="Models" href="models.html" />
+    <link rel="prev" title="Core" href="core.html" /> 
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="models.html" title="Models"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="core.html" title="Core"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">bamboo 0.6.3 alpha documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="lib">
+<h1>Lib<a class="headerlink" href="#lib" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="module-bamboo.lib.async">
+<span id="async-tools"></span><h2>Async Tools<a class="headerlink" href="#module-bamboo.lib.async" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="bamboo.lib.async.call_async">
+<code class="descclassname">bamboo.lib.async.</code><code class="descname">call_async</code><span class="sig-paren">(</span><em>function</em>, <em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bamboo/lib/async.html#call_async"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bamboo.lib.async.call_async" title="Permalink to this definition">¶</a></dt>
+<dd><p>Potentially asynchronously call <cite>function</cite> with the arguments.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>function</strong> &#8211; The function to call.</li>
+<li><strong>args</strong> &#8211; Arguments for the function.</li>
+<li><strong>kwargs</strong> &#8211; Keyword arguments for the function.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+<div class="section" id="module-bamboo.lib.datetools">
+<span id="date-tools"></span><h2>Date Tools<a class="headerlink" href="#module-bamboo.lib.datetools" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="bamboo.lib.datetools.parse_timestamp_query">
+<code class="descclassname">bamboo.lib.datetools.</code><code class="descname">parse_timestamp_query</code><span class="sig-paren">(</span><em>query</em>, <em>schema</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bamboo/lib/datetools.html#parse_timestamp_query"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bamboo.lib.datetools.parse_timestamp_query" title="Permalink to this definition">¶</a></dt>
+<dd><p>Interpret date column queries as JSON.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="bamboo.lib.datetools.recognize_dates">
+<code class="descclassname">bamboo.lib.datetools.</code><code class="descname">recognize_dates</code><span class="sig-paren">(</span><em>df</em>, <em>schema=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bamboo/lib/datetools.html#recognize_dates"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bamboo.lib.datetools.recognize_dates" title="Permalink to this definition">¶</a></dt>
+<dd><p>Convert data columns to datetimes.</p>
+<p>Check if object columns in a dataframe can be parsed as dates.
+If yes, rewrite column with values parsed as dates.</p>
+<p>If schema is passed, convert columes to datetime if column in <em>schema</em> is
+of type datetime.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>df</strong> &#8211; The DataFrame to convert columns in.</li>
+<li><strong>schema</strong> &#8211; Schema to define columns of type datetime.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">A DataFrame with column values convert to datetime types.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+<div class="section" id="module-bamboo.lib.jsontools">
+<span id="json-tools"></span><h2>JSON Tools<a class="headerlink" href="#module-bamboo.lib.jsontools" title="Permalink to this headline">¶</a></h2>
+<dl class="exception">
+<dt id="bamboo.lib.jsontools.JSONError">
+<em class="property">exception </em><code class="descclassname">bamboo.lib.jsontools.</code><code class="descname">JSONError</code><a class="reference internal" href="_modules/bamboo/lib/jsontools.html#JSONError"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bamboo.lib.jsontools.JSONError" title="Permalink to this definition">¶</a></dt>
+<dd><p>For errors while parsing JSON.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="bamboo.lib.jsontools.df_to_json">
+<code class="descclassname">bamboo.lib.jsontools.</code><code class="descname">df_to_json</code><span class="sig-paren">(</span><em>df</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bamboo/lib/jsontools.html#df_to_json"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bamboo.lib.jsontools.df_to_json" title="Permalink to this definition">¶</a></dt>
+<dd><p>Convert DataFrame to a list of dicts, then dump to JSON.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="bamboo.lib.jsontools.df_to_jsondict">
+<code class="descclassname">bamboo.lib.jsontools.</code><code class="descname">df_to_jsondict</code><span class="sig-paren">(</span><em>df</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bamboo/lib/jsontools.html#df_to_jsondict"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bamboo.lib.jsontools.df_to_jsondict" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return DataFrame as a list of dicts for each row.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="bamboo.lib.jsontools.get_json_value">
+<code class="descclassname">bamboo.lib.jsontools.</code><code class="descname">get_json_value</code><span class="sig-paren">(</span><em>value</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bamboo/lib/jsontools.html#get_json_value"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bamboo.lib.jsontools.get_json_value" title="Permalink to this definition">¶</a></dt>
+<dd><p>Parse JSON value based on type.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="bamboo.lib.jsontools.series_to_jsondict">
+<code class="descclassname">bamboo.lib.jsontools.</code><code class="descname">series_to_jsondict</code><span class="sig-paren">(</span><em>series</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bamboo/lib/jsontools.html#series_to_jsondict"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bamboo.lib.jsontools.series_to_jsondict" title="Permalink to this definition">¶</a></dt>
+<dd><p>Convert a Series to a dictionary encodable as JSON.</p>
+</dd></dl>
+
+</div>
+<div class="section" id="module-bamboo.lib.mongo">
+<span id="mongo-utilities"></span><h2>Mongo Utilities<a class="headerlink" href="#module-bamboo.lib.mongo" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="bamboo.lib.mongo._is_invalid_for_mongo">
+<code class="descclassname">bamboo.lib.mongo.</code><code class="descname">_is_invalid_for_mongo</code><span class="sig-paren">(</span><em>key</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bamboo/lib/mongo.html#_is_invalid_for_mongo"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bamboo.lib.mongo._is_invalid_for_mongo" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return if string is invalid for storage in MongoDB.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="bamboo.lib.mongo.df_mongo_decode">
+<code class="descclassname">bamboo.lib.mongo.</code><code class="descname">df_mongo_decode</code><span class="sig-paren">(</span><em>df</em>, <em>keep_mongo_keys=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bamboo/lib/mongo.html#df_mongo_decode"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bamboo.lib.mongo.df_mongo_decode" title="Permalink to this definition">¶</a></dt>
+<dd><p>Decode MongoDB reserved keys in this DataFrame.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="bamboo.lib.mongo.dict_for_mongo">
+<code class="descclassname">bamboo.lib.mongo.</code><code class="descname">dict_for_mongo</code><span class="sig-paren">(</span><em>_dict</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bamboo/lib/mongo.html#dict_for_mongo"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bamboo.lib.mongo.dict_for_mongo" title="Permalink to this definition">¶</a></dt>
+<dd><p>Encode all keys in <cite>_dict</cite> for MongoDB.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="bamboo.lib.mongo.dump_mongo_json">
+<code class="descclassname">bamboo.lib.mongo.</code><code class="descname">dump_mongo_json</code><span class="sig-paren">(</span><em>obj</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bamboo/lib/mongo.html#dump_mongo_json"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bamboo.lib.mongo.dump_mongo_json" title="Permalink to this definition">¶</a></dt>
+<dd><p>Dump JSON using BSON conversion.</p>
+<p>Args:</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>obj</strong> &#8211; Datastructure to dump as JSON.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">JSON string of dumped <cite>obj</cite>.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="bamboo.lib.mongo.key_for_mongo">
+<code class="descclassname">bamboo.lib.mongo.</code><code class="descname">key_for_mongo</code><span class="sig-paren">(</span><em>key</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bamboo/lib/mongo.html#key_for_mongo"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bamboo.lib.mongo.key_for_mongo" title="Permalink to this definition">¶</a></dt>
+<dd><p>Encode illegal MongoDB characters in string.</p>
+<p>Base64 encode any characters in a string that cannot be MongoDB keys. This
+includes any &#8216;$&#8217; and any &#8216;.&#8217;. &#8216;$&#8217; are supposed to be allowed as the
+non-first character but the current version of MongoDB does not allow any
+occurence of &#8216;$&#8217;.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>key</strong> &#8211; The string to remove characters from.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">The string with illegal keys encoded.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="bamboo.lib.mongo.remove_mongo_reserved_keys">
+<code class="descclassname">bamboo.lib.mongo.</code><code class="descname">remove_mongo_reserved_keys</code><span class="sig-paren">(</span><em>_dict</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bamboo/lib/mongo.html#remove_mongo_reserved_keys"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bamboo.lib.mongo.remove_mongo_reserved_keys" title="Permalink to this definition">¶</a></dt>
+<dd><p>Remove any keys reserved for MongoDB from <cite>_dict</cite>.</p>
+<p>Check for <cite>MONGO_ID</cite> in stored dictionary.  If found replace
+with unprefixed, if not found remove reserved key from dictionary.</p>
+<p>Args:</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>_dict</strong> &#8211; Dictionary to remove reserved keys from.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">Dictionary with reserved keys removed.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="bamboo.lib.mongo.reserve_encoded">
+<code class="descclassname">bamboo.lib.mongo.</code><code class="descname">reserve_encoded</code><span class="sig-paren">(</span><em>string</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bamboo/lib/mongo.html#reserve_encoded"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bamboo.lib.mongo.reserve_encoded" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return encoding prefixed string.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="bamboo.lib.mongo.value_for_mongo">
+<code class="descclassname">bamboo.lib.mongo.</code><code class="descname">value_for_mongo</code><span class="sig-paren">(</span><em>value</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bamboo/lib/mongo.html#value_for_mongo"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bamboo.lib.mongo.value_for_mongo" title="Permalink to this definition">¶</a></dt>
+<dd><p>Ensure value is a format acceptable for a MongoDB value.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>value</strong> &#8211; The value to encode.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">The encoded value.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+<div class="section" id="module-bamboo.lib.readers">
+<span id="readers"></span><h2>Readers<a class="headerlink" href="#module-bamboo.lib.readers" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="schema">
+<h2>Schema<a class="headerlink" href="#schema" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="bamboo.lib.schema_builder.Schema">
+<em class="property">class </em><code class="descclassname">bamboo.lib.schema_builder.</code><code class="descname">Schema</code><a class="reference internal" href="_modules/bamboo/lib/schema_builder.html#Schema"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bamboo.lib.schema_builder.Schema" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="method">
+<dt id="bamboo.lib.schema_builder.Schema._resluggable_column">
+<code class="descname">_resluggable_column</code><span class="sig-paren">(</span><em>column</em>, <em>labels_to_slugs</em>, <em>dframe</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bamboo/lib/schema_builder.html#Schema._resluggable_column"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bamboo.lib.schema_builder.Schema._resluggable_column" title="Permalink to this definition">¶</a></dt>
+<dd><p>Test if column should be slugged.</p>
+<dl class="docutils">
+<dt>A column should be slugged if:</dt>
+<dd><ol class="first last arabic">
+<li><p class="first">The <cite>column</cite> is a key in <cite>labels_to_slugs</cite> and</p>
+</li>
+<li><dl class="first docutils">
+<dt>The <cite>column</cite> is not a value in <cite>labels_to_slugs</cite> or</dt>
+<dd><ol class="first last arabic simple">
+<li>The <cite>column</cite> label is not equal to the <cite>column</cite> slug and</li>
+<li>The slug is not in the <cite>dframe</cite>&#8216;s columns</li>
+</ol>
+</dd>
+</dl>
+</li>
+</ol>
+</dd>
+</dl>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>column</strong> &#8211; The column to reslug.</li>
+<li><strong>labels_to_slugs</strong> &#8211; The labels to slugs map (only build once).</li>
+<li><strong>dframe</strong> &#8211; The DataFrame that column is in.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="bamboo.lib.schema_builder.Schema.labels_to_slugs">
+<code class="descname">labels_to_slugs</code><a class="headerlink" href="#bamboo.lib.schema_builder.Schema.labels_to_slugs" title="Permalink to this definition">¶</a></dt>
+<dd><p>Build dict from column labels to slugs.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="bamboo.lib.schema_builder.Schema.rebuild">
+<code class="descname">rebuild</code><span class="sig-paren">(</span><em>dframe</em>, <em>overwrite=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bamboo/lib/schema_builder.html#Schema.rebuild"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bamboo.lib.schema_builder.Schema.rebuild" title="Permalink to this definition">¶</a></dt>
+<dd><p>Rebuild a schema for a dframe.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>dframe</strong> &#8211; The DataFrame whose schema to merge with the current
+schema.</li>
+<li><strong>overwrite</strong> &#8211; If true replace schema, otherwise update.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="bamboo.lib.schema_builder.Schema.rename_map_for_dframe">
+<code class="descname">rename_map_for_dframe</code><span class="sig-paren">(</span><em>dframe</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bamboo/lib/schema_builder.html#Schema.rename_map_for_dframe"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bamboo.lib.schema_builder.Schema.rename_map_for_dframe" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return a map from dframe columns to slugs.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>dframe</strong> &#8211; The DataFrame to produce the map for.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="classmethod">
+<dt id="bamboo.lib.schema_builder.Schema.safe_init">
+<em class="property">classmethod </em><code class="descname">safe_init</code><span class="sig-paren">(</span><em>arg</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bamboo/lib/schema_builder.html#Schema.safe_init"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bamboo.lib.schema_builder.Schema.safe_init" title="Permalink to this definition">¶</a></dt>
+<dd><p>Make schema with potential arg of None.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="bamboo.lib.schema_builder.Schema.set_olap_type">
+<code class="descname">set_olap_type</code><span class="sig-paren">(</span><em>column</em>, <em>olap_type</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bamboo/lib/schema_builder.html#Schema.set_olap_type"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bamboo.lib.schema_builder.Schema.set_olap_type" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set the OLAP Type for this <cite>column</cite> of schema.</p>
+<p>Only columns with an original OLAP Type of &#8216;measure&#8217; can be modified.
+This includes columns with Simple Type integer, float, and datetime.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>column</strong> &#8211; The column to set the OLAP Type for.</li>
+<li><strong>olap_type</strong> &#8211; The OLAP Type to set. Must be &#8216;dimension&#8217; or
+&#8216;measure&#8217;.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Raises:</th><td class="field-body"><p class="first last"><cite>ArgumentError</cite> if trying to set the OLAP Type of an column
+whose OLAP Type was not originally a &#8216;measure&#8217;.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-bamboo.lib.schema_builder">
+<span id="schema-builder"></span><h2>Schema Builder<a class="headerlink" href="#module-bamboo.lib.schema_builder" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="bamboo.lib.schema_builder._slugify_columns">
+<code class="descclassname">bamboo.lib.schema_builder.</code><code class="descname">_slugify_columns</code><span class="sig-paren">(</span><em>column_names</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bamboo/lib/schema_builder.html#_slugify_columns"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bamboo.lib.schema_builder._slugify_columns" title="Permalink to this definition">¶</a></dt>
+<dd><p>Convert list of strings into unique slugs.</p>
+<p>Convert non-alphanumeric characters in column names into underscores and
+ensure that all column names are unique.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>column_names</strong> &#8211; A list of strings.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">A list of slugified names with a one-to-one mapping to
+<cite>column_names</cite>.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="bamboo.lib.schema_builder.filter_schema">
+<code class="descclassname">bamboo.lib.schema_builder.</code><code class="descname">filter_schema</code><span class="sig-paren">(</span><em>schema</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bamboo/lib/schema_builder.html#filter_schema"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bamboo.lib.schema_builder.filter_schema" title="Permalink to this definition">¶</a></dt>
+<dd><p>Remove not settable columns.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="bamboo.lib.schema_builder.make_unique">
+<code class="descclassname">bamboo.lib.schema_builder.</code><code class="descname">make_unique</code><span class="sig-paren">(</span><em>name</em>, <em>reserved_names</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bamboo/lib/schema_builder.html#make_unique"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bamboo.lib.schema_builder.make_unique" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return a slug ensuring name is not in <cite>reserved_names</cite>.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>name</strong> &#8211; The name to make unique.</li>
+<li><strong>reserved_names</strong> &#8211; A list of names the column must not be included in.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="bamboo.lib.schema_builder.schema_from_dframe">
+<code class="descclassname">bamboo.lib.schema_builder.</code><code class="descname">schema_from_dframe</code><span class="sig-paren">(</span><em>dframe</em>, <em>schema=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bamboo/lib/schema_builder.html#schema_from_dframe"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bamboo.lib.schema_builder.schema_from_dframe" title="Permalink to this definition">¶</a></dt>
+<dd><p>Build schema from the DataFrame and a schema.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>dframe</strong> &#8211; The DataFrame to build a schema for.</li>
+<li><strong>schema</strong> &#8211; Existing schema, optional.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">A dictionary schema.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+<div class="section" id="module-bamboo.lib.utils">
+<span id="utilities"></span><h2>Utilities<a class="headerlink" href="#module-bamboo.lib.utils" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="bamboo.lib.utils.combine_dicts">
+<code class="descclassname">bamboo.lib.utils.</code><code class="descname">combine_dicts</code><span class="sig-paren">(</span><em>*dicts</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bamboo/lib/utils.html#combine_dicts"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bamboo.lib.utils.combine_dicts" title="Permalink to this definition">¶</a></dt>
+<dd><p>Combine dicts with keys in later dicts taking precedence.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="bamboo.lib.utils.is_float_nan">
+<code class="descclassname">bamboo.lib.utils.</code><code class="descname">is_float_nan</code><span class="sig-paren">(</span><em>num</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bamboo/lib/utils.html#is_float_nan"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bamboo.lib.utils.is_float_nan" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return True is <cite>num</cite> is a float and NaN.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="bamboo.lib.utils.replace_keys">
+<code class="descclassname">bamboo.lib.utils.</code><code class="descname">replace_keys</code><span class="sig-paren">(</span><em>original</em>, <em>mapping</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bamboo/lib/utils.html#replace_keys"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bamboo.lib.utils.replace_keys" title="Permalink to this definition">¶</a></dt>
+<dd><p>Recursively replace any keys in original with their values in mappnig.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>original</strong> &#8211; The dictionary to replace keys in.</li>
+<li><strong>mapping</strong> &#8211; A dict mapping keys to new keys.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">Original with keys replaced via mapping.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Lib</a><ul>
+<li><a class="reference internal" href="#module-bamboo.lib.async">Async Tools</a></li>
+<li><a class="reference internal" href="#module-bamboo.lib.datetools">Date Tools</a></li>
+<li><a class="reference internal" href="#module-bamboo.lib.jsontools">JSON Tools</a></li>
+<li><a class="reference internal" href="#module-bamboo.lib.mongo">Mongo Utilities</a></li>
+<li><a class="reference internal" href="#module-bamboo.lib.readers">Readers</a></li>
+<li><a class="reference internal" href="#schema">Schema</a></li>
+<li><a class="reference internal" href="#module-bamboo.lib.schema_builder">Schema Builder</a></li>
+<li><a class="reference internal" href="#module-bamboo.lib.utils">Utilities</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="core.html"
+                        title="previous chapter">Core</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="models.html"
+                        title="next chapter">Models</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/lib.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="models.html" title="Models"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="core.html" title="Core"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">bamboo 0.6.3 alpha documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &copy; Copyright 2013, Peter Lubell-Doughtie, Mark Johnston.
+    </div>
+  </body>
+</html>

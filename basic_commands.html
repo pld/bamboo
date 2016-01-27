@@ -1,0 +1,931 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Basic Commands &mdash; bamboo 0.6.3 alpha documentation</title>
+    
+    <link rel="stylesheet" href="_static/nature.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '0.6.3 alpha',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="top" title="bamboo 0.6.3 alpha documentation" href="index.html" />
+    <link rel="next" title="Plotting" href="plotting.html" />
+    <link rel="prev" title="Examples" href="examples.html" /> 
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="plotting.html" title="Plotting"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="examples.html" title="Examples"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">bamboo 0.6.3 alpha documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="basic-commands">
+<h1>Basic Commands<a class="headerlink" href="#basic-commands" title="Permalink to this headline">¶</a></h1>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">On the command line some special characters may need to be escaped for
+the commands to function correctly.  E.g. <code class="docutils literal"><span class="pre">&amp;</span></code> as <code class="docutils literal"><span class="pre">\&amp;</span></code>, <code class="docutils literal"><span class="pre">?</span></code> as <code class="docutils literal"><span class="pre">\?</span></code>,
+<code class="docutils literal"><span class="pre">=</span></code> as <code class="docutils literal"><span class="pre">\=</span></code>.</p>
+</div>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">[<em>SIC</em>] all spelling errors in the example dataset.</p>
+</div>
+<div class="section" id="storing-data-in-bamboo">
+<h2>Storing data in <em>bamboo</em><a class="headerlink" href="#storing-data-in-bamboo" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="upload-data-from-a-url-to-bamboo">
+<h3>Upload data from a URL to <em>bamboo</em><a class="headerlink" href="#upload-data-from-a-url-to-bamboo" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-sh"><div class="highlight"><pre>curl -X POST -d <span class="s2">&quot;url=http://formhub.org/mberg/forms/good_eats/data.csv&quot;</span> http://bamboo.io/datasets
+</pre></div>
+</div>
+<p><strong>returns:</strong></p>
+<div class="highlight-javascript"><div class="highlight"><pre><span class="p">{</span>
+    <span class="s2">&quot;id&quot;</span><span class="o">:</span> <span class="s2">&quot;8a3d74711475d8a51c84484fe73f24bd151242ea&quot;</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="upload-data-from-a-csv-file-to-bamboo">
+<h3>Upload data from a CSV file to <em>bamboo</em><a class="headerlink" href="#upload-data-from-a-csv-file-to-bamboo" title="Permalink to this headline">¶</a></h3>
+<p>given the file <code class="docutils literal"><span class="pre">/home/modilabs/good_eats.csv</span></code> exists locally on your
+filesystem</p>
+<div class="highlight-sh"><div class="highlight"><pre>curl -X POST -F <span class="nv">csv_file</span><span class="o">=</span>@/home/modilabs/good_eats.csv http://bamboo.io/datasets
+</pre></div>
+</div>
+<p><strong>returns:</strong></p>
+<div class="highlight-javascript"><div class="highlight"><pre><span class="p">{</span>
+    <span class="s2">&quot;id&quot;</span><span class="o">:</span> <span class="s2">&quot;8a3d74711475d8a51c84484fe73f24bd151242ea&quot;</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="upload-data-from-a-json-file-to-bamboo">
+<h3>Upload data from a JSON file to <em>bamboo</em><a class="headerlink" href="#upload-data-from-a-json-file-to-bamboo" title="Permalink to this headline">¶</a></h3>
+<p>given the file <code class="docutils literal"><span class="pre">/home/modilabs/good_eats.json</span></code> exists locally on your
+filesystem</p>
+<div class="highlight-sh"><div class="highlight"><pre>curl -X POST -F <span class="nv">json_file</span><span class="o">=</span>@/home/modilabs/good_eats.json http://bamboo.io/datasets
+</pre></div>
+</div>
+<p><strong>returns:</strong></p>
+<div class="highlight-javascript"><div class="highlight"><pre><span class="p">{</span>
+    <span class="s2">&quot;id&quot;</span><span class="o">:</span> <span class="s2">&quot;8a3d74711475d8a51c84484fe73f24bd151242ea&quot;</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="missing-data-in-bamboo">
+<h3>Missing Data in <em>bamboo</em><a class="headerlink" href="#missing-data-in-bamboo" title="Permalink to this headline">¶</a></h3>
+<p>NA Values in uploaded data are interpreted using pandas.  The following values
+are by default interpreted as NA:</p>
+<ul class="simple">
+<li>missing values,</li>
+<li>the string &#8216;NA&#8217;,</li>
+<li>the string &#8216;NaN&#8217;,</li>
+<li>the string &#8216;NaT&#8217; for datetime columns.</li>
+</ul>
+<p>For details see the <a class="reference external" href="http://pandas.pydata.org/pandas-docs/dev/missing_data.html">pandas docs</a>.</p>
+<p>You can specify custom values to interpret as NA using the <code class="docutils literal"><span class="pre">na_values</span></code>
+parameter.  For example, to interpret the string &#8216;n/a&#8217; as missing data, call:</p>
+<div class="highlight-sh"><div class="highlight"><pre>curl -X POST -d <span class="s2">&quot;url=http://formhub.org/mberg/forms/good_eats/data.csv&quot;</span> http://bamboo.io/datasets?na_values<span class="o">=</span><span class="s1">&#39;[&quot;n/a&quot;]&#39;</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="deleting-a-dataset">
+<h3>Deleting a dataset<a class="headerlink" href="#deleting-a-dataset" title="Permalink to this headline">¶</a></h3>
+<p>To delete a dataset pass the dataset ID to a delete request.</p>
+<div class="highlight-sh"><div class="highlight"><pre>curl -X DELETE http://bamboo.io/datasets/8a3d74711475d8a51c84484fe73f24bd151242ea
+</pre></div>
+</div>
+<p><strong>returns:</strong></p>
+<div class="highlight-javascript"><div class="highlight"><pre><span class="p">{</span>
+    <span class="s2">&quot;success&quot;</span><span class="o">:</span> <span class="s2">&quot;deleted dataset&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;id&quot;</span><span class="o">:</span> <span class="s2">&quot;8a3d74711475d8a51c84484fe73f24bd151242ea&quot;</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="retrieve-information-about-a-dataset">
+<h2>Retrieve information about a dataset<a class="headerlink" href="#retrieve-information-about-a-dataset" title="Permalink to this headline">¶</a></h2>
+<p>given the id is <code class="docutils literal"><span class="pre">8a3d74711475d8a51c84484fe73f24bd151242ea</span></code></p>
+<div class="highlight-sh"><div class="highlight"><pre>curl http://bamboo.io/datasets/8a3d74711475d8a51c84484fe73f24bd151242ea/info
+</pre></div>
+</div>
+<p><strong>returns:</strong></p>
+<div class="highlight-javascript"><div class="highlight"><pre><span class="p">{</span>
+    <span class="s2">&quot;id&quot;</span><span class="o">:</span> <span class="s2">&quot;8a3d74711475d8a51c84484fe73f24bd151242ea&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;schema&quot;</span><span class="o">:</span> <span class="p">{</span>
+        <span class="s2">&quot;amount&quot;</span><span class="o">:</span> <span class="p">{</span>
+            <span class="s2">&quot;label&quot;</span><span class="o">:</span> <span class="s2">&quot;Amount&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;olap_type&quot;</span><span class="o">:</span> <span class="s2">&quot;measure&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;simpletype&quot;</span><span class="o">:</span> <span class="s2">&quot;float&quot;</span>
+        <span class="p">},</span>
+        <span class="s2">&quot;rating&quot;</span><span class="o">:</span> <span class="p">{</span>
+            <span class="s2">&quot;label&quot;</span><span class="o">:</span> <span class="s2">&quot;Rating&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;olap_type&quot;</span><span class="o">:</span> <span class="s2">&quot;dimension&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;simpletype&quot;</span><span class="o">:</span> <span class="s2">&quot;string&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;cardinality&quot;</span><span class="o">:</span> <span class="mi">2</span>
+        <span class="p">},</span>
+        <span class="s2">&quot;food_type&quot;</span><span class="o">:</span> <span class="p">{</span>
+            <span class="s2">&quot;label&quot;</span><span class="o">:</span> <span class="s2">&quot;Food Type&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;olap_type&quot;</span><span class="o">:</span> <span class="s2">&quot;dimension&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;simpletype&quot;</span><span class="o">:</span> <span class="s2">&quot;string&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;cardinality&quot;</span><span class="o">:</span> <span class="mi">8</span>
+        <span class="p">},</span>
+        <span class="p">...</span>
+    <span class="p">},</span>
+    <span class="s2">&quot;created_at&quot;</span><span class="o">:</span> <span class="s2">&quot;2012-6-18 14:43:32&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;updated_at&quot;</span><span class="o">:</span> <span class="s2">&quot;2012-6-18 14:43:32&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;num_rows&quot;</span><span class="o">:</span> <span class="s2">&quot;500&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;num_columns&quot;</span><span class="o">:</span> <span class="s2">&quot;30&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;state&quot;</span><span class="o">:</span> <span class="s2">&quot;ready&quot;</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="retrieve-data">
+<h2>Retrieve data<a class="headerlink" href="#retrieve-data" title="Permalink to this headline">¶</a></h2>
+<p>given the id is <code class="docutils literal"><span class="pre">8a3d74711475d8a51c84484fe73f24bd151242ea</span></code></p>
+<div class="section" id="by-id">
+<h3>By ID<a class="headerlink" href="#by-id" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-sh"><div class="highlight"><pre>curl http://bamboo.io/datasets/8a3d74711475d8a51c84484fe73f24bd151242ea
+</pre></div>
+</div>
+<p>This returns the dataset as JSON.</p>
+<p><strong>returns:</strong></p>
+<div class="highlight-javascript"><div class="highlight"><pre><span class="p">[</span>
+    <span class="p">{</span>
+        <span class="s2">&quot;rating&quot;</span><span class="o">:</span> <span class="s2">&quot;delectible&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;_percentage_complete&quot;</span><span class="o">:</span> <span class="s2">&quot;n/a&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;_xform_id_string&quot;</span><span class="o">:</span> <span class="s2">&quot;good_eats&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;risk_factor&quot;</span><span class="o">:</span> <span class="s2">&quot;low_risk&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;gps_alt&quot;</span><span class="o">:</span> <span class="s2">&quot;39.5&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;food_type&quot;</span><span class="o">:</span> <span class="s2">&quot;lunch&quot;</span><span class="p">,</span>
+        <span class="p">...</span>
+    <span class="p">},</span>
+    <span class="p">...</span>
+<span class="p">]</span>
+</pre></div>
+</div>
+<p>Alternatively, return the dataset as a CSV,</p>
+<div class="highlight-sh"><div class="highlight"><pre>curl http://bamboo.io/datasets/8a3d74711475d8a51c84484fe73f24bd151242ea.csv
+</pre></div>
+</div>
+<p><strong>returns:</strong></p>
+<div class="highlight-none"><div class="highlight"><pre>rating,_percentage_complete,_xform_id_string,gps_alt,food_type
+delectible,n/a,good_eats,low_risk,39.5,lunch
+...
+</pre></div>
+</div>
+</div>
+<div class="section" id="by-id-with-select">
+<h3>By ID with select<a class="headerlink" href="#by-id-with-select" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-sh"><div class="highlight"><pre>curl -g http://bamboo.io/datasets/8a3d74711475d8a51c84484fe73f24bd151242ea?select<span class="o">=</span><span class="s1">&#39;{&quot;rating&quot;:1}&#39;</span>
+</pre></div>
+</div>
+<p>This returns the dataset as JSON given the select, i.e. only the rating
+column.</p>
+<p><strong>returns:</strong></p>
+<div class="highlight-javascript"><div class="highlight"><pre><span class="p">[</span>
+    <span class="p">{</span><span class="s2">&quot;rating&quot;</span><span class="o">:</span> <span class="s2">&quot;epic_eat&quot;</span><span class="p">},</span>
+    <span class="p">{</span><span class="s2">&quot;rating&quot;</span><span class="o">:</span> <span class="s2">&quot;delectible&quot;</span><span class="p">},</span>
+    <span class="p">{</span><span class="s2">&quot;rating&quot;</span><span class="o">:</span> <span class="s2">&quot;delectible&quot;</span><span class="p">},</span>
+    <span class="p">{</span><span class="s2">&quot;rating&quot;</span><span class="o">:</span> <span class="s2">&quot;delectible&quot;</span><span class="p">},</span>
+    <span class="p">{</span><span class="s2">&quot;rating&quot;</span><span class="o">:</span> <span class="s2">&quot;epic_eat&quot;</span><span class="p">},</span>
+    <span class="p">{</span><span class="s2">&quot;rating&quot;</span><span class="o">:</span> <span class="s2">&quot;delectible&quot;</span><span class="p">},</span>
+    <span class="p">{</span><span class="s2">&quot;rating&quot;</span><span class="o">:</span> <span class="s2">&quot;delectible&quot;</span><span class="p">},</span>
+    <span class="p">{</span><span class="s2">&quot;rating&quot;</span><span class="o">:</span> <span class="s2">&quot;delectible&quot;</span><span class="p">},</span>
+    <span class="p">{</span><span class="s2">&quot;rating&quot;</span><span class="o">:</span> <span class="s2">&quot;delectible&quot;</span><span class="p">},</span>
+    <span class="p">{</span><span class="s2">&quot;rating&quot;</span><span class="o">:</span> <span class="s2">&quot;epic_eat&quot;</span><span class="p">},</span>
+    <span class="p">{</span><span class="s2">&quot;rating&quot;</span><span class="o">:</span> <span class="s2">&quot;epic_eat&quot;</span><span class="p">},</span>
+    <span class="p">{</span><span class="s2">&quot;rating&quot;</span><span class="o">:</span> <span class="s2">&quot;epic_eat&quot;</span><span class="p">},</span>
+    <span class="p">{</span><span class="s2">&quot;rating&quot;</span><span class="o">:</span> <span class="s2">&quot;delectible&quot;</span><span class="p">},</span>
+    <span class="p">{</span><span class="s2">&quot;rating&quot;</span><span class="o">:</span> <span class="s2">&quot;epic_eat&quot;</span><span class="p">},</span>
+    <span class="p">{</span><span class="s2">&quot;rating&quot;</span><span class="o">:</span> <span class="s2">&quot;epic_eat&quot;</span><span class="p">},</span>
+    <span class="p">{</span><span class="s2">&quot;rating&quot;</span><span class="o">:</span> <span class="s2">&quot;epic_eat&quot;</span><span class="p">},</span>
+    <span class="p">{</span><span class="s2">&quot;rating&quot;</span><span class="o">:</span> <span class="s2">&quot;delectible&quot;</span><span class="p">},</span>
+    <span class="p">{</span><span class="s2">&quot;rating&quot;</span><span class="o">:</span> <span class="s2">&quot;delectible&quot;</span><span class="p">},</span>
+    <span class="p">{</span><span class="s2">&quot;rating&quot;</span><span class="o">:</span> <span class="s2">&quot;delectible&quot;</span><span class="p">},</span>
+    <span class="p">{</span><span class="s2">&quot;rating&quot;</span><span class="o">:</span> <span class="s2">&quot;delectible&quot;</span><span class="p">},</span>
+    <span class="p">{</span><span class="s2">&quot;rating&quot;</span><span class="o">:</span> <span class="s2">&quot;epic_eat&quot;</span><span class="p">}</span>
+<span class="p">]</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="by-id-with-distinct">
+<h3>By ID with distinct<a class="headerlink" href="#by-id-with-distinct" title="Permalink to this headline">¶</a></h3>
+<p>To retrieve only the unique values in a column, pass the <em>distinct</em> parameter:</p>
+<div class="highlight-sh"><div class="highlight"><pre>curl -g http://bamboo.io/datasets/8a3d74711475d8a51c84484fe73f24bd151242ea?select<span class="o">=</span><span class="s1">&#39;{&quot;rating&quot;:1}&amp;distinct=rating&#39;</span>
+</pre></div>
+</div>
+<p>This returns the distinct keys for the results of the passed query as a JSON
+array.</p>
+<p><strong>returns:</strong></p>
+<div class="highlight-javascript"><div class="highlight"><pre><span class="p">[</span>
+    <span class="s2">&quot;delectible&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;epic_eat&quot;</span>
+<span class="p">]</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="by-id-and-query">
+<h3>By ID and query<a class="headerlink" href="#by-id-and-query" title="Permalink to this headline">¶</a></h3>
+<p>The query must be valid MongoDB extended JSON</p>
+<div class="highlight-sh"><div class="highlight"><pre>curl -g http://bamboo.io/datasets/8a3d74711475d8a51c84484fe73f24bd151242ea?query<span class="o">=</span><span class="s1">&#39;{&quot;food_type&quot;:&quot;lunch&quot;}&#39;</span>
+</pre></div>
+</div>
+<p>This returns the dataset as JSON given the query, i.e. only rows with a
+food_type of &#8220;lunch&#8221;.</p>
+<p><strong>returns:</strong></p>
+<div class="highlight-javascript"><div class="highlight"><pre><span class="p">[</span>
+    <span class="p">{</span>
+        <span class="s2">&quot;rating&quot;</span><span class="o">:</span> <span class="s2">&quot;delectible&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;location_name&quot;</span><span class="o">:</span> <span class="s2">&quot;Tolga Copsis &quot;</span><span class="p">,</span>
+        <span class="s2">&quot;description&quot;</span><span class="o">:</span> <span class="s2">&quot;Cotsi &quot;</span><span class="p">,</span> <span class="s2">&quot;_gps_precision&quot;</span><span class="o">:</span> <span class="s2">&quot;85.0&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;submit_date&quot;</span><span class="o">:</span> <span class="p">{</span><span class="s2">&quot;$date&quot;</span><span class="o">:</span> <span class="mi">1325635200000</span><span class="p">},</span>
+        <span class="s2">&quot;_gps_latitude&quot;</span><span class="o">:</span> <span class="s2">&quot;37.951282449999994&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;_gps_altitude&quot;</span><span class="o">:</span> <span class="s2">&quot;0.0&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;submit_data&quot;</span><span class="o">:</span> <span class="p">{</span><span class="s2">&quot;$date&quot;</span><span class="o">:</span> <span class="mi">1325635200000</span><span class="p">},</span>
+        <span class="s2">&quot;_gps_longitude&quot;</span><span class="o">:</span> <span class="s2">&quot;27.3700048&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;comments&quot;</span><span class="o">:</span> <span class="s2">&quot;n/a&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;amount&quot;</span><span class="o">:</span> <span class="mf">8.0</span><span class="p">,</span>
+        <span class="s2">&quot;risk_factor&quot;</span><span class="o">:</span> <span class="s2">&quot;low_risk&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;imei&quot;</span><span class="o">:</span> <span class="mi">358490042584319</span><span class="p">,</span>
+        <span class="s2">&quot;food_type&quot;</span><span class="o">:</span> <span class="s2">&quot;lunch&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;gps&quot;</span><span class="o">:</span> <span class="s2">&quot;37.951282449999994 27.3700048 0.0 85.0&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;location_photo&quot;</span><span class="o">:</span> <span class="s2">&quot;1325672494341.jpg&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;food_photo&quot;</span><span class="o">:</span> <span class="s2">&quot;1325672462974.jpg&quot;</span>
+    <span class="p">},</span>
+    <span class="p">...</span>
+<span class="p">]</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="query-with-dates">
+<h3>Query with dates<a class="headerlink" href="#query-with-dates" title="Permalink to this headline">¶</a></h3>
+<p>To query with dates use the MongoDB query format and specify dates as Unix
+epochs.</p>
+<div class="highlight-sh"><div class="highlight"><pre>curl -g http://bamboo.io/datasets/8a3d74711475d8a51c84484fe73f24bd151242ea?query<span class="o">=</span><span class="s1">&#39;{&quot;submit_date&quot;: {&quot;$lt&quot;: 1320000000}&#39;</span>
+</pre></div>
+</div>
+<p>Returns the rows with a time stamp less than 1320000000, which is October 30th
+2011.</p>
+<p>You may also pass dates in the form &#8220;YYYY-MM-DD&#8221;, and other common formats:</p>
+<div class="highlight-sh"><div class="highlight"><pre>curl -g http://bamboo.io/datasets/8a3d74711475d8a51c84484fe73f24bd151242ea?query<span class="o">=</span><span class="s1">&#39;{&quot;submit_date&quot;: {&quot;$lt&quot;: &quot;2011-10-30&quot;}&#39;</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="only-return-the-count">
+<h3>Only return the count<a class="headerlink" href="#only-return-the-count" title="Permalink to this headline">¶</a></h3>
+<p>To only the return the number of records in your query pass <em>count=True</em>.
+The count will take into consideration the <em>query</em>, <em>distinct</em>, and <em>limit</em>
+parameters.</p>
+<div class="highlight-sh"><div class="highlight"><pre>curl -g http://bamboo.io/datasets/8a3d74711475d8a51c84484fe73f24bd151242ea?query<span class="o">=</span><span class="s1">&#39;{&quot;rating&quot;:&quot;delectible&quot;}&#39;</span><span class="p">&amp;</span><span class="nv">count</span><span class="o">=</span>True
+</pre></div>
+</div>
+<p><strong>returns:</strong></p>
+<div class="highlight-javascript"><div class="highlight"><pre><span class="mi">11</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="retrieve-summary-statistics-for-dataset">
+<h2>Retrieve summary statistics for dataset<a class="headerlink" href="#retrieve-summary-statistics-for-dataset" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="id1">
+<h3>By ID<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-sh"><div class="highlight"><pre>curl http://bamboo.io/datasets/8a3d74711475d8a51c84484fe73f24bd151242ea/summary?select<span class="o">=</span>all
+</pre></div>
+</div>
+<p>This returns a summary of the dataset.  Columns of type float and integer are
+show as summary statistics.  Columns of type string and boolean are shown as
+counts of unique values.</p>
+<p>The select argument is required.  It can either be <code class="docutils literal"><span class="pre">all</span></code> or a MongoDB JSON
+select query.</p>
+<p><strong>returns:</strong></p>
+<div class="highlight-javascript"><div class="highlight"><pre><span class="p">{</span>
+    <span class="s2">&quot;rating&quot;</span><span class="o">:</span> <span class="p">{</span>
+        <span class="s2">&quot;summary&quot;</span><span class="o">:</span> <span class="p">{</span>
+            <span class="s2">&quot;delectible&quot;</span><span class="o">:</span> <span class="mi">12</span><span class="p">,</span>
+            <span class="s2">&quot;epic_eat&quot;</span><span class="o">:</span> <span class="mi">10</span>
+        <span class="p">}</span>
+    <span class="p">},</span>
+    <span class="s2">&quot;amount&quot;</span><span class="o">:</span> <span class="p">{</span>
+        <span class="s2">&quot;summary&quot;</span><span class="o">:</span> <span class="p">{</span>
+            <span class="s2">&quot;count&quot;</span><span class="o">:</span> <span class="mf">22.0</span><span class="p">,</span>
+            <span class="s2">&quot;std&quot;</span><span class="o">:</span> <span class="mf">339.16360630207191</span><span class="p">,</span>
+            <span class="s2">&quot;min&quot;</span><span class="o">:</span> <span class="mf">2.0</span><span class="p">,</span>
+            <span class="s2">&quot;max&quot;</span><span class="o">:</span> <span class="mf">1600.0</span><span class="p">,</span>
+            <span class="s2">&quot;50%&quot;</span><span class="o">:</span> <span class="mf">12.0</span><span class="p">,</span>
+            <span class="s2">&quot;25%&quot;</span><span class="o">:</span> <span class="mf">4.6875</span><span class="p">,</span>
+            <span class="s2">&quot;75%&quot;</span><span class="o">:</span> <span class="mf">19.5</span><span class="p">,</span>
+            <span class="s2">&quot;mean&quot;</span><span class="o">:</span> <span class="mf">92.772727272727266</span>
+        <span class="p">}</span>
+    <span class="p">},</span>
+    <span class="p">...</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="with-a-query">
+<h3>With a query<a class="headerlink" href="#with-a-query" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-sh"><div class="highlight"><pre>curl -g http://bamboo.io/datasets/8a3d74711475d8a51c84484fe73f24bd151242ea/summary?query<span class="o">=</span><span class="s1">&#39;{&quot;food_type&quot;: &quot;lunch&quot;}&#39;</span><span class="p">&amp;</span><span class="k">select</span><span class="o">=</span>all
+</pre></div>
+</div>
+<p>Return the summary restricting to data that matches the Mongo query passed as
+<em>query</em>.</p>
+<p><strong>returns:</strong></p>
+<div class="highlight-javascript"><div class="highlight"><pre><span class="p">{</span>
+    <span class="s2">&quot;rating&quot;</span><span class="o">:</span> <span class="p">{</span>
+        <span class="s2">&quot;summary&quot;</span><span class="o">:</span> <span class="p">{</span>
+            <span class="s2">&quot;delectible&quot;</span><span class="o">:</span> <span class="mi">5</span><span class="p">,</span>
+            <span class="s2">&quot;epic_eat&quot;</span><span class="o">:</span> <span class="mi">2</span>
+        <span class="p">}</span>
+    <span class="p">},</span>
+    <span class="s2">&quot;amount&quot;</span><span class="o">:</span> <span class="p">{</span>
+        <span class="s2">&quot;summary&quot;</span><span class="o">:</span> <span class="p">{</span>
+            <span class="s2">&quot;count&quot;</span><span class="o">:</span> <span class="mf">7.0</span><span class="p">,</span>
+            <span class="s2">&quot;std&quot;</span><span class="o">:</span> <span class="mf">71.321017238959797</span><span class="p">,</span>
+            <span class="s2">&quot;min&quot;</span><span class="o">:</span> <span class="mf">4.25</span><span class="p">,</span>
+            <span class="s2">&quot;max&quot;</span><span class="o">:</span> <span class="mf">200.0</span><span class="p">,</span>
+            <span class="s2">&quot;50%&quot;</span><span class="o">:</span> <span class="mf">12.0</span><span class="p">,</span>
+            <span class="s2">&quot;25%&quot;</span><span class="o">:</span> <span class="mf">8.5</span><span class="p">,</span>
+            <span class="s2">&quot;75%&quot;</span><span class="o">:</span> <span class="mf">19.0</span><span class="p">,</span>
+            <span class="s2">&quot;mean&quot;</span><span class="o">:</span> <span class="mf">38.75</span>
+        <span class="p">}</span>
+    <span class="p">},</span>
+    <span class="s2">&quot;risk_factor&quot;</span><span class="o">:</span> <span class="p">{</span>
+        <span class="s2">&quot;summary&quot;</span><span class="o">:</span> <span class="p">{</span>
+            <span class="s2">&quot;low_risk&quot;</span><span class="o">:</span> <span class="mi">7</span>
+        <span class="p">}</span>
+    <span class="p">},</span>
+    <span class="s2">&quot;food_type&quot;</span><span class="o">:</span> <span class="p">{</span>
+        <span class="s2">&quot;summary&quot;</span><span class="o">:</span> <span class="p">{</span>
+            <span class="s2">&quot;lunch&quot;</span><span class="o">:</span> <span class="mi">7</span>
+        <span class="p">}</span>
+    <span class="p">},</span>
+    <span class="p">...</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="with-a-grouping">
+<h3>With a grouping<a class="headerlink" href="#with-a-grouping" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-sh"><div class="highlight"><pre>curl http://bamboo.io/datasets/8a3d74711475d8a51c84484fe73f24bd151242ea/summary?select<span class="o">=</span>all<span class="p">&amp;</span><span class="nv">group</span><span class="o">=</span>food_type
+</pre></div>
+</div>
+<p>Return the summary grouping on the value passed as <em>group</em>.</p>
+<p><strong>returns:</strong></p>
+<div class="highlight-javascript"><div class="highlight"><pre><span class="p">{</span>
+    <span class="s2">&quot;food_type&quot;</span><span class="o">:</span> <span class="p">{</span>
+        <span class="s2">&quot;caffeination&quot;</span><span class="o">:</span> <span class="p">{</span>
+            <span class="s2">&quot;rating&quot;</span><span class="o">:</span> <span class="p">{</span>
+                <span class="s2">&quot;summary&quot;</span><span class="o">:</span> <span class="p">{</span>
+                    <span class="s2">&quot;epic_eat&quot;</span><span class="o">:</span> <span class="mi">1</span>
+                 <span class="p">}</span>
+            <span class="p">},</span>
+            <span class="s2">&quot;description&quot;</span><span class="o">:</span> <span class="p">{</span>
+                <span class="s2">&quot;summary&quot;</span><span class="o">:</span> <span class="p">{</span>
+                    <span class="s2">&quot;Turkish coffee&quot;</span><span class="o">:</span> <span class="mi">1</span>
+                <span class="p">}</span>
+            <span class="p">},</span>
+            <span class="s2">&quot;amount&quot;</span><span class="o">:</span> <span class="p">{</span>
+                <span class="s2">&quot;summary&quot;</span><span class="o">:</span> <span class="p">{</span>
+                    <span class="s2">&quot;count&quot;</span><span class="o">:</span> <span class="mf">1.0</span><span class="p">,</span>
+                    <span class="s2">&quot;std&quot;</span><span class="o">:</span> <span class="s2">&quot;null&quot;</span><span class="p">,</span>
+                    <span class="s2">&quot;min&quot;</span><span class="o">:</span> <span class="mf">2.5</span><span class="p">,</span>
+                    <span class="s2">&quot;max&quot;</span><span class="o">:</span> <span class="mf">2.5</span><span class="p">,</span>
+                    <span class="s2">&quot;50%&quot;</span><span class="o">:</span> <span class="mf">2.5</span><span class="p">,</span>
+                    <span class="s2">&quot;25%&quot;</span><span class="o">:</span> <span class="mf">2.5</span><span class="p">,</span>
+                    <span class="s2">&quot;75%&quot;</span><span class="o">:</span> <span class="mf">2.5</span><span class="p">,</span>
+                    <span class="s2">&quot;mean&quot;</span><span class="o">:</span> <span class="mf">2.5</span>
+                <span class="p">}</span>
+            <span class="p">},</span>
+            <span class="s2">&quot;risk_factor&quot;</span><span class="o">:</span> <span class="p">{</span>
+                <span class="s2">&quot;summary&quot;</span><span class="o">:</span> <span class="p">{</span>
+                    <span class="s2">&quot;low_risk&quot;</span><span class="o">:</span> <span class="mi">1</span>
+                <span class="p">}</span>
+            <span class="p">},</span>
+            <span class="p">...</span>
+        <span class="s2">&quot;deserts&quot;</span><span class="o">:</span> <span class="p">{</span>
+            <span class="s2">&quot;rating&quot;</span><span class="o">:</span> <span class="p">{</span>
+                <span class="s2">&quot;summary&quot;</span><span class="o">:</span> <span class="p">{</span>
+                    <span class="s2">&quot;epic_eat&quot;</span><span class="o">:</span> <span class="mi">2</span>
+                <span class="p">}</span>
+            <span class="p">},</span>
+            <span class="s2">&quot;description&quot;</span><span class="o">:</span> <span class="p">{</span>
+                <span class="s2">&quot;summary&quot;</span><span class="o">:</span> <span class="p">{</span>
+                    <span class="s2">&quot;Baklava&quot;</span><span class="o">:</span> <span class="mi">1</span><span class="p">,</span>
+                    <span class="s2">&quot;Rice Pudding &quot;</span><span class="o">:</span> <span class="mi">1</span>
+                <span class="p">}</span>
+            <span class="p">},</span>
+            <span class="s2">&quot;amount&quot;</span><span class="o">:</span> <span class="p">{</span>
+                <span class="s2">&quot;summary&quot;</span><span class="o">:</span> <span class="p">{</span>
+                    <span class="s2">&quot;count&quot;</span><span class="o">:</span> <span class="mf">2.0</span><span class="p">,</span>
+                    <span class="s2">&quot;std&quot;</span><span class="o">:</span> <span class="mf">2.2980970388562794</span><span class="p">,</span>
+                    <span class="s2">&quot;min&quot;</span><span class="o">:</span> <span class="mf">2.75</span><span class="p">,</span>
+                    <span class="s2">&quot;max&quot;</span><span class="o">:</span> <span class="mf">6.0</span><span class="p">,</span>
+                    <span class="s2">&quot;50%&quot;</span><span class="o">:</span> <span class="mf">4.375</span><span class="p">,</span>
+                    <span class="s2">&quot;25%&quot;</span><span class="o">:</span> <span class="mf">3.5625</span><span class="p">,</span>
+                    <span class="s2">&quot;75%&quot;</span><span class="o">:</span> <span class="mf">5.1875</span><span class="p">,</span>
+                    <span class="s2">&quot;mean&quot;</span><span class="o">:</span> <span class="mf">4.375</span>
+                <span class="p">}</span>
+            <span class="p">},</span>
+            <span class="s2">&quot;risk_factor&quot;</span><span class="o">:</span> <span class="p">{</span>
+                <span class="s2">&quot;summary&quot;</span><span class="o">:</span> <span class="p">{</span>
+                    <span class="s2">&quot;low_risk&quot;</span><span class="o">:</span> <span class="mi">2</span>
+                <span class="p">}</span>
+            <span class="p">},</span>
+            <span class="p">...</span>
+        <span class="p">}</span>
+        <span class="p">...</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="with-a-grouping-and-a-select">
+<h3>With a grouping and a select<a class="headerlink" href="#with-a-grouping-and-a-select" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-sh"><div class="highlight"><pre>curl -g http://bamboo.io/datasets/8a3d74711475d8a51c84484fe73f24bd151242ea/summary?select<span class="o">=</span><span class="s1">&#39;{&quot;rating&quot;:1}&#39;</span><span class="p">&amp;</span><span class="nv">group</span><span class="o">=</span>food_type
+</pre></div>
+</div>
+<p>Return the summary grouping on the value passed as <em>group</em> and only showing the
+columns specified by the <em>select</em>.</p>
+<p><strong>returns:</strong></p>
+<div class="highlight-javascript"><div class="highlight"><pre><span class="p">{</span>
+    <span class="s2">&quot;food_type&quot;</span><span class="o">:</span> <span class="p">{</span>
+        <span class="s2">&quot;caffeination&quot;</span><span class="o">:</span> <span class="p">{</span>
+            <span class="s2">&quot;rating&quot;</span><span class="o">:</span> <span class="p">{</span>
+                <span class="s2">&quot;summary&quot;</span><span class="o">:</span> <span class="p">{</span>
+                    <span class="s2">&quot;epic_eat&quot;</span><span class="o">:</span> <span class="mi">1</span>
+                <span class="p">}</span>
+            <span class="p">}</span>
+        <span class="p">},</span>
+        <span class="s2">&quot;deserts&quot;</span><span class="o">:</span> <span class="p">{</span>
+            <span class="s2">&quot;rating&quot;</span><span class="o">:</span> <span class="p">{</span>
+                <span class="s2">&quot;summary&quot;</span><span class="o">:</span> <span class="p">{</span>
+                    <span class="s2">&quot;epic_eat&quot;</span><span class="o">:</span> <span class="mi">2</span>
+                <span class="p">}</span>
+            <span class="p">}</span>
+        <span class="p">},</span>
+        <span class="p">...</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="with-a-multi-grouping">
+<h3>With a multi-grouping<a class="headerlink" href="#with-a-multi-grouping" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-sh"><div class="highlight"><pre>curl http://bamboo.io/datasets/8a3d74711475d8a51c84484fe73f24bd151242ea/summary?select<span class="o">=</span>all<span class="p">&amp;</span><span class="nv">group</span><span class="o">=</span>food_type,rating
+</pre></div>
+</div>
+<p><strong>returns:</strong></p>
+<div class="highlight-javascript"><div class="highlight"><pre><span class="p">{</span>
+    <span class="s2">&quot;food_type,rating&quot;</span><span class="o">:</span> <span class="p">{</span>
+        <span class="s2">&quot;(u&#39;dinner&#39;, u&#39;delectible&#39;)&quot;</span><span class="o">:</span> <span class="p">{</span>
+            <span class="s2">&quot;rating&quot;</span><span class="o">:</span> <span class="p">{</span>
+                <span class="s2">&quot;summary&quot;</span><span class="o">:</span> <span class="p">{</span>
+                    <span class="s2">&quot;delectible&quot;</span><span class="o">:</span> <span class="mi">2</span>
+                <span class="p">}</span>
+            <span class="p">},</span>
+            <span class="s2">&quot;amount&quot;</span><span class="o">:</span> <span class="p">{</span>
+                <span class="s2">&quot;summary&quot;</span><span class="o">:</span> <span class="p">{</span>
+                    <span class="s2">&quot;count&quot;</span><span class="o">:</span> <span class="mf">2.0</span><span class="p">,</span>
+                    <span class="s2">&quot;std&quot;</span><span class="o">:</span> <span class="mf">1.4142135623730951</span><span class="p">,</span>
+                    <span class="s2">&quot;min&quot;</span><span class="o">:</span> <span class="mf">12.0</span><span class="p">,</span>
+                    <span class="s2">&quot;max&quot;</span><span class="o">:</span> <span class="mf">14.0</span><span class="p">,</span>
+                    <span class="s2">&quot;50%&quot;</span><span class="o">:</span> <span class="mf">13.0</span><span class="p">,</span>
+                    <span class="s2">&quot;25%&quot;</span><span class="o">:</span> <span class="mf">12.5</span><span class="p">,</span>
+                    <span class="s2">&quot;75%&quot;</span><span class="o">:</span> <span class="mf">13.5</span><span class="p">,</span>
+                    <span class="s2">&quot;mean&quot;</span><span class="o">:</span> <span class="mf">13.0</span>
+                <span class="p">}</span>
+            <span class="p">},</span>
+            <span class="s2">&quot;risk_factor&quot;</span><span class="o">:</span> <span class="p">{</span>
+                <span class="s2">&quot;summary&quot;</span><span class="o">:</span> <span class="p">{</span>
+                    <span class="s2">&quot;low_risk&quot;</span><span class="o">:</span> <span class="mi">2</span>
+                <span class="p">}</span>
+            <span class="p">},</span>
+            <span class="s2">&quot;food_type&quot;</span><span class="o">:</span> <span class="p">{</span>
+                <span class="s2">&quot;summary&quot;</span><span class="o">:</span> <span class="p">{</span>
+                    <span class="s2">&quot;dinner&quot;</span><span class="o">:</span> <span class="mi">2</span>
+                <span class="p">}</span>
+            <span class="p">},</span>
+            <span class="p">...</span>
+        <span class="p">}</span>
+        <span class="s2">&quot;(u&#39;deserts&#39;, u&#39;epic_eat&#39;)&quot;</span><span class="o">:</span> <span class="p">{</span>
+            <span class="s2">&quot;rating&quot;</span><span class="o">:</span> <span class="p">{</span>
+                <span class="s2">&quot;summary&quot;</span><span class="o">:</span> <span class="p">{</span>
+                    <span class="s2">&quot;epic_eat&quot;</span><span class="o">:</span> <span class="mi">2</span>
+                <span class="p">}</span>
+            <span class="p">},</span>
+            <span class="s2">&quot;amount&quot;</span><span class="o">:</span> <span class="p">{</span>
+                <span class="s2">&quot;summary&quot;</span><span class="o">:</span> <span class="p">{</span>
+                    <span class="s2">&quot;count&quot;</span><span class="o">:</span> <span class="mf">2.0</span><span class="p">,</span>
+                    <span class="s2">&quot;std&quot;</span><span class="o">:</span> <span class="mf">2.2980970388562794</span><span class="p">,</span>
+                    <span class="s2">&quot;min&quot;</span><span class="o">:</span> <span class="mf">2.75</span><span class="p">,</span>
+                    <span class="s2">&quot;max&quot;</span><span class="o">:</span> <span class="mf">6.0</span><span class="p">,</span>
+                    <span class="s2">&quot;50%&quot;</span><span class="o">:</span> <span class="mf">4.375</span><span class="p">,</span>
+                    <span class="s2">&quot;25%&quot;</span><span class="o">:</span> <span class="mf">3.5625</span><span class="p">,</span>
+                    <span class="s2">&quot;75%&quot;</span><span class="o">:</span> <span class="mf">5.1875</span><span class="p">,</span>
+                    <span class="s2">&quot;mean&quot;</span><span class="o">:</span> <span class="mf">4.375</span>
+                <span class="p">}</span>
+            <span class="p">},</span>
+            <span class="s2">&quot;risk_factor&quot;</span><span class="o">:</span> <span class="p">{</span>
+                <span class="s2">&quot;summary&quot;</span><span class="o">:</span> <span class="p">{</span>
+                    <span class="s2">&quot;low_risk&quot;</span><span class="o">:</span> <span class="mi">2</span>
+                <span class="p">}</span>
+            <span class="p">},</span>
+            <span class="s2">&quot;food_type&quot;</span><span class="o">:</span> <span class="p">{</span>
+                <span class="s2">&quot;summary&quot;</span><span class="o">:</span> <span class="p">{</span>
+                    <span class="s2">&quot;deserts&quot;</span><span class="o">:</span> <span class="mi">2</span>
+                <span class="p">}</span>
+            <span class="p">},</span>
+            <span class="p">...</span>
+        <span class="p">}</span>
+        <span class="p">...</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="calculation-formulas">
+<h2>Calculation formulas<a class="headerlink" href="#calculation-formulas" title="Permalink to this headline">¶</a></h2>
+<p>Calculations are specified by a <em>name</em>, which is the label and a <em>formula</em>,
+which is either calculated by row or aggregated over multiple rows.</p>
+<p>The calculation <em>formula</em> can contain a combination of integers, floats, and/or
+strings which must map to column names, as well as operators and functions
+(specified in the Parser).</p>
+<p>Calculations that are aggregations can also be specified with a <em>group</em> and a
+<em>query</em>. The dataset will be grouped by the <em>group</em> parameter and limited to rows
+matching the <em>query</em> parameter.</p>
+<p>The results of aggregations are stored in a dataset with one column for
+the unique groups and another for the result of the <em>formula</em>. This dataset is
+indexed by the group parameter and unique per dataset ID.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p>When a two calculations with the same name are added the calculations are
+not overwritten.</p>
+<p class="last">The second calculation will have a label equal to the same name as the
+first calculation but it will have a unique slug. You can determine this
+slug via a <a class="reference internal" href="#retrieve-information-about-a-dataset">dataset info call</a>.</p>
+</div>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">It is possible to have the same calculation label with different
+formulas, but impossible to have the same calculation slug with
+different formulas.</p>
+</div>
+<div class="section" id="store-calculation-formula">
+<h3>Store calculation formula<a class="headerlink" href="#store-calculation-formula" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-sh"><div class="highlight"><pre>curl -X POST -d <span class="s2">&quot;name=amount_less_than_10&amp;formula=amount&lt;10&quot;</span> http://bamboo.io/calculations/8a3d74711475d8a51c84484fe73f24bd151242ea
+</pre></div>
+</div>
+<p><strong>returns:</strong></p>
+<div class="highlight-javascript"><div class="highlight"><pre><span class="p">{</span>
+    <span class="s2">&quot;success&quot;</span><span class="o">:</span> <span class="s2">&quot;created calulcation: water_functioning_count&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;id&quot;</span><span class="o">:</span> <span class="s2">&quot;8a3d74711475d8a51c84484fe73f24bd151242ea&quot;</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="retrieve-a-list-of-stored-calculations">
+<h3>Retrieve a list of stored calculations<a class="headerlink" href="#retrieve-a-list-of-stored-calculations" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-sh"><div class="highlight"><pre>curl http://bamboo.io/calculations/8a3d74711475d8a51c84484fe73f24bd151242ea
+</pre></div>
+</div>
+<p><strong>returns:</strong></p>
+<div class="highlight-javascript"><div class="highlight"><pre><span class="p">[</span>
+    <span class="p">{</span>
+        <span class="s2">&quot;formula&quot;</span><span class="o">:</span> <span class="s2">&quot;amount&lt;10&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;group&quot;</span><span class="o">:</span> <span class="kc">null</span><span class="p">,</span>
+        <span class="s2">&quot;name&quot;</span><span class="o">:</span> <span class="s2">&quot;amount_less_than_10&quot;</span>
+    <span class="p">}</span>
+<span class="p">]</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="retrieve-newly-calculated-column">
+<h3>Retrieve newly calculated column<a class="headerlink" href="#retrieve-newly-calculated-column" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-sh"><div class="highlight"><pre>curl -g http://bamboo.io/datasets/8a3d74711475d8a51c84484fe73f24bd151242ea?select<span class="o">=</span><span class="s1">&#39;{&quot;amount_less_than_10&quot;:1}&#39;</span>
+</pre></div>
+</div>
+<p><strong>returns:</strong></p>
+<div class="highlight-javascript"><div class="highlight"><pre><span class="p">[</span>
+    <span class="p">{</span><span class="s2">&quot;amount_less_than_10&quot;</span><span class="o">:</span> <span class="kc">true</span><span class="p">},</span>
+    <span class="p">{</span><span class="s2">&quot;amount_less_than_10&quot;</span><span class="o">:</span> <span class="kc">false</span><span class="p">},</span>
+    <span class="p">{</span><span class="s2">&quot;amount_less_than_10&quot;</span><span class="o">:</span> <span class="kc">false</span><span class="p">},</span>
+    <span class="p">{</span><span class="s2">&quot;amount_less_than_10&quot;</span><span class="o">:</span> <span class="kc">true</span><span class="p">},</span>
+    <span class="p">{</span><span class="s2">&quot;amount_less_than_10&quot;</span><span class="o">:</span> <span class="kc">true</span><span class="p">},</span>
+    <span class="p">{</span><span class="s2">&quot;amount_less_than_10&quot;</span><span class="o">:</span> <span class="kc">true</span><span class="p">},</span>
+    <span class="p">{</span><span class="s2">&quot;amount_less_than_10&quot;</span><span class="o">:</span> <span class="kc">true</span><span class="p">},</span>
+    <span class="p">{</span><span class="s2">&quot;amount_less_than_10&quot;</span><span class="o">:</span> <span class="kc">false</span><span class="p">},</span>
+    <span class="p">{</span><span class="s2">&quot;amount_less_than_10&quot;</span><span class="o">:</span> <span class="kc">true</span><span class="p">},</span>
+    <span class="p">{</span><span class="s2">&quot;amount_less_than_10&quot;</span><span class="o">:</span> <span class="kc">false</span><span class="p">},</span>
+    <span class="p">{</span><span class="s2">&quot;amount_less_than_10&quot;</span><span class="o">:</span> <span class="kc">false</span><span class="p">},</span>
+    <span class="p">{</span><span class="s2">&quot;amount_less_than_10&quot;</span><span class="o">:</span> <span class="kc">false</span><span class="p">},</span>
+    <span class="p">{</span><span class="s2">&quot;amount_less_than_10&quot;</span><span class="o">:</span> <span class="kc">true</span><span class="p">},</span>
+    <span class="p">{</span><span class="s2">&quot;amount_less_than_10&quot;</span><span class="o">:</span> <span class="kc">false</span><span class="p">},</span>
+    <span class="p">{</span><span class="s2">&quot;amount_less_than_10&quot;</span><span class="o">:</span> <span class="kc">false</span><span class="p">},</span>
+    <span class="p">{</span><span class="s2">&quot;amount_less_than_10&quot;</span><span class="o">:</span> <span class="kc">false</span><span class="p">},</span>
+    <span class="p">{</span><span class="s2">&quot;amount_less_than_10&quot;</span><span class="o">:</span> <span class="kc">true</span><span class="p">},</span>
+    <span class="p">{</span><span class="s2">&quot;amount_less_than_10&quot;</span><span class="o">:</span> <span class="kc">true</span><span class="p">},</span>
+    <span class="p">{</span><span class="s2">&quot;amount_less_than_10&quot;</span><span class="o">:</span> <span class="kc">false</span><span class="p">},</span>
+    <span class="p">{</span><span class="s2">&quot;amount_less_than_10&quot;</span><span class="o">:</span> <span class="kc">false</span><span class="p">},</span>
+    <span class="p">{</span><span class="s2">&quot;amount_less_than_10&quot;</span><span class="o">:</span> <span class="kc">true</span><span class="p">}</span>
+<span class="p">]</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="delete-a-calculation">
+<h3>Delete a calculation<a class="headerlink" href="#delete-a-calculation" title="Permalink to this headline">¶</a></h3>
+<p>To delete a calculation use the format <code class="docutils literal"><span class="pre">datasets/[dataset</span> <span class="pre">ID]/calculations/[name]</span></code>
+or <code class="docutils literal"><span class="pre">datasets/[dataset</span> <span class="pre">ID]/calculations?name=[name]</span></code>. For example,</p>
+<div class="highlight-sh"><div class="highlight"><pre>curl -X DELETE http://bamboo.io/datasets/8a3d74711475d8a51c84484fe73f24bd151242ea/calculations/amount_less_than_10
+</pre></div>
+</div>
+<p><strong>returns:</strong></p>
+<div class="highlight-javascript"><div class="highlight"><pre><span class="p">{</span>
+    <span class="s2">&quot;success&quot;</span><span class="o">:</span> <span class="s2">&quot;deleted calculation: &#39;amount_less_than_10&#39;&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;id&quot;</span><span class="o">:</span> <span class="s2">&quot;8a3d74711475d8a51c84484fe73f24bd151242ea&quot;</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="store-aggregation-formula">
+<h3>Store aggregation formula<a class="headerlink" href="#store-aggregation-formula" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-sh"><div class="highlight"><pre>curl -X POST -d <span class="s2">&quot;name=sum_of_amount&amp;formula=sum(amount)&quot;</span> http://bamboo.io/calculations/8a3d74711475d8a51c84484fe73f24bd151242ea
+</pre></div>
+</div>
+<p><strong>returns:</strong></p>
+<div class="highlight-javascript"><div class="highlight"><pre><span class="p">{</span>
+    <span class="s2">&quot;formula&quot;</span><span class="o">:</span> <span class="s2">&quot;sum(amount)&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;group&quot;</span><span class="o">:</span> <span class="kc">null</span><span class="p">,</span>
+    <span class="s2">&quot;name&quot;</span><span class="o">:</span> <span class="s2">&quot;sum_of_amount&quot;</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="store-aggregation-formula-with-group">
+<h3>Store aggregation formula with group<a class="headerlink" href="#store-aggregation-formula-with-group" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-sh"><div class="highlight"><pre>curl -X POST -d <span class="s2">&quot;name=sum_of_amount&amp;formula=sum(amount)&amp;group=food_type&quot;</span> http://bamboo.io/calculations/8a3d74711475d8a51c84484fe73f24bd151242ea
+</pre></div>
+</div>
+<p><strong>returns:</strong></p>
+<div class="highlight-javascript"><div class="highlight"><pre><span class="p">{</span>
+    <span class="s2">&quot;formula&quot;</span><span class="o">:</span> <span class="s2">&quot;sum(amount)&quot;</span><span class="p">,</span>
+     <span class="s2">&quot;group&quot;</span><span class="o">:</span> <span class="s2">&quot;food_type&quot;</span><span class="p">,</span>
+     <span class="s2">&quot;name&quot;</span><span class="o">:</span> <span class="s2">&quot;sum_of_amount&quot;</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="store-aggregation-formula-with-multi-group">
+<h3>Store aggregation formula with multi-group<a class="headerlink" href="#store-aggregation-formula-with-multi-group" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-sh"><div class="highlight"><pre>curl -X POST -d <span class="s2">&quot;name=sum_of_amount&amp;formula=sum(amount)&amp;group=food_type,rating&quot;</span> http://bamboo.io/calculations/8a3d74711475d8a51c84484fe73f24bd151242ea
+</pre></div>
+</div>
+<p><strong>returns:</strong></p>
+<div class="highlight-javascript"><div class="highlight"><pre><span class="p">{</span>
+    <span class="s2">&quot;formula&quot;</span><span class="o">:</span> <span class="s2">&quot;sum(amount)&quot;</span><span class="p">,</span>
+     <span class="s2">&quot;group&quot;</span><span class="o">:</span> <span class="s2">&quot;food_type,rating&quot;</span><span class="p">,</span>
+     <span class="s2">&quot;name&quot;</span><span class="o">:</span> <span class="s2">&quot;sum_of_amount&quot;</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="retrieve-lists-of-aggregated-datasets">
+<h3>Retrieve lists of aggregated datasets<a class="headerlink" href="#retrieve-lists-of-aggregated-datasets" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-sh"><div class="highlight"><pre>curl -g http://bamboo.io/datasets/8a3d74711475d8a51c84484fe73f24bd151242ea/aggregations
+</pre></div>
+</div>
+<p>Returns a map of groups (included an empty group) to dataset IDs for
+aggregation calculations.</p>
+<p><strong>returns:</strong></p>
+<div class="highlight-javascript"><div class="highlight"><pre><span class="p">{</span>
+    <span class="s2">&quot;&quot;</span><span class="o">:</span> <span class="s2">&quot;9ae0ee32b78d445588742ac818c3d533&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;food_type&quot;</span><span class="o">:</span> <span class="s2">&quot;643eaccb31e74216bfa7c16bfb0e79e5&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;food_type,rating&quot;</span><span class="o">:</span> <span class="s2">&quot;10cedc551e40418caa72495d771703b3&quot;</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="retrieve-the-linked-datasets-that-groups-on-foodtype-and-rating">
+<h3>Retrieve the linked datasets that groups on foodtype and rating<a class="headerlink" href="#retrieve-the-linked-datasets-that-groups-on-foodtype-and-rating" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-sh"><div class="highlight"><pre>curl -g http://bamboo.io/datasets/10cedc551e40418caa72495d771703b3
+</pre></div>
+</div>
+<p>Linked dataset are the same as any other dataset.</p>
+<p><strong>returns:</strong></p>
+<div class="highlight-javascript"><div class="highlight"><pre><span class="p">[</span>
+    <span class="p">{</span>
+        <span class="s2">&quot;rating&quot;</span><span class="o">:</span> <span class="s2">&quot;epic_eat&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;food_type&quot;</span><span class="o">:</span> <span class="s2">&quot;deserts&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;sum_of_amount&quot;</span><span class="o">:</span> <span class="mf">8.75</span>
+    <span class="p">},</span>
+    <span class="p">{</span>
+        <span class="s2">&quot;rating&quot;</span><span class="o">:</span> <span class="s2">&quot;delectible&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;food_type&quot;</span><span class="o">:</span> <span class="s2">&quot;dinner&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;sum_of_amount&quot;</span><span class="o">:</span> <span class="mf">26.0</span>
+    <span class="p">},</span>
+    <span class="p">{</span>
+        <span class="s2">&quot;rating&quot;</span><span class="o">:</span> <span class="s2">&quot;epic_eat&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;food_type&quot;</span><span class="o">:</span> <span class="s2">&quot;lunch&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;sum_of_amount&quot;</span><span class="o">:</span> <span class="mf">22.25</span>
+    <span class="p">},</span>
+    <span class="p">{</span>
+        <span class="s2">&quot;rating&quot;</span><span class="o">:</span> <span class="s2">&quot;delectible&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;food_type&quot;</span><span class="o">:</span> <span class="s2">&quot;street_meat&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;sum_of_amount&quot;</span><span class="o">:</span> <span class="mf">2.0</span>
+    <span class="p">},</span>
+    <span class="p">{</span>
+        <span class="s2">&quot;rating&quot;</span><span class="o">:</span> <span class="s2">&quot;epic_eat&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;food_type&quot;</span><span class="o">:</span> <span class="s2">&quot;caffeination&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;sum_of_amount&quot;</span><span class="o">:</span> <span class="mf">2.5</span>
+    <span class="p">},</span>
+    <span class="p">{</span>
+        <span class="s2">&quot;rating&quot;</span><span class="o">:</span> <span class="s2">&quot;epic_eat&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;food_type&quot;</span><span class="o">:</span> <span class="s2">&quot;dinner&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;sum_of_amount&quot;</span><span class="o">:</span> <span class="mf">1612.0</span>
+    <span class="p">},</span>
+    <span class="p">{</span>
+        <span class="s2">&quot;rating&quot;</span><span class="o">:</span> <span class="s2">&quot;delectible&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;food_type&quot;</span><span class="o">:</span> <span class="s2">&quot;drunk_food&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;sum_of_amount&quot;</span><span class="o">:</span> <span class="mf">20.0</span>
+    <span class="p">},</span>
+    <span class="p">{</span>
+        <span class="s2">&quot;rating&quot;</span><span class="o">:</span> <span class="s2">&quot;epic_eat&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;food_type&quot;</span><span class="o">:</span> <span class="s2">&quot;libations&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;sum_of_amount&quot;</span><span class="o">:</span> <span class="mf">9.5</span>
+    <span class="p">},</span>
+    <span class="p">{</span>
+        <span class="s2">&quot;rating&quot;</span><span class="o">:</span> <span class="s2">&quot;delectible&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;food_type&quot;</span><span class="o">:</span> <span class="s2">&quot;lunch&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;sum_of_amount&quot;</span><span class="o">:</span> <span class="mf">249.0</span>
+    <span class="p">},</span>
+    <span class="p">{</span>
+        <span class="s2">&quot;rating&quot;</span><span class="o">:</span> <span class="s2">&quot;delectible&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;food_type&quot;</span><span class="o">:</span> <span class="s2">&quot;morning_food&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;sum_of_amount&quot;</span><span class="o">:</span> <span class="mf">12.0</span>
+    <span class="p">},</span>
+    <span class="p">{</span>
+        <span class="s2">&quot;rating&quot;</span><span class="o">:</span> <span class="s2">&quot;epic_eat&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;food_type&quot;</span><span class="o">:</span> <span class="s2">&quot;morning_food&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;sum_of_amount&quot;</span><span class="o">:</span> <span class="mf">28.0</span>
+    <span class="p">},</span>
+    <span class="p">{</span>
+        <span class="s2">&quot;rating&quot;</span><span class="o">:</span> <span class="s2">&quot;delectible&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;food_type&quot;</span><span class="o">:</span> <span class="s2">&quot;streat_sweets&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;sum_of_amount&quot;</span><span class="o">:</span> <span class="mf">4.0</span>
+    <span class="p">}</span>
+<span class="p">]</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="check-the-bamboo-version">
+<h2>Check the <em>bamboo</em> version<a class="headerlink" href="#check-the-bamboo-version" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-sh"><div class="highlight"><pre>curl http://bamboo.io/version
+</pre></div>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Basic Commands</a><ul>
+<li><a class="reference internal" href="#storing-data-in-bamboo">Storing data in <em>bamboo</em></a><ul>
+<li><a class="reference internal" href="#upload-data-from-a-url-to-bamboo">Upload data from a URL to <em>bamboo</em></a></li>
+<li><a class="reference internal" href="#upload-data-from-a-csv-file-to-bamboo">Upload data from a CSV file to <em>bamboo</em></a></li>
+<li><a class="reference internal" href="#upload-data-from-a-json-file-to-bamboo">Upload data from a JSON file to <em>bamboo</em></a></li>
+<li><a class="reference internal" href="#missing-data-in-bamboo">Missing Data in <em>bamboo</em></a></li>
+<li><a class="reference internal" href="#deleting-a-dataset">Deleting a dataset</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#retrieve-information-about-a-dataset">Retrieve information about a dataset</a></li>
+<li><a class="reference internal" href="#retrieve-data">Retrieve data</a><ul>
+<li><a class="reference internal" href="#by-id">By ID</a></li>
+<li><a class="reference internal" href="#by-id-with-select">By ID with select</a></li>
+<li><a class="reference internal" href="#by-id-with-distinct">By ID with distinct</a></li>
+<li><a class="reference internal" href="#by-id-and-query">By ID and query</a></li>
+<li><a class="reference internal" href="#query-with-dates">Query with dates</a></li>
+<li><a class="reference internal" href="#only-return-the-count">Only return the count</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#retrieve-summary-statistics-for-dataset">Retrieve summary statistics for dataset</a><ul>
+<li><a class="reference internal" href="#id1">By ID</a></li>
+<li><a class="reference internal" href="#with-a-query">With a query</a></li>
+<li><a class="reference internal" href="#with-a-grouping">With a grouping</a></li>
+<li><a class="reference internal" href="#with-a-grouping-and-a-select">With a grouping and a select</a></li>
+<li><a class="reference internal" href="#with-a-multi-grouping">With a multi-grouping</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#calculation-formulas">Calculation formulas</a><ul>
+<li><a class="reference internal" href="#store-calculation-formula">Store calculation formula</a></li>
+<li><a class="reference internal" href="#retrieve-a-list-of-stored-calculations">Retrieve a list of stored calculations</a></li>
+<li><a class="reference internal" href="#retrieve-newly-calculated-column">Retrieve newly calculated column</a></li>
+<li><a class="reference internal" href="#delete-a-calculation">Delete a calculation</a></li>
+<li><a class="reference internal" href="#store-aggregation-formula">Store aggregation formula</a></li>
+<li><a class="reference internal" href="#store-aggregation-formula-with-group">Store aggregation formula with group</a></li>
+<li><a class="reference internal" href="#store-aggregation-formula-with-multi-group">Store aggregation formula with multi-group</a></li>
+<li><a class="reference internal" href="#retrieve-lists-of-aggregated-datasets">Retrieve lists of aggregated datasets</a></li>
+<li><a class="reference internal" href="#retrieve-the-linked-datasets-that-groups-on-foodtype-and-rating">Retrieve the linked datasets that groups on foodtype and rating</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#check-the-bamboo-version">Check the <em>bamboo</em> version</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="examples.html"
+                        title="previous chapter">Examples</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="plotting.html"
+                        title="next chapter">Plotting</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/basic_commands.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="plotting.html" title="Plotting"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="examples.html" title="Examples"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">bamboo 0.6.3 alpha documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &copy; Copyright 2013, Peter Lubell-Doughtie, Mark Johnston.
+    </div>
+  </body>
+</html>

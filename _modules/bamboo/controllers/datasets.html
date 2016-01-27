@@ -1,0 +1,761 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>bamboo.controllers.datasets &mdash; bamboo 0.6.3 alpha documentation</title>
+    
+    <link rel="stylesheet" href="../../../_static/nature.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../',
+        VERSION:     '0.6.3 alpha',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="top" title="bamboo 0.6.3 alpha documentation" href="../../../index.html" />
+    <link rel="up" title="Module code" href="../../index.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../../index.html">bamboo 0.6.3 alpha documentation</a> &raquo;</li>
+          <li><a href="../../index.html" accesskey="U">Module code</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <h1>Source code for bamboo.controllers.datasets</h1><div class="highlight"><pre>
+<span class="kn">import</span> <span class="nn">urllib2</span>
+
+<span class="kn">from</span> <span class="nn">external</span> <span class="kn">import</span> <span class="n">bearcart</span>
+<span class="kn">from</span> <span class="nn">pandas</span> <span class="kn">import</span> <span class="n">concat</span>
+<span class="kn">import</span> <span class="nn">vincent</span>
+
+<span class="kn">from</span> <span class="nn">bamboo.controllers.abstract_controller</span> <span class="kn">import</span> <span class="n">AbstractController</span>
+<span class="kn">from</span> <span class="nn">bamboo.core.aggregations</span> <span class="kn">import</span> <span class="n">AGGREGATIONS</span>
+<span class="kn">from</span> <span class="nn">bamboo.core.frame</span> <span class="kn">import</span> <span class="n">df_to_csv_string</span><span class="p">,</span> <span class="n">NonUniqueJoinError</span>
+<span class="kn">from</span> <span class="nn">bamboo.core.merge</span> <span class="kn">import</span> <span class="n">merge_dataset_ids</span><span class="p">,</span> <span class="n">MergeError</span>
+<span class="kn">from</span> <span class="nn">bamboo.core.summary</span> <span class="kn">import</span> <span class="n">ColumnTypeError</span>
+<span class="kn">from</span> <span class="nn">bamboo.lib.exceptions</span> <span class="kn">import</span> <span class="n">ArgumentError</span>
+<span class="kn">from</span> <span class="nn">bamboo.lib.jsontools</span> <span class="kn">import</span> <span class="n">df_to_jsondict</span><span class="p">,</span> <span class="n">JSONError</span><span class="p">,</span> <span class="n">safe_json_loads</span>
+<span class="kn">from</span> <span class="nn">bamboo.lib.utils</span> <span class="kn">import</span> <span class="n">parse_int</span>
+<span class="kn">from</span> <span class="nn">bamboo.lib.query_args</span> <span class="kn">import</span> <span class="n">QueryArgs</span>
+<span class="kn">from</span> <span class="nn">bamboo.models.dataset</span> <span class="kn">import</span> <span class="n">Dataset</span>
+<span class="kn">from</span> <span class="nn">bamboo.models.observation</span> <span class="kn">import</span> <span class="n">Observation</span>
+
+
+<span class="k">def</span> <span class="nf">valid_column</span><span class="p">(</span><span class="n">dataset</span><span class="p">,</span> <span class="n">c</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">c</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">dataset</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">ArgumentError</span><span class="p">(</span><span class="s">&quot;&#39;</span><span class="si">%s</span><span class="s">&#39; is not a column for this dataset.&quot;</span> <span class="o">%</span> <span class="n">c</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="Datasets"><a class="viewcode-back" href="../../../controllers.html#bamboo.controllers.datasets.Datasets">[docs]</a><span class="k">class</span> <span class="nc">Datasets</span><span class="p">(</span><span class="n">AbstractController</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    The Datasets Controller provides access to data.  Datasets can store data</span>
+<span class="sd">    from uploaded CSVs or URLs pointing to CSVs.  Additional rows can be passed</span>
+<span class="sd">    as JSON and added to a dataset.</span>
+
+<span class="sd">    All actions in the Datasets Controller can optionally take a `callback`</span>
+<span class="sd">    parameter.  If passed the returned result will be wrapped this the</span>
+<span class="sd">    parameter value.  E.g., is ``callback=parseResults`` the returned value</span>
+<span class="sd">    will be ``parseResults([some-JSON])``, where ``some-JSON`` is the function</span>
+<span class="sd">    return value.</span>
+
+<span class="sd">    Attributes:</span>
+
+<span class="sd">    - DEFAULT_AGGREGATION: The default aggregation for plotting with an index.</span>
+<span class="sd">    - SELECT_ALL_FOR_SUMMARY: A string the the client can pass to</span>
+<span class="sd">    - indicate that all columns should be summarized.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">DEFAULT_AGGREGATION</span> <span class="o">=</span> <span class="s">&#39;sum&#39;</span>
+    <span class="n">SELECT_ALL_FOR_SUMMARY</span> <span class="o">=</span> <span class="s">&#39;all&#39;</span>
+
+<div class="viewcode-block" id="Datasets.delete"><a class="viewcode-back" href="../../../controllers.html#bamboo.controllers.datasets.Datasets.delete">[docs]</a>    <span class="k">def</span> <span class="nf">delete</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dataset_id</span><span class="p">,</span> <span class="n">query</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Delete the dataset with hash `dataset_id`.</span>
+
+<span class="sd">        This also deletes any observations associated with the dataset_id. The</span>
+<span class="sd">        dataset and observations are not recoverable.</span>
+
+<span class="sd">        :param dataset_id: The dataset ID of the dataset to be deleted.</span>
+
+<span class="sd">        :returns: A string of success or error if that dataset could not be</span>
+<span class="sd">            found.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">def</span> <span class="nf">action</span><span class="p">(</span><span class="n">dataset</span><span class="p">,</span> <span class="n">query</span><span class="o">=</span><span class="n">query</span><span class="p">):</span>
+            <span class="n">message</span> <span class="o">=</span> <span class="s">&#39; rows matching query: </span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="n">query</span> <span class="k">if</span> <span class="n">query</span> <span class="k">else</span> <span class="s">&#39;&#39;</span>
+            <span class="n">query</span> <span class="o">=</span> <span class="n">safe_json_loads</span><span class="p">(</span><span class="n">query</span><span class="p">)</span>
+            <span class="n">dataset</span><span class="o">.</span><span class="n">delete</span><span class="p">(</span><span class="n">query</span><span class="p">)</span>
+
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_success</span><span class="p">(</span><span class="s">&#39;deleted dataset</span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="n">message</span><span class="p">,</span> <span class="n">dataset_id</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_safe_get_and_call</span><span class="p">(</span><span class="n">dataset_id</span><span class="p">,</span> <span class="n">action</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="Datasets.info"><a class="viewcode-back" href="../../../controllers.html#bamboo.controllers.datasets.Datasets.info">[docs]</a>    <span class="k">def</span> <span class="nf">info</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dataset_id</span><span class="p">,</span> <span class="n">callback</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Fetch and return the meta-data for a dataset.</span>
+
+<span class="sd">        :param dataset_id: The dataset ID of the dataset to return meta-data</span>
+<span class="sd">            for.</span>
+<span class="sd">        :param callback: A JSONP callback function to wrap the result in.</span>
+
+<span class="sd">        :returns: The data for `dataset_id`. Returns an error message if</span>
+<span class="sd">            `dataset_id` does not exist.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">def</span> <span class="nf">action</span><span class="p">(</span><span class="n">dataset</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">dataset</span><span class="o">.</span><span class="n">info</span><span class="p">()</span>
+
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_safe_get_and_call</span><span class="p">(</span><span class="n">dataset_id</span><span class="p">,</span> <span class="n">action</span><span class="p">,</span> <span class="n">callback</span><span class="o">=</span><span class="n">callback</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="Datasets.set_info"><a class="viewcode-back" href="../../../controllers.html#bamboo.controllers.datasets.Datasets.set_info">[docs]</a>    <span class="k">def</span> <span class="nf">set_info</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dataset_id</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Set the metadata for a dataset.</span>
+
+<span class="sd">        :param dataset_id: ID of the dataset to update.</span>
+<span class="sd">        :param attribution: Text to set the attribution to.</span>
+<span class="sd">        :param description: Text to set the description to.</span>
+<span class="sd">        :param label: Text to set the label to.</span>
+<span class="sd">        :param license: Text to set the license to.</span>
+
+<span class="sd">        :returns: Success or error.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">def</span> <span class="nf">action</span><span class="p">(</span><span class="n">dataset</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">dataset</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="n">kwargs</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_safe_get_and_call</span><span class="p">(</span><span class="n">dataset_id</span><span class="p">,</span> <span class="n">action</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="Datasets.summary"><a class="viewcode-back" href="../../../controllers.html#bamboo.controllers.datasets.Datasets.summary">[docs]</a>    <span class="k">def</span> <span class="nf">summary</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dataset_id</span><span class="p">,</span> <span class="n">query</span><span class="o">=</span><span class="p">{},</span> <span class="n">select</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">group</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">limit</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+                <span class="n">order_by</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">callback</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">flat</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Return a summary of the dataset ID given the passed parameters.</span>
+
+<span class="sd">        Retrieve the dataset by ID then limit that data using the optional</span>
+<span class="sd">        `query`, `select` and `limit` parameters. Summarize the resulting data</span>
+<span class="sd">        potentially grouping by the optional `group` parameter. Order the</span>
+<span class="sd">        results using `order_by` if passed.</span>
+
+<span class="sd">        :param dataset_id: The dataset ID of the dataset to summarize.</span>
+<span class="sd">        :param select: This is a required argument, it can be &#39;all&#39; or a</span>
+<span class="sd">            MongoDB JSON query.</span>
+<span class="sd">        :param group: If passed, group the summary by this column or list of</span>
+<span class="sd">            columns.</span>
+<span class="sd">        :param query: If passed restrict summary to rows matching this query.</span>
+<span class="sd">        :param limit: If passed limit the rows to summarize to this number.</span>
+<span class="sd">        :param order_by: If passed order the result using this column.</span>
+<span class="sd">        :param flat: Return multigroups as a flat list.</span>
+<span class="sd">        :param callback: A JSONP callback function to wrap the result in.</span>
+
+<span class="sd">        :returns: An error message if `dataset_id` does not exist or the JSON</span>
+<span class="sd">            for query or select is improperly formatted.  Otherwise the summary</span>
+<span class="sd">            as a JSON string.</span>
+
+<span class="sd">        :raises: `ArgumentError` if no select is supplied or dataset is not in</span>
+<span class="sd">            ready state.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">def</span> <span class="nf">action</span><span class="p">(</span><span class="n">dataset</span><span class="p">,</span> <span class="n">query</span><span class="o">=</span><span class="n">query</span><span class="p">,</span> <span class="n">select</span><span class="o">=</span><span class="n">select</span><span class="p">,</span> <span class="n">limit</span><span class="o">=</span><span class="n">limit</span><span class="p">):</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">dataset</span><span class="o">.</span><span class="n">is_ready</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">ArgumentError</span><span class="p">(</span><span class="s">&#39;dataset is not finished importing&#39;</span><span class="p">)</span>
+
+            <span class="n">limit</span> <span class="o">=</span> <span class="n">parse_int</span><span class="p">(</span><span class="n">limit</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+            <span class="n">query</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__parse_query</span><span class="p">(</span><span class="n">query</span><span class="p">)</span>
+            <span class="n">select</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__parse_select</span><span class="p">(</span><span class="n">select</span><span class="p">,</span> <span class="n">required</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+
+            <span class="n">groups</span> <span class="o">=</span> <span class="n">dataset</span><span class="o">.</span><span class="n">split_groups</span><span class="p">(</span><span class="n">group</span><span class="p">)</span>
+            <span class="p">[</span><span class="n">valid_column</span><span class="p">(</span><span class="n">dataset</span><span class="p">,</span> <span class="n">c</span><span class="p">)</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">groups</span><span class="p">]</span>
+
+            <span class="c"># if select append groups to select</span>
+            <span class="k">if</span> <span class="n">select</span><span class="p">:</span>
+                <span class="n">select</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="nb">dict</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">groups</span><span class="p">,</span> <span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">groups</span><span class="p">))))</span>
+
+            <span class="n">query_args</span> <span class="o">=</span> <span class="n">QueryArgs</span><span class="p">(</span><span class="n">query</span><span class="o">=</span><span class="n">query</span><span class="p">,</span> <span class="n">select</span><span class="o">=</span><span class="n">select</span><span class="p">,</span> <span class="n">limit</span><span class="o">=</span><span class="n">limit</span><span class="p">,</span>
+                                   <span class="n">order_by</span><span class="o">=</span><span class="n">order_by</span><span class="p">)</span>
+            <span class="n">dframe</span> <span class="o">=</span> <span class="n">dataset</span><span class="o">.</span><span class="n">dframe</span><span class="p">(</span><span class="n">query_args</span><span class="p">)</span>
+
+            <span class="k">return</span> <span class="n">dataset</span><span class="o">.</span><span class="n">summarize</span><span class="p">(</span><span class="n">dframe</span><span class="p">,</span> <span class="n">groups</span><span class="o">=</span><span class="n">groups</span><span class="p">,</span>
+                                     <span class="n">no_cache</span><span class="o">=</span><span class="n">query</span> <span class="ow">or</span> <span class="n">select</span><span class="p">,</span> <span class="n">flat</span><span class="o">=</span><span class="n">flat</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_safe_get_and_call</span><span class="p">(</span><span class="n">dataset_id</span><span class="p">,</span> <span class="n">action</span><span class="p">,</span> <span class="n">callback</span><span class="o">=</span><span class="n">callback</span><span class="p">,</span>
+                                       <span class="n">exceptions</span><span class="o">=</span><span class="p">(</span><span class="n">ColumnTypeError</span><span class="p">,))</span>
+</div>
+<div class="viewcode-block" id="Datasets.aggregations"><a class="viewcode-back" href="../../../controllers.html#bamboo.controllers.datasets.Datasets.aggregations">[docs]</a>    <span class="k">def</span> <span class="nf">aggregations</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dataset_id</span><span class="p">,</span> <span class="n">callback</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Return a dict of aggregated data for the given `dataset_id`.</span>
+
+<span class="sd">        :param dataset_id: The dataset ID of the dataset to return aggregations</span>
+<span class="sd">            for.</span>
+<span class="sd">        :param callback: A JSONP callback function to wrap the result in.</span>
+
+<span class="sd">        :returns: An error message if `dataset_id` does not exist. Otherwise,</span>
+<span class="sd">            returns a dict of the form {[group]: [id]}.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">def</span> <span class="nf">action</span><span class="p">(</span><span class="n">dataset</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">dataset</span><span class="o">.</span><span class="n">aggregated_datasets_dict</span>
+
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_safe_get_and_call</span><span class="p">(</span><span class="n">dataset_id</span><span class="p">,</span> <span class="n">action</span><span class="p">,</span> <span class="n">callback</span><span class="o">=</span><span class="n">callback</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="Datasets.show"><a class="viewcode-back" href="../../../controllers.html#bamboo.controllers.datasets.Datasets.show">[docs]</a>    <span class="k">def</span> <span class="nf">show</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dataset_id</span><span class="p">,</span> <span class="n">query</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">select</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">distinct</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">limit</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+             <span class="n">order_by</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">format</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">callback</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">count</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span>
+             <span class="n">index</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Return rows for `dataset_id`, matching the passed parameters.</span>
+
+<span class="sd">        Retrieve the dataset by ID then limit that data using the optional</span>
+<span class="sd">        `query`, `select` and `limit` parameters. Order the results using</span>
+<span class="sd">        `order_by` if passed.</span>
+
+<span class="sd">        :param dataset_id: The dataset ID of the dataset to return.</span>
+<span class="sd">        :param select: A MongoDB JSON query for select.</span>
+<span class="sd">        :param distinct: A field to return distinct results for.</span>
+<span class="sd">        :param query: If passed restrict results to rows matching this query.</span>
+<span class="sd">        :param limit: If passed limit the rows to this number.</span>
+<span class="sd">        :param order_by: If passed order the result using this column.</span>
+<span class="sd">        :param format: Format of output data, &#39;json&#39; or &#39;csv&#39;</span>
+<span class="sd">        :param callback: A JSONP callback function to wrap the result in.</span>
+<span class="sd">        :param count: Return the count for this query.</span>
+<span class="sd">        :param index: Include index with data.</span>
+
+<span class="sd">        :returns: An error message if `dataset_id` does not exist or the JSON</span>
+<span class="sd">            for query or select is improperly formatted. Otherwise a JSON</span>
+<span class="sd">            string of the rows matching the parameters.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">content_type</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__content_type_for_format</span><span class="p">(</span><span class="n">format</span><span class="p">)</span>
+
+        <span class="k">def</span> <span class="nf">action</span><span class="p">(</span><span class="n">dataset</span><span class="p">,</span> <span class="n">limit</span><span class="o">=</span><span class="n">limit</span><span class="p">,</span> <span class="n">query</span><span class="o">=</span><span class="n">query</span><span class="p">,</span> <span class="n">select</span><span class="o">=</span><span class="n">select</span><span class="p">):</span>
+            <span class="n">query_args</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__parse_query_args</span><span class="p">(</span>
+                <span class="n">limit</span><span class="p">,</span> <span class="n">order_by</span><span class="p">,</span> <span class="n">query</span><span class="p">,</span> <span class="n">select</span><span class="p">,</span> <span class="n">distinct</span><span class="o">=</span><span class="n">distinct</span><span class="p">,</span>
+                <span class="n">dataset</span><span class="o">=</span><span class="n">dataset</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="n">count</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">dataset</span><span class="o">.</span><span class="n">count</span><span class="p">(</span><span class="n">query_args</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">dframe</span> <span class="o">=</span> <span class="n">dataset</span><span class="o">.</span><span class="n">dframe</span><span class="p">(</span><span class="n">query_args</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="n">index</span><span class="p">)</span>
+
+                <span class="k">if</span> <span class="n">distinct</span><span class="p">:</span>
+                    <span class="k">return</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">dframe</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">tolist</span><span class="p">())</span>
+
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__dataframe_as_content_type</span><span class="p">(</span><span class="n">content_type</span><span class="p">,</span> <span class="n">dframe</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_safe_get_and_call</span><span class="p">(</span>
+            <span class="n">dataset_id</span><span class="p">,</span> <span class="n">action</span><span class="p">,</span> <span class="n">callback</span><span class="o">=</span><span class="n">callback</span><span class="p">,</span> <span class="n">content_type</span><span class="o">=</span><span class="n">content_type</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="Datasets.merge"><a class="viewcode-back" href="../../../controllers.html#bamboo.controllers.datasets.Datasets.merge">[docs]</a>    <span class="k">def</span> <span class="nf">merge</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dataset_ids</span><span class="p">,</span> <span class="n">mapping</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Merge the datasets with the dataset_ids in `datasets`.</span>
+
+<span class="sd">        :param dataset_ids: A JSON encoded array of dataset IDs for existing</span>
+<span class="sd">            datasets.</span>
+<span class="sd">        :param mapping: An optional mapping from original column names to</span>
+<span class="sd">            destination names.</span>
+
+<span class="sd">        :returns: An error if the datasets could not be found or less than two</span>
+<span class="sd">            dataset IDs were passed.  Otherwise, the ID of the new merged</span>
+<span class="sd">            dataset created by combining the datasets provided as an argument.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">def</span> <span class="nf">action</span><span class="p">(</span><span class="n">dataset</span><span class="p">,</span> <span class="n">dataset_ids</span><span class="o">=</span><span class="n">dataset_ids</span><span class="p">,</span> <span class="n">mapping</span><span class="o">=</span><span class="n">mapping</span><span class="p">):</span>
+            <span class="n">mapping</span> <span class="o">=</span> <span class="n">safe_json_loads</span><span class="p">(</span><span class="n">mapping</span><span class="p">)</span>
+
+            <span class="n">dataset_ids</span> <span class="o">=</span> <span class="n">safe_json_loads</span><span class="p">(</span><span class="n">dataset_ids</span><span class="p">)</span>
+            <span class="n">dataset</span> <span class="o">=</span> <span class="n">merge_dataset_ids</span><span class="p">(</span><span class="n">dataset_ids</span><span class="p">,</span> <span class="n">mapping</span><span class="p">)</span>
+
+            <span class="k">return</span> <span class="p">{</span><span class="n">Dataset</span><span class="o">.</span><span class="n">ID</span><span class="p">:</span> <span class="n">dataset</span><span class="o">.</span><span class="n">dataset_id</span><span class="p">}</span>
+
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_safe_get_and_call</span><span class="p">(</span>
+            <span class="bp">None</span><span class="p">,</span> <span class="n">action</span><span class="p">,</span> <span class="n">exceptions</span><span class="o">=</span><span class="p">(</span><span class="n">MergeError</span><span class="p">,),</span> <span class="n">error</span> <span class="o">=</span> <span class="s">&#39;merge failed&#39;</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="Datasets.create"><a class="viewcode-back" href="../../../controllers.html#bamboo.controllers.datasets.Datasets.create">[docs]</a>    <span class="k">def</span> <span class="nf">create</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Create a dataset by URL, CSV or schema file.</span>
+
+<span class="sd">        If `url` is provided, create a dataset by downloading a CSV from that</span>
+<span class="sd">        URL. If `url` is not provided and `csv_file` is provided, create a</span>
+<span class="sd">        dataset with the data in the passed `csv_file`. If both `url` and</span>
+<span class="sd">        `csv_file` are provided, `csv_file` is ignored. If `schema` is</span>
+<span class="sd">        supplied, an empty dataset is created with the associated column</span>
+<span class="sd">        structure.</span>
+
+<span class="sd">        .. note::</span>
+
+<span class="sd">            The follow words are reserved and will be slugified by adding</span>
+<span class="sd">            underscores (or multiple underscores to ensure uniqueness) if used</span>
+<span class="sd">            as column names:</span>
+
+<span class="sd">                - all</span>
+<span class="sd">                - and</span>
+<span class="sd">                - case</span>
+<span class="sd">                - date</span>
+<span class="sd">                - default</span>
+<span class="sd">                - in</span>
+<span class="sd">                - not</span>
+<span class="sd">                - or</span>
+<span class="sd">                - sum</span>
+<span class="sd">                - today</span>
+
+<span class="sd">        :param url: A URL to load a CSV file from. The URL must point to a CSV</span>
+<span class="sd">            file.</span>
+<span class="sd">        :param csv_file: An uploaded CSV file to read from.</span>
+<span class="sd">        :param json_file: An uploaded JSON file to read from.</span>
+<span class="sd">        :param schema: A SDF schema file (JSON)</span>
+<span class="sd">        :param na_values: A JSON list of values to interpret as missing data.</span>
+<span class="sd">        :param perish: Number of seconds after which to delete the dataset.</span>
+
+<span class="sd">        :returns: An error message if `url`, `csv_file`, or `scehma` are not</span>
+<span class="sd">            provided. An error message if an improperly formatted value raises</span>
+<span class="sd">            a ValueError, e.g. an improperly formatted CSV file. An error</span>
+<span class="sd">            message if the URL could not be loaded. Otherwise returns a JSON</span>
+<span class="sd">            string with the dataset ID of the newly created dataset.  Note that</span>
+<span class="sd">            the dataset will not be fully loaded until its state is set to</span>
+<span class="sd">            ready.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__create_or_update</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="Datasets.reset"><a class="viewcode-back" href="../../../controllers.html#bamboo.controllers.datasets.Datasets.reset">[docs]</a>    <span class="k">def</span> <span class="nf">reset</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dataset_id</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Replace a dataset&#39;s data.</span>
+
+<span class="sd">        Takes equivalent arguments and returns equivalent values as `create`.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__create_or_update</span><span class="p">(</span><span class="n">dataset_id</span><span class="o">=</span><span class="n">dataset_id</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="Datasets.update"><a class="viewcode-back" href="../../../controllers.html#bamboo.controllers.datasets.Datasets.update">[docs]</a>    <span class="k">def</span> <span class="nf">update</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dataset_id</span><span class="p">,</span> <span class="n">update</span><span class="p">,</span> <span class="n">clear_pending</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Update the `dataset_id` with the new rows as JSON.</span>
+
+<span class="sd">        :param dataset_id: The ID of the dataset to update.</span>
+<span class="sd">        :param update: The JSON to update the dataset with.</span>
+<span class="sd">        :param clear_pending: Remove any pending updates. Default False.</span>
+
+<span class="sd">        :returns: A JSON dict with the ID of the dataset updated, or with an</span>
+<span class="sd">            error message.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">def</span> <span class="nf">action</span><span class="p">(</span><span class="n">dataset</span><span class="p">,</span> <span class="n">update</span><span class="o">=</span><span class="n">update</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">clear_pending</span><span class="p">:</span>
+                <span class="n">dataset</span><span class="o">.</span><span class="n">clear_pending_updates</span><span class="p">()</span>
+            <span class="n">update</span> <span class="o">=</span> <span class="n">safe_json_loads</span><span class="p">(</span><span class="n">update</span><span class="p">)</span>
+            <span class="n">dataset</span><span class="o">.</span><span class="n">add_observations</span><span class="p">(</span><span class="n">update</span><span class="p">)</span>
+
+            <span class="k">return</span> <span class="p">{</span><span class="n">Dataset</span><span class="o">.</span><span class="n">ID</span><span class="p">:</span> <span class="n">dataset_id</span><span class="p">}</span>
+
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_safe_get_and_call</span><span class="p">(</span>
+            <span class="n">dataset_id</span><span class="p">,</span> <span class="n">action</span><span class="p">,</span> <span class="n">exceptions</span><span class="o">=</span><span class="p">(</span><span class="n">NonUniqueJoinError</span><span class="p">,))</span>
+</div>
+<div class="viewcode-block" id="Datasets.drop_columns"><a class="viewcode-back" href="../../../controllers.html#bamboo.controllers.datasets.Datasets.drop_columns">[docs]</a>    <span class="k">def</span> <span class="nf">drop_columns</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dataset_id</span><span class="p">,</span> <span class="n">columns</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Drop columns in dataset.</span>
+
+<span class="sd">        Removes all the `columns` from the dataset with ID `dataset_id`.</span>
+
+<span class="sd">        :param dataset_id: The ID of the dataset to update.</span>
+<span class="sd">        :param columns: An array of columns within the dataset.</span>
+
+<span class="sd">        :returns: An error if any column is not in the dataset. Otherwise a</span>
+<span class="sd">            success message.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">def</span> <span class="nf">action</span><span class="p">(</span><span class="n">dataset</span><span class="p">):</span>
+            <span class="n">deleted</span> <span class="o">=</span> <span class="n">dataset</span><span class="o">.</span><span class="n">delete_columns</span><span class="p">(</span><span class="n">columns</span><span class="p">)</span>
+
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_success</span><span class="p">(</span><span class="s">&#39;dropped columns: </span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="n">deleted</span><span class="p">,</span> <span class="n">dataset_id</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_safe_get_and_call</span><span class="p">(</span><span class="n">dataset_id</span><span class="p">,</span> <span class="n">action</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="Datasets.join"><a class="viewcode-back" href="../../../controllers.html#bamboo.controllers.datasets.Datasets.join">[docs]</a>    <span class="k">def</span> <span class="nf">join</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dataset_id</span><span class="p">,</span> <span class="n">other_dataset_id</span><span class="p">,</span> <span class="n">on</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Join the columns from two existing datasets.</span>
+
+<span class="sd">        The `on` column must exists in both dataset. The values in the `on`</span>
+<span class="sd">        `on` column of the other dataset must be unique.</span>
+
+<span class="sd">        `on` can either be a single string to join on the same column in both</span>
+<span class="sd">        datasets, or a comman separated list of the name for the left hand side</span>
+<span class="sd">        and then the name for the right hand side. E.g.:</span>
+
+<span class="sd">            * on=food_type,foodtype</span>
+
+<span class="sd">        Will join on the left hand `food_type` column and the right hand</span>
+<span class="sd">        `foodtype` column.</span>
+
+
+<span class="sd">        :param dataset_id: The left hand dataset to be joined onto.</span>
+<span class="sd">        :param other_dataset_id: The right hand to join.</span>
+<span class="sd">        :param on: A column to join on, this column must be unique in the other</span>
+<span class="sd">          dataset.</span>
+
+<span class="sd">        :returns: Success and the new merged dataset ID or error message.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">def</span> <span class="nf">action</span><span class="p">(</span><span class="n">dataset</span><span class="p">):</span>
+            <span class="n">other_dataset</span> <span class="o">=</span> <span class="n">Dataset</span><span class="o">.</span><span class="n">find_one</span><span class="p">(</span><span class="n">other_dataset_id</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="n">other_dataset</span><span class="o">.</span><span class="n">record</span><span class="p">:</span>
+                <span class="n">merged_dataset</span> <span class="o">=</span> <span class="n">dataset</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">other_dataset</span><span class="p">,</span> <span class="n">on</span><span class="p">)</span>
+
+                <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_success</span><span class="p">(</span><span class="s">&#39;joined dataset </span><span class="si">%s</span><span class="s"> to </span><span class="si">%s</span><span class="s"> on </span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span>
+                    <span class="n">other_dataset_id</span><span class="p">,</span> <span class="n">dataset_id</span><span class="p">,</span> <span class="n">on</span><span class="p">),</span>
+                    <span class="n">merged_dataset</span><span class="o">.</span><span class="n">dataset_id</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_safe_get_and_call</span><span class="p">(</span>
+            <span class="n">dataset_id</span><span class="p">,</span> <span class="n">action</span><span class="p">,</span> <span class="n">exceptions</span><span class="o">=</span><span class="p">(</span><span class="ne">KeyError</span><span class="p">,</span> <span class="n">NonUniqueJoinError</span><span class="p">))</span>
+</div>
+<div class="viewcode-block" id="Datasets.resample"><a class="viewcode-back" href="../../../controllers.html#bamboo.controllers.datasets.Datasets.resample">[docs]</a>    <span class="k">def</span> <span class="nf">resample</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dataset_id</span><span class="p">,</span> <span class="n">date_column</span><span class="p">,</span> <span class="n">interval</span><span class="p">,</span> <span class="n">how</span><span class="o">=</span><span class="s">&#39;mean&#39;</span><span class="p">,</span>
+                 <span class="n">query</span><span class="o">=</span><span class="p">{},</span> <span class="n">format</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Resample a dataset.</span>
+
+<span class="sd">        Resample a dataset based on the given interval and date column.</span>
+
+<span class="sd">        :param dataset_id: The ID of the dataset to resample.</span>
+<span class="sd">        :param date_column: This column determins the dates that are used in</span>
+<span class="sd">            resampling.</span>
+<span class="sd">        :param interval: The interval to use in resampling, any interval valid</span>
+<span class="sd">            for the pandas resample function is accepted.</span>
+<span class="sd">        :type interval: String</span>
+<span class="sd">        :param how: The method of interpolation to use, any method valid for</span>
+<span class="sd">            the pandas resampling function is accepted.</span>
+<span class="sd">        :param query: A query to restrict the data which is resampled.</span>
+<span class="sd">        :param format: The format of the returned DataFrame.</span>
+
+<span class="sd">        :returns: A resampled DataFrame.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">content_type</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__content_type_for_format</span><span class="p">(</span><span class="n">format</span><span class="p">)</span>
+
+        <span class="k">def</span> <span class="nf">action</span><span class="p">(</span><span class="n">dataset</span><span class="p">,</span> <span class="n">query</span><span class="o">=</span><span class="n">query</span><span class="p">):</span>
+            <span class="n">query</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__parse_query</span><span class="p">(</span><span class="n">query</span><span class="p">)</span>
+            <span class="n">dframe</span> <span class="o">=</span> <span class="n">dataset</span><span class="o">.</span><span class="n">resample</span><span class="p">(</span><span class="n">date_column</span><span class="p">,</span> <span class="n">interval</span><span class="p">,</span> <span class="n">how</span><span class="p">,</span> <span class="n">query</span><span class="o">=</span><span class="n">query</span><span class="p">)</span>
+
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__dataframe_as_content_type</span><span class="p">(</span><span class="n">content_type</span><span class="p">,</span> <span class="n">dframe</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_safe_get_and_call</span><span class="p">(</span><span class="n">dataset_id</span><span class="p">,</span> <span class="n">action</span><span class="p">,</span>
+                                       <span class="n">exceptions</span><span class="o">=</span><span class="p">(</span><span class="ne">TypeError</span><span class="p">,),</span>
+                                       <span class="n">content_type</span><span class="o">=</span><span class="n">content_type</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="Datasets.set_olap_type"><a class="viewcode-back" href="../../../controllers.html#bamboo.controllers.datasets.Datasets.set_olap_type">[docs]</a>    <span class="k">def</span> <span class="nf">set_olap_type</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dataset_id</span><span class="p">,</span> <span class="n">column</span><span class="p">,</span> <span class="n">olap_type</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Set the OLAP Type for this `column` of dataset.</span>
+
+<span class="sd">        Only columns with an original OLAP Type of &#39;measure&#39; can be modified.</span>
+<span class="sd">        This includes columns with Simple Type integer, float, and datetime.</span>
+
+<span class="sd">        :param dataset_id: The ID of the dataset to modify.</span>
+<span class="sd">        :param column: The column to set the OLAP Type for.</span>
+<span class="sd">        :param olap_type: The OLAP Type to set. Must be &#39;dimension&#39; or</span>
+<span class="sd">            &#39;measure&#39;.</span>
+
+<span class="sd">        :returns: A success or error message.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">def</span> <span class="nf">action</span><span class="p">(</span><span class="n">dataset</span><span class="p">):</span>
+            <span class="n">dataset</span><span class="o">.</span><span class="n">set_olap_type</span><span class="p">(</span><span class="n">column</span><span class="p">,</span> <span class="n">olap_type</span><span class="p">)</span>
+
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_success</span><span class="p">(</span><span class="s">&#39;set OLAP Type for column &quot;</span><span class="si">%s</span><span class="s">&quot; to &quot;</span><span class="si">%s</span><span class="s">&quot;.&#39;</span> <span class="o">%</span> <span class="p">(</span>
+                <span class="n">column</span><span class="p">,</span> <span class="n">olap_type</span><span class="p">),</span> <span class="n">dataset_id</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_safe_get_and_call</span><span class="p">(</span><span class="n">dataset_id</span><span class="p">,</span> <span class="n">action</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="Datasets.rolling"><a class="viewcode-back" href="../../../controllers.html#bamboo.controllers.datasets.Datasets.rolling">[docs]</a>    <span class="k">def</span> <span class="nf">rolling</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dataset_id</span><span class="p">,</span> <span class="n">window</span><span class="p">,</span> <span class="n">win_type</span><span class="o">=</span><span class="s">&#39;boxcar&#39;</span><span class="p">,</span>
+                <span class="n">format</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Calculate the rolling window over a dataset.</span>
+
+<span class="sd">        Calculate a rolling aggregation over the dataset.</span>
+
+<span class="sd">        :param dataset_id: The dataset to calculate a rolling aggregation for.</span>
+<span class="sd">        :param window: The number of observations to include in each window of</span>
+<span class="sd">            aggregation.</span>
+<span class="sd">        :type window: Numeric</span>
+<span class="sd">        :param win_type: The method of aggegating data in the window, default</span>
+<span class="sd">            &#39;boxcar&#39;.  See pandas docs for details.</span>
+<span class="sd">        :param format: The format of the returned DtaFrame.</span>
+
+<span class="sd">        :returns: A DataFrame of aggregated rolling data.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">content_type</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__content_type_for_format</span><span class="p">(</span><span class="n">format</span><span class="p">)</span>
+
+        <span class="k">def</span> <span class="nf">action</span><span class="p">(</span><span class="n">dataset</span><span class="p">):</span>
+            <span class="n">dframe</span> <span class="o">=</span> <span class="n">dataset</span><span class="o">.</span><span class="n">rolling</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">win_type</span><span class="p">),</span> <span class="nb">int</span><span class="p">(</span><span class="n">window</span><span class="p">))</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__dataframe_as_content_type</span><span class="p">(</span><span class="n">content_type</span><span class="p">,</span> <span class="n">dframe</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_safe_get_and_call</span><span class="p">(</span><span class="n">dataset_id</span><span class="p">,</span> <span class="n">action</span><span class="p">,</span>
+                                       <span class="n">content_type</span><span class="o">=</span><span class="n">content_type</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="Datasets.row_delete"><a class="viewcode-back" href="../../../controllers.html#bamboo.controllers.datasets.Datasets.row_delete">[docs]</a>    <span class="k">def</span> <span class="nf">row_delete</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dataset_id</span><span class="p">,</span> <span class="n">index</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Delete a row from dataset by index.</span>
+
+<span class="sd">        :param dataset_id: The dataset to modify.</span>
+<span class="sd">        :param index: The index to delete in the dataset.</span>
+
+<span class="sd">        :returns: Success or error message.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">def</span> <span class="nf">action</span><span class="p">(</span><span class="n">dataset</span><span class="p">):</span>
+            <span class="n">dataset</span><span class="o">.</span><span class="n">delete_observation</span><span class="p">(</span><span class="n">parse_int</span><span class="p">(</span><span class="n">index</span><span class="p">))</span>
+
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_success</span><span class="p">(</span><span class="s">&#39;Deleted row with index &quot;</span><span class="si">%s</span><span class="s">&quot;.&#39;</span> <span class="o">%</span> <span class="n">index</span><span class="p">,</span>
+                                 <span class="n">dataset_id</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_safe_get_and_call</span><span class="p">(</span><span class="n">dataset_id</span><span class="p">,</span> <span class="n">action</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="Datasets.row_show"><a class="viewcode-back" href="../../../controllers.html#bamboo.controllers.datasets.Datasets.row_show">[docs]</a>    <span class="k">def</span> <span class="nf">row_show</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dataset_id</span><span class="p">,</span> <span class="n">index</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Show a row by index.</span>
+
+<span class="sd">        :param dataset_id: The dataset to fetch a row from.</span>
+<span class="sd">        :param index: The index of the row to fetch.</span>
+
+<span class="sd">        :returns: The requested row.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">def</span> <span class="nf">action</span><span class="p">(</span><span class="n">dataset</span><span class="p">):</span>
+            <span class="n">row</span> <span class="o">=</span> <span class="n">Observation</span><span class="o">.</span><span class="n">find_one</span><span class="p">(</span><span class="n">dataset</span><span class="p">,</span> <span class="n">parse_int</span><span class="p">(</span><span class="n">index</span><span class="p">))</span>
+
+            <span class="k">if</span> <span class="n">row</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">row</span><span class="o">.</span><span class="n">clean_record</span>
+
+        <span class="n">error_message</span> <span class="o">=</span> <span class="s">&quot;No row exists at index </span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="n">index</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_safe_get_and_call</span><span class="p">(</span><span class="n">dataset_id</span><span class="p">,</span> <span class="n">action</span><span class="p">,</span> <span class="n">error</span><span class="o">=</span><span class="n">error_message</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="Datasets.row_update"><a class="viewcode-back" href="../../../controllers.html#bamboo.controllers.datasets.Datasets.row_update">[docs]</a>    <span class="k">def</span> <span class="nf">row_update</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dataset_id</span><span class="p">,</span> <span class="n">index</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Update a row in dataset by index.</span>
+
+<span class="sd">        Update the row in dataset identified by `index` by updating it with the</span>
+<span class="sd">        JSON dict `data`.  If there is a column in the DataFrame for which</span>
+<span class="sd">        there is not a corresponding key in `data` that column will not be</span>
+<span class="sd">        modified.</span>
+
+<span class="sd">        :param dataset_id: The dataset to modify.</span>
+<span class="sd">        :param index: The index to update.</span>
+<span class="sd">        :param data: A JSON dict to update the row with.</span>
+
+<span class="sd">        :returns: Success or error message.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">def</span> <span class="nf">action</span><span class="p">(</span><span class="n">dataset</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="n">data</span><span class="p">):</span>
+            <span class="n">data</span> <span class="o">=</span> <span class="n">safe_json_loads</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+            <span class="n">dataset</span><span class="o">.</span><span class="n">update_observation</span><span class="p">(</span><span class="n">parse_int</span><span class="p">(</span><span class="n">index</span><span class="p">),</span> <span class="n">data</span><span class="p">)</span>
+
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_success</span><span class="p">(</span><span class="s">&#39;Updated row with index &quot;</span><span class="si">%s</span><span class="s">&quot;.&#39;</span> <span class="o">%</span> <span class="n">index</span><span class="p">,</span>
+                                 <span class="n">dataset_id</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_safe_get_and_call</span><span class="p">(</span><span class="n">dataset_id</span><span class="p">,</span> <span class="n">action</span><span class="p">,</span>
+                                       <span class="n">exceptions</span><span class="o">=</span><span class="p">(</span><span class="n">NonUniqueJoinError</span><span class="p">,))</span>
+</div>
+<div class="viewcode-block" id="Datasets.plot"><a class="viewcode-back" href="../../../controllers.html#bamboo.controllers.datasets.Datasets.plot">[docs]</a>    <span class="k">def</span> <span class="nf">plot</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dataset_id</span><span class="p">,</span> <span class="n">query</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">select</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">limit</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">group</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
+             <span class="n">order_by</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">plot_type</span><span class="o">=</span><span class="s">&#39;line&#39;</span><span class="p">,</span> <span class="n">aggregation</span><span class="o">=</span><span class="s">&#39;sum&#39;</span><span class="p">,</span>
+             <span class="n">palette</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">vega</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">width</span><span class="o">=</span><span class="mi">750</span><span class="p">,</span> <span class="n">height</span><span class="o">=</span><span class="mi">400</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Plot a dataset given restrictions.</span>
+
+<span class="sd">        :param dataset_id: The dataset ID of the dataset to return.</span>
+<span class="sd">        :param select: A MongoDB JSON query for select.</span>
+<span class="sd">        :param distinct: A field to return distinct results for.</span>
+<span class="sd">        :param query: If passed restrict results to rows matching this query.</span>
+<span class="sd">        :param limit: If passed limit the rows to this number.</span>
+<span class="sd">        :param group: Group by this column.</span>
+<span class="sd">        :param order_by: If passed order the result using this column.</span>
+<span class="sd">        :param index: If passed set this column as the index.</span>
+<span class="sd">        :param plot_type: Option type of plot, may be: *area*, *bar*, *line*,</span>
+<span class="sd">            *scatterplot*, or *stack*.  The default is *line*.</span>
+<span class="sd">        :param aggregation: The type of aggregation to use.  The default is</span>
+<span class="sd">            *sum*.</span>
+<span class="sd">        :param palette: Color palette to use for the graph, accepts any of</span>
+<span class="sd">            https://github.com/shutterstock/rickshaw#color-schemes, default</span>
+<span class="sd">            spectrum14.</span>
+<span class="sd">        :param vega: Output vega JSON.</span>
+
+<span class="sd">        :returns: HTML with an embedded plot.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">def</span> <span class="nf">action</span><span class="p">(</span><span class="n">dataset</span><span class="p">,</span> <span class="n">select</span><span class="o">=</span><span class="n">select</span><span class="p">):</span>
+            <span class="n">query_args</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__parse_query_args</span><span class="p">(</span><span class="n">limit</span><span class="p">,</span> <span class="n">order_by</span><span class="p">,</span> <span class="n">query</span><span class="p">,</span>
+                                                 <span class="n">select</span><span class="p">,</span> <span class="n">dataset</span><span class="o">=</span><span class="n">dataset</span><span class="p">)</span>
+
+            <span class="n">numerics_select</span> <span class="o">=</span> <span class="n">dataset</span><span class="o">.</span><span class="n">schema</span><span class="o">.</span><span class="n">numerics_select</span>
+            <span class="n">query_select</span> <span class="o">=</span> <span class="n">query_args</span><span class="o">.</span><span class="n">select</span>
+
+            <span class="k">if</span> <span class="n">query_select</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+                <span class="n">query_select</span> <span class="o">=</span> <span class="n">numerics_select</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">query_select</span> <span class="o">=</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">v</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">query_select</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">k</span> <span class="ow">in</span>
+                                <span class="n">numerics_select</span><span class="o">.</span><span class="n">keys</span><span class="p">()}</span>
+
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">query_select</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">ArgumentError</span><span class="p">(</span>
+                    <span class="s">&#39;No numeric columns for dataset, or no select columns are &#39;</span>
+                    <span class="s">&#39;numeric. Select: </span><span class="si">%s</span><span class="s">.&#39;</span> <span class="o">%</span> <span class="n">select</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="n">index</span><span class="p">:</span>
+                <span class="n">query_select</span><span class="p">[</span><span class="n">index</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
+                <span class="n">valid_column</span><span class="p">(</span><span class="n">dataset</span><span class="p">,</span> <span class="n">index</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="n">group</span><span class="p">:</span>
+                <span class="n">query_select</span><span class="p">[</span><span class="n">group</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
+                <span class="n">valid_column</span><span class="p">(</span><span class="n">dataset</span><span class="p">,</span> <span class="n">group</span><span class="p">)</span>
+
+            <span class="n">query_args</span><span class="o">.</span><span class="n">select</span> <span class="o">=</span> <span class="n">query_select</span>
+
+            <span class="n">dframe</span> <span class="o">=</span> <span class="n">dataset</span><span class="o">.</span><span class="n">dframe</span><span class="p">(</span><span class="n">query_args</span><span class="o">=</span><span class="n">query_args</span><span class="p">)</span><span class="o">.</span><span class="n">dropna</span><span class="p">()</span>
+            <span class="n">axis</span> <span class="o">=</span> <span class="bp">None</span>
+
+            <span class="k">if</span> <span class="n">group</span> <span class="ow">or</span> <span class="n">index</span><span class="p">:</span>
+                <span class="n">agg</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__parse_aggregation</span><span class="p">(</span><span class="n">aggregation</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="n">index</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">group</span><span class="p">:</span>
+                    <span class="n">groupby</span> <span class="o">=</span> <span class="n">dframe</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="n">group</span><span class="p">)</span>
+                    <span class="n">dframes</span> <span class="o">=</span> <span class="p">[]</span>
+
+                    <span class="k">for</span> <span class="n">g</span> <span class="ow">in</span> <span class="n">groupby</span><span class="o">.</span><span class="n">groups</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+                        <span class="n">renamed</span> <span class="o">=</span> <span class="p">{</span><span class="n">c</span><span class="p">:</span> <span class="s">&#39;</span><span class="si">%s</span><span class="s"> </span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="n">g</span><span class="p">)</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">dframe</span><span class="o">.</span><span class="n">columns</span><span class="p">}</span>
+                        <span class="n">data</span> <span class="o">=</span> <span class="n">groupby</span><span class="o">.</span><span class="n">get_group</span><span class="p">(</span><span class="n">g</span><span class="p">)</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="n">index</span><span class="p">)</span><span class="o">.</span><span class="n">agg</span><span class="p">(</span><span class="n">agg</span><span class="p">)</span>
+                        <span class="n">dframes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">rename</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="n">renamed</span><span class="p">))</span>
+
+                    <span class="n">dframe</span> <span class="o">=</span> <span class="n">concat</span><span class="p">(</span><span class="n">dframes</span><span class="p">)</span><span class="o">.</span><span class="n">fillna</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">reset_index</span><span class="p">()</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span>
+                        <span class="n">index</span><span class="p">)</span><span class="o">.</span><span class="n">agg</span><span class="p">(</span><span class="n">agg</span><span class="p">)</span><span class="o">.</span><span class="n">sort_index</span><span class="p">()</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">dframe</span> <span class="o">=</span> <span class="n">dframe</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="n">index</span><span class="p">)</span><span class="o">.</span><span class="n">agg</span><span class="p">(</span><span class="n">agg</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="n">group</span><span class="p">:</span>
+                <span class="n">dframe</span> <span class="o">=</span> <span class="n">dframe</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="n">group</span><span class="p">)</span><span class="o">.</span><span class="n">agg</span><span class="p">(</span><span class="n">agg</span><span class="p">)</span><span class="o">.</span><span class="n">reset_index</span><span class="p">()</span>
+                <span class="n">axis</span> <span class="o">=</span> <span class="n">dframe</span><span class="p">[</span><span class="n">group</span><span class="p">]</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+                <span class="n">dframe</span> <span class="o">=</span> <span class="n">dframe</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="n">group</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="n">vega</span><span class="p">:</span>
+                <span class="n">dframe</span><span class="o">.</span><span class="n">index</span> <span class="o">=</span> <span class="n">axis</span> <span class="ow">or</span> <span class="n">dframe</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="nb">float</span><span class="p">)</span>
+                <span class="n">vis</span> <span class="o">=</span> <span class="n">vincent</span><span class="o">.</span><span class="n">Bar</span><span class="p">()</span>
+                <span class="n">vis</span><span class="o">.</span><span class="n">tabular_data</span><span class="p">(</span><span class="n">dframe</span><span class="p">,</span> <span class="n">columns</span><span class="o">=</span><span class="n">dframe</span><span class="o">.</span><span class="n">columns</span><span class="o">.</span><span class="n">tolist</span><span class="p">()[</span><span class="mi">0</span><span class="p">:</span><span class="mi">1</span><span class="p">])</span>
+
+                <span class="k">return</span> <span class="n">vis</span><span class="o">.</span><span class="n">vega</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">vis</span> <span class="o">=</span> <span class="n">bearcart</span><span class="o">.</span><span class="n">Chart</span><span class="p">(</span><span class="n">dframe</span><span class="p">,</span> <span class="n">plt_type</span><span class="o">=</span><span class="n">plot_type</span><span class="p">,</span> <span class="n">width</span><span class="o">=</span><span class="n">width</span><span class="p">,</span>
+                                     <span class="n">height</span><span class="o">=</span><span class="n">height</span><span class="p">,</span> <span class="n">palette</span><span class="o">=</span><span class="n">palette</span><span class="p">,</span>
+                                     <span class="n">x_axis</span><span class="o">=</span><span class="n">axis</span> <span class="ow">or</span> <span class="bp">True</span><span class="p">,</span>
+                                     <span class="n">x_time</span><span class="o">=</span><span class="n">index</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">)</span>
+
+            <span class="k">return</span> <span class="n">vis</span><span class="o">.</span><span class="n">build_html</span><span class="p">()</span>
+
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_safe_get_and_call</span><span class="p">(</span>
+            <span class="n">dataset_id</span><span class="p">,</span> <span class="n">action</span><span class="p">,</span> <span class="n">content_type</span><span class="o">=</span><span class="s">&#39;text/html&#39;</span><span class="p">)</span>
+</div>
+    <span class="k">def</span> <span class="nf">__create_or_update</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">url</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">csv_file</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">json_file</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
+                           <span class="n">schema</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">na_values</span><span class="o">=</span><span class="p">[],</span> <span class="n">perish</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+                           <span class="n">dataset_id</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="n">error</span> <span class="o">=</span> <span class="s">&#39;url, csv_file or schema required&#39;</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">schema</span> <span class="ow">or</span> <span class="n">url</span> <span class="ow">or</span> <span class="n">csv_file</span> <span class="ow">or</span> <span class="n">json_file</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">dataset_id</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+                    <span class="n">dataset</span> <span class="o">=</span> <span class="n">Dataset</span><span class="p">()</span>
+                    <span class="n">dataset</span><span class="o">.</span><span class="n">save</span><span class="p">()</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">dataset</span> <span class="o">=</span> <span class="n">Dataset</span><span class="o">.</span><span class="n">find_one</span><span class="p">(</span><span class="n">dataset_id</span><span class="p">)</span>
+                    <span class="n">Observation</span><span class="o">.</span><span class="n">delete_all</span><span class="p">(</span><span class="n">dataset</span><span class="p">)</span>
+
+                <span class="k">if</span> <span class="n">schema</span><span class="p">:</span>
+                    <span class="n">dataset</span><span class="o">.</span><span class="n">import_schema</span><span class="p">(</span><span class="n">schema</span><span class="p">)</span>
+
+                <span class="n">na_values</span> <span class="o">=</span> <span class="n">safe_json_loads</span><span class="p">(</span><span class="n">na_values</span><span class="p">)</span>
+
+                <span class="k">if</span> <span class="n">url</span><span class="p">:</span>
+                    <span class="n">dataset</span><span class="o">.</span><span class="n">import_from_url</span><span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="n">na_values</span><span class="o">=</span><span class="n">na_values</span><span class="p">)</span>
+                <span class="k">elif</span> <span class="n">csv_file</span><span class="p">:</span>
+                    <span class="n">dataset</span><span class="o">.</span><span class="n">import_from_csv</span><span class="p">(</span><span class="n">csv_file</span><span class="p">,</span> <span class="n">na_values</span><span class="o">=</span><span class="n">na_values</span><span class="p">)</span>
+                <span class="k">elif</span> <span class="n">json_file</span><span class="p">:</span>
+                    <span class="n">dataset</span><span class="o">.</span><span class="n">import_from_json</span><span class="p">(</span><span class="n">json_file</span><span class="p">)</span>
+
+                <span class="n">result</span> <span class="o">=</span> <span class="p">{</span><span class="n">Dataset</span><span class="o">.</span><span class="n">ID</span><span class="p">:</span> <span class="n">dataset</span><span class="o">.</span><span class="n">dataset_id</span><span class="p">}</span>
+
+            <span class="n">perish</span> <span class="o">=</span> <span class="n">parse_int</span><span class="p">(</span><span class="n">perish</span><span class="p">)</span>
+            <span class="n">perish</span> <span class="ow">and</span> <span class="n">dataset</span><span class="o">.</span><span class="n">delete</span><span class="p">(</span><span class="n">countdown</span><span class="o">=</span><span class="n">perish</span><span class="p">)</span>
+        <span class="k">except</span> <span class="n">urllib2</span><span class="o">.</span><span class="n">URLError</span><span class="p">:</span>
+            <span class="n">error</span> <span class="o">=</span> <span class="s">&#39;could not load: </span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="n">url</span>
+        <span class="k">except</span> <span class="ne">IOError</span><span class="p">:</span>
+            <span class="n">error</span> <span class="o">=</span> <span class="s">&#39;could not get a filehandle for: </span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="n">csv_file</span>
+        <span class="k">except</span> <span class="n">JSONError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="n">error</span> <span class="o">=</span> <span class="n">e</span><span class="o">.</span><span class="n">__str__</span><span class="p">()</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">set_response_params</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="n">success_status_code</span><span class="o">=</span><span class="mi">201</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dump_or_error</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="n">error</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__content_type_for_format</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">format</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">CSV</span> <span class="k">if</span> <span class="n">format</span> <span class="o">==</span> <span class="s">&#39;csv&#39;</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">JSON</span>
+
+    <span class="k">def</span> <span class="nf">__dataframe_as_content_type</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">content_type</span><span class="p">,</span> <span class="n">dframe</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">content_type</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">CSV</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">df_to_csv_string</span><span class="p">(</span><span class="n">dframe</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">df_to_jsondict</span><span class="p">(</span><span class="n">dframe</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__parse_select</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">select</span><span class="p">,</span> <span class="n">required</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">required</span> <span class="ow">and</span> <span class="n">select</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">ArgumentError</span><span class="p">(</span><span class="s">&#39;no select&#39;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">select</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">SELECT_ALL_FOR_SUMMARY</span><span class="p">:</span>
+            <span class="n">select</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="k">elif</span> <span class="n">select</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">select</span> <span class="o">=</span> <span class="n">safe_json_loads</span><span class="p">(</span><span class="n">select</span><span class="p">,</span> <span class="n">error_title</span><span class="o">=</span><span class="s">&#39;select&#39;</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">select</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+                <span class="n">msg</span> <span class="o">=</span> <span class="s">&#39;select argument must be a JSON dictionary, found: </span><span class="si">%s</span><span class="s">.&#39;</span>
+                <span class="k">raise</span> <span class="n">ArgumentError</span><span class="p">(</span><span class="n">msg</span> <span class="o">%</span> <span class="n">select</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">select</span>
+
+    <span class="k">def</span> <span class="nf">__parse_query</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">query</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">safe_json_loads</span><span class="p">(</span><span class="n">query</span><span class="p">)</span> <span class="ow">or</span> <span class="p">{}</span>
+
+    <span class="k">def</span> <span class="nf">__parse_aggregation</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">agg</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">agg</span> <span class="k">if</span> <span class="n">agg</span> <span class="ow">in</span> <span class="n">AGGREGATIONS</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">DEFAULT_AGGREGATION</span>
+
+    <span class="k">def</span> <span class="nf">__parse_query_args</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">limit</span><span class="p">,</span> <span class="n">order_by</span><span class="p">,</span> <span class="n">query</span><span class="p">,</span> <span class="n">select</span><span class="p">,</span>
+                           <span class="n">distinct</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">dataset</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+            <span class="n">limit</span> <span class="o">=</span> <span class="n">parse_int</span><span class="p">(</span><span class="n">limit</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+            <span class="n">query</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__parse_query</span><span class="p">(</span><span class="n">query</span><span class="p">)</span>
+            <span class="n">select</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__parse_select</span><span class="p">(</span><span class="n">select</span><span class="p">)</span>
+
+            <span class="k">return</span> <span class="n">QueryArgs</span><span class="p">(</span><span class="n">query</span><span class="o">=</span><span class="n">query</span><span class="p">,</span> <span class="n">select</span><span class="o">=</span><span class="n">select</span><span class="p">,</span> <span class="n">distinct</span><span class="o">=</span><span class="n">distinct</span><span class="p">,</span>
+                             <span class="n">limit</span><span class="o">=</span><span class="n">limit</span><span class="p">,</span> <span class="n">order_by</span><span class="o">=</span><span class="n">order_by</span><span class="p">,</span> <span class="n">dataset</span><span class="o">=</span><span class="n">dataset</span><span class="p">)</span></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../../index.html">bamboo 0.6.3 alpha documentation</a> &raquo;</li>
+          <li><a href="../../index.html" >Module code</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2013, Peter Lubell-Doughtie, Mark Johnston.
+    </div>
+  </body>
+</html>

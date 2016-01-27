@@ -1,0 +1,196 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>bamboo.config.routes &mdash; bamboo 0.6.3 alpha documentation</title>
+    
+    <link rel="stylesheet" href="../../../_static/nature.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../',
+        VERSION:     '0.6.3 alpha',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="top" title="bamboo 0.6.3 alpha documentation" href="../../../index.html" />
+    <link rel="up" title="Module code" href="../../index.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../../index.html">bamboo 0.6.3 alpha documentation</a> &raquo;</li>
+          <li><a href="../../index.html" accesskey="U">Module code</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <h1>Source code for bamboo.config.routes</h1><div class="highlight"><pre>
+<span class="kn">from</span> <span class="nn">bamboo.controllers.calculations</span> <span class="kn">import</span> <span class="n">Calculations</span>
+<span class="kn">from</span> <span class="nn">bamboo.controllers.datasets</span> <span class="kn">import</span> <span class="n">Datasets</span>
+<span class="kn">from</span> <span class="nn">bamboo.controllers.root</span> <span class="kn">import</span> <span class="n">Root</span>
+<span class="kn">from</span> <span class="nn">bamboo.controllers.version</span> <span class="kn">import</span> <span class="n">Version</span>
+
+<span class="c"># define routes as tuples:</span>
+<span class="c"># (name, method, route, controller, action)</span>
+<span class="n">ROUTES</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="c"># root</span>
+    <span class="p">[</span><span class="s">&#39;root&#39;</span><span class="p">,</span> <span class="s">&#39;GET&#39;</span><span class="p">,</span>
+        <span class="s">&#39;/&#39;</span><span class="p">,</span> <span class="s">&#39;root&#39;</span><span class="p">,</span> <span class="s">&#39;index&#39;</span><span class="p">],</span>
+    <span class="c"># datasets</span>
+    <span class="p">[</span><span class="s">&#39;datasets_aggregations&#39;</span><span class="p">,</span> <span class="s">&#39;GET&#39;</span><span class="p">,</span>
+        <span class="s">&#39;/datasets/:dataset_id/aggregations&#39;</span><span class="p">,</span> <span class="s">&#39;datasets&#39;</span><span class="p">,</span> <span class="s">&#39;aggregations&#39;</span><span class="p">],</span>
+    <span class="p">[</span><span class="s">&#39;datasets_create&#39;</span><span class="p">,</span> <span class="s">&#39;POST&#39;</span><span class="p">,</span> <span class="s">&#39;/datasets&#39;</span><span class="p">,</span> <span class="s">&#39;datasets&#39;</span><span class="p">,</span> <span class="s">&#39;create&#39;</span><span class="p">],</span>
+    <span class="p">[</span><span class="s">&#39;datasets_delete&#39;</span><span class="p">,</span> <span class="s">&#39;DELETE&#39;</span><span class="p">,</span>
+        <span class="s">&#39;/datasets/:dataset_id&#39;</span><span class="p">,</span> <span class="s">&#39;datasets&#39;</span><span class="p">,</span> <span class="s">&#39;delete&#39;</span><span class="p">],</span>
+    <span class="p">[</span><span class="s">&#39;datasets_drop_columns&#39;</span><span class="p">,</span> <span class="s">&#39;PUT&#39;</span><span class="p">,</span>
+        <span class="s">&#39;/datasets/:dataset_id/drop_columns&#39;</span><span class="p">,</span> <span class="s">&#39;datasets&#39;</span><span class="p">,</span> <span class="s">&#39;drop_columns&#39;</span><span class="p">],</span>
+    <span class="p">[</span><span class="s">&#39;datasets_info&#39;</span><span class="p">,</span> <span class="s">&#39;GET&#39;</span><span class="p">,</span>
+        <span class="s">&#39;/datasets/:dataset_id/info&#39;</span><span class="p">,</span> <span class="s">&#39;datasets&#39;</span><span class="p">,</span> <span class="s">&#39;info&#39;</span><span class="p">],</span>
+    <span class="p">[</span><span class="s">&#39;datasets_merge&#39;</span><span class="p">,</span> <span class="s">&#39;POST&#39;</span><span class="p">,</span> <span class="s">&#39;/datasets/merge&#39;</span><span class="p">,</span> <span class="s">&#39;datasets&#39;</span><span class="p">,</span> <span class="s">&#39;merge&#39;</span><span class="p">],</span>
+    <span class="p">[</span><span class="s">&#39;datasets_join&#39;</span><span class="p">,</span> <span class="s">&#39;POST&#39;</span><span class="p">,</span>
+        <span class="s">&#39;/datasets/:dataset_id/join&#39;</span><span class="p">,</span> <span class="s">&#39;datasets&#39;</span><span class="p">,</span> <span class="s">&#39;join&#39;</span><span class="p">],</span>
+    <span class="p">[</span><span class="s">&#39;datasets_join_alias&#39;</span><span class="p">,</span> <span class="s">&#39;POST&#39;</span><span class="p">,</span> <span class="s">&#39;/datasets/join&#39;</span><span class="p">,</span> <span class="s">&#39;datasets&#39;</span><span class="p">,</span> <span class="s">&#39;join&#39;</span><span class="p">],</span>
+    <span class="p">[</span><span class="s">&#39;datasets_plot&#39;</span><span class="p">,</span> <span class="s">&#39;GET&#39;</span><span class="p">,</span>
+        <span class="s">&#39;/datasets/:dataset_id/plot&#39;</span><span class="p">,</span> <span class="s">&#39;datasets&#39;</span><span class="p">,</span> <span class="s">&#39;plot&#39;</span><span class="p">],</span>
+    <span class="p">[</span><span class="s">&#39;datasets_resample&#39;</span><span class="p">,</span> <span class="s">&#39;GET&#39;</span><span class="p">,</span>
+        <span class="s">&#39;/datasets/:dataset_id/resample&#39;</span><span class="p">,</span> <span class="s">&#39;datasets&#39;</span><span class="p">,</span> <span class="s">&#39;resample&#39;</span><span class="p">],</span>
+    <span class="p">[</span><span class="s">&#39;datasets_reset&#39;</span><span class="p">,</span> <span class="s">&#39;PUT&#39;</span><span class="p">,</span>
+        <span class="s">&#39;/datasets/:dataset_id/reset&#39;</span><span class="p">,</span> <span class="s">&#39;datasets&#39;</span><span class="p">,</span> <span class="s">&#39;reset&#39;</span><span class="p">],</span>
+    <span class="p">[</span><span class="s">&#39;datasets_rolling&#39;</span><span class="p">,</span> <span class="s">&#39;GET&#39;</span><span class="p">,</span>
+        <span class="s">&#39;/datasets/:dataset_id/rolling&#39;</span><span class="p">,</span> <span class="s">&#39;datasets&#39;</span><span class="p">,</span> <span class="s">&#39;rolling&#39;</span><span class="p">],</span>
+    <span class="p">[</span><span class="s">&#39;datasets_set_olap_type&#39;</span><span class="p">,</span> <span class="s">&#39;PUT&#39;</span><span class="p">,</span>
+        <span class="s">&#39;/datasets/:dataset_id/set_olap_type&#39;</span><span class="p">,</span> <span class="s">&#39;datasets&#39;</span><span class="p">,</span> <span class="s">&#39;set_olap_type&#39;</span><span class="p">],</span>
+    <span class="p">[</span><span class="s">&#39;datasets_show&#39;</span><span class="p">,</span> <span class="s">&#39;GET&#39;</span><span class="p">,</span>
+        <span class="s">&#39;/datasets/:dataset_id.:format&#39;</span><span class="p">,</span> <span class="s">&#39;datasets&#39;</span><span class="p">,</span> <span class="s">&#39;show&#39;</span><span class="p">],</span>
+    <span class="p">[</span><span class="s">&#39;datasets_show&#39;</span><span class="p">,</span> <span class="s">&#39;GET&#39;</span><span class="p">,</span> <span class="s">&#39;/datasets/:dataset_id&#39;</span><span class="p">,</span> <span class="s">&#39;datasets&#39;</span><span class="p">,</span> <span class="s">&#39;show&#39;</span><span class="p">],</span>
+    <span class="p">[</span><span class="s">&#39;datasets_set_info&#39;</span><span class="p">,</span> <span class="s">&#39;PUT&#39;</span><span class="p">,</span>
+        <span class="s">&#39;/datasets/:dataset_id/info&#39;</span><span class="p">,</span> <span class="s">&#39;datasets&#39;</span><span class="p">,</span> <span class="s">&#39;set_info&#39;</span><span class="p">],</span>
+    <span class="p">[</span><span class="s">&#39;datasets_summary&#39;</span><span class="p">,</span> <span class="s">&#39;GET&#39;</span><span class="p">,</span>
+        <span class="s">&#39;/datasets/:dataset_id/summary&#39;</span><span class="p">,</span> <span class="s">&#39;datasets&#39;</span><span class="p">,</span> <span class="s">&#39;summary&#39;</span><span class="p">],</span>
+    <span class="p">[</span><span class="s">&#39;datasets_update&#39;</span><span class="p">,</span> <span class="s">&#39;PUT&#39;</span><span class="p">,</span>
+        <span class="s">&#39;/datasets/:dataset_id&#39;</span><span class="p">,</span> <span class="s">&#39;datasets&#39;</span><span class="p">,</span> <span class="s">&#39;update&#39;</span><span class="p">],</span>
+    <span class="p">[</span><span class="s">&#39;datasets_row_delete&#39;</span><span class="p">,</span> <span class="s">&#39;DELETE&#39;</span><span class="p">,</span> <span class="s">&#39;/datasets/:dataset_id/row/:index&#39;</span><span class="p">,</span>
+        <span class="s">&#39;datasets&#39;</span><span class="p">,</span> <span class="s">&#39;row_delete&#39;</span><span class="p">],</span>
+    <span class="p">[</span><span class="s">&#39;datasets_row_show&#39;</span><span class="p">,</span> <span class="s">&#39;GET&#39;</span><span class="p">,</span> <span class="s">&#39;/datasets/:dataset_id/row/:index&#39;</span><span class="p">,</span>
+        <span class="s">&#39;datasets&#39;</span><span class="p">,</span> <span class="s">&#39;row_show&#39;</span><span class="p">],</span>
+    <span class="p">[</span><span class="s">&#39;datasets_row_update&#39;</span><span class="p">,</span> <span class="s">&#39;PUT&#39;</span><span class="p">,</span> <span class="s">&#39;/datasets/:dataset_id/row/:index&#39;</span><span class="p">,</span>
+        <span class="s">&#39;datasets&#39;</span><span class="p">,</span> <span class="s">&#39;row_update&#39;</span><span class="p">],</span>
+    <span class="c"># calculations</span>
+    <span class="p">[</span><span class="s">&#39;calculations_create&#39;</span><span class="p">,</span> <span class="s">&#39;POST&#39;</span><span class="p">,</span>
+        <span class="s">&#39;/calculations/:dataset_id&#39;</span><span class="p">,</span> <span class="s">&#39;calculations&#39;</span><span class="p">,</span> <span class="s">&#39;create&#39;</span><span class="p">],</span>
+    <span class="p">[</span><span class="s">&#39;calculations_create_alias&#39;</span><span class="p">,</span> <span class="s">&#39;POST&#39;</span><span class="p">,</span>
+        <span class="s">&#39;/datasets/:dataset_id/calculations&#39;</span><span class="p">,</span> <span class="s">&#39;calculations&#39;</span><span class="p">,</span> <span class="s">&#39;create&#39;</span><span class="p">],</span>
+    <span class="p">[</span><span class="s">&#39;calculations_delete&#39;</span><span class="p">,</span> <span class="s">&#39;DELETE&#39;</span><span class="p">,</span>
+        <span class="s">&#39;/datasets/:dataset_id/calculations&#39;</span><span class="p">,</span> <span class="s">&#39;calculations&#39;</span><span class="p">,</span> <span class="s">&#39;delete&#39;</span><span class="p">],</span>
+    <span class="p">[</span><span class="s">&#39;calculations_delete_alias&#39;</span><span class="p">,</span> <span class="s">&#39;DELETE&#39;</span><span class="p">,</span>
+        <span class="s">&#39;/datasets/:dataset_id/calculations/:name&#39;</span><span class="p">,</span> <span class="s">&#39;calculations&#39;</span><span class="p">,</span> <span class="s">&#39;delete&#39;</span><span class="p">],</span>
+    <span class="p">[</span><span class="s">&#39;calculations_show&#39;</span><span class="p">,</span> <span class="s">&#39;GET&#39;</span><span class="p">,</span>
+        <span class="s">&#39;/calculations/:dataset_id&#39;</span><span class="p">,</span> <span class="s">&#39;calculations&#39;</span><span class="p">,</span> <span class="s">&#39;show&#39;</span><span class="p">],</span>
+    <span class="p">[</span><span class="s">&#39;calculations_show_alias&#39;</span><span class="p">,</span> <span class="s">&#39;GET&#39;</span><span class="p">,</span>
+        <span class="s">&#39;/datasets/:dataset_id/calculations&#39;</span><span class="p">,</span> <span class="s">&#39;calculations&#39;</span><span class="p">,</span> <span class="s">&#39;show&#39;</span><span class="p">],</span>
+    <span class="c"># version</span>
+    <span class="p">[</span><span class="s">&#39;version&#39;</span><span class="p">,</span> <span class="s">&#39;GET&#39;</span><span class="p">,</span> <span class="s">&#39;/version&#39;</span><span class="p">,</span> <span class="s">&#39;version&#39;</span><span class="p">,</span> <span class="s">&#39;index&#39;</span><span class="p">],</span>
+<span class="p">]</span>
+
+
+<div class="viewcode-block" id="options"><a class="viewcode-back" href="../../../config.html#bamboo.config.routes.options">[docs]</a><span class="k">def</span> <span class="nf">options</span><span class="p">():</span>
+    <span class="sd">&quot;&quot;&quot;Create option methods for all routes.&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="p">[[</span><span class="s">&#39;</span><span class="si">%s</span><span class="s">_options&#39;</span> <span class="o">%</span> <span class="n">name</span><span class="p">,</span> <span class="s">&#39;OPTIONS&#39;</span><span class="p">,</span> <span class="n">route</span><span class="p">,</span> <span class="n">controller</span><span class="p">,</span> <span class="s">&#39;options&#39;</span><span class="p">]</span>
+            <span class="k">for</span> <span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">route</span><span class="p">,</span> <span class="n">controller</span><span class="p">,</span> <span class="n">_</span><span class="p">)</span> <span class="ow">in</span> <span class="n">ROUTES</span><span class="p">]</span>
+
+</div>
+<div class="viewcode-block" id="connect_routes"><a class="viewcode-back" href="../../../config.html#bamboo.config.routes.connect_routes">[docs]</a><span class="k">def</span> <span class="nf">connect_routes</span><span class="p">(</span><span class="n">dispatcher</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;This function takes the dispatcher and attaches the routes.</span>
+
+<span class="sd">    :param dispatcher: The CherryPy dispatcher.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c"># controller instances map</span>
+    <span class="n">controllers</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s">&#39;root&#39;</span><span class="p">:</span> <span class="n">Root</span><span class="p">(),</span>
+        <span class="s">&#39;calculations&#39;</span><span class="p">:</span> <span class="n">Calculations</span><span class="p">(),</span>
+        <span class="s">&#39;datasets&#39;</span><span class="p">:</span> <span class="n">Datasets</span><span class="p">(),</span>
+        <span class="s">&#39;version&#39;</span><span class="p">:</span> <span class="n">Version</span><span class="p">(),</span>
+    <span class="p">}</span>
+
+    <span class="c"># map them into args to dispatcher</span>
+    <span class="n">dictify</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="nb">dict</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span>
+        <span class="p">[</span><span class="s">&#39;name&#39;</span><span class="p">,</span> <span class="s">&#39;conditions&#39;</span><span class="p">,</span> <span class="s">&#39;route&#39;</span><span class="p">,</span> <span class="s">&#39;controller&#39;</span><span class="p">,</span> <span class="s">&#39;action&#39;</span><span class="p">],</span> <span class="n">x</span><span class="p">))</span>
+    <span class="n">route_case</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s">&#39;conditions&#39;</span><span class="p">:</span> <span class="k">lambda</span> <span class="n">v</span><span class="p">:</span> <span class="nb">dict</span><span class="p">(</span><span class="n">method</span><span class="o">=</span><span class="n">v</span><span class="p">),</span>
+        <span class="s">&#39;controller&#39;</span><span class="p">:</span> <span class="k">lambda</span> <span class="n">v</span><span class="p">:</span> <span class="n">controllers</span><span class="p">[</span><span class="n">v</span><span class="p">],</span>
+    <span class="p">}</span>
+    <span class="n">kwarg_map</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">d</span><span class="p">:</span> <span class="p">{</span>
+        <span class="n">k</span><span class="p">:</span> <span class="n">route_case</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">v</span><span class="p">:</span> <span class="n">v</span><span class="p">)(</span><span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">d</span><span class="o">.</span><span class="n">iteritems</span><span class="p">()</span>
+    <span class="p">}</span>
+
+    <span class="n">routes</span> <span class="o">=</span> <span class="p">[</span><span class="n">kwarg_map</span><span class="p">(</span><span class="n">dictify</span><span class="p">(</span><span class="n">route</span><span class="p">))</span> <span class="k">for</span> <span class="n">route</span> <span class="ow">in</span> <span class="n">ROUTES</span> <span class="o">+</span> <span class="n">options</span><span class="p">()]</span>
+
+    <span class="c"># attach them</span>
+    <span class="k">for</span> <span class="n">route</span> <span class="ow">in</span> <span class="n">routes</span><span class="p">:</span>
+        <span class="n">dispatcher</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="o">**</span><span class="n">route</span><span class="p">)</span></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../../index.html">bamboo 0.6.3 alpha documentation</a> &raquo;</li>
+          <li><a href="../../index.html" >Module code</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2013, Peter Lubell-Doughtie, Mark Johnston.
+    </div>
+  </body>
+</html>

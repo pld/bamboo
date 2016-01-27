@@ -1,0 +1,475 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>bamboo.models.observation &mdash; bamboo 0.6.3 alpha documentation</title>
+    
+    <link rel="stylesheet" href="../../../_static/nature.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../',
+        VERSION:     '0.6.3 alpha',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="top" title="bamboo 0.6.3 alpha documentation" href="../../../index.html" />
+    <link rel="up" title="Module code" href="../../index.html" /> 
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">bamboo 0.6.3 alpha documentation</a> &raquo;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" accesskey="U">Module code</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for bamboo.models.observation</h1><div class="highlight"><pre>
+<span class="kn">from</span> <span class="nn">math</span> <span class="kn">import</span> <span class="n">ceil</span>
+<span class="kn">from</span> <span class="nn">pandas</span> <span class="kn">import</span> <span class="n">concat</span><span class="p">,</span> <span class="n">DataFrame</span>
+<span class="kn">from</span> <span class="nn">pymongo.errors</span> <span class="kn">import</span> <span class="n">AutoReconnect</span>
+
+<span class="kn">from</span> <span class="nn">bamboo.core.frame</span> <span class="kn">import</span> <span class="n">add_id_column</span><span class="p">,</span> <span class="n">DATASET_ID</span><span class="p">,</span> <span class="n">INDEX</span>
+<span class="kn">from</span> <span class="nn">bamboo.lib.datetools</span> <span class="kn">import</span> <span class="n">now</span><span class="p">,</span> <span class="n">parse_timestamp_query</span>
+<span class="kn">from</span> <span class="nn">bamboo.lib.mongo</span> <span class="kn">import</span> <span class="n">MONGO_ID</span><span class="p">,</span> <span class="n">MONGO_ID_ENCODED</span>
+<span class="kn">from</span> <span class="nn">bamboo.lib.parsing</span> <span class="kn">import</span> <span class="n">parse_columns</span>
+<span class="kn">from</span> <span class="nn">bamboo.lib.query_args</span> <span class="kn">import</span> <span class="n">QueryArgs</span>
+<span class="kn">from</span> <span class="nn">bamboo.lib.utils</span> <span class="kn">import</span> <span class="n">combine_dicts</span><span class="p">,</span> <span class="n">invert_dict</span><span class="p">,</span> <span class="n">replace_keys</span>
+<span class="kn">from</span> <span class="nn">bamboo.models.abstract_model</span> <span class="kn">import</span> <span class="n">AbstractModel</span>
+
+
+<span class="k">def</span> <span class="nf">add_index</span><span class="p">(</span><span class="n">df</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Add an encoded index to this DataFrame.&quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">INDEX</span> <span class="ow">in</span> <span class="n">df</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
+        <span class="c"># No index, create index for this dframe.</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="s">&#39;index&#39;</span> <span class="ow">in</span> <span class="n">df</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
+            <span class="c"># Custom index not supplied, use pandas default index.</span>
+            <span class="n">df</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">inplace</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+
+        <span class="n">df</span><span class="o">.</span><span class="n">rename</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="p">{</span><span class="s">&#39;index&#39;</span><span class="p">:</span> <span class="n">INDEX</span><span class="p">},</span> <span class="n">inplace</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">df</span>
+
+
+<span class="k">def</span> <span class="nf">encode</span><span class="p">(</span><span class="n">dframe</span><span class="p">,</span> <span class="n">dataset</span><span class="p">,</span> <span class="n">append_index</span><span class="o">=</span><span class="bp">True</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Encode the columns for `dataset` to slugs and add ID column.</span>
+
+<span class="sd">    The ID column is the dataset_id for dataset.  This is</span>
+<span class="sd">    used to link observations to a specific dataset.</span>
+
+<span class="sd">    :param dframe: The DataFrame to encode.</span>
+<span class="sd">    :param dataset: The Dataset to use a mapping for.</span>
+<span class="sd">    :param append_index: Add index to the DataFrame, default True.</span>
+
+<span class="sd">    :returns: A modified `dframe`.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">append_index</span><span class="p">:</span>
+        <span class="n">dframe</span> <span class="o">=</span> <span class="n">add_index</span><span class="p">(</span><span class="n">dframe</span><span class="p">)</span>
+
+    <span class="n">dframe</span> <span class="o">=</span> <span class="n">add_id_column</span><span class="p">(</span><span class="n">dframe</span><span class="p">,</span> <span class="n">dataset</span><span class="o">.</span><span class="n">dataset_id</span><span class="p">)</span>
+    <span class="n">encoded_columns_map</span> <span class="o">=</span> <span class="n">dataset</span><span class="o">.</span><span class="n">schema</span><span class="o">.</span><span class="n">rename_map_for_dframe</span><span class="p">(</span><span class="n">dframe</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">dframe</span><span class="o">.</span><span class="n">rename</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="n">encoded_columns_map</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">update_calculations</span><span class="p">(</span><span class="n">record</span><span class="p">,</span> <span class="n">dataset</span><span class="p">):</span>
+    <span class="n">calculations</span> <span class="o">=</span> <span class="n">dataset</span><span class="o">.</span><span class="n">calculations</span><span class="p">(</span><span class="n">include_aggs</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">calculations</span><span class="p">):</span>
+        <span class="n">dframe</span> <span class="o">=</span> <span class="n">DataFrame</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="n">record</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="n">labels_to_slugs</span> <span class="o">=</span> <span class="n">dataset</span><span class="o">.</span><span class="n">schema</span><span class="o">.</span><span class="n">labels_to_slugs</span>
+
+        <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">calculations</span><span class="p">:</span>
+            <span class="n">columns</span> <span class="o">=</span> <span class="n">parse_columns</span><span class="p">(</span><span class="n">dataset</span><span class="p">,</span> <span class="n">c</span><span class="o">.</span><span class="n">formula</span><span class="p">,</span> <span class="n">c</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">dframe</span><span class="o">=</span><span class="n">dframe</span><span class="p">)</span>
+            <span class="n">record</span><span class="p">[</span><span class="n">labels_to_slugs</span><span class="p">[</span><span class="n">c</span><span class="o">.</span><span class="n">name</span><span class="p">]]</span> <span class="o">=</span> <span class="n">columns</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+
+    <span class="k">return</span> <span class="n">record</span>
+
+
+<div class="viewcode-block" id="Observation"><a class="viewcode-back" href="../../../models.html#bamboo.models.observation.Observation">[docs]</a><span class="k">class</span> <span class="nc">Observation</span><span class="p">(</span><span class="n">AbstractModel</span><span class="p">):</span>
+
+    <span class="n">__collectionname__</span> <span class="o">=</span> <span class="s">&#39;observations&#39;</span>
+
+    <span class="n">DELETED_AT</span> <span class="o">=</span> <span class="s">&#39;-1&#39;</span>  <span class="c"># use a short code for key</span>
+    <span class="n">ENCODING</span> <span class="o">=</span> <span class="s">&#39;enc&#39;</span>
+    <span class="n">ENCODING_DATASET_ID</span> <span class="o">=</span> <span class="s">&#39;</span><span class="si">%s</span><span class="s">_</span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">DATASET_ID</span><span class="p">,</span> <span class="n">ENCODING</span><span class="p">)</span>
+
+    <span class="nd">@classmethod</span>
+<div class="viewcode-block" id="Observation.delete"><a class="viewcode-back" href="../../../models.html#bamboo.models.observation.Observation.delete">[docs]</a>    <span class="k">def</span> <span class="nf">delete</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">dataset</span><span class="p">,</span> <span class="n">index</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Delete observation at index for dataset.</span>
+
+<span class="sd">        :param dataset: The dataset to delete the observation from.</span>
+<span class="sd">        :param index: The index of the observation to delete.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">query</span> <span class="o">=</span> <span class="p">{</span><span class="n">INDEX</span><span class="p">:</span> <span class="n">index</span><span class="p">,</span> <span class="n">DATASET_ID</span><span class="p">:</span> <span class="n">dataset</span><span class="o">.</span><span class="n">dataset_id</span><span class="p">}</span>
+        <span class="n">query</span> <span class="o">=</span> <span class="n">cls</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="n">query</span><span class="p">,</span> <span class="n">dataset</span><span class="o">=</span><span class="n">dataset</span><span class="p">)</span>
+
+        <span class="n">cls</span><span class="o">.</span><span class="n">__soft_delete</span><span class="p">(</span><span class="n">query</span><span class="p">)</span>
+</div>
+    <span class="nd">@classmethod</span>
+<div class="viewcode-block" id="Observation.delete_all"><a class="viewcode-back" href="../../../models.html#bamboo.models.observation.Observation.delete_all">[docs]</a>    <span class="k">def</span> <span class="nf">delete_all</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">dataset</span><span class="p">,</span> <span class="n">query</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Delete the observations for `dataset`.</span>
+
+<span class="sd">        :param dataset: The dataset to delete observations for.</span>
+<span class="sd">        :param query: An optional query to restrict deletion.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">query</span> <span class="o">=</span> <span class="n">query</span> <span class="ow">or</span> <span class="p">{}</span>
+        <span class="n">query</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="n">DATASET_ID</span><span class="p">:</span> <span class="n">dataset</span><span class="o">.</span><span class="n">dataset_id</span><span class="p">})</span>
+        <span class="n">query</span> <span class="o">=</span> <span class="n">cls</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="n">query</span><span class="p">,</span> <span class="n">dataset</span><span class="o">=</span><span class="n">dataset</span><span class="p">)</span>
+
+        <span class="nb">super</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">cls</span><span class="p">())</span><span class="o">.</span><span class="n">delete</span><span class="p">(</span><span class="n">query</span><span class="p">)</span>
+</div>
+    <span class="nd">@classmethod</span>
+<div class="viewcode-block" id="Observation.delete_columns"><a class="viewcode-back" href="../../../models.html#bamboo.models.observation.Observation.delete_columns">[docs]</a>    <span class="k">def</span> <span class="nf">delete_columns</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">dataset</span><span class="p">,</span> <span class="n">columns</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Delete a column from the dataset.&quot;&quot;&quot;</span>
+        <span class="n">encoding</span> <span class="o">=</span> <span class="n">cls</span><span class="o">.</span><span class="n">encoding</span><span class="p">(</span><span class="n">dataset</span><span class="p">)</span>
+
+        <span class="n">cls</span><span class="o">.</span><span class="n">unset</span><span class="p">({</span><span class="n">cls</span><span class="o">.</span><span class="n">ENCODING_DATASET_ID</span><span class="p">:</span> <span class="n">dataset</span><span class="o">.</span><span class="n">dataset_id</span><span class="p">},</span>
+                  <span class="p">{</span><span class="s">&quot;</span><span class="si">%s</span><span class="s">.</span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">cls</span><span class="o">.</span><span class="n">ENCODING</span><span class="p">,</span> <span class="n">c</span><span class="p">):</span> <span class="mi">1</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">columns</span><span class="p">})</span>
+
+        <span class="n">cls</span><span class="o">.</span><span class="n">unset</span><span class="p">(</span>
+            <span class="n">cls</span><span class="o">.</span><span class="n">encode</span><span class="p">({</span><span class="n">DATASET_ID</span><span class="p">:</span> <span class="n">dataset</span><span class="o">.</span><span class="n">dataset_id</span><span class="p">},</span> <span class="n">encoding</span><span class="o">=</span><span class="n">encoding</span><span class="p">),</span>
+            <span class="n">cls</span><span class="o">.</span><span class="n">encode</span><span class="p">({</span><span class="n">c</span><span class="p">:</span> <span class="mi">1</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">columns</span><span class="p">},</span> <span class="n">encoding</span><span class="o">=</span><span class="n">encoding</span><span class="p">))</span>
+</div>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">delete_encoding</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">dataset</span><span class="p">):</span>
+        <span class="n">query</span> <span class="o">=</span> <span class="p">{</span><span class="n">cls</span><span class="o">.</span><span class="n">ENCODING_DATASET_ID</span><span class="p">:</span> <span class="n">dataset</span><span class="o">.</span><span class="n">dataset_id</span><span class="p">}</span>
+
+        <span class="nb">super</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">cls</span><span class="p">())</span><span class="o">.</span><span class="n">delete</span><span class="p">(</span><span class="n">query</span><span class="p">)</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">encoding</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">dataset</span><span class="p">,</span> <span class="n">encoded_dframe</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="n">record</span> <span class="o">=</span> <span class="nb">super</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">cls</span><span class="p">)</span><span class="o">.</span><span class="n">find_one</span><span class="p">({</span>
+            <span class="n">cls</span><span class="o">.</span><span class="n">ENCODING_DATASET_ID</span><span class="p">:</span> <span class="n">dataset</span><span class="o">.</span><span class="n">dataset_id</span><span class="p">})</span><span class="o">.</span><span class="n">record</span>
+
+        <span class="k">if</span> <span class="n">record</span> <span class="ow">is</span> <span class="bp">None</span> <span class="ow">and</span> <span class="n">encoded_dframe</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">encoding</span> <span class="o">=</span> <span class="n">cls</span><span class="o">.</span><span class="n">__make_encoding</span><span class="p">(</span><span class="n">encoded_dframe</span><span class="p">)</span>
+            <span class="n">cls</span><span class="o">.</span><span class="n">__store_encoding</span><span class="p">(</span><span class="n">dataset</span><span class="p">,</span> <span class="n">encoding</span><span class="p">)</span>
+
+            <span class="k">return</span> <span class="n">cls</span><span class="o">.</span><span class="n">encoding</span><span class="p">(</span><span class="n">dataset</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">record</span><span class="p">[</span><span class="n">cls</span><span class="o">.</span><span class="n">ENCODING</span><span class="p">]</span> <span class="k">if</span> <span class="n">record</span> <span class="k">else</span> <span class="bp">None</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">encode</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">dict_</span><span class="p">,</span> <span class="n">dataset</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">dataset</span><span class="p">:</span>
+            <span class="n">encoding</span> <span class="o">=</span> <span class="n">cls</span><span class="o">.</span><span class="n">encoding</span><span class="p">(</span><span class="n">dataset</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">replace_keys</span><span class="p">(</span><span class="n">dict_</span><span class="p">,</span> <span class="n">encoding</span><span class="p">)</span> <span class="k">if</span> <span class="n">encoding</span> <span class="k">else</span> <span class="n">dict_</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">decoding</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">dataset</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">invert_dict</span><span class="p">(</span><span class="n">cls</span><span class="o">.</span><span class="n">encoding</span><span class="p">(</span><span class="n">dataset</span><span class="p">))</span>
+
+    <span class="nd">@classmethod</span>
+<div class="viewcode-block" id="Observation.find"><a class="viewcode-back" href="../../../models.html#bamboo.models.observation.Observation.find">[docs]</a>    <span class="k">def</span> <span class="nf">find</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">dataset</span><span class="p">,</span> <span class="n">query_args</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">as_cursor</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span>
+             <span class="n">include_deleted</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Return observation rows matching parameters.</span>
+
+<span class="sd">        :param dataset: Dataset to return rows for.</span>
+<span class="sd">        :param include_deleted: If True, return delete records, default False.</span>
+<span class="sd">        :param query_args: An optional QueryArgs to hold the query arguments.</span>
+
+<span class="sd">        :raises: `JSONError` if the query could not be parsed.</span>
+
+<span class="sd">        :returns: A list of dictionaries matching the passed in `query` and</span>
+<span class="sd">            other parameters.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">encoding</span> <span class="o">=</span> <span class="n">cls</span><span class="o">.</span><span class="n">encoding</span><span class="p">(</span><span class="n">dataset</span><span class="p">)</span> <span class="ow">or</span> <span class="p">{}</span>
+        <span class="n">query_args</span> <span class="o">=</span> <span class="n">query_args</span> <span class="ow">or</span> <span class="n">QueryArgs</span><span class="p">()</span>
+
+        <span class="n">query_args</span><span class="o">.</span><span class="n">query</span> <span class="o">=</span> <span class="n">parse_timestamp_query</span><span class="p">(</span><span class="n">query_args</span><span class="o">.</span><span class="n">query</span><span class="p">,</span>
+                                                 <span class="n">dataset</span><span class="o">.</span><span class="n">schema</span><span class="p">)</span>
+        <span class="n">query_args</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="n">encoding</span><span class="p">,</span> <span class="p">{</span><span class="n">DATASET_ID</span><span class="p">:</span> <span class="n">dataset</span><span class="o">.</span><span class="n">dataset_id</span><span class="p">})</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">include_deleted</span><span class="p">:</span>
+            <span class="n">query</span> <span class="o">=</span> <span class="n">query_args</span><span class="o">.</span><span class="n">query</span>
+            <span class="n">query</span><span class="p">[</span><span class="n">cls</span><span class="o">.</span><span class="n">DELETED_AT</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="n">query_args</span><span class="o">.</span><span class="n">query</span> <span class="o">=</span> <span class="n">query</span>
+
+        <span class="c"># exclude deleted at column</span>
+        <span class="n">query_args</span><span class="o">.</span><span class="n">select</span> <span class="o">=</span> <span class="n">query_args</span><span class="o">.</span><span class="n">select</span> <span class="ow">or</span> <span class="p">{</span><span class="n">cls</span><span class="o">.</span><span class="n">DELETED_AT</span><span class="p">:</span> <span class="mi">0</span><span class="p">}</span>
+
+        <span class="n">distinct</span> <span class="o">=</span> <span class="n">query_args</span><span class="o">.</span><span class="n">distinct</span>
+        <span class="n">records</span> <span class="o">=</span> <span class="nb">super</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">cls</span><span class="p">)</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="n">query_args</span><span class="p">,</span> <span class="n">as_dict</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span>
+                                       <span class="n">as_cursor</span><span class="o">=</span><span class="p">(</span><span class="n">as_cursor</span> <span class="ow">or</span> <span class="n">distinct</span><span class="p">))</span>
+
+        <span class="k">return</span> <span class="n">records</span><span class="o">.</span><span class="n">distinct</span><span class="p">(</span><span class="n">encoding</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">distinct</span><span class="p">,</span> <span class="n">distinct</span><span class="p">))</span> <span class="k">if</span> <span class="n">distinct</span>\
+            <span class="k">else</span> <span class="n">records</span>
+</div>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">update_from_dframe</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">df</span><span class="p">,</span> <span class="n">dataset</span><span class="p">):</span>
+        <span class="n">dataset</span><span class="o">.</span><span class="n">build_schema</span><span class="p">(</span><span class="n">df</span><span class="p">)</span>
+        <span class="n">encoded_dframe</span> <span class="o">=</span> <span class="n">encode</span><span class="p">(</span><span class="n">df</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(),</span> <span class="n">dataset</span><span class="p">,</span> <span class="n">append_index</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+        <span class="n">encoding</span> <span class="o">=</span> <span class="n">cls</span><span class="o">.</span><span class="n">encoding</span><span class="p">(</span><span class="n">dataset</span><span class="p">)</span>
+
+        <span class="n">cls</span><span class="o">.</span><span class="n">__batch_update</span><span class="p">(</span><span class="n">encoded_dframe</span><span class="p">,</span> <span class="n">encoding</span><span class="p">)</span>
+        <span class="n">cls</span><span class="o">.</span><span class="n">__store_encoding</span><span class="p">(</span><span class="n">dataset</span><span class="p">,</span> <span class="n">encoding</span><span class="p">)</span>
+        <span class="n">dataset</span><span class="o">.</span><span class="n">update_stats</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">update</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+
+    <span class="nd">@classmethod</span>
+<div class="viewcode-block" id="Observation.find_one"><a class="viewcode-back" href="../../../models.html#bamboo.models.observation.Observation.find_one">[docs]</a>    <span class="k">def</span> <span class="nf">find_one</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">dataset</span><span class="p">,</span> <span class="n">index</span><span class="p">,</span> <span class="n">decode</span><span class="o">=</span><span class="bp">True</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Return row by index.</span>
+
+<span class="sd">        :param dataset: The dataset to find the row for.</span>
+<span class="sd">        :param index: The index of the row to find.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">query</span> <span class="o">=</span> <span class="p">{</span><span class="n">INDEX</span><span class="p">:</span> <span class="n">index</span><span class="p">,</span> <span class="n">DATASET_ID</span><span class="p">:</span> <span class="n">dataset</span><span class="o">.</span><span class="n">dataset_id</span><span class="p">,</span>
+                 <span class="n">cls</span><span class="o">.</span><span class="n">DELETED_AT</span><span class="p">:</span> <span class="mi">0</span><span class="p">}</span>
+        <span class="n">query</span> <span class="o">=</span> <span class="n">cls</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="n">query</span><span class="p">,</span> <span class="n">dataset</span><span class="o">=</span><span class="n">dataset</span><span class="p">)</span>
+        <span class="n">decoding</span> <span class="o">=</span> <span class="n">cls</span><span class="o">.</span><span class="n">decoding</span><span class="p">(</span><span class="n">dataset</span><span class="p">)</span>
+        <span class="n">record</span> <span class="o">=</span> <span class="nb">super</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">cls</span><span class="p">)</span><span class="o">.</span><span class="n">find_one</span><span class="p">(</span><span class="n">query</span><span class="p">,</span> <span class="n">as_dict</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">cls</span><span class="p">(</span><span class="n">cls</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="n">record</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="n">decoding</span><span class="p">)</span> <span class="k">if</span> <span class="n">decode</span> <span class="k">else</span> <span class="n">record</span><span class="p">)</span>
+</div>
+    <span class="nd">@classmethod</span>
+<div class="viewcode-block" id="Observation.append"><a class="viewcode-back" href="../../../models.html#bamboo.models.observation.Observation.append">[docs]</a>    <span class="k">def</span> <span class="nf">append</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">dframe</span><span class="p">,</span> <span class="n">dataset</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Append an additional dframe to an existing dataset.</span>
+
+<span class="sd">        :params dframe: The DataFrame to append.</span>
+<span class="sd">        :params dataset: The DataSet to add `dframe` to.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">encoded_dframe</span> <span class="o">=</span> <span class="n">encode</span><span class="p">(</span><span class="n">dframe</span><span class="p">,</span> <span class="n">dataset</span><span class="p">)</span>
+        <span class="n">encoding</span> <span class="o">=</span> <span class="n">cls</span><span class="o">.</span><span class="n">encoding</span><span class="p">(</span><span class="n">dataset</span><span class="p">,</span> <span class="n">encoded_dframe</span><span class="p">)</span>
+
+        <span class="n">cls</span><span class="o">.</span><span class="n">__batch_save</span><span class="p">(</span><span class="n">encoded_dframe</span><span class="p">,</span> <span class="n">encoding</span><span class="p">)</span>
+        <span class="n">dataset</span><span class="o">.</span><span class="n">clear_summary_stats</span><span class="p">()</span>
+</div>
+    <span class="nd">@classmethod</span>
+<div class="viewcode-block" id="Observation.save"><a class="viewcode-back" href="../../../models.html#bamboo.models.observation.Observation.save">[docs]</a>    <span class="k">def</span> <span class="nf">save</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">dframe</span><span class="p">,</span> <span class="n">dataset</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Save data in `dframe` with the `dataset`.</span>
+
+<span class="sd">        Encode `dframe` for MongoDB, and add fields to identify it with the</span>
+<span class="sd">        passed in `dataset`. All column names in `dframe` are converted to</span>
+<span class="sd">        slugs using the dataset&#39;s schema.  The dataset is update to store the</span>
+<span class="sd">        size of the stored data.</span>
+
+<span class="sd">        :param dframe: The DataFrame to store.</span>
+<span class="sd">        :param dataset: The dataset to store the dframe in.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c"># Build schema for the dataset after having read it from file.</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">dataset</span><span class="o">.</span><span class="n">schema</span><span class="p">:</span>
+            <span class="n">dataset</span><span class="o">.</span><span class="n">build_schema</span><span class="p">(</span><span class="n">dframe</span><span class="p">)</span>
+
+        <span class="c"># Update stats, before inplace encoding.</span>
+        <span class="n">dataset</span><span class="o">.</span><span class="n">update_stats</span><span class="p">(</span><span class="n">dframe</span><span class="p">)</span>
+
+        <span class="n">encoded_dframe</span> <span class="o">=</span> <span class="n">encode</span><span class="p">(</span><span class="n">dframe</span><span class="p">,</span> <span class="n">dataset</span><span class="p">)</span>
+        <span class="n">encoding</span> <span class="o">=</span> <span class="n">cls</span><span class="o">.</span><span class="n">encoding</span><span class="p">(</span><span class="n">dataset</span><span class="p">,</span> <span class="n">encoded_dframe</span><span class="p">)</span>
+
+        <span class="n">cls</span><span class="o">.</span><span class="n">__batch_save</span><span class="p">(</span><span class="n">encoded_dframe</span><span class="p">,</span> <span class="n">encoding</span><span class="p">)</span>
+</div>
+    <span class="nd">@classmethod</span>
+<div class="viewcode-block" id="Observation.update"><a class="viewcode-back" href="../../../models.html#bamboo.models.observation.Observation.update">[docs]</a>    <span class="k">def</span> <span class="nf">update</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">dataset</span><span class="p">,</span> <span class="n">index</span><span class="p">,</span> <span class="n">record</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Update a dataset row by index.</span>
+
+<span class="sd">        The record dictionary will update, not replace, the data in the row at</span>
+<span class="sd">        index.</span>
+
+<span class="sd">        :param dataset: The dataset to update a row for.</span>
+<span class="sd">        :param dex: The index of the row to update.</span>
+<span class="sd">        :param record: The dictionary to update the row with.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">previous_record</span> <span class="o">=</span> <span class="n">cls</span><span class="o">.</span><span class="n">find_one</span><span class="p">(</span><span class="n">dataset</span><span class="p">,</span> <span class="n">index</span><span class="p">)</span><span class="o">.</span><span class="n">record</span>
+        <span class="n">previous_record</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">MONGO_ID</span><span class="p">)</span>
+        <span class="n">record</span> <span class="o">=</span> <span class="n">combine_dicts</span><span class="p">(</span><span class="n">previous_record</span><span class="p">,</span> <span class="n">record</span><span class="p">)</span>
+        <span class="n">record</span> <span class="o">=</span> <span class="n">update_calculations</span><span class="p">(</span><span class="n">record</span><span class="p">,</span> <span class="n">dataset</span><span class="p">)</span>
+
+        <span class="n">record</span> <span class="o">=</span> <span class="n">cls</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="n">record</span><span class="p">,</span> <span class="n">dataset</span><span class="o">=</span><span class="n">dataset</span><span class="p">)</span>
+
+        <span class="n">cls</span><span class="o">.</span><span class="n">delete</span><span class="p">(</span><span class="n">dataset</span><span class="p">,</span> <span class="n">index</span><span class="p">)</span>
+
+        <span class="nb">super</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">cls</span><span class="p">())</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">record</span><span class="p">)</span>
+</div>
+    <span class="nd">@classmethod</span>
+<div class="viewcode-block" id="Observation.batch_read_dframe_from_cursor"><a class="viewcode-back" href="../../../models.html#bamboo.models.observation.Observation.batch_read_dframe_from_cursor">[docs]</a>    <span class="k">def</span> <span class="nf">batch_read_dframe_from_cursor</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">dataset</span><span class="p">,</span> <span class="n">observations</span><span class="p">,</span> <span class="n">distinct</span><span class="p">,</span>
+                                      <span class="n">limit</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Read a DataFrame from a MongoDB Cursor in batches.&quot;&quot;&quot;</span>
+        <span class="n">dframes</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">batch</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">decoding</span> <span class="o">=</span> <span class="n">cls</span><span class="o">.</span><span class="n">decoding</span><span class="p">(</span><span class="n">dataset</span><span class="p">)</span>
+
+        <span class="k">while</span> <span class="bp">True</span><span class="p">:</span>
+            <span class="n">start</span> <span class="o">=</span> <span class="n">batch</span> <span class="o">*</span> <span class="n">cls</span><span class="o">.</span><span class="n">DB_READ_BATCH_SIZE</span>
+            <span class="n">end</span> <span class="o">=</span> <span class="n">start</span> <span class="o">+</span> <span class="n">cls</span><span class="o">.</span><span class="n">DB_READ_BATCH_SIZE</span>
+
+            <span class="k">if</span> <span class="n">limit</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">end</span> <span class="o">&gt;</span> <span class="n">limit</span><span class="p">:</span>
+                <span class="n">end</span> <span class="o">=</span> <span class="n">limit</span>
+
+            <span class="c"># if there is a limit this may occur, and we are done</span>
+            <span class="k">if</span> <span class="n">start</span> <span class="o">&gt;=</span> <span class="n">end</span><span class="p">:</span>
+                <span class="k">break</span>
+
+            <span class="n">current_observations</span> <span class="o">=</span> <span class="p">[</span>
+                <span class="n">replace_keys</span><span class="p">(</span><span class="n">ob</span><span class="p">,</span> <span class="n">decoding</span><span class="p">)</span> <span class="k">for</span> <span class="n">ob</span> <span class="ow">in</span> <span class="n">observations</span><span class="p">[</span><span class="n">start</span><span class="p">:</span><span class="n">end</span><span class="p">]]</span>
+
+            <span class="c"># if the batches exhausted the data</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="nb">len</span><span class="p">(</span><span class="n">current_observations</span><span class="p">):</span>
+                <span class="k">break</span>
+
+            <span class="n">dframes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">current_observations</span><span class="p">))</span>
+
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">distinct</span><span class="p">:</span>
+                <span class="n">observations</span><span class="o">.</span><span class="n">rewind</span><span class="p">()</span>
+
+            <span class="n">batch</span> <span class="o">+=</span> <span class="mi">1</span>
+
+        <span class="k">return</span> <span class="n">concat</span><span class="p">(</span><span class="n">dframes</span><span class="p">)</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">dframes</span><span class="p">)</span> <span class="k">else</span> <span class="n">DataFrame</span><span class="p">()</span>
+</div>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">__batch_save</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">dframe</span><span class="p">,</span> <span class="n">encoding</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Save records in batches to avoid document size maximum setting.</span>
+
+<span class="sd">        :param dframe: A DataFrame to save in the current model.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">def</span> <span class="nf">command</span><span class="p">(</span><span class="n">records</span><span class="p">,</span> <span class="n">encoding</span><span class="p">):</span>
+            <span class="n">cls</span><span class="o">.</span><span class="n">collection</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="n">records</span><span class="p">)</span>
+
+        <span class="n">batch_size</span> <span class="o">=</span> <span class="n">cls</span><span class="o">.</span><span class="n">DB_SAVE_BATCH_SIZE</span>
+
+        <span class="n">cls</span><span class="o">.</span><span class="n">__batch_command_wrapper</span><span class="p">(</span><span class="n">command</span><span class="p">,</span> <span class="n">dframe</span><span class="p">,</span> <span class="n">encoding</span><span class="p">,</span> <span class="n">batch_size</span><span class="p">)</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">__batch_update</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">dframe</span><span class="p">,</span> <span class="n">encoding</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Update records in batches to avoid document size maximum setting.</span>
+
+<span class="sd">        DataFrame must have column with record (object) ids.</span>
+
+<span class="sd">        :param dfarme: The DataFrame to update.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">def</span> <span class="nf">command</span><span class="p">(</span><span class="n">records</span><span class="p">,</span> <span class="n">encoding</span><span class="p">):</span>
+            <span class="c"># Encode the reserved key to access the row ID.</span>
+            <span class="n">mongo_id_key</span> <span class="o">=</span> <span class="n">encoding</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">MONGO_ID_ENCODED</span><span class="p">,</span> <span class="n">MONGO_ID_ENCODED</span><span class="p">)</span>
+
+            <span class="c"># MongoDB has no batch updates.</span>
+            <span class="k">for</span> <span class="n">record</span> <span class="ow">in</span> <span class="n">records</span><span class="p">:</span>
+                <span class="n">spec</span> <span class="o">=</span> <span class="p">{</span><span class="n">MONGO_ID</span><span class="p">:</span> <span class="n">record</span><span class="p">[</span><span class="n">mongo_id_key</span><span class="p">]}</span>
+                <span class="k">del</span> <span class="n">record</span><span class="p">[</span><span class="n">mongo_id_key</span><span class="p">]</span>
+                <span class="n">doc</span> <span class="o">=</span> <span class="p">{</span><span class="s">&#39;$set&#39;</span><span class="p">:</span> <span class="n">record</span><span class="p">}</span>
+                <span class="n">cls</span><span class="o">.</span><span class="n">collection</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">spec</span><span class="p">,</span> <span class="n">doc</span><span class="p">)</span>
+
+        <span class="n">cls</span><span class="o">.</span><span class="n">__batch_command_wrapper</span><span class="p">(</span><span class="n">command</span><span class="p">,</span> <span class="n">dframe</span><span class="p">,</span> <span class="n">encoding</span><span class="p">,</span>
+                                    <span class="n">cls</span><span class="o">.</span><span class="n">DB_SAVE_BATCH_SIZE</span><span class="p">)</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">__batch_command_wrapper</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">command</span><span class="p">,</span> <span class="n">df</span><span class="p">,</span> <span class="n">encoding</span><span class="p">,</span> <span class="n">batch_size</span><span class="p">):</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">cls</span><span class="o">.</span><span class="n">__batch_command</span><span class="p">(</span><span class="n">command</span><span class="p">,</span> <span class="n">df</span><span class="p">,</span> <span class="n">encoding</span><span class="p">,</span> <span class="n">batch_size</span><span class="p">)</span>
+        <span class="k">except</span> <span class="n">AutoReconnect</span><span class="p">:</span>
+            <span class="n">batch_size</span> <span class="o">/=</span> <span class="mi">2</span>
+
+            <span class="c"># If batch size drop is less than MIN_BATCH_SIZE, assume the</span>
+            <span class="c"># records are too large or there is another error and fail.</span>
+            <span class="k">if</span> <span class="n">batch_size</span> <span class="o">&gt;=</span> <span class="n">cls</span><span class="o">.</span><span class="n">MIN_BATCH_SIZE</span><span class="p">:</span>
+                <span class="n">cls</span><span class="o">.</span><span class="n">__batch_command_wrapper</span><span class="p">(</span><span class="n">command</span><span class="p">,</span> <span class="n">df</span><span class="p">,</span> <span class="n">encoding</span><span class="p">,</span> <span class="n">batch_size</span><span class="p">)</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">__batch_command</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">command</span><span class="p">,</span> <span class="n">dframe</span><span class="p">,</span> <span class="n">encoding</span><span class="p">,</span> <span class="n">batch_size</span><span class="p">):</span>
+        <span class="n">batches</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">ceil</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">dframe</span><span class="p">))</span> <span class="o">/</span> <span class="n">batch_size</span><span class="p">))</span>
+
+        <span class="k">for</span> <span class="n">batch</span> <span class="ow">in</span> <span class="nb">xrange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">batches</span><span class="p">):</span>
+            <span class="n">start</span> <span class="o">=</span> <span class="n">batch</span> <span class="o">*</span> <span class="n">batch_size</span>
+            <span class="n">end</span> <span class="o">=</span> <span class="n">start</span> <span class="o">+</span> <span class="n">batch_size</span>
+            <span class="n">current_dframe</span> <span class="o">=</span> <span class="n">dframe</span><span class="p">[</span><span class="n">start</span><span class="p">:</span><span class="n">end</span><span class="p">]</span>
+            <span class="n">records</span> <span class="o">=</span> <span class="n">cls</span><span class="o">.</span><span class="n">__encode_records</span><span class="p">(</span><span class="n">current_dframe</span><span class="p">,</span> <span class="n">encoding</span><span class="p">)</span>
+            <span class="n">command</span><span class="p">(</span><span class="n">records</span><span class="p">,</span> <span class="n">encoding</span><span class="p">)</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">__encode_records</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">dframe</span><span class="p">,</span> <span class="n">encoding</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">cls</span><span class="o">.</span><span class="n">__encode_record</span><span class="p">(</span><span class="n">row</span><span class="o">.</span><span class="n">to_dict</span><span class="p">(),</span> <span class="n">encoding</span><span class="p">)</span>
+                <span class="k">for</span> <span class="p">(</span><span class="n">_</span><span class="p">,</span> <span class="n">row</span><span class="p">)</span> <span class="ow">in</span> <span class="n">dframe</span><span class="o">.</span><span class="n">iterrows</span><span class="p">()]</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">__encode_record</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">row</span><span class="p">,</span> <span class="n">encoding</span><span class="p">):</span>
+        <span class="n">encoded</span> <span class="o">=</span> <span class="n">replace_keys</span><span class="p">(</span><span class="n">row</span><span class="p">,</span> <span class="n">encoding</span><span class="p">)</span>
+        <span class="n">encoded</span><span class="p">[</span><span class="n">cls</span><span class="o">.</span><span class="n">DELETED_AT</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+
+        <span class="k">return</span> <span class="n">encoded</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">__make_encoding</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">dframe</span><span class="p">,</span> <span class="n">start</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+        <span class="c"># Ensure that DATASET_ID is first so that we can guarantee an index.</span>
+        <span class="n">columns</span> <span class="o">=</span> <span class="p">[</span><span class="n">DATASET_ID</span><span class="p">]</span> <span class="o">+</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">dframe</span><span class="o">.</span><span class="n">columns</span> <span class="o">-</span> <span class="p">[</span><span class="n">DATASET_ID</span><span class="p">])</span>
+        <span class="k">return</span> <span class="p">{</span><span class="n">v</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">start</span> <span class="o">+</span> <span class="n">i</span><span class="p">)</span> <span class="k">for</span> <span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">v</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">columns</span><span class="p">)}</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">__soft_delete</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">query</span><span class="p">):</span>
+        <span class="n">cls</span><span class="o">.</span><span class="n">collection</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">query</span><span class="p">,</span>
+                              <span class="p">{</span><span class="s">&#39;$set&#39;</span><span class="p">:</span> <span class="p">{</span><span class="n">cls</span><span class="o">.</span><span class="n">DELETED_AT</span><span class="p">:</span> <span class="n">now</span><span class="p">()</span><span class="o">.</span><span class="n">isoformat</span><span class="p">()}})</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">__store_encoding</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">dataset</span><span class="p">,</span> <span class="n">encoding</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Store encoded columns with dataset.</span>
+
+<span class="sd">        :param dataset: The dataset to store the encoding with.</span>
+<span class="sd">        :param encoding: The encoding for dataset.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">record</span> <span class="o">=</span> <span class="p">{</span><span class="n">cls</span><span class="o">.</span><span class="n">ENCODING_DATASET_ID</span><span class="p">:</span> <span class="n">dataset</span><span class="o">.</span><span class="n">dataset_id</span><span class="p">,</span>
+                  <span class="n">cls</span><span class="o">.</span><span class="n">ENCODING</span><span class="p">:</span> <span class="n">encoding</span><span class="p">}</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">cls</span><span class="p">())</span><span class="o">.</span><span class="n">delete</span><span class="p">({</span><span class="n">cls</span><span class="o">.</span><span class="n">ENCODING_DATASET_ID</span><span class="p">:</span> <span class="n">dataset</span><span class="o">.</span><span class="n">dataset_id</span><span class="p">})</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">cls</span><span class="p">())</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">record</span><span class="p">)</span></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">bamboo 0.6.3 alpha documentation</a> &raquo;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Module code</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &copy; Copyright 2013, Peter Lubell-Doughtie, Mark Johnston.
+    </div>
+  </body>
+</html>

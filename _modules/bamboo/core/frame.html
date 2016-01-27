@@ -1,0 +1,203 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>bamboo.core.frame &mdash; bamboo 0.6.3 alpha documentation</title>
+    
+    <link rel="stylesheet" href="../../../_static/nature.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../',
+        VERSION:     '0.6.3 alpha',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="top" title="bamboo 0.6.3 alpha documentation" href="../../../index.html" />
+    <link rel="up" title="Module code" href="../../index.html" /> 
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">bamboo 0.6.3 alpha documentation</a> &raquo;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" accesskey="U">Module code</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for bamboo.core.frame</h1><div class="highlight"><pre>
+<span class="kn">from</span> <span class="nn">cStringIO</span> <span class="kn">import</span> <span class="n">StringIO</span>
+
+<span class="kn">from</span> <span class="nn">pandas</span> <span class="kn">import</span> <span class="n">Series</span>
+
+<span class="kn">from</span> <span class="nn">bamboo.lib.mongo</span> <span class="kn">import</span> <span class="n">MONGO_ID_ENCODED</span>
+
+
+<span class="c"># reserved bamboo keys</span>
+<span class="n">BAMBOO_RESERVED_KEY_PREFIX</span> <span class="o">=</span> <span class="s">&#39;^^&#39;</span>
+<span class="n">DATASET_ID</span> <span class="o">=</span> <span class="n">BAMBOO_RESERVED_KEY_PREFIX</span> <span class="o">+</span> <span class="s">&#39;dataset_id&#39;</span>
+<span class="n">INDEX</span> <span class="o">=</span> <span class="n">BAMBOO_RESERVED_KEY_PREFIX</span> <span class="o">+</span> <span class="s">&#39;index&#39;</span>
+<span class="n">PARENT_DATASET_ID</span> <span class="o">=</span> <span class="n">BAMBOO_RESERVED_KEY_PREFIX</span> <span class="o">+</span> <span class="s">&#39;parent_dataset_id&#39;</span>
+
+<span class="n">BAMBOO_RESERVED_KEYS</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="n">DATASET_ID</span><span class="p">,</span>
+    <span class="n">INDEX</span><span class="p">,</span>
+    <span class="n">PARENT_DATASET_ID</span><span class="p">,</span>
+<span class="p">]</span>
+
+<span class="c"># all the reserved keys</span>
+<span class="n">RESERVED_KEYS</span> <span class="o">=</span> <span class="n">BAMBOO_RESERVED_KEYS</span> <span class="o">+</span> <span class="p">[</span><span class="n">MONGO_ID_ENCODED</span><span class="p">]</span>
+
+
+<span class="k">def</span> <span class="nf">add_id_column</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">dataset_id</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">add_constant_column</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">dataset_id</span><span class="p">,</span> <span class="n">DATASET_ID</span><span class="p">)</span> <span class="k">if</span> <span class="ow">not</span>\
+        <span class="n">DATASET_ID</span> <span class="ow">in</span> <span class="n">df</span><span class="o">.</span><span class="n">columns</span> <span class="k">else</span> <span class="n">df</span>
+
+
+<span class="k">def</span> <span class="nf">add_constant_column</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
+    <span class="n">column</span> <span class="o">=</span> <span class="n">Series</span><span class="p">([</span><span class="n">value</span><span class="p">]</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">df</span><span class="p">),</span> <span class="n">index</span><span class="o">=</span><span class="n">df</span><span class="o">.</span><span class="n">index</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">df</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">column</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="add_parent_column"><a class="viewcode-back" href="../../../core.html#bamboo.core.frame.add_parent_column">[docs]</a><span class="k">def</span> <span class="nf">add_parent_column</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">parent_dataset_id</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Add parent ID column to this DataFrame.&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">add_constant_column</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">parent_dataset_id</span><span class="p">,</span> <span class="n">PARENT_DATASET_ID</span><span class="p">)</span>
+
+</div>
+<span class="k">def</span> <span class="nf">df_to_csv_string</span><span class="p">(</span><span class="n">df</span><span class="p">):</span>
+    <span class="nb">buffer</span> <span class="o">=</span> <span class="n">StringIO</span><span class="p">()</span>
+    <span class="n">df</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span><span class="nb">buffer</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s">&#39;utf-8&#39;</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+    <span class="k">return</span> <span class="nb">buffer</span><span class="o">.</span><span class="n">getvalue</span><span class="p">()</span>
+
+
+<div class="viewcode-block" id="join_dataset"><a class="viewcode-back" href="../../../core.html#bamboo.core.frame.join_dataset">[docs]</a><span class="k">def</span> <span class="nf">join_dataset</span><span class="p">(</span><span class="n">left</span><span class="p">,</span> <span class="n">other</span><span class="p">,</span> <span class="n">on</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Left join an `other` dataset.</span>
+
+<span class="sd">    :param other: Other dataset to join.</span>
+<span class="sd">    :param on: Column or 2 comma seperated columns to join on.</span>
+
+<span class="sd">    :returns: Joined DataFrame.</span>
+
+<span class="sd">    :raises: `KeyError` if join columns not in datasets.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">on_lhs</span><span class="p">,</span> <span class="n">on_rhs</span> <span class="o">=</span> <span class="p">(</span><span class="n">on</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s">&#39;,&#39;</span><span class="p">)</span> <span class="o">*</span> <span class="mi">2</span><span class="p">)[:</span><span class="mi">2</span><span class="p">]</span>
+
+    <span class="n">right_dframe</span> <span class="o">=</span> <span class="n">other</span><span class="o">.</span><span class="n">dframe</span><span class="p">(</span><span class="n">padded</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">on_lhs</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">left</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span><span class="s">&#39;No item named &quot;</span><span class="si">%s</span><span class="s">&quot; in left hand side dataset&#39;</span> <span class="o">%</span> <span class="n">on_lhs</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">on_rhs</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">right_dframe</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span><span class="s">&#39;No item named &quot;</span><span class="si">%s</span><span class="s">&quot; in right hand side dataset&#39;</span> <span class="o">%</span>
+                       <span class="n">on_rhs</span><span class="p">)</span>
+
+    <span class="n">right_dframe</span> <span class="o">=</span> <span class="n">right_dframe</span><span class="o">.</span><span class="n">set_index</span><span class="p">(</span><span class="n">on_rhs</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">right_dframe</span><span class="o">.</span><span class="n">index</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">right_dframe</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">unique</span><span class="p">()):</span>
+        <span class="n">msg</span> <span class="o">=</span> <span class="s">&#39;Join column &quot;</span><span class="si">%s</span><span class="s">&quot; of the right hand side dataset is not unique&#39;</span>
+        <span class="k">raise</span> <span class="n">NonUniqueJoinError</span><span class="p">(</span><span class="n">msg</span> <span class="o">%</span> <span class="n">on_rhs</span><span class="p">)</span>
+
+    <span class="n">shared_columns</span> <span class="o">=</span> <span class="n">left</span><span class="o">.</span><span class="n">columns</span><span class="o">.</span><span class="n">intersection</span><span class="p">(</span><span class="n">right_dframe</span><span class="o">.</span><span class="n">columns</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">shared_columns</span><span class="p">):</span>
+        <span class="n">rename_map</span> <span class="o">=</span> <span class="p">[{</span><span class="n">c</span><span class="p">:</span> <span class="s">&#39;</span><span class="si">%s</span><span class="s">.</span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">shared_columns</span><span class="p">}</span> <span class="k">for</span> <span class="n">v</span>
+                      <span class="ow">in</span> <span class="p">[</span><span class="s">&#39;x&#39;</span><span class="p">,</span> <span class="s">&#39;y&#39;</span><span class="p">]]</span>
+        <span class="n">left</span><span class="o">.</span><span class="n">rename</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="n">rename_map</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">inplace</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+        <span class="n">right_dframe</span><span class="o">.</span><span class="n">rename</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="n">rename_map</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">inplace</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">left</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">right_dframe</span><span class="p">,</span> <span class="n">on</span><span class="o">=</span><span class="n">on_lhs</span><span class="p">)</span>
+
+</div>
+<div class="viewcode-block" id="remove_reserved_keys"><a class="viewcode-back" href="../../../core.html#bamboo.core.frame.remove_reserved_keys">[docs]</a><span class="k">def</span> <span class="nf">remove_reserved_keys</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">exclude</span><span class="o">=</span><span class="p">[]):</span>
+    <span class="sd">&quot;&quot;&quot;Remove reserved internal columns in this DataFrame.</span>
+
+<span class="sd">    :param keep_parent_ids: Keep parent column if True, default False.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">reserved_keys</span> <span class="o">=</span> <span class="n">__column_intersect</span><span class="p">(</span>
+        <span class="n">df</span><span class="p">,</span> <span class="n">BAMBOO_RESERVED_KEYS</span><span class="p">)</span><span class="o">.</span><span class="n">difference</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">exclude</span><span class="p">))</span>
+
+    <span class="k">return</span> <span class="n">df</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="n">reserved_keys</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
+</div>
+<div class="viewcode-block" id="rows_for_parent_id"><a class="viewcode-back" href="../../../core.html#bamboo.core.frame.rows_for_parent_id">[docs]</a><span class="k">def</span> <span class="nf">rows_for_parent_id</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">parent_id</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;DataFrame with only rows for `parent_id`.</span>
+
+<span class="sd">    :param parent_id: The ID to restrict rows to.</span>
+
+<span class="sd">    :returns: A DataFrame including only rows with a parent ID equal to</span>
+<span class="sd">        that passed in.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">df</span><span class="p">[</span><span class="n">df</span><span class="p">[</span><span class="n">PARENT_DATASET_ID</span><span class="p">]</span> <span class="o">==</span> <span class="n">parent_id</span><span class="p">]</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="n">PARENT_DATASET_ID</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+
+</div>
+<span class="k">def</span> <span class="nf">__column_intersect</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">list_</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Return the intersection of `list_` and DataFrame&#39;s columns.&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="nb">set</span><span class="p">(</span><span class="n">list_</span><span class="p">)</span><span class="o">.</span><span class="n">intersection</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">df</span><span class="o">.</span><span class="n">columns</span><span class="o">.</span><span class="n">tolist</span><span class="p">()))</span>
+
+
+<span class="k">class</span> <span class="nc">NonUniqueJoinError</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
+    <span class="k">pass</span>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">bamboo 0.6.3 alpha documentation</a> &raquo;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Module code</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &copy; Copyright 2013, Peter Lubell-Doughtie, Mark Johnston.
+    </div>
+  </body>
+</html>

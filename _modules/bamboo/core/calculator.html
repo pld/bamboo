@@ -1,0 +1,499 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>bamboo.core.calculator &mdash; bamboo 0.6.3 alpha documentation</title>
+    
+    <link rel="stylesheet" href="../../../_static/nature.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../',
+        VERSION:     '0.6.3 alpha',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="top" title="bamboo 0.6.3 alpha documentation" href="../../../index.html" />
+    <link rel="up" title="Module code" href="../../index.html" /> 
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">bamboo 0.6.3 alpha documentation</a> &raquo;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" accesskey="U">Module code</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for bamboo.core.calculator</h1><div class="highlight"><pre>
+<span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">defaultdict</span>
+
+<span class="kn">from</span> <span class="nn">celery.task</span> <span class="kn">import</span> <span class="n">task</span>
+<span class="kn">from</span> <span class="nn">pandas</span> <span class="kn">import</span> <span class="n">concat</span><span class="p">,</span> <span class="n">DataFrame</span>
+
+<span class="kn">from</span> <span class="nn">bamboo.core.aggregator</span> <span class="kn">import</span> <span class="n">Aggregator</span>
+<span class="kn">from</span> <span class="nn">bamboo.core.frame</span> <span class="kn">import</span> <span class="n">add_parent_column</span><span class="p">,</span> <span class="n">join_dataset</span>
+<span class="kn">from</span> <span class="nn">bamboo.core.parser</span> <span class="kn">import</span> <span class="n">Parser</span>
+<span class="kn">from</span> <span class="nn">bamboo.lib.datetools</span> <span class="kn">import</span> <span class="n">recognize_dates</span>
+<span class="kn">from</span> <span class="nn">bamboo.lib.jsontools</span> <span class="kn">import</span> <span class="n">df_to_jsondict</span>
+<span class="kn">from</span> <span class="nn">bamboo.lib.mongo</span> <span class="kn">import</span> <span class="n">MONGO_ID</span>
+<span class="kn">from</span> <span class="nn">bamboo.lib.parsing</span> <span class="kn">import</span> <span class="n">parse_columns</span>
+<span class="kn">from</span> <span class="nn">bamboo.lib.query_args</span> <span class="kn">import</span> <span class="n">QueryArgs</span>
+<span class="kn">from</span> <span class="nn">bamboo.lib.utils</span> <span class="kn">import</span> <span class="n">combine_dicts</span><span class="p">,</span> <span class="n">flatten</span><span class="p">,</span> <span class="n">to_list</span>
+
+
+<div class="viewcode-block" id="calculate_columns"><a class="viewcode-back" href="../../../core.html#bamboo.core.calculator.calculate_columns">[docs]</a><span class="k">def</span> <span class="nf">calculate_columns</span><span class="p">(</span><span class="n">dataset</span><span class="p">,</span> <span class="n">calculations</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Calculate and store new columns for `calculations`.</span>
+
+<span class="sd">    The new columns are join t othe Calculation dframe and replace the</span>
+<span class="sd">    dataset&#39;s observations.</span>
+
+<span class="sd">    .. note::</span>
+
+<span class="sd">        This can result in race-conditions when:</span>
+
+<span class="sd">        - deleting ``controllers.Datasets.DELETE``</span>
+<span class="sd">        - updating ``controllers.Datasets.POST([dataset_id])``</span>
+
+<span class="sd">        Therefore, perform these actions asychronously.</span>
+
+<span class="sd">    :param dataset: The dataset to calculate for.</span>
+<span class="sd">    :param calculations: A list of calculations.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">new_cols</span> <span class="o">=</span> <span class="bp">None</span>
+
+    <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">calculations</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">c</span><span class="o">.</span><span class="n">aggregation</span><span class="p">:</span>
+            <span class="n">aggregator</span> <span class="o">=</span> <span class="n">__create_aggregator</span><span class="p">(</span>
+                <span class="n">dataset</span><span class="p">,</span> <span class="n">c</span><span class="o">.</span><span class="n">formula</span><span class="p">,</span> <span class="n">c</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">c</span><span class="o">.</span><span class="n">groups_as_list</span><span class="p">)</span>
+            <span class="n">aggregator</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">dataset</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">columns</span> <span class="o">=</span> <span class="n">parse_columns</span><span class="p">(</span><span class="n">dataset</span><span class="p">,</span> <span class="n">c</span><span class="o">.</span><span class="n">formula</span><span class="p">,</span> <span class="n">c</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">new_cols</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+                <span class="n">new_cols</span> <span class="o">=</span> <span class="n">DataFrame</span><span class="p">(</span><span class="n">columns</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">new_cols</span> <span class="o">=</span> <span class="n">new_cols</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">columns</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+
+    <span class="k">if</span> <span class="n">new_cols</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+        <span class="n">dataset</span><span class="o">.</span><span class="n">update_observations</span><span class="p">(</span><span class="n">new_cols</span><span class="p">)</span>
+
+    <span class="c"># propagate calculation to any merged child datasets</span>
+    <span class="p">[</span><span class="n">__propagate_column</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">dataset</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">dataset</span><span class="o">.</span><span class="n">merged_datasets</span><span class="p">]</span>
+
+</div>
+<span class="nd">@task</span><span class="p">(</span><span class="n">default_retry_delay</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">ignore_result</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">calculate_updates</span><span class="p">(</span><span class="n">dataset</span><span class="p">,</span> <span class="n">new_data</span><span class="p">,</span> <span class="n">new_dframe_raw</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
+                      <span class="n">parent_dataset_id</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">update_id</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Update dataset with `new_data`.</span>
+
+<span class="sd">    This can result in race-conditions when:</span>
+
+<span class="sd">    - deleting ``controllers.Datasets.DELETE``</span>
+<span class="sd">    - updating ``controllers.Datasets.POST([dataset_id])``</span>
+
+<span class="sd">    Therefore, perform these actions asychronously.</span>
+
+<span class="sd">    :param new_data: Data to update this dataset with.</span>
+<span class="sd">    :param new_dframe_raw: DataFrame to update this dataset with.</span>
+<span class="sd">    :param parent_dataset_id: If passed add ID as parent ID to column,</span>
+<span class="sd">        default is None.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">__update_is_valid</span><span class="p">(</span><span class="n">dataset</span><span class="p">,</span> <span class="n">new_dframe_raw</span><span class="p">):</span>
+        <span class="n">dataset</span><span class="o">.</span><span class="n">remove_pending_update</span><span class="p">(</span><span class="n">update_id</span><span class="p">)</span>
+        <span class="k">return</span>
+
+    <span class="n">__ensure_ready</span><span class="p">(</span><span class="n">dataset</span><span class="p">,</span> <span class="n">update_id</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">new_dframe_raw</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+        <span class="n">new_dframe_raw</span> <span class="o">=</span> <span class="n">dframe_from_update</span><span class="p">(</span><span class="n">dataset</span><span class="p">,</span> <span class="n">new_data</span><span class="p">)</span>
+
+    <span class="n">new_dframe</span> <span class="o">=</span> <span class="n">recognize_dates</span><span class="p">(</span><span class="n">new_dframe_raw</span><span class="p">,</span> <span class="n">dataset</span><span class="o">.</span><span class="n">schema</span><span class="p">)</span>
+
+    <span class="n">new_dframe</span> <span class="o">=</span> <span class="n">__add_calculations</span><span class="p">(</span><span class="n">dataset</span><span class="p">,</span> <span class="n">new_dframe</span><span class="p">)</span>
+
+    <span class="c"># set parent id if provided</span>
+    <span class="k">if</span> <span class="n">parent_dataset_id</span><span class="p">:</span>
+        <span class="n">new_dframe</span> <span class="o">=</span> <span class="n">add_parent_column</span><span class="p">(</span><span class="n">new_dframe</span><span class="p">,</span> <span class="n">parent_dataset_id</span><span class="p">)</span>
+
+    <span class="n">dataset</span><span class="o">.</span><span class="n">append_observations</span><span class="p">(</span><span class="n">new_dframe</span><span class="p">)</span>
+    <span class="n">dataset</span><span class="o">.</span><span class="n">clear_summary_stats</span><span class="p">()</span>
+
+    <span class="n">propagate</span><span class="p">(</span><span class="n">dataset</span><span class="p">,</span> <span class="n">new_dframe</span><span class="o">=</span><span class="n">new_dframe</span><span class="p">,</span> <span class="n">update</span><span class="o">=</span><span class="p">{</span><span class="s">&#39;add&#39;</span><span class="p">:</span> <span class="n">new_dframe_raw</span><span class="p">})</span>
+
+    <span class="n">dataset</span><span class="o">.</span><span class="n">update_complete</span><span class="p">(</span><span class="n">update_id</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="dframe_from_update"><a class="viewcode-back" href="../../../core.html#bamboo.core.calculator.dframe_from_update">[docs]</a><span class="k">def</span> <span class="nf">dframe_from_update</span><span class="p">(</span><span class="n">dataset</span><span class="p">,</span> <span class="n">new_data</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Make a DataFrame for the `new_data`.</span>
+
+<span class="sd">    :param new_data: Data to add to dframe.</span>
+<span class="sd">    :type new_data: List.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">filtered_data</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">columns</span> <span class="o">=</span> <span class="n">dataset</span><span class="o">.</span><span class="n">columns</span>
+    <span class="n">labels_to_slugs</span> <span class="o">=</span> <span class="n">dataset</span><span class="o">.</span><span class="n">schema</span><span class="o">.</span><span class="n">labels_to_slugs</span>
+    <span class="n">num_columns</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">columns</span><span class="p">)</span>
+    <span class="n">num_rows</span> <span class="o">=</span> <span class="n">dataset</span><span class="o">.</span><span class="n">num_rows</span>
+    <span class="n">dframe_empty</span> <span class="o">=</span> <span class="ow">not</span> <span class="n">num_columns</span>
+
+    <span class="k">if</span> <span class="n">dframe_empty</span><span class="p">:</span>
+        <span class="n">columns</span> <span class="o">=</span> <span class="n">dataset</span><span class="o">.</span><span class="n">schema</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span>
+
+    <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">new_data</span><span class="p">:</span>
+        <span class="n">filtered_row</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">col</span><span class="p">,</span> <span class="n">val</span> <span class="ow">in</span> <span class="n">row</span><span class="o">.</span><span class="n">iteritems</span><span class="p">():</span>
+            <span class="c"># special case for reserved keys (e.g. _id)</span>
+            <span class="k">if</span> <span class="n">col</span> <span class="o">==</span> <span class="n">MONGO_ID</span><span class="p">:</span>
+                <span class="k">if</span> <span class="p">(</span><span class="ow">not</span> <span class="n">num_columns</span> <span class="ow">or</span> <span class="n">col</span> <span class="ow">in</span> <span class="n">columns</span><span class="p">)</span> <span class="ow">and</span>\
+                        <span class="n">col</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">filtered_row</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+                    <span class="n">filtered_row</span><span class="p">[</span><span class="n">col</span><span class="p">]</span> <span class="o">=</span> <span class="n">val</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="c"># if col is a label take slug, if it&#39;s a slug take col</span>
+                <span class="n">slug</span> <span class="o">=</span> <span class="n">labels_to_slugs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
+                    <span class="n">col</span><span class="p">,</span> <span class="n">col</span> <span class="k">if</span> <span class="n">col</span> <span class="ow">in</span> <span class="n">labels_to_slugs</span><span class="o">.</span><span class="n">values</span><span class="p">()</span> <span class="k">else</span> <span class="bp">None</span><span class="p">)</span>
+
+                <span class="c"># if slug is valid or there is an empty dframe</span>
+                <span class="k">if</span> <span class="p">(</span><span class="n">slug</span> <span class="ow">or</span> <span class="n">col</span> <span class="ow">in</span> <span class="n">labels_to_slugs</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span> <span class="ow">and</span> <span class="p">(</span>
+                        <span class="n">dframe_empty</span> <span class="ow">or</span> <span class="n">slug</span> <span class="ow">in</span> <span class="n">columns</span><span class="p">):</span>
+                    <span class="n">filtered_row</span><span class="p">[</span><span class="n">slug</span><span class="p">]</span> <span class="o">=</span> <span class="n">dataset</span><span class="o">.</span><span class="n">schema</span><span class="o">.</span><span class="n">convert_type</span><span class="p">(</span>
+                        <span class="n">slug</span><span class="p">,</span> <span class="n">val</span><span class="p">)</span>
+
+        <span class="n">filtered_data</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">filtered_row</span><span class="p">)</span>
+
+    <span class="n">index</span> <span class="o">=</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_rows</span><span class="p">,</span> <span class="n">num_rows</span> <span class="o">+</span> <span class="nb">len</span><span class="p">(</span><span class="n">filtered_data</span><span class="p">))</span>
+    <span class="n">new_dframe</span> <span class="o">=</span> <span class="n">DataFrame</span><span class="p">(</span><span class="n">filtered_data</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="n">index</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">new_dframe</span>
+
+</div>
+<span class="nd">@task</span><span class="p">(</span><span class="n">default_retry_delay</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">ignore_result</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">propagate</span><span class="p">(</span><span class="n">dataset</span><span class="p">,</span> <span class="n">new_dframe</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">update</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Propagate changes in a modified dataset.&quot;&quot;&quot;</span>
+    <span class="n">__update_aggregate_datasets</span><span class="p">(</span><span class="n">dataset</span><span class="p">,</span> <span class="n">new_dframe</span><span class="p">,</span> <span class="n">update</span><span class="o">=</span><span class="n">update</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">update</span><span class="p">:</span>
+        <span class="n">__update_merged_datasets</span><span class="p">(</span><span class="n">dataset</span><span class="p">,</span> <span class="n">update</span><span class="p">)</span>
+        <span class="n">__update_joined_datasets</span><span class="p">(</span><span class="n">dataset</span><span class="p">,</span> <span class="n">update</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">__add_calculations</span><span class="p">(</span><span class="n">dataset</span><span class="p">,</span> <span class="n">new_dframe</span><span class="p">):</span>
+    <span class="n">labels_to_slugs</span> <span class="o">=</span> <span class="n">dataset</span><span class="o">.</span><span class="n">schema</span><span class="o">.</span><span class="n">labels_to_slugs</span>
+
+    <span class="k">for</span> <span class="n">calculation</span> <span class="ow">in</span> <span class="n">dataset</span><span class="o">.</span><span class="n">calculations</span><span class="p">(</span><span class="n">include_aggs</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
+        <span class="n">function</span> <span class="o">=</span> <span class="n">Parser</span><span class="o">.</span><span class="n">parse_function</span><span class="p">(</span><span class="n">calculation</span><span class="o">.</span><span class="n">formula</span><span class="p">)</span>
+        <span class="n">new_column</span> <span class="o">=</span> <span class="n">new_dframe</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">function</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">args</span><span class="o">=</span><span class="p">(</span><span class="n">dataset</span><span class="p">,</span> <span class="p">))</span>
+        <span class="n">potential_name</span> <span class="o">=</span> <span class="n">calculation</span><span class="o">.</span><span class="n">name</span>
+
+        <span class="k">if</span> <span class="n">potential_name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">dataset</span><span class="o">.</span><span class="n">dframe</span><span class="p">()</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">potential_name</span> <span class="ow">in</span> <span class="n">labels_to_slugs</span><span class="p">:</span>
+                <span class="n">new_column</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">labels_to_slugs</span><span class="p">[</span><span class="n">potential_name</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">new_column</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">potential_name</span>
+
+        <span class="n">new_dframe</span> <span class="o">=</span> <span class="n">new_dframe</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">new_column</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">new_dframe</span>
+
+
+<div class="viewcode-block" id="__calculation_data"><a class="viewcode-back" href="../../../core.html#bamboo.core.calculator.__calculation_data">[docs]</a><span class="k">def</span> <span class="nf">__calculation_data</span><span class="p">(</span><span class="n">dataset</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Create a list of aggregate calculation information.</span>
+
+<span class="sd">    Builds a list of calculation information from the current datasets</span>
+<span class="sd">    aggregated datasets and aggregate calculations.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">calcs_to_data</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">list</span><span class="p">)</span>
+
+    <span class="n">calculations</span> <span class="o">=</span> <span class="n">dataset</span><span class="o">.</span><span class="n">calculations</span><span class="p">(</span><span class="n">only_aggs</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+    <span class="n">names_to_formulas</span> <span class="o">=</span> <span class="p">{</span><span class="n">c</span><span class="o">.</span><span class="n">name</span><span class="p">:</span> <span class="n">c</span><span class="o">.</span><span class="n">formula</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">calculations</span><span class="p">}</span>
+    <span class="n">names</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">names_to_formulas</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+
+    <span class="k">for</span> <span class="n">group</span><span class="p">,</span> <span class="n">dataset</span> <span class="ow">in</span> <span class="n">dataset</span><span class="o">.</span><span class="n">aggregated_datasets</span><span class="p">:</span>
+        <span class="n">labels_to_slugs</span> <span class="o">=</span> <span class="n">dataset</span><span class="o">.</span><span class="n">schema</span><span class="o">.</span><span class="n">labels_to_slugs</span>
+        <span class="n">calculations_for_dataset</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span>
+            <span class="n">labels_to_slugs</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span><span class="o">.</span><span class="n">intersection</span><span class="p">(</span><span class="n">names</span><span class="p">))</span>
+
+        <span class="k">for</span> <span class="n">calc</span> <span class="ow">in</span> <span class="n">calculations_for_dataset</span><span class="p">:</span>
+            <span class="n">calcs_to_data</span><span class="p">[</span><span class="n">calc</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">((</span>
+                <span class="n">names_to_formulas</span><span class="p">[</span><span class="n">calc</span><span class="p">],</span> <span class="n">labels_to_slugs</span><span class="p">[</span><span class="n">calc</span><span class="p">],</span>  <span class="n">group</span><span class="p">,</span>
+                <span class="n">dataset</span><span class="p">))</span>
+
+    <span class="k">return</span> <span class="n">flatten</span><span class="p">(</span><span class="n">calcs_to_data</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
+
+</div>
+<div class="viewcode-block" id="__update_is_valid"><a class="viewcode-back" href="../../../core.html#bamboo.core.calculator.__update_is_valid">[docs]</a><span class="k">def</span> <span class="nf">__update_is_valid</span><span class="p">(</span><span class="n">dataset</span><span class="p">,</span> <span class="n">new_dframe</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Check if the update is valid.</span>
+
+<span class="sd">    Check whether this is a right-hand side of any joins</span>
+<span class="sd">    and deny the update if the update would produce an invalid</span>
+<span class="sd">    join as a result.</span>
+
+<span class="sd">    :param dataset: The dataset to check if update valid for.</span>
+<span class="sd">    :param new_dframe: The update dframe to check.</span>
+<span class="sd">    :returns: True is the update is valid, False otherwise.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">select</span> <span class="o">=</span> <span class="p">{</span><span class="n">on</span><span class="p">:</span> <span class="mi">1</span> <span class="k">for</span> <span class="n">on</span> <span class="ow">in</span> <span class="n">dataset</span><span class="o">.</span><span class="n">on_columns_for_rhs_of_joins</span> <span class="k">if</span> <span class="n">on</span> <span class="ow">in</span>
+              <span class="n">new_dframe</span><span class="o">.</span><span class="n">columns</span> <span class="ow">and</span> <span class="n">on</span> <span class="ow">in</span> <span class="n">dataset</span><span class="o">.</span><span class="n">columns</span><span class="p">}</span>
+    <span class="n">dframe</span> <span class="o">=</span> <span class="n">dataset</span><span class="o">.</span><span class="n">dframe</span><span class="p">(</span><span class="n">query_args</span><span class="o">=</span><span class="n">QueryArgs</span><span class="p">(</span><span class="n">select</span><span class="o">=</span><span class="n">select</span><span class="p">))</span>
+
+    <span class="k">for</span> <span class="n">on</span> <span class="ow">in</span> <span class="n">select</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+        <span class="n">merged_join_column</span> <span class="o">=</span> <span class="n">concat</span><span class="p">([</span><span class="n">new_dframe</span><span class="p">[</span><span class="n">on</span><span class="p">],</span> <span class="n">dframe</span><span class="p">[</span><span class="n">on</span><span class="p">]])</span>
+
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">merged_join_column</span><span class="p">)</span> <span class="o">!=</span> <span class="n">merged_join_column</span><span class="o">.</span><span class="n">nunique</span><span class="p">():</span>
+            <span class="k">return</span> <span class="bp">False</span>
+
+    <span class="k">return</span> <span class="bp">True</span>
+
+</div>
+<span class="k">def</span> <span class="nf">__create_aggregator</span><span class="p">(</span><span class="n">dataset</span><span class="p">,</span> <span class="n">formula</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">groups</span><span class="p">,</span> <span class="n">dframe</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+    <span class="c"># TODO this should work with index eventually</span>
+    <span class="n">columns</span> <span class="o">=</span> <span class="n">parse_columns</span><span class="p">(</span><span class="n">dataset</span><span class="p">,</span> <span class="n">formula</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">dframe</span><span class="p">,</span> <span class="n">no_index</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+
+    <span class="n">dependent_columns</span> <span class="o">=</span> <span class="n">Parser</span><span class="o">.</span><span class="n">dependent_columns</span><span class="p">(</span><span class="n">formula</span><span class="p">,</span> <span class="n">dataset</span><span class="p">)</span>
+    <span class="n">aggregation</span> <span class="o">=</span> <span class="n">Parser</span><span class="o">.</span><span class="n">parse_aggregation</span><span class="p">(</span><span class="n">formula</span><span class="p">)</span>
+
+    <span class="c"># get dframe with only the necessary columns</span>
+    <span class="n">select</span> <span class="o">=</span> <span class="n">combine_dicts</span><span class="p">({</span><span class="n">group</span><span class="p">:</span> <span class="mi">1</span> <span class="k">for</span> <span class="n">group</span> <span class="ow">in</span> <span class="n">groups</span><span class="p">},</span>
+                           <span class="p">{</span><span class="n">col</span><span class="p">:</span> <span class="mi">1</span> <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="n">dependent_columns</span><span class="p">})</span>
+
+    <span class="c"># ensure at least one column (MONGO_ID) for the count aggregation</span>
+    <span class="n">query_args</span> <span class="o">=</span> <span class="n">QueryArgs</span><span class="p">(</span><span class="n">select</span><span class="o">=</span><span class="n">select</span> <span class="ow">or</span> <span class="p">{</span><span class="n">MONGO_ID</span><span class="p">:</span> <span class="mi">1</span><span class="p">})</span>
+    <span class="n">dframe</span> <span class="o">=</span> <span class="n">dataset</span><span class="o">.</span><span class="n">dframe</span><span class="p">(</span><span class="n">query_args</span><span class="o">=</span><span class="n">query_args</span><span class="p">,</span> <span class="n">keep_mongo_keys</span><span class="o">=</span><span class="ow">not</span> <span class="n">select</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">Aggregator</span><span class="p">(</span><span class="n">dframe</span><span class="p">,</span> <span class="n">groups</span><span class="p">,</span> <span class="n">aggregation</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">columns</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">__ensure_ready</span><span class="p">(</span><span class="n">dataset</span><span class="p">,</span> <span class="n">update_id</span><span class="p">):</span>
+    <span class="c"># dataset must not be pending</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">dataset</span><span class="o">.</span><span class="n">is_ready</span> <span class="ow">or</span> <span class="p">(</span>
+            <span class="n">update_id</span> <span class="ow">and</span> <span class="n">dataset</span><span class="o">.</span><span class="n">has_pending_updates</span><span class="p">(</span><span class="n">update_id</span><span class="p">)):</span>
+        <span class="n">dataset</span><span class="o">.</span><span class="n">reload</span><span class="p">()</span>
+        <span class="k">raise</span> <span class="n">calculate_updates</span><span class="o">.</span><span class="n">retry</span><span class="p">()</span>
+
+
+<span class="k">def</span> <span class="nf">__find_merge_offset</span><span class="p">(</span><span class="n">dataset</span><span class="p">,</span> <span class="n">merged_dataset</span><span class="p">):</span>
+    <span class="n">offset</span> <span class="o">=</span> <span class="mi">0</span>
+
+    <span class="k">for</span> <span class="n">parent_id</span> <span class="ow">in</span> <span class="n">merged_dataset</span><span class="o">.</span><span class="n">parent_ids</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">dataset</span><span class="o">.</span><span class="n">dataset_id</span> <span class="o">==</span> <span class="n">parent_id</span><span class="p">:</span>
+            <span class="k">break</span>
+
+        <span class="n">offset</span> <span class="o">+=</span> <span class="n">dataset</span><span class="o">.</span><span class="n">find_one</span><span class="p">(</span><span class="n">parent_id</span><span class="p">)</span><span class="o">.</span><span class="n">num_rows</span>
+
+    <span class="k">return</span> <span class="n">offset</span>
+
+
+<div class="viewcode-block" id="__propagate_column"><a class="viewcode-back" href="../../../core.html#bamboo.core.calculator.__propagate_column">[docs]</a><span class="k">def</span> <span class="nf">__propagate_column</span><span class="p">(</span><span class="n">dataset</span><span class="p">,</span> <span class="n">parent_dataset</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Propagate columns in `parent_dataset` to `dataset`.</span>
+
+<span class="sd">    When a new calculation is added to a dataset this will propagate the</span>
+<span class="sd">    new column to all child (merged) datasets.</span>
+
+<span class="sd">    :param dataset: THe child dataet.</span>
+<span class="sd">    :param parent_dataset: The dataset to propagate.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c"># delete the rows in this dataset from the parent</span>
+    <span class="n">dataset</span><span class="o">.</span><span class="n">remove_parent_observations</span><span class="p">(</span><span class="n">parent_dataset</span><span class="o">.</span><span class="n">dataset_id</span><span class="p">)</span>
+
+    <span class="c"># get this dataset without the out-of-date parent rows</span>
+    <span class="n">dframe</span> <span class="o">=</span> <span class="n">dataset</span><span class="o">.</span><span class="n">dframe</span><span class="p">(</span><span class="n">keep_parent_ids</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+
+    <span class="c"># create new dframe from the upated parent and add parent id</span>
+    <span class="n">parent_dframe</span> <span class="o">=</span> <span class="n">add_parent_column</span><span class="p">(</span><span class="n">parent_dataset</span><span class="o">.</span><span class="n">dframe</span><span class="p">(),</span>
+                                      <span class="n">parent_dataset</span><span class="o">.</span><span class="n">dataset_id</span><span class="p">)</span>
+
+    <span class="c"># merge this new dframe with the existing dframe</span>
+    <span class="n">updated_dframe</span> <span class="o">=</span> <span class="n">concat</span><span class="p">([</span><span class="n">dframe</span><span class="p">,</span> <span class="n">parent_dframe</span><span class="p">])</span>
+
+    <span class="c"># save new dframe (updates schema)</span>
+    <span class="n">dataset</span><span class="o">.</span><span class="n">replace_observations</span><span class="p">(</span><span class="n">updated_dframe</span><span class="p">)</span>
+    <span class="n">dataset</span><span class="o">.</span><span class="n">clear_summary_stats</span><span class="p">()</span>
+
+    <span class="c"># recur into merged dataset</span>
+    <span class="p">[</span><span class="n">__propagate_column</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">dataset</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">dataset</span><span class="o">.</span><span class="n">merged_datasets</span><span class="p">]</span>
+
+</div>
+<span class="k">def</span> <span class="nf">__remapped_data</span><span class="p">(</span><span class="n">dataset_id</span><span class="p">,</span> <span class="n">mapping</span><span class="p">,</span> <span class="n">slugified_data</span><span class="p">):</span>
+    <span class="n">column_map</span> <span class="o">=</span> <span class="n">mapping</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">dataset_id</span><span class="p">)</span> <span class="k">if</span> <span class="n">mapping</span> <span class="k">else</span> <span class="bp">None</span>
+
+    <span class="k">if</span> <span class="n">column_map</span><span class="p">:</span>
+        <span class="n">slugified_data</span> <span class="o">=</span> <span class="p">[{</span><span class="n">column_map</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">k</span><span class="p">):</span> <span class="n">v</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">row</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
+                          <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">slugified_data</span><span class="p">]</span>
+
+    <span class="k">return</span> <span class="n">slugified_data</span>
+
+
+<span class="k">def</span> <span class="nf">__slugify_data</span><span class="p">(</span><span class="n">new_data</span><span class="p">,</span> <span class="n">labels_to_slugs</span><span class="p">):</span>
+    <span class="n">slugified_data</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">new_data</span> <span class="o">=</span> <span class="n">to_list</span><span class="p">(</span><span class="n">new_data</span><span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">new_data</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">row</span><span class="o">.</span><span class="n">iteritems</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">labels_to_slugs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">key</span><span class="p">)</span> <span class="ow">and</span> <span class="n">key</span> <span class="o">!=</span> <span class="n">MONGO_ID</span><span class="p">:</span>
+                <span class="k">del</span> <span class="n">row</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+                <span class="n">row</span><span class="p">[</span><span class="n">labels_to_slugs</span><span class="p">[</span><span class="n">key</span><span class="p">]]</span> <span class="o">=</span> <span class="n">value</span>
+
+        <span class="n">slugified_data</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">row</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">slugified_data</span>
+
+
+<span class="k">def</span> <span class="nf">__update_aggregate_datasets</span><span class="p">(</span><span class="n">dataset</span><span class="p">,</span> <span class="n">new_dframe</span><span class="p">,</span> <span class="n">update</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+    <span class="n">calcs_to_data</span> <span class="o">=</span> <span class="n">__calculation_data</span><span class="p">(</span><span class="n">dataset</span><span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">formula</span><span class="p">,</span> <span class="n">slug</span><span class="p">,</span> <span class="n">groups</span><span class="p">,</span> <span class="n">a_dataset</span> <span class="ow">in</span> <span class="n">calcs_to_data</span><span class="p">:</span>
+        <span class="n">__update_aggregate_dataset</span><span class="p">(</span><span class="n">dataset</span><span class="p">,</span> <span class="n">formula</span><span class="p">,</span> <span class="n">new_dframe</span><span class="p">,</span> <span class="n">slug</span><span class="p">,</span> <span class="n">groups</span><span class="p">,</span>
+                                   <span class="n">a_dataset</span><span class="p">,</span> <span class="n">update</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="__update_aggregate_dataset"><a class="viewcode-back" href="../../../core.html#bamboo.core.calculator.__update_aggregate_dataset">[docs]</a><span class="k">def</span> <span class="nf">__update_aggregate_dataset</span><span class="p">(</span><span class="n">dataset</span><span class="p">,</span> <span class="n">formula</span><span class="p">,</span> <span class="n">new_dframe</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">groups</span><span class="p">,</span>
+                               <span class="n">a_dataset</span><span class="p">,</span> <span class="n">reducible</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Update the aggregated dataset built for `dataset` with `calculation`.</span>
+
+<span class="sd">    Proceed with the following steps:</span>
+
+<span class="sd">        - delete the rows in this dataset from the parent</span>
+<span class="sd">        - recalculate aggregated dataframe from aggregation</span>
+<span class="sd">        - update aggregated dataset with new dataframe and add parent id</span>
+<span class="sd">        - recur on all merged datasets descending from the aggregated</span>
+<span class="sd">          dataset</span>
+
+<span class="sd">    :param formula: The formula to execute.</span>
+<span class="sd">    :param new_dframe: The DataFrame to aggregate on.</span>
+<span class="sd">    :param name: The name of the aggregation.</span>
+<span class="sd">    :param groups: A column or columns to group on.</span>
+<span class="sd">    :type group: String, list of strings, or None.</span>
+<span class="sd">    :param a_dataset: The DataSet to store the aggregation in.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c"># parse aggregation and build column arguments</span>
+    <span class="n">aggregator</span> <span class="o">=</span> <span class="n">__create_aggregator</span><span class="p">(</span>
+        <span class="n">dataset</span><span class="p">,</span> <span class="n">formula</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">groups</span><span class="p">,</span> <span class="n">dframe</span><span class="o">=</span><span class="n">new_dframe</span><span class="p">)</span>
+    <span class="n">new_agg_dframe</span> <span class="o">=</span> <span class="n">aggregator</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">dataset</span><span class="p">,</span> <span class="n">a_dataset</span><span class="p">,</span> <span class="n">formula</span><span class="p">,</span> <span class="n">reducible</span><span class="p">)</span>
+
+    <span class="c"># jsondict from new dframe</span>
+    <span class="n">new_data</span> <span class="o">=</span> <span class="n">df_to_jsondict</span><span class="p">(</span><span class="n">new_agg_dframe</span><span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">merged_dataset</span> <span class="ow">in</span> <span class="n">a_dataset</span><span class="o">.</span><span class="n">merged_datasets</span><span class="p">:</span>
+        <span class="c"># remove rows in child from this merged dataset</span>
+        <span class="n">merged_dataset</span><span class="o">.</span><span class="n">remove_parent_observations</span><span class="p">(</span><span class="n">a_dataset</span><span class="o">.</span><span class="n">dataset_id</span><span class="p">)</span>
+
+        <span class="c"># calculate updates for the child</span>
+        <span class="n">calculate_updates</span><span class="p">(</span><span class="n">merged_dataset</span><span class="p">,</span> <span class="n">new_data</span><span class="p">,</span>
+                          <span class="n">parent_dataset_id</span><span class="o">=</span><span class="n">a_dataset</span><span class="o">.</span><span class="n">dataset_id</span><span class="p">)</span>
+
+</div>
+<div class="viewcode-block" id="__update_joined_datasets"><a class="viewcode-back" href="../../../core.html#bamboo.core.calculator.__update_joined_datasets">[docs]</a><span class="k">def</span> <span class="nf">__update_joined_datasets</span><span class="p">(</span><span class="n">dataset</span><span class="p">,</span> <span class="n">update</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Update any joined datasets.&quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="s">&#39;add&#39;</span> <span class="ow">in</span> <span class="n">update</span><span class="p">:</span>
+        <span class="n">new_dframe</span> <span class="o">=</span> <span class="n">update</span><span class="p">[</span><span class="s">&#39;add&#39;</span><span class="p">]</span>
+
+    <span class="k">for</span> <span class="n">direction</span><span class="p">,</span> <span class="n">other_dataset</span><span class="p">,</span> <span class="n">on</span><span class="p">,</span> <span class="n">j_dataset</span> <span class="ow">in</span> <span class="n">dataset</span><span class="o">.</span><span class="n">joined_datasets</span><span class="p">:</span>
+        <span class="k">if</span> <span class="s">&#39;add&#39;</span> <span class="ow">in</span> <span class="n">update</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">direction</span> <span class="o">==</span> <span class="s">&#39;left&#39;</span><span class="p">:</span>
+                <span class="c"># only proceed if on in new dframe</span>
+                <span class="k">if</span> <span class="n">on</span> <span class="ow">in</span> <span class="n">new_dframe</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
+                    <span class="n">left_dframe</span> <span class="o">=</span> <span class="n">other_dataset</span><span class="o">.</span><span class="n">dframe</span><span class="p">(</span><span class="n">padded</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+
+                    <span class="c"># only proceed if new on value is in on column in lhs</span>
+                    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">new_dframe</span><span class="p">[</span><span class="n">on</span><span class="p">])</span><span class="o">.</span><span class="n">intersection</span><span class="p">(</span>
+                            <span class="nb">set</span><span class="p">(</span><span class="n">left_dframe</span><span class="p">[</span><span class="n">on</span><span class="p">]))):</span>
+                        <span class="n">merged_dframe</span> <span class="o">=</span> <span class="n">join_dataset</span><span class="p">(</span><span class="n">left_dframe</span><span class="p">,</span> <span class="n">dataset</span><span class="p">,</span> <span class="n">on</span><span class="p">)</span>
+                        <span class="n">j_dataset</span><span class="o">.</span><span class="n">replace_observations</span><span class="p">(</span><span class="n">merged_dframe</span><span class="p">)</span>
+
+                        <span class="c"># TODO is it OK not to propagate the join here?</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="c"># if on in new data join with existing data</span>
+                <span class="k">if</span> <span class="n">on</span> <span class="ow">in</span> <span class="n">new_dframe</span><span class="p">:</span>
+                    <span class="n">new_dframe</span> <span class="o">=</span> <span class="n">join_dataset</span><span class="p">(</span><span class="n">new_dframe</span><span class="p">,</span> <span class="n">other_dataset</span><span class="p">,</span> <span class="n">on</span><span class="p">)</span>
+
+                <span class="n">calculate_updates</span><span class="p">(</span><span class="n">j_dataset</span><span class="p">,</span> <span class="n">df_to_jsondict</span><span class="p">(</span><span class="n">new_dframe</span><span class="p">),</span>
+                                  <span class="n">parent_dataset_id</span><span class="o">=</span><span class="n">dataset</span><span class="o">.</span><span class="n">dataset_id</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="s">&#39;delete&#39;</span> <span class="ow">in</span> <span class="n">update</span><span class="p">:</span>
+            <span class="n">j_dataset</span><span class="o">.</span><span class="n">delete_observation</span><span class="p">(</span><span class="n">update</span><span class="p">[</span><span class="s">&#39;delete&#39;</span><span class="p">])</span>
+        <span class="k">elif</span> <span class="s">&#39;edit&#39;</span> <span class="ow">in</span> <span class="n">update</span><span class="p">:</span>
+            <span class="n">j_dataset</span><span class="o">.</span><span class="n">update_observation</span><span class="p">(</span><span class="o">*</span><span class="n">update</span><span class="p">[</span><span class="s">&#39;edit&#39;</span><span class="p">])</span>
+
+</div>
+<span class="k">def</span> <span class="nf">__update_merged_datasets</span><span class="p">(</span><span class="n">dataset</span><span class="p">,</span> <span class="n">update</span><span class="p">):</span>
+    <span class="k">if</span> <span class="s">&#39;add&#39;</span> <span class="ow">in</span> <span class="n">update</span><span class="p">:</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="n">df_to_jsondict</span><span class="p">(</span><span class="n">update</span><span class="p">[</span><span class="s">&#39;add&#39;</span><span class="p">])</span>
+
+        <span class="c"># store slugs as labels for child datasets</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="n">__slugify_data</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">dataset</span><span class="o">.</span><span class="n">schema</span><span class="o">.</span><span class="n">labels_to_slugs</span><span class="p">)</span>
+
+    <span class="c"># update the merged datasets with new_dframe</span>
+    <span class="k">for</span> <span class="n">mapping</span><span class="p">,</span> <span class="n">merged_dataset</span> <span class="ow">in</span> <span class="n">dataset</span><span class="o">.</span><span class="n">merged_datasets_with_map</span><span class="p">:</span>
+        <span class="k">if</span> <span class="s">&#39;add&#39;</span> <span class="ow">in</span> <span class="n">update</span><span class="p">:</span>
+            <span class="n">mapped_data</span> <span class="o">=</span> <span class="n">__remapped_data</span><span class="p">(</span><span class="n">dataset</span><span class="o">.</span><span class="n">dataset_id</span><span class="p">,</span> <span class="n">mapping</span><span class="p">,</span> <span class="n">data</span><span class="p">)</span>
+            <span class="n">calculate_updates</span><span class="p">(</span><span class="n">merged_dataset</span><span class="p">,</span> <span class="n">mapped_data</span><span class="p">,</span>
+                              <span class="n">parent_dataset_id</span><span class="o">=</span><span class="n">dataset</span><span class="o">.</span><span class="n">dataset_id</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="s">&#39;delete&#39;</span> <span class="ow">in</span> <span class="n">update</span><span class="p">:</span>
+            <span class="n">offset</span> <span class="o">=</span> <span class="n">__find_merge_offset</span><span class="p">(</span><span class="n">dataset</span><span class="p">,</span> <span class="n">merged_dataset</span><span class="p">)</span>
+            <span class="n">merged_dataset</span><span class="o">.</span><span class="n">delete_observation</span><span class="p">(</span><span class="n">update</span><span class="p">[</span><span class="s">&#39;delete&#39;</span><span class="p">]</span> <span class="o">+</span> <span class="n">offset</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="s">&#39;edit&#39;</span> <span class="ow">in</span> <span class="n">update</span><span class="p">:</span>
+            <span class="n">offset</span> <span class="o">=</span> <span class="n">__find_merge_offset</span><span class="p">(</span><span class="n">dataset</span><span class="p">,</span> <span class="n">merged_dataset</span><span class="p">)</span>
+            <span class="n">index</span><span class="p">,</span> <span class="n">data</span> <span class="o">=</span> <span class="n">update</span><span class="p">[</span><span class="s">&#39;edit&#39;</span><span class="p">]</span>
+            <span class="n">merged_dataset</span><span class="o">.</span><span class="n">update_observation</span><span class="p">(</span><span class="n">index</span> <span class="o">+</span> <span class="n">offset</span><span class="p">,</span> <span class="n">data</span><span class="p">)</span>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">bamboo 0.6.3 alpha documentation</a> &raquo;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Module code</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &copy; Copyright 2013, Peter Lubell-Doughtie, Mark Johnston.
+    </div>
+  </body>
+</html>

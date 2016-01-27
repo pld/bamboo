@@ -1,0 +1,199 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>bamboo.controllers.calculations &mdash; bamboo 0.6.3 alpha documentation</title>
+    
+    <link rel="stylesheet" href="../../../_static/nature.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../',
+        VERSION:     '0.6.3 alpha',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="top" title="bamboo 0.6.3 alpha documentation" href="../../../index.html" />
+    <link rel="up" title="Module code" href="../../index.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../../index.html">bamboo 0.6.3 alpha documentation</a> &raquo;</li>
+          <li><a href="../../index.html" accesskey="U">Module code</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <h1>Source code for bamboo.controllers.calculations</h1><div class="highlight"><pre>
+<span class="kn">from</span> <span class="nn">bamboo.controllers.abstract_controller</span> <span class="kn">import</span> <span class="n">AbstractController</span>
+<span class="kn">from</span> <span class="nn">bamboo.core.parser</span> <span class="kn">import</span> <span class="n">ParseError</span>
+<span class="kn">from</span> <span class="nn">bamboo.lib.exceptions</span> <span class="kn">import</span> <span class="n">ArgumentError</span>
+<span class="kn">from</span> <span class="nn">bamboo.lib.jsontools</span> <span class="kn">import</span> <span class="n">safe_json_loads</span>
+<span class="kn">from</span> <span class="nn">bamboo.models.calculation</span> <span class="kn">import</span> <span class="n">Calculation</span><span class="p">,</span> <span class="n">UniqueCalculationError</span><span class="p">,</span>\
+    <span class="n">DependencyError</span>
+<span class="kn">from</span> <span class="nn">bamboo.models.dataset</span> <span class="kn">import</span> <span class="n">Dataset</span>
+
+
+<div class="viewcode-block" id="Calculations"><a class="viewcode-back" href="../../../controllers.html#bamboo.controllers.calculations.Calculations">[docs]</a><span class="k">class</span> <span class="nc">Calculations</span><span class="p">(</span><span class="n">AbstractController</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;The Calculations Controller provides access to calculations.</span>
+
+<span class="sd">    Calculations are formulas and names that (for now) must be linked to a</span>
+<span class="sd">    specific dataset via that dataset&#39;s ID. All actions in the Calculations</span>
+<span class="sd">    Controller can optionally take a `callback` parameter.  If passed the</span>
+<span class="sd">    returned result will be wrapped this the parameter value.  E.g., if</span>
+<span class="sd">    ``callback=parseResults`` the returned value will be</span>
+<span class="sd">    ``parseResults([some-JSON])``, where ``some-JSON`` is the function return</span>
+<span class="sd">    value.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="Calculations.delete"><a class="viewcode-back" href="../../../controllers.html#bamboo.controllers.calculations.Calculations.delete">[docs]</a>    <span class="k">def</span> <span class="nf">delete</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dataset_id</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">group</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Delete the calculation with `name` from the dataset.</span>
+
+<span class="sd">        Delete the calculation with column `name` from the dataset specified by</span>
+<span class="sd">        the hash `dataset_id` from mongo. If it is an aggregate calculation a</span>
+<span class="sd">        `group` must also be passed to determine the correct aggregate</span>
+<span class="sd">        calculation to delete. This will also remove the column `name` from the</span>
+<span class="sd">        dataframe for the dataset or the aggregate dataset.</span>
+
+<span class="sd">        :param dataset_id: The dataset ID for which to delete the calculation.</span>
+<span class="sd">        :param name: The name of the calculation to delete.</span>
+<span class="sd">        :param group: The group of the calculation to delete, if an</span>
+<span class="sd">            aggregation.</span>
+
+<span class="sd">        :returns: JSON with success if delete or an error string if the</span>
+<span class="sd">            calculation could not be found.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">def</span> <span class="nf">action</span><span class="p">(</span><span class="n">dataset</span><span class="p">):</span>
+            <span class="n">calculation</span> <span class="o">=</span> <span class="n">Calculation</span><span class="o">.</span><span class="n">find_one</span><span class="p">(</span><span class="n">dataset</span><span class="o">.</span><span class="n">dataset_id</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">group</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="n">calculation</span><span class="p">:</span>
+                <span class="n">calculation</span><span class="o">.</span><span class="n">delete</span><span class="p">(</span><span class="n">dataset</span><span class="p">)</span>
+
+                <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_success</span><span class="p">(</span><span class="s">&#39;deleted calculation: </span><span class="se">\&#39;</span><span class="si">%s</span><span class="se">\&#39;</span><span class="s">&#39;</span> <span class="o">%</span> <span class="n">name</span><span class="p">,</span>
+                                     <span class="n">dataset_id</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_safe_get_and_call</span><span class="p">(</span>
+            <span class="n">dataset_id</span><span class="p">,</span> <span class="n">action</span><span class="p">,</span> <span class="n">exceptions</span><span class="o">=</span><span class="p">(</span><span class="n">DependencyError</span><span class="p">,),</span>
+            <span class="n">error</span> <span class="o">=</span> <span class="s">&#39;name and dataset_id combination not found&#39;</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="Calculations.create"><a class="viewcode-back" href="../../../controllers.html#bamboo.controllers.calculations.Calculations.create">[docs]</a>    <span class="k">def</span> <span class="nf">create</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dataset_id</span><span class="p">,</span> <span class="n">formula</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">json_file</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
+               <span class="n">group</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Add a calculation to a dataset with the given fomula, etc.</span>
+
+<span class="sd">        Create a new calculation for `dataset_id` named `name` that calculates</span>
+<span class="sd">        the `formula`.  Variables in formula can only refer to columns in the</span>
+<span class="sd">        dataset.</span>
+
+<span class="sd">        :param dataset_id: The dataset ID to add the calculation to.</span>
+<span class="sd">        :param formula: The formula for the calculation which must match the</span>
+<span class="sd">            parser language.</span>
+<span class="sd">        :param name: The name to assign the new column for this formula.</span>
+<span class="sd">        :param data: A dict or list of dicts mapping calculation names and</span>
+<span class="sd">            formulas.</span>
+<span class="sd">        :param group: A column to group by for aggregations, must be a</span>
+<span class="sd">            dimension.</span>
+
+<span class="sd">        :returns: A success string is the calculation is create. An error</span>
+<span class="sd">            string if the dataset could not be found, the formula could not be</span>
+<span class="sd">            parsed, or the group was invalid.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">def</span> <span class="nf">action</span><span class="p">(</span><span class="n">dataset</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">json_file</span><span class="p">:</span>
+                <span class="n">calculations</span> <span class="o">=</span> <span class="n">safe_json_loads</span><span class="p">(</span><span class="n">json_file</span><span class="o">.</span><span class="n">file</span><span class="o">.</span><span class="n">read</span><span class="p">())</span>
+                <span class="n">Calculation</span><span class="o">.</span><span class="n">create_from_list_or_dict</span><span class="p">(</span><span class="n">dataset</span><span class="p">,</span> <span class="n">calculations</span><span class="p">)</span>
+                <span class="n">success_message</span> <span class="o">=</span> <span class="s">&#39;created calculations from JSON&#39;</span>
+            <span class="k">elif</span> <span class="n">formula</span> <span class="ow">is</span> <span class="bp">None</span> <span class="ow">or</span> <span class="n">name</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">ArgumentError</span><span class="p">(</span><span class="s">&#39;Must provide both formula and name argume&#39;</span>
+                                    <span class="s">&#39;nts, or json_file argument&#39;</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">Calculation</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="n">dataset</span><span class="p">,</span> <span class="n">formula</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">group</span><span class="p">)</span>
+
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_success</span><span class="p">(</span><span class="s">&#39;created calculation: </span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="n">name</span><span class="p">,</span> <span class="n">dataset_id</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_safe_get_and_call</span><span class="p">(</span>
+            <span class="n">dataset_id</span><span class="p">,</span> <span class="n">action</span><span class="p">,</span>
+            <span class="n">exceptions</span><span class="o">=</span><span class="p">(</span><span class="n">UniqueCalculationError</span><span class="p">,</span> <span class="n">ParseError</span><span class="p">,),</span>
+            <span class="n">success_status_code</span><span class="o">=</span><span class="mi">201</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="Calculations.show"><a class="viewcode-back" href="../../../controllers.html#bamboo.controllers.calculations.Calculations.show">[docs]</a>    <span class="k">def</span> <span class="nf">show</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dataset_id</span><span class="p">,</span> <span class="n">callback</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Retrieve the calculations for `dataset_id`.</span>
+
+<span class="sd">        :param dataset_id: The dataset to show calculations for.</span>
+<span class="sd">        :param callback: A JSONP callback function string.</span>
+
+<span class="sd">        :returns: A list of calculation records.  Each calculation record</span>
+<span class="sd">            shows the calculations name, formula, group (if it exists), and</span>
+<span class="sd">            state.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">def</span> <span class="nf">action</span><span class="p">(</span><span class="n">dataset</span><span class="p">):</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="n">Calculation</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="n">dataset</span><span class="p">)</span>
+
+            <span class="k">return</span> <span class="p">[</span><span class="n">x</span><span class="o">.</span><span class="n">clean_record</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">result</span><span class="p">]</span>
+
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_safe_get_and_call</span><span class="p">(</span><span class="n">dataset_id</span><span class="p">,</span> <span class="n">action</span><span class="p">,</span> <span class="n">callback</span><span class="o">=</span><span class="n">callback</span><span class="p">)</span></div></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../../index.html">bamboo 0.6.3 alpha documentation</a> &raquo;</li>
+          <li><a href="../../index.html" >Module code</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2013, Peter Lubell-Doughtie, Mark Johnston.
+    </div>
+  </body>
+</html>

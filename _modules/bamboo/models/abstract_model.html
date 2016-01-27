@@ -1,0 +1,293 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>bamboo.models.abstract_model &mdash; bamboo 0.6.3 alpha documentation</title>
+    
+    <link rel="stylesheet" href="../../../_static/nature.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../',
+        VERSION:     '0.6.3 alpha',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="top" title="bamboo 0.6.3 alpha documentation" href="../../../index.html" />
+    <link rel="up" title="Module code" href="../../index.html" /> 
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">bamboo 0.6.3 alpha documentation</a> &raquo;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" accesskey="U">Module code</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for bamboo.models.abstract_model</h1><div class="highlight"><pre>
+<span class="kn">from</span> <span class="nn">bamboo.config.db</span> <span class="kn">import</span> <span class="n">Database</span>
+<span class="kn">from</span> <span class="nn">bamboo.core.frame</span> <span class="kn">import</span> <span class="n">BAMBOO_RESERVED_KEYS</span>
+<span class="kn">from</span> <span class="nn">bamboo.lib.decorators</span> <span class="kn">import</span> <span class="n">classproperty</span>
+<span class="kn">from</span> <span class="nn">bamboo.lib.mongo</span> <span class="kn">import</span> <span class="n">dict_for_mongo</span><span class="p">,</span> <span class="n">remove_mongo_reserved_keys</span>
+
+
+<div class="viewcode-block" id="AbstractModel"><a class="viewcode-back" href="../../../models.html#bamboo.models.abstract_model.AbstractModel">[docs]</a><span class="k">class</span> <span class="nc">AbstractModel</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;An abstact class for all MongoDB models.</span>
+
+<span class="sd">    Attributes:</span>
+
+<span class="sd">    - __collection__: The MongoDB collection to communicate with.</span>
+<span class="sd">    - STATE: A key with which to store state.</span>
+<span class="sd">    - STATE_PENDING: A value for the pending state.</span>
+<span class="sd">    - STATE_READY: A value for the ready state.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">__collection__</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="n">__collectionname__</span> <span class="o">=</span> <span class="bp">None</span>
+
+    <span class="n">DB_READ_BATCH_SIZE</span> <span class="o">=</span> <span class="mi">1000</span>
+    <span class="n">DB_SAVE_BATCH_SIZE</span> <span class="o">=</span> <span class="mi">2000</span>
+    <span class="n">ERROR_MESSAGE</span> <span class="o">=</span> <span class="s">&#39;error_message&#39;</span>
+    <span class="n">GROUP_DELIMITER</span> <span class="o">=</span> <span class="s">&#39;,&#39;</span>  <span class="c"># delimiter when passing multiple groups as a string</span>
+    <span class="n">MIN_BATCH_SIZE</span> <span class="o">=</span> <span class="mi">50</span>
+    <span class="n">STATE</span> <span class="o">=</span> <span class="s">&#39;state&#39;</span>
+    <span class="n">STATE_FAILED</span> <span class="o">=</span> <span class="s">&#39;failed&#39;</span>
+    <span class="n">STATE_PENDING</span> <span class="o">=</span> <span class="s">&#39;pending&#39;</span>
+    <span class="n">STATE_READY</span> <span class="o">=</span> <span class="s">&#39;ready&#39;</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">state</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">record</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">STATE</span><span class="p">]</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">error_message</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">record</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ERROR_MESSAGE</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">is_pending</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">state</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">STATE_PENDING</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">is_ready</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">state</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">STATE_READY</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">record_ready</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">record</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">state</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">STATE_READY</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">clean_record</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Remove reserved keys from records.&quot;&quot;&quot;</span>
+        <span class="n">_dict</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="n">key</span><span class="p">:</span> <span class="n">value</span> <span class="k">for</span> <span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">record</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">key</span> <span class="ow">in</span>
+            <span class="n">BAMBOO_RESERVED_KEYS</span>
+        <span class="p">}</span>
+        <span class="k">return</span> <span class="n">remove_mongo_reserved_keys</span><span class="p">(</span><span class="n">_dict</span><span class="p">)</span>
+
+    <span class="nd">@classmethod</span>
+<div class="viewcode-block" id="AbstractModel.set_collection"><a class="viewcode-back" href="../../../models.html#bamboo.models.abstract_model.AbstractModel.set_collection">[docs]</a>    <span class="k">def</span> <span class="nf">set_collection</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">collection_name</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Return a MongoDB collection for the passed name.</span>
+
+<span class="sd">        :param collection_name: The name of collection to return.</span>
+
+<span class="sd">        :returns: A MongoDB collection from the current database.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">Database</span><span class="o">.</span><span class="n">db</span><span class="p">()[</span><span class="n">collection_name</span><span class="p">]</span>
+</div>
+    <span class="nd">@classproperty</span>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">collection</span><span class="p">(</span><span class="n">cls</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Set the internal collection to the class&#39; collection name.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">cls</span><span class="o">.</span><span class="n">__collection__</span><span class="p">:</span>
+            <span class="n">cls</span><span class="o">.</span><span class="n">__collection__</span> <span class="o">=</span> <span class="n">AbstractModel</span><span class="o">.</span><span class="n">set_collection</span><span class="p">(</span>
+                <span class="n">cls</span><span class="o">.</span><span class="n">__collectionname__</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">cls</span><span class="o">.</span><span class="n">__collection__</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">create</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">):</span>
+        <span class="n">model</span> <span class="o">=</span> <span class="n">cls</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">model</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">)</span>
+
+    <span class="nd">@classmethod</span>
+<div class="viewcode-block" id="AbstractModel.find"><a class="viewcode-back" href="../../../models.html#bamboo.models.abstract_model.AbstractModel.find">[docs]</a>    <span class="k">def</span> <span class="nf">find</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">query_args</span><span class="p">,</span> <span class="n">as_dict</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">as_cursor</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;An interface to MongoDB&#39;s find functionality.</span>
+
+<span class="sd">        :param query_args: An optional QueryArgs to hold the query arguments.</span>
+<span class="sd">        :param as_cursor: If True, return the cursor.</span>
+<span class="sd">        :param as_dict: If True, return dicts and not model instances.</span>
+
+<span class="sd">        :returns: A list of dicts or model instances for each row returned.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">cursor</span> <span class="o">=</span> <span class="n">cls</span><span class="o">.</span><span class="n">collection</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="n">query_args</span><span class="o">.</span><span class="n">query</span><span class="p">,</span>
+                                     <span class="n">query_args</span><span class="o">.</span><span class="n">select</span><span class="p">,</span>
+                                     <span class="n">sort</span><span class="o">=</span><span class="n">query_args</span><span class="o">.</span><span class="n">order_by</span><span class="p">,</span>
+                                     <span class="n">limit</span><span class="o">=</span><span class="n">query_args</span><span class="o">.</span><span class="n">limit</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">as_cursor</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">cursor</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">[</span><span class="n">record</span> <span class="k">for</span> <span class="n">record</span> <span class="ow">in</span> <span class="n">cursor</span><span class="p">]</span> <span class="k">if</span> <span class="n">as_dict</span> <span class="k">else</span> <span class="p">[</span>
+                <span class="n">cls</span><span class="p">(</span><span class="n">record</span><span class="p">)</span> <span class="k">for</span> <span class="n">record</span> <span class="ow">in</span> <span class="n">cursor</span>
+            <span class="p">]</span>
+</div>
+    <span class="nd">@classmethod</span>
+<div class="viewcode-block" id="AbstractModel.find_one"><a class="viewcode-back" href="../../../models.html#bamboo.models.abstract_model.AbstractModel.find_one">[docs]</a>    <span class="k">def</span> <span class="nf">find_one</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">query</span><span class="p">,</span> <span class="n">select</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">as_dict</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Return the first row matching `query` and `select` from MongoDB.</span>
+
+<span class="sd">        :param query: A query to pass to MongoDB.</span>
+<span class="sd">        :param select: An optional select to pass to MongoDB.</span>
+<span class="sd">        :param as_dict: If true, return dicts and not model instances.</span>
+
+<span class="sd">        :returns: A model instance of the row returned for this query and</span>
+<span class="sd">            select.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">record</span> <span class="o">=</span> <span class="n">cls</span><span class="o">.</span><span class="n">collection</span><span class="o">.</span><span class="n">find_one</span><span class="p">(</span><span class="n">query</span><span class="p">,</span> <span class="n">select</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">record</span> <span class="k">if</span> <span class="n">as_dict</span> <span class="k">else</span> <span class="n">cls</span><span class="p">(</span><span class="n">record</span><span class="p">)</span>
+</div>
+    <span class="nd">@classmethod</span>
+<div class="viewcode-block" id="AbstractModel.unset"><a class="viewcode-back" href="../../../models.html#bamboo.models.abstract_model.AbstractModel.unset">[docs]</a>    <span class="k">def</span> <span class="nf">unset</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">query</span><span class="p">,</span> <span class="n">unset_query</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Call unset with the spec `query` the unset document `unset_query`.</span>
+
+<span class="sd">        :param query: The spec restrict updates to.</span>
+<span class="sd">        :param unset_query: The query to pass to unset.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">cls</span><span class="o">.</span><span class="n">collection</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">query</span><span class="p">,</span> <span class="p">{</span><span class="s">&quot;$unset&quot;</span><span class="p">:</span> <span class="n">unset_query</span><span class="p">},</span> <span class="n">multi</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+</div>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">record</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Instantiate with data in `record`.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">record</span> <span class="o">=</span> <span class="n">record</span>
+
+    <span class="k">def</span> <span class="nf">__nonzero__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">record</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span>
+
+<div class="viewcode-block" id="AbstractModel.failed"><a class="viewcode-back" href="../../../models.html#bamboo.models.abstract_model.AbstractModel.failed">[docs]</a>    <span class="k">def</span> <span class="nf">failed</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">message</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Perist the state of the current instance to `STATE_FAILED`.</span>
+
+<span class="sd">        :params message: A string store as the error message, default None.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">doc</span> <span class="o">=</span> <span class="p">{</span><span class="bp">self</span><span class="o">.</span><span class="n">STATE</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">STATE_FAILED</span><span class="p">}</span>
+
+        <span class="k">if</span> <span class="n">message</span><span class="p">:</span>
+            <span class="n">doc</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="bp">self</span><span class="o">.</span><span class="n">ERROR_MESSAGE</span><span class="p">:</span> <span class="n">message</span><span class="p">})</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">doc</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="AbstractModel.pending"><a class="viewcode-back" href="../../../models.html#bamboo.models.abstract_model.AbstractModel.pending">[docs]</a>    <span class="k">def</span> <span class="nf">pending</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Perist the state of the current instance to `STATE_PENDING`&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="bp">self</span><span class="o">.</span><span class="n">STATE</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">STATE_PENDING</span><span class="p">})</span>
+</div>
+<div class="viewcode-block" id="AbstractModel.ready"><a class="viewcode-back" href="../../../models.html#bamboo.models.abstract_model.AbstractModel.ready">[docs]</a>    <span class="k">def</span> <span class="nf">ready</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Perist the state of the current instance to `STATE_READY`&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="bp">self</span><span class="o">.</span><span class="n">STATE</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">STATE_READY</span><span class="p">})</span>
+</div>
+<div class="viewcode-block" id="AbstractModel.delete"><a class="viewcode-back" href="../../../models.html#bamboo.models.abstract_model.AbstractModel.delete">[docs]</a>    <span class="k">def</span> <span class="nf">delete</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">query</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Delete rows matching query.</span>
+
+<span class="sd">        :param query: The query for rows to delete.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">collection</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">query</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="AbstractModel.save"><a class="viewcode-back" href="../../../models.html#bamboo.models.abstract_model.AbstractModel.save">[docs]</a>    <span class="k">def</span> <span class="nf">save</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">record</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Save `record` in this model&#39;s collection.</span>
+
+<span class="sd">        Save the record in the model instance&#39;s collection and set the internal</span>
+<span class="sd">        record of this instance to the passed in record.</span>
+
+<span class="sd">        :param record: The dict to save in the model&#39;s collection.</span>
+
+<span class="sd">        :returns: The record passed in.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">collection</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="n">record</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">record</span> <span class="o">=</span> <span class="n">record</span>
+
+        <span class="k">return</span> <span class="bp">self</span>
+</div>
+<div class="viewcode-block" id="AbstractModel.update"><a class="viewcode-back" href="../../../models.html#bamboo.models.abstract_model.AbstractModel.update">[docs]</a>    <span class="k">def</span> <span class="nf">update</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">record</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Update the current instance with `record`.</span>
+
+<span class="sd">        Update the current model instance based on its `_id`, set it to the</span>
+<span class="sd">        passed in `record`.</span>
+
+<span class="sd">        :param record: The record to replace the instance&#39;s data with.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">record</span> <span class="o">=</span> <span class="n">dict_for_mongo</span><span class="p">(</span><span class="n">record</span><span class="p">)</span>
+        <span class="n">id_dict</span> <span class="o">=</span> <span class="p">{</span><span class="s">&#39;_id&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">record</span><span class="p">[</span><span class="s">&#39;_id&#39;</span><span class="p">]}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">collection</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">id_dict</span><span class="p">,</span> <span class="p">{</span><span class="s">&#39;$set&#39;</span><span class="p">:</span> <span class="n">record</span><span class="p">})</span>
+
+        <span class="c"># Set record to the latest record from the database</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">record</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__class__</span><span class="o">.</span><span class="n">collection</span><span class="o">.</span><span class="n">find_one</span><span class="p">(</span><span class="n">id_dict</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="AbstractModel.split_groups"><a class="viewcode-back" href="../../../models.html#bamboo.models.abstract_model.AbstractModel.split_groups">[docs]</a>    <span class="k">def</span> <span class="nf">split_groups</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">groups</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Split a string based on the group delimiter&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">groups</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">GROUP_DELIMITER</span><span class="p">)</span> <span class="k">if</span> <span class="n">groups</span> <span class="k">else</span> <span class="p">[]</span>
+</div>
+    <span class="k">def</span> <span class="nf">join_groups</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">groups</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">GROUP_DELIMITER</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">groups</span><span class="p">)</span></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">bamboo 0.6.3 alpha documentation</a> &raquo;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Module code</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &copy; Copyright 2013, Peter Lubell-Doughtie, Mark Johnston.
+    </div>
+  </body>
+</html>

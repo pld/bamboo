@@ -1,0 +1,245 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>bamboo.lib.mongo &mdash; bamboo 0.6.3 alpha documentation</title>
+    
+    <link rel="stylesheet" href="../../../_static/nature.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../',
+        VERSION:     '0.6.3 alpha',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="top" title="bamboo 0.6.3 alpha documentation" href="../../../index.html" />
+    <link rel="up" title="Module code" href="../../index.html" /> 
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">bamboo 0.6.3 alpha documentation</a> &raquo;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" accesskey="U">Module code</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for bamboo.lib.mongo</h1><div class="highlight"><pre>
+<span class="kn">from</span> <span class="nn">base64</span> <span class="kn">import</span> <span class="n">b64encode</span>
+<span class="kn">from</span> <span class="nn">numpy</span> <span class="kn">import</span> <span class="n">datetime64</span>
+<span class="kn">import</span> <span class="nn">simplejson</span> <span class="kn">as</span> <span class="nn">json</span>
+<span class="kn">import</span> <span class="nn">re</span>
+
+<span class="kn">from</span> <span class="nn">bson</span> <span class="kn">import</span> <span class="n">json_util</span>
+
+
+<span class="c"># _id is reserved by MongoDB</span>
+<span class="n">MONGO_RESERVED_KEY_PREFIX</span> <span class="o">=</span> <span class="s">&#39;##&#39;</span>
+<span class="n">MONGO_ID</span> <span class="o">=</span> <span class="s">&#39;_id&#39;</span>
+<span class="n">MONGO_ID_ENCODED</span> <span class="o">=</span> <span class="n">MONGO_RESERVED_KEY_PREFIX</span> <span class="o">+</span> <span class="s">&#39;_id&#39;</span>
+
+<span class="n">ILLEGAL_VALUES</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;$&#39;</span><span class="p">,</span> <span class="s">&#39;.&#39;</span><span class="p">]</span>
+<span class="n">REPLACEMENT_VALUES</span> <span class="o">=</span> <span class="p">[</span><span class="n">b64encode</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="k">for</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">ILLEGAL_VALUES</span><span class="p">]</span>
+
+<span class="n">RE_ILLEGAL_MAP</span> <span class="o">=</span> <span class="p">[(</span><span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="s">r&#39;\</span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="n">value</span><span class="p">),</span> <span class="n">REPLACEMENT_VALUES</span><span class="p">[</span><span class="n">idx</span><span class="p">])</span> <span class="k">for</span>
+                  <span class="n">idx</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">ILLEGAL_VALUES</span><span class="p">)]</span>
+<span class="n">RE_LEGAL_MAP</span> <span class="o">=</span> <span class="p">[(</span><span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="s">r&#39;\</span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="n">value</span><span class="p">),</span> <span class="n">ILLEGAL_VALUES</span><span class="p">[</span><span class="n">idx</span><span class="p">])</span> <span class="k">for</span>
+                <span class="n">idx</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">REPLACEMENT_VALUES</span><span class="p">)]</span>
+
+
+<div class="viewcode-block" id="df_mongo_decode"><a class="viewcode-back" href="../../../lib.html#bamboo.lib.mongo.df_mongo_decode">[docs]</a><span class="k">def</span> <span class="nf">df_mongo_decode</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">keep_mongo_keys</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Decode MongoDB reserved keys in this DataFrame.&quot;&quot;&quot;</span>
+    <span class="n">rename_dict</span> <span class="o">=</span> <span class="p">{}</span>
+
+    <span class="k">if</span> <span class="n">MONGO_ID</span> <span class="ow">in</span> <span class="n">df</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">keep_mongo_keys</span><span class="p">:</span>
+            <span class="n">df</span><span class="o">.</span><span class="n">rename</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="p">{</span><span class="n">MONGO_ID</span><span class="p">:</span> <span class="n">MONGO_ID_ENCODED</span><span class="p">,</span>
+                               <span class="n">MONGO_ID_ENCODED</span><span class="p">:</span> <span class="n">MONGO_ID</span><span class="p">},</span> <span class="n">inplace</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">del</span> <span class="n">df</span><span class="p">[</span><span class="n">MONGO_ID</span><span class="p">]</span>
+            <span class="k">if</span> <span class="n">MONGO_ID_ENCODED</span> <span class="ow">in</span> <span class="n">df</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
+                <span class="n">rename_dict</span><span class="p">[</span><span class="n">MONGO_ID_ENCODED</span><span class="p">]</span> <span class="o">=</span> <span class="n">MONGO_ID</span>
+
+    <span class="k">if</span> <span class="n">rename_dict</span><span class="p">:</span>
+        <span class="n">df</span><span class="o">.</span><span class="n">rename</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="p">{</span><span class="n">MONGO_ID_ENCODED</span><span class="p">:</span> <span class="n">MONGO_ID</span><span class="p">},</span> <span class="n">inplace</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">df</span>
+
+</div>
+<div class="viewcode-block" id="dump_mongo_json"><a class="viewcode-back" href="../../../lib.html#bamboo.lib.mongo.dump_mongo_json">[docs]</a><span class="k">def</span> <span class="nf">dump_mongo_json</span><span class="p">(</span><span class="n">obj</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Dump JSON using BSON conversion.</span>
+
+<span class="sd">    Args:</span>
+
+<span class="sd">    :param obj: Datastructure to dump as JSON.</span>
+
+<span class="sd">    :returns: JSON string of dumped `obj`.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="n">json_util</span><span class="o">.</span><span class="n">default</span><span class="p">)</span>
+
+</div>
+<div class="viewcode-block" id="remove_mongo_reserved_keys"><a class="viewcode-back" href="../../../lib.html#bamboo.lib.mongo.remove_mongo_reserved_keys">[docs]</a><span class="k">def</span> <span class="nf">remove_mongo_reserved_keys</span><span class="p">(</span><span class="n">_dict</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Remove any keys reserved for MongoDB from `_dict`.</span>
+
+<span class="sd">    Check for `MONGO_ID` in stored dictionary.  If found replace</span>
+<span class="sd">    with unprefixed, if not found remove reserved key from dictionary.</span>
+
+<span class="sd">    Args:</span>
+
+<span class="sd">    :param _dict: Dictionary to remove reserved keys from.</span>
+
+<span class="sd">    :returns: Dictionary with reserved keys removed.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">_dict</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">MONGO_ID_ENCODED</span><span class="p">):</span>
+        <span class="n">_dict</span><span class="p">[</span><span class="n">MONGO_ID</span><span class="p">]</span> <span class="o">=</span> <span class="n">_dict</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">MONGO_ID_ENCODED</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="c"># remove mongo reserved keys</span>
+        <span class="k">del</span> <span class="n">_dict</span><span class="p">[</span><span class="n">MONGO_ID</span><span class="p">]</span>
+
+    <span class="k">return</span> <span class="n">_dict</span>
+
+</div>
+<div class="viewcode-block" id="reserve_encoded"><a class="viewcode-back" href="../../../lib.html#bamboo.lib.mongo.reserve_encoded">[docs]</a><span class="k">def</span> <span class="nf">reserve_encoded</span><span class="p">(</span><span class="n">string</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Return encoding prefixed string.&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">MONGO_ID_ENCODED</span> <span class="k">if</span> <span class="n">string</span> <span class="o">==</span> <span class="n">MONGO_ID</span> <span class="k">else</span> <span class="n">string</span>
+
+</div>
+<span class="k">def</span> <span class="nf">dict_from_mongo</span><span class="p">(</span><span class="n">_dict</span><span class="p">):</span>
+    <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">_dict</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+            <span class="n">value</span> <span class="o">=</span> <span class="p">[</span><span class="n">dict_from_mongo</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span>
+                     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span> <span class="k">else</span> <span class="n">obj</span> <span class="k">for</span> <span class="n">obj</span> <span class="ow">in</span> <span class="n">value</span><span class="p">]</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+            <span class="n">value</span> <span class="o">=</span> <span class="n">dict_from_mongo</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">_was_encoded_for_mongo</span><span class="p">(</span><span class="n">key</span><span class="p">):</span>
+            <span class="k">del</span> <span class="n">_dict</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+            <span class="n">_dict</span><span class="p">[</span><span class="n">_decode_from_mongo</span><span class="p">(</span><span class="n">key</span><span class="p">)]</span> <span class="o">=</span> <span class="n">value</span>
+
+    <span class="k">return</span> <span class="n">_dict</span>
+
+
+<div class="viewcode-block" id="dict_for_mongo"><a class="viewcode-back" href="../../../lib.html#bamboo.lib.mongo.dict_for_mongo">[docs]</a><span class="k">def</span> <span class="nf">dict_for_mongo</span><span class="p">(</span><span class="n">_dict</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Encode all keys in `_dict` for MongoDB.&quot;&quot;&quot;</span>
+    <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">_dict</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="k">if</span> <span class="n">_is_invalid_for_mongo</span><span class="p">(</span><span class="n">key</span><span class="p">):</span>
+            <span class="k">del</span> <span class="n">_dict</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+            <span class="n">key</span> <span class="o">=</span> <span class="n">key_for_mongo</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+            <span class="n">_dict</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">dict_for_mongo</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span> <span class="k">else</span> <span class="n">obj</span>
+                          <span class="k">for</span> <span class="n">obj</span> <span class="ow">in</span> <span class="n">value</span><span class="p">]</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+            <span class="n">_dict</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">dict_for_mongo</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">_dict</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">value_for_mongo</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">_dict</span>
+
+</div>
+<div class="viewcode-block" id="key_for_mongo"><a class="viewcode-back" href="../../../lib.html#bamboo.lib.mongo.key_for_mongo">[docs]</a><span class="k">def</span> <span class="nf">key_for_mongo</span><span class="p">(</span><span class="n">key</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Encode illegal MongoDB characters in string.</span>
+
+<span class="sd">    Base64 encode any characters in a string that cannot be MongoDB keys. This</span>
+<span class="sd">    includes any &#39;$&#39; and any &#39;.&#39;. &#39;$&#39; are supposed to be allowed as the</span>
+<span class="sd">    non-first character but the current version of MongoDB does not allow any</span>
+<span class="sd">    occurence of &#39;$&#39;.</span>
+
+<span class="sd">    :param key: The string to remove characters from.</span>
+
+<span class="sd">    :returns: The string with illegal keys encoded.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="nb">reduce</span><span class="p">(</span><span class="k">lambda</span> <span class="n">s</span><span class="p">,</span> <span class="n">expr</span><span class="p">:</span> <span class="n">expr</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="n">expr</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">s</span><span class="p">),</span>
+                  <span class="n">RE_ILLEGAL_MAP</span><span class="p">,</span> <span class="n">key</span><span class="p">)</span>
+
+</div>
+<div class="viewcode-block" id="value_for_mongo"><a class="viewcode-back" href="../../../lib.html#bamboo.lib.mongo.value_for_mongo">[docs]</a><span class="k">def</span> <span class="nf">value_for_mongo</span><span class="p">(</span><span class="n">value</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Ensure value is a format acceptable for a MongoDB value.</span>
+
+<span class="sd">    :param value: The value to encode.</span>
+
+<span class="sd">    :returns: The encoded value.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">datetime64</span><span class="p">):</span>
+        <span class="n">value</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">value</span>
+
+</div>
+<span class="k">def</span> <span class="nf">_decode_from_mongo</span><span class="p">(</span><span class="n">key</span><span class="p">):</span>
+    <span class="k">return</span> <span class="nb">reduce</span><span class="p">(</span><span class="k">lambda</span> <span class="n">s</span><span class="p">,</span> <span class="n">expr</span><span class="p">:</span> <span class="n">expr</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="n">expr</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">s</span><span class="p">),</span>
+                  <span class="n">RE_LEGAL_MAP</span><span class="p">,</span> <span class="n">key</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="_is_invalid_for_mongo"><a class="viewcode-back" href="../../../lib.html#bamboo.lib.mongo._is_invalid_for_mongo">[docs]</a><span class="k">def</span> <span class="nf">_is_invalid_for_mongo</span><span class="p">(</span><span class="n">key</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Return if string is invalid for storage in MongoDB.&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="nb">any</span><span class="p">([</span><span class="n">key</span><span class="o">.</span><span class="n">count</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">for</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">ILLEGAL_VALUES</span><span class="p">])</span>
+
+</div>
+<span class="k">def</span> <span class="nf">_was_encoded_for_mongo</span><span class="p">(</span><span class="n">key</span><span class="p">):</span>
+    <span class="k">return</span> <span class="nb">any</span><span class="p">([</span><span class="n">key</span><span class="o">.</span><span class="n">count</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">for</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">REPLACEMENT_VALUES</span><span class="p">])</span>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">bamboo 0.6.3 alpha documentation</a> &raquo;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Module code</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &copy; Copyright 2013, Peter Lubell-Doughtie, Mark Johnston.
+    </div>
+  </body>
+</html>

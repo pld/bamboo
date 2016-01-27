@@ -1,0 +1,320 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Manipulating Data &mdash; bamboo 0.6.3 alpha documentation</title>
+    
+    <link rel="stylesheet" href="_static/nature.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '0.6.3 alpha',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="top" title="bamboo 0.6.3 alpha documentation" href="index.html" />
+    <link rel="next" title="Advanced Commands" href="advanced_commands.html" />
+    <link rel="prev" title="Plotting" href="plotting.html" /> 
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="advanced_commands.html" title="Advanced Commands"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="plotting.html" title="Plotting"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">bamboo 0.6.3 alpha documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="manipulating-data">
+<h1>Manipulating Data<a class="headerlink" href="#manipulating-data" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="updating-your-data">
+<h2>Updating your data<a class="headerlink" href="#updating-your-data" title="Permalink to this headline">¶</a></h2>
+<p>You can add single or multiple row updates to a dataset via JSON data in a PUT
+request to the dataset id. The row(s) should be key-value pairs where the key
+is the column name. In the example that we have been using here, the dataset
+could be updated with a JSON dictionary like this:</p>
+<div class="highlight-javascript"><div class="highlight"><pre><span class="p">{</span>
+    <span class="s2">&quot;rating&quot;</span><span class="o">:</span> <span class="s2">&quot;delectible&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;amount&quot;</span><span class="o">:</span> <span class="mi">2</span><span class="p">,</span>
+    <span class="s2">&quot;food_type&quot;</span><span class="o">:</span> <span class="s2">&quot;streat_sweets&quot;</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>N/A values will be added when the dictionary does not supply a value for a
+given column.</p>
+<div class="highlight-sh"><div class="highlight"><pre>curl -X PUT -d <span class="s1">&#39;update={&quot;rating&quot;:&quot;delectible&quot;,&quot;amount&quot;:2,&quot;food_type&quot;:&quot;streat_sweets&quot;}&#39;</span> http://bamboo.io/datasets/8a3d74711475d8a51c84484fe73f24bd151242ea
+</pre></div>
+</div>
+<p><strong>returns:</strong></p>
+<div class="highlight-javascript"><div class="highlight"><pre><span class="p">{</span><span class="s2">&quot;id&quot;</span><span class="o">:</span> <span class="s2">&quot;8a3d74711475d8a51c84484fe73f24bd151242ea&quot;</span><span class="p">}</span>
+</pre></div>
+</div>
+<div class="section" id="replacing-your-dataset">
+<h3>Replacing your dataset<a class="headerlink" href="#replacing-your-dataset" title="Permalink to this headline">¶</a></h3>
+<p>To remove the existing content of a dataset and replace it with new content use
+the <code class="docutils literal"><span class="pre">reset</span></code> end-point.  This takes the same parameters as create plus a
+Dataset ID.  The dataset&#8217;s content is replaced but the Dataset ID does not
+change.  This requires a PUT request.</p>
+<div class="highlight-sh"><div class="highlight"><pre>curl -X PUT -d <span class="s2">&quot;url=http://formhub.org/mberg/forms/good_eats/data.csv&quot;</span> http://bamboo.io/datasets/8a3d74711475d8a51c84484fe73f24bd151242ea/reset<span class="s2">&quot;</span>
+</pre></div>
+</div>
+<p><strong>returns:</strong></p>
+<div class="highlight-javascript"><div class="highlight"><pre><span class="p">{</span>
+    <span class="s2">&quot;id&quot;</span><span class="o">:</span> <span class="s2">&quot;8a3d74711475d8a51c84484fe73f24bd151242ea&quot;</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="modifying-your-data">
+<h2>Modifying your data<a class="headerlink" href="#modifying-your-data" title="Permalink to this headline">¶</a></h2>
+<p>You can show, edit, and delete a single row in your dataset using the <code class="docutils literal"><span class="pre">row</span></code>
+endpoint.  To interact with the row endpoint you specify the <code class="docutils literal"><span class="pre">dataset_id</span></code> and
+the <code class="docutils literal"><span class="pre">index</span></code> of the row you would like to interact with.</p>
+<p>The indices of your dataset can be retrieved by passing <code class="docutils literal"><span class="pre">index=True</span></code> to the
+show dataset command.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">Dataset indices begin with 0, i.e. the first row will be at index 0.</p>
+</div>
+<div class="section" id="retrieving-a-row-by-index">
+<h3>Retrieving a row by index<a class="headerlink" href="#retrieving-a-row-by-index" title="Permalink to this headline">¶</a></h3>
+<p>To retrieve the first row of your dataset:</p>
+<div class="highlight-sh"><div class="highlight"><pre>curl http://bamboo.io/datasets/8a3d74711475d8a51c84484fe73f24bd151242ea/row/0
+</pre></div>
+</div>
+<p><strong>returns:</strong></p>
+<div class="highlight-javascript"><div class="highlight"><pre><span class="p">{</span>
+    <span class="s2">&quot;rating&quot;</span><span class="o">:</span> <span class="s2">&quot;delectible&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;_percentage_complete&quot;</span><span class="o">:</span> <span class="s2">&quot;n/a&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;_xform_id_string&quot;</span><span class="o">:</span> <span class="s2">&quot;good_eats&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;risk_factor&quot;</span><span class="o">:</span> <span class="s2">&quot;low_risk&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;gps_alt&quot;</span><span class="o">:</span> <span class="s2">&quot;39.5&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;food_type&quot;</span><span class="o">:</span> <span class="s2">&quot;lunch&quot;</span><span class="p">,</span>
+    <span class="p">...</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="deleting-a-row-by-index">
+<h3>Deleting a row by index<a class="headerlink" href="#deleting-a-row-by-index" title="Permalink to this headline">¶</a></h3>
+<p>To delete the first row of your dataset:</p>
+<div class="highlight-sh"><div class="highlight"><pre>curl -X DELETE http://bamboo.io/datasets/8a3d74711475d8a51c84484fe73f24bd151242ea/row/0
+</pre></div>
+</div>
+<p><strong>returns:</strong></p>
+<div class="highlight-javascript"><div class="highlight"><pre><span class="p">{</span>
+    <span class="s2">&quot;success&quot;</span><span class="o">:</span> <span class="s2">&quot;Deleted row with index &#39;0&#39;.&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;id&quot;</span><span class="o">:</span> <span class="s2">&quot;8a3d74711475d8a51c84484fe73f24bd151242ea&quot;</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="editing-a-row-by-index">
+<h3>Editing a row by index<a class="headerlink" href="#editing-a-row-by-index" title="Permalink to this headline">¶</a></h3>
+<p>To set the <cite>amount</cite> to <cite>5.0</cite> for the first row of your dataset:</p>
+<div class="highlight-sh"><div class="highlight"><pre>curl -X PUT -d <span class="s1">&#39;data={&quot;amount&quot;:&quot;5.0&quot;}&#39;</span> http://bamboo.io/datasets/8a3d74711475d8a51c84484fe73f24bd151242ea/row/0
+</pre></div>
+</div>
+<p><strong>returns:</strong></p>
+<div class="highlight-javascript"><div class="highlight"><pre><span class="p">{</span>
+    <span class="s2">&quot;success&quot;</span><span class="o">:</span> <span class="s2">&quot;Updated row with index &#39;0&#39;.&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;id&quot;</span><span class="o">:</span> <span class="s2">&quot;8a3d74711475d8a51c84484fe73f24bd151242ea&quot;</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="merging-multiple-datasets">
+<h2>Merging multiple Datasets<a class="headerlink" href="#merging-multiple-datasets" title="Permalink to this headline">¶</a></h2>
+<p>To row-wise merge 2 or more datasets into a new dataset use the _merge_ command
+. For example, to merge two datasets with IDs 8a3d7 and 2de98,
+use the following command. This will return the ID of the new merged dataset.
+The merge occurs in the background.  When the dataset status is set to &#8220;ready&#8221;
+you can be sure the data has been merged.</p>
+<div class="highlight-sh"><div class="highlight"><pre>curl -X POST -d <span class="s2">&quot;dataset_ids=[\&quot;8a3d7\&quot;, \&quot;2de98\&quot;]&quot;</span> http://bamboo.io/datasets/merge
+</pre></div>
+</div>
+<p><strong>returns:</strong></p>
+<div class="highlight-javascript"><div class="highlight"><pre><span class="p">{</span><span class="s2">&quot;id&quot;</span><span class="o">:</span> <span class="s2">&quot;8a3d74711475d8a51c84484fe73f24bd151242ea&quot;</span><span class="p">}</span>
+</pre></div>
+</div>
+<div class="section" id="merge-with-a-column-mapping">
+<h3>Merge with a column mapping<a class="headerlink" href="#merge-with-a-column-mapping" title="Permalink to this headline">¶</a></h3>
+<p>Merge takes an optional <code class="docutils literal"><span class="pre">mapping</span></code> parameter, which maps columns in the original
+dataset to columns in the new merged dataset.</p>
+<p>For example, a JSON mapping of:</p>
+<div class="highlight-javascript"><div class="highlight"><pre><span class="p">{</span>
+    <span class="s2">&quot;8a3d7&quot;</span><span class="o">:</span> <span class="p">{</span><span class="s2">&quot;foodtype&quot;</span><span class="o">:</span> <span class="s2">&quot;food_type&quot;</span><span class="p">},</span>
+    <span class="s2">&quot;2de98&quot;</span><span class="o">:</span> <span class="p">{</span><span class="s2">&quot;foodType&quot;</span><span class="o">:</span> <span class="s2">&quot;food_type&quot;</span><span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>will map the &#8220;foodtype&#8221; column from dataset ID 8a3d7 and the &#8220;foodType&#8221; column
+from dataset 2de98 to a canonical &#8220;food_type&#8221; column in the merged dataset.</p>
+<div class="highlight-sh"><div class="highlight"><pre>curl -X POST -d <span class="s2">&quot;datasets=[8a3d7,2de98]&amp;mapping={\&quot;8a3d7\&quot;:{\&quot;foodtype\&quot;:\&quot;food_type\&quot;},&quot;</span>2de98<span class="s2">&quot;:{\&quot;foodType\&quot;:\&quot;food_type\&quot;}}&quot;</span> http://bamboo.io/datasets/merge
+</pre></div>
+</div>
+<p><strong>returns:</strong></p>
+<div class="highlight-javascript"><div class="highlight"><pre><span class="p">{</span><span class="s2">&quot;id&quot;</span><span class="o">:</span> <span class="s2">&quot;8a3d74711475d8a51c84484fe73f24bd151242ea&quot;</span><span class="p">}</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="joining-multiple-datasets">
+<h2>Joining multiple Datasets<a class="headerlink" href="#joining-multiple-datasets" title="Permalink to this headline">¶</a></h2>
+<p>You can perform column joins between multiple datasets.  The column that is
+joined on must be unique in the right hand side dataset and must exist in both
+datasets. The left hand side dataset ID is specified in the URL, and the right
+hand side is passed as the <em>other_dataset_id</em> parameter.</p>
+<p>If the join succeeds the ID of the new dataset is returned as JSON. If the join
+fails an error message is returned, also as JSON.</p>
+<p>Updates which are subsequently made to either the left hand side or the right
+hand side dataset will be propagated to the joined dataset. Updates to the
+right hand side that make the join column non-unique will be disallowed.</p>
+<p>For example supposing the &#8216;food_type&#8217; column is in datasets with IDs 8a3d7 and
+2de98, you can join the two datasets on that column by executing:</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<ul class="last simple">
+<li>You can not join datasets which have overlapping columns.</li>
+<li>After you have joined two datasets you can not update the right hand
+(<code class="docutils literal"><span class="pre">other_dataset_id</span></code>) with data that will make its <code class="docutils literal"><span class="pre">on</span></code> column
+non-unique.</li>
+<li>Updates to the left hand side (<code class="docutils literal"><span class="pre">dataset_id</span></code>) will be merged with right
+hand side columns if the update matches an existing <code class="docutils literal"><span class="pre">on</span></code> column,
+otherwise if will have NaN for the other columns.</li>
+</ul>
+</div>
+<div class="highlight-sh"><div class="highlight"><pre>curl -X POST -d <span class="s2">&quot;dataset_id=8a3d7&amp;other_dataset_id=2de98&amp;on=food_type&quot;</span> http://bamboo.io/datasets/join
+</pre></div>
+</div>
+<p><strong>returns:</strong></p>
+<div class="highlight-javascript"><div class="highlight"><pre><span class="p">{</span><span class="s2">&quot;id&quot;</span><span class="o">:</span> <span class="s2">&quot;8a3d74711475d8a51c84484fe73f24bd151242ea&quot;</span><span class="p">}</span>
+</pre></div>
+</div>
+<div class="section" id="joining-on-different-columns">
+<h3>Joining on different columns<a class="headerlink" href="#joining-on-different-columns" title="Permalink to this headline">¶</a></h3>
+<p>To join column <code class="docutils literal"><span class="pre">A</span></code> in the left hand side dataset with column <code class="docutils literal"><span class="pre">B</span></code> in the
+right hand side dataset, set the <code class="docutils literal"><span class="pre">on</span></code> parameter to <code class="docutils literal"><span class="pre">A,B</span></code>.</p>
+<p>Continuing the above example, suppose dataset 8a3d7 has a &#8220;food_type&#8221; column
+but 2de98 has a &#8220;foodtype&#8221; column, use the command:</p>
+<div class="highlight-sh"><div class="highlight"><pre>curl -X POST -d <span class="s2">&quot;dataset_id=8a3d7&amp;other_dataset_id=2de98&amp;on=food_type,foodtype&quot;</span> http://bamboo.io/datasets/join
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Manipulating Data</a><ul>
+<li><a class="reference internal" href="#updating-your-data">Updating your data</a><ul>
+<li><a class="reference internal" href="#replacing-your-dataset">Replacing your dataset</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#modifying-your-data">Modifying your data</a><ul>
+<li><a class="reference internal" href="#retrieving-a-row-by-index">Retrieving a row by index</a></li>
+<li><a class="reference internal" href="#deleting-a-row-by-index">Deleting a row by index</a></li>
+<li><a class="reference internal" href="#editing-a-row-by-index">Editing a row by index</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#merging-multiple-datasets">Merging multiple Datasets</a><ul>
+<li><a class="reference internal" href="#merge-with-a-column-mapping">Merge with a column mapping</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#joining-multiple-datasets">Joining multiple Datasets</a><ul>
+<li><a class="reference internal" href="#joining-on-different-columns">Joining on different columns</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="plotting.html"
+                        title="previous chapter">Plotting</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="advanced_commands.html"
+                        title="next chapter">Advanced Commands</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/manipulating_data.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="advanced_commands.html" title="Advanced Commands"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="plotting.html" title="Plotting"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">bamboo 0.6.3 alpha documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &copy; Copyright 2013, Peter Lubell-Doughtie, Mark Johnston.
+    </div>
+  </body>
+</html>

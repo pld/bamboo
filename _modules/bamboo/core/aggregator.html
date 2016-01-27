@@ -1,0 +1,213 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>bamboo.core.aggregator &mdash; bamboo 0.6.3 alpha documentation</title>
+    
+    <link rel="stylesheet" href="../../../_static/nature.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../',
+        VERSION:     '0.6.3 alpha',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="top" title="bamboo 0.6.3 alpha documentation" href="../../../index.html" />
+    <link rel="up" title="Module code" href="../../index.html" /> 
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">bamboo 0.6.3 alpha documentation</a> &raquo;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" accesskey="U">Module code</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for bamboo.core.aggregator</h1><div class="highlight"><pre>
+<span class="kn">from</span> <span class="nn">pandas</span> <span class="kn">import</span> <span class="n">concat</span>
+
+<span class="kn">from</span> <span class="nn">bamboo.core.aggregations</span> <span class="kn">import</span> <span class="n">AGGREGATIONS</span>
+<span class="kn">from</span> <span class="nn">bamboo.core.frame</span> <span class="kn">import</span> <span class="n">add_parent_column</span><span class="p">,</span> <span class="n">rows_for_parent_id</span>
+<span class="kn">from</span> <span class="nn">bamboo.lib.parsing</span> <span class="kn">import</span> <span class="n">parse_columns</span>
+
+
+<span class="k">def</span> <span class="nf">group_join</span><span class="p">(</span><span class="n">groups</span><span class="p">,</span> <span class="n">left</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">groups</span><span class="p">:</span>
+        <span class="n">other</span><span class="o">.</span><span class="n">set_index</span><span class="p">(</span><span class="n">groups</span><span class="p">,</span> <span class="n">inplace</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">left</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="n">on</span><span class="o">=</span><span class="n">groups</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">groups</span><span class="p">)</span> <span class="k">else</span> <span class="bp">None</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">aggregated_dataset</span><span class="p">(</span><span class="n">dataset</span><span class="p">,</span> <span class="n">dframe</span><span class="p">,</span> <span class="n">groups</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Create an aggregated dataset for this dataset.</span>
+
+<span class="sd">    Creates and saves a dataset from the given `dframe`.  Then stores this</span>
+<span class="sd">    dataset as an aggregated dataset given `groups` for `self`.</span>
+
+<span class="sd">    :param dframe: The DataFrame to store in the new aggregated dataset.</span>
+<span class="sd">    :param groups: The groups associated with this aggregated dataset.</span>
+<span class="sd">    :returns: The newly created aggregated dataset.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">a_dataset</span> <span class="o">=</span> <span class="n">dataset</span><span class="o">.</span><span class="n">create</span><span class="p">()</span>
+    <span class="n">a_dataset</span><span class="o">.</span><span class="n">save_observations</span><span class="p">(</span><span class="n">dframe</span><span class="p">)</span>
+
+    <span class="c"># store a link to the new dataset</span>
+    <span class="n">group_str</span> <span class="o">=</span> <span class="n">dataset</span><span class="o">.</span><span class="n">join_groups</span><span class="p">(</span><span class="n">groups</span><span class="p">)</span>
+    <span class="n">a_datasets_dict</span> <span class="o">=</span> <span class="n">dataset</span><span class="o">.</span><span class="n">aggregated_datasets_dict</span>
+    <span class="n">a_datasets_dict</span><span class="p">[</span><span class="n">group_str</span><span class="p">]</span> <span class="o">=</span> <span class="n">a_dataset</span><span class="o">.</span><span class="n">dataset_id</span>
+    <span class="n">dataset</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="n">dataset</span><span class="o">.</span><span class="n">AGGREGATED_DATASETS</span><span class="p">:</span> <span class="n">a_datasets_dict</span><span class="p">})</span>
+
+    <span class="k">return</span> <span class="n">a_dataset</span>
+
+
+<div class="viewcode-block" id="Aggregator"><a class="viewcode-back" href="../../../core.html#bamboo.core.aggregator.Aggregator">[docs]</a><span class="k">class</span> <span class="nc">Aggregator</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Perform a aggregations on datasets.</span>
+
+<span class="sd">    Apply the `aggregation` to group columns by `groups` and the `columns`</span>
+<span class="sd">    of the `dframe`. Store the resulting `dframe` as a linked dataset for</span>
+<span class="sd">    `dataset`. If a linked dataset with the same groups already exists update</span>
+<span class="sd">    this dataset.  Otherwise create a new linked dataset.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dframe</span><span class="p">,</span> <span class="n">groups</span><span class="p">,</span> <span class="n">_type</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">columns</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Create an Aggregator.</span>
+
+<span class="sd">        :param columns: The columns to aggregate over.</span>
+<span class="sd">        :param dframe: The DataFrame to aggregate.</span>
+<span class="sd">        :param groups: A list of columns to group on.</span>
+<span class="sd">        :param _type: The aggregation to perform.</span>
+<span class="sd">        :param name: The name of the aggregation.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">columns</span> <span class="o">=</span> <span class="n">columns</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dframe</span> <span class="o">=</span> <span class="n">dframe</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">groups</span> <span class="o">=</span> <span class="n">groups</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">name</span>
+        <span class="n">aggregation</span> <span class="o">=</span> <span class="n">AGGREGATIONS</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">_type</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">aggregation</span> <span class="o">=</span> <span class="n">aggregation</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">groups</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">dframe</span><span class="p">)</span>
+
+<div class="viewcode-block" id="Aggregator.save"><a class="viewcode-back" href="../../../core.html#bamboo.core.aggregator.Aggregator.save">[docs]</a>    <span class="k">def</span> <span class="nf">save</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dataset</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Save this aggregation.</span>
+
+<span class="sd">        If an aggregated dataset for this aggregations group already exists</span>
+<span class="sd">        store in this dataset, if not create a new aggregated dataset and store</span>
+<span class="sd">        the aggregation in this new aggregated dataset.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">new_dframe</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">aggregation</span><span class="o">.</span><span class="n">eval</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">columns</span><span class="p">)</span>
+        <span class="n">new_dframe</span> <span class="o">=</span> <span class="n">add_parent_column</span><span class="p">(</span><span class="n">new_dframe</span><span class="p">,</span> <span class="n">dataset</span><span class="o">.</span><span class="n">dataset_id</span><span class="p">)</span>
+
+        <span class="n">a_dataset</span> <span class="o">=</span> <span class="n">dataset</span><span class="o">.</span><span class="n">aggregated_dataset</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">groups</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">a_dataset</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">a_dataset</span> <span class="o">=</span> <span class="n">aggregated_dataset</span><span class="p">(</span><span class="n">dataset</span><span class="p">,</span> <span class="n">new_dframe</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">groups</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">a_dframe</span> <span class="o">=</span> <span class="n">a_dataset</span><span class="o">.</span><span class="n">dframe</span><span class="p">()</span>
+            <span class="n">new_dframe</span> <span class="o">=</span> <span class="n">group_join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">groups</span><span class="p">,</span> <span class="n">a_dframe</span><span class="p">,</span> <span class="n">new_dframe</span><span class="p">)</span>
+            <span class="n">a_dataset</span><span class="o">.</span><span class="n">replace_observations</span><span class="p">(</span><span class="n">new_dframe</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">new_dframe</span> <span class="o">=</span> <span class="n">new_dframe</span>
+</div>
+<div class="viewcode-block" id="Aggregator.update"><a class="viewcode-back" href="../../../core.html#bamboo.core.aggregator.Aggregator.update">[docs]</a>    <span class="k">def</span> <span class="nf">update</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dataset</span><span class="p">,</span> <span class="n">child_dataset</span><span class="p">,</span> <span class="n">formula</span><span class="p">,</span> <span class="n">reducible</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Attempt to reduce an update and store.&quot;&quot;&quot;</span>
+        <span class="n">parent_dataset_id</span> <span class="o">=</span> <span class="n">dataset</span><span class="o">.</span><span class="n">dataset_id</span>
+
+        <span class="c"># get dframe only including rows from this parent</span>
+        <span class="n">dframe</span> <span class="o">=</span> <span class="n">rows_for_parent_id</span><span class="p">(</span><span class="n">child_dataset</span><span class="o">.</span><span class="n">dframe</span><span class="p">(</span>
+            <span class="n">keep_parent_ids</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">reload_</span><span class="o">=</span><span class="bp">True</span><span class="p">),</span> <span class="n">parent_dataset_id</span><span class="p">)</span>
+
+        <span class="c"># remove rows in child from parent</span>
+        <span class="n">child_dataset</span><span class="o">.</span><span class="n">remove_parent_observations</span><span class="p">(</span><span class="n">parent_dataset_id</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">reducible</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">__is_reducible</span><span class="p">():</span>
+            <span class="n">dframe</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">aggregation</span><span class="o">.</span><span class="n">reduce</span><span class="p">(</span><span class="n">dframe</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">columns</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">dframe</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">updated_dframe</span><span class="p">(</span><span class="n">dataset</span><span class="p">,</span> <span class="n">formula</span><span class="p">,</span> <span class="n">dframe</span><span class="p">)</span>
+
+        <span class="n">new_a_dframe</span> <span class="o">=</span> <span class="n">concat</span><span class="p">([</span><span class="n">child_dataset</span><span class="o">.</span><span class="n">dframe</span><span class="p">(),</span> <span class="n">dframe</span><span class="p">])</span>
+        <span class="n">new_a_dframe</span> <span class="o">=</span> <span class="n">add_parent_column</span><span class="p">(</span><span class="n">new_a_dframe</span><span class="p">,</span> <span class="n">parent_dataset_id</span><span class="p">)</span>
+        <span class="n">child_dataset</span><span class="o">.</span><span class="n">replace_observations</span><span class="p">(</span><span class="n">new_a_dframe</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">child_dataset</span><span class="o">.</span><span class="n">dframe</span><span class="p">()</span>
+</div>
+<div class="viewcode-block" id="Aggregator.updated_dframe"><a class="viewcode-back" href="../../../core.html#bamboo.core.aggregator.Aggregator.updated_dframe">[docs]</a>    <span class="k">def</span> <span class="nf">updated_dframe</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dataset</span><span class="p">,</span> <span class="n">formula</span><span class="p">,</span> <span class="n">dframe</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Create a new aggregation and update return updated dframe.&quot;&quot;&quot;</span>
+        <span class="c"># build column arguments from original dframe</span>
+        <span class="n">columns</span> <span class="o">=</span> <span class="n">parse_columns</span><span class="p">(</span><span class="n">dataset</span><span class="p">,</span> <span class="n">formula</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">dframe</span><span class="p">)</span>
+        <span class="n">new_dframe</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">aggregation</span><span class="o">.</span><span class="n">eval</span><span class="p">(</span><span class="n">columns</span><span class="p">)</span>
+
+        <span class="n">new_columns</span> <span class="o">=</span> <span class="p">[</span><span class="n">x</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">new_dframe</span><span class="o">.</span><span class="n">columns</span> <span class="k">if</span> <span class="n">x</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">groups</span><span class="p">]</span>
+
+        <span class="n">dframe</span> <span class="o">=</span> <span class="n">dframe</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="n">new_columns</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">dframe</span> <span class="o">=</span> <span class="n">group_join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">groups</span><span class="p">,</span> <span class="n">new_dframe</span><span class="p">,</span> <span class="n">dframe</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">dframe</span>
+</div>
+    <span class="k">def</span> <span class="nf">__is_reducible</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;If it is not grouped and a reduce is defined.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">groups</span> <span class="ow">and</span> <span class="s">&#39;reduce&#39;</span> <span class="ow">in</span> <span class="nb">dir</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">aggregation</span><span class="p">)</span></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">bamboo 0.6.3 alpha documentation</a> &raquo;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Module code</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &copy; Copyright 2013, Peter Lubell-Doughtie, Mark Johnston.
+    </div>
+  </body>
+</html>

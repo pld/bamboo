@@ -1,0 +1,812 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>bamboo.models.dataset &mdash; bamboo 0.6.3 alpha documentation</title>
+    
+    <link rel="stylesheet" href="../../../_static/nature.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../',
+        VERSION:     '0.6.3 alpha',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="top" title="bamboo 0.6.3 alpha documentation" href="../../../index.html" />
+    <link rel="up" title="Module code" href="../../index.html" /> 
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">bamboo 0.6.3 alpha documentation</a> &raquo;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" accesskey="U">Module code</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for bamboo.models.dataset</h1><div class="highlight"><pre>
+<span class="kn">import</span> <span class="nn">re</span>
+<span class="kn">import</span> <span class="nn">uuid</span>
+<span class="kn">from</span> <span class="nn">time</span> <span class="kn">import</span> <span class="n">gmtime</span><span class="p">,</span> <span class="n">strftime</span>
+
+<span class="kn">from</span> <span class="nn">celery.task</span> <span class="kn">import</span> <span class="n">task</span>
+<span class="kn">from</span> <span class="nn">pandas</span> <span class="kn">import</span> <span class="n">DataFrame</span><span class="p">,</span> <span class="n">rolling_window</span>
+
+<span class="kn">from</span> <span class="nn">bamboo.core.calculator</span> <span class="kn">import</span> <span class="n">calculate_updates</span><span class="p">,</span> <span class="n">dframe_from_update</span><span class="p">,</span>\
+    <span class="n">propagate</span>
+<span class="kn">from</span> <span class="nn">bamboo.core.frame</span> <span class="kn">import</span> <span class="n">BAMBOO_RESERVED_KEY_PREFIX</span><span class="p">,</span>\
+    <span class="n">DATASET_ID</span><span class="p">,</span> <span class="n">INDEX</span><span class="p">,</span> <span class="n">join_dataset</span><span class="p">,</span> <span class="n">PARENT_DATASET_ID</span><span class="p">,</span> <span class="n">remove_reserved_keys</span>
+<span class="kn">from</span> <span class="nn">bamboo.core.summary</span> <span class="kn">import</span> <span class="n">summarize</span>
+<span class="kn">from</span> <span class="nn">bamboo.lib.async</span> <span class="kn">import</span> <span class="n">call_async</span>
+<span class="kn">from</span> <span class="nn">bamboo.lib.exceptions</span> <span class="kn">import</span> <span class="n">ArgumentError</span>
+<span class="kn">from</span> <span class="nn">bamboo.lib.mongo</span> <span class="kn">import</span> <span class="n">df_mongo_decode</span>
+<span class="kn">from</span> <span class="nn">bamboo.lib.readers</span> <span class="kn">import</span> <span class="n">ImportableDataset</span>
+<span class="kn">from</span> <span class="nn">bamboo.lib.query_args</span> <span class="kn">import</span> <span class="n">QueryArgs</span>
+<span class="kn">from</span> <span class="nn">bamboo.lib.schema_builder</span> <span class="kn">import</span> <span class="n">Schema</span>
+<span class="kn">from</span> <span class="nn">bamboo.lib.utils</span> <span class="kn">import</span> <span class="n">combine_dicts</span><span class="p">,</span> <span class="n">to_list</span>
+<span class="kn">from</span> <span class="nn">bamboo.models.abstract_model</span> <span class="kn">import</span> <span class="n">AbstractModel</span>
+<span class="kn">from</span> <span class="nn">bamboo.models.calculation</span> <span class="kn">import</span> <span class="n">Calculation</span>
+<span class="kn">from</span> <span class="nn">bamboo.models.observation</span> <span class="kn">import</span> <span class="n">Observation</span>
+
+<span class="c"># The format pandas encodes multicolumns in.</span>
+<span class="n">strip_pattern</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="s">&quot;\(u&#39;|&#39;, u&#39;|&#39;\)&quot;</span><span class="p">)</span>
+
+
+<span class="nd">@task</span><span class="p">(</span><span class="n">ignore_result</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">delete_task</span><span class="p">(</span><span class="n">dataset</span><span class="p">,</span> <span class="n">query</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Background task to delete dataset and its associated observations.&quot;&quot;&quot;</span>
+    <span class="n">Observation</span><span class="o">.</span><span class="n">delete_all</span><span class="p">(</span><span class="n">dataset</span><span class="p">,</span> <span class="n">query</span><span class="o">=</span><span class="n">query</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">query</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">dataset</span><span class="o">.</span><span class="n">__class__</span><span class="p">,</span> <span class="n">dataset</span><span class="p">)</span><span class="o">.</span><span class="n">delete</span><span class="p">(</span>
+            <span class="p">{</span><span class="n">DATASET_ID</span><span class="p">:</span> <span class="n">dataset</span><span class="o">.</span><span class="n">dataset_id</span><span class="p">})</span>
+        <span class="n">Observation</span><span class="o">.</span><span class="n">delete_encoding</span><span class="p">(</span><span class="n">dataset</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="Dataset"><a class="viewcode-back" href="../../../models.html#bamboo.models.dataset.Dataset">[docs]</a><span class="k">class</span> <span class="nc">Dataset</span><span class="p">(</span><span class="n">AbstractModel</span><span class="p">,</span> <span class="n">ImportableDataset</span><span class="p">):</span>
+
+    <span class="n">__collectionname__</span> <span class="o">=</span> <span class="s">&#39;datasets&#39;</span>
+
+    <span class="c"># caching keys</span>
+    <span class="n">STATS</span> <span class="o">=</span> <span class="s">&#39;_stats&#39;</span>
+    <span class="n">ALL</span> <span class="o">=</span> <span class="s">&#39;_all&#39;</span>
+
+    <span class="c"># metadata</span>
+    <span class="n">AGGREGATED_DATASETS</span> <span class="o">=</span> <span class="n">BAMBOO_RESERVED_KEY_PREFIX</span> <span class="o">+</span> <span class="s">&#39;linked_datasets&#39;</span>
+    <span class="n">ATTRIBUTION</span> <span class="o">=</span> <span class="s">&#39;attribution&#39;</span>
+    <span class="n">CREATED_AT</span> <span class="o">=</span> <span class="s">&#39;created_at&#39;</span>
+    <span class="n">DESCRIPTION</span> <span class="o">=</span> <span class="s">&#39;description&#39;</span>
+    <span class="n">ID</span> <span class="o">=</span> <span class="s">&#39;id&#39;</span>
+    <span class="n">JOINED_DATASETS</span> <span class="o">=</span> <span class="s">&#39;joined_datasets&#39;</span>
+    <span class="n">LABEL</span> <span class="o">=</span> <span class="s">&#39;label&#39;</span>
+    <span class="n">LICENSE</span> <span class="o">=</span> <span class="s">&#39;license&#39;</span>
+    <span class="n">NUM_COLUMNS</span> <span class="o">=</span> <span class="s">&#39;num_columns&#39;</span>
+    <span class="n">NUM_ROWS</span> <span class="o">=</span> <span class="s">&#39;num_rows&#39;</span>
+    <span class="n">MERGED_DATASETS</span> <span class="o">=</span> <span class="s">&#39;merged_datasets&#39;</span>
+    <span class="n">PARENT_IDS</span> <span class="o">=</span> <span class="s">&#39;parent_ids&#39;</span>
+    <span class="n">PENDING_UPDATES</span> <span class="o">=</span> <span class="s">&#39;pending_updates&#39;</span>
+    <span class="n">SCHEMA</span> <span class="o">=</span> <span class="s">&#39;schema&#39;</span>
+    <span class="n">UPDATED_AT</span> <span class="o">=</span> <span class="s">&#39;updated_at&#39;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">record</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">Dataset</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="n">record</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__dframe</span> <span class="o">=</span> <span class="bp">None</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">aggregated_datasets</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">[(</span><span class="bp">self</span><span class="o">.</span><span class="n">split_groups</span><span class="p">(</span><span class="n">group</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">find_one</span><span class="p">(</span><span class="n">_id</span><span class="p">))</span> <span class="k">for</span> <span class="p">(</span>
+            <span class="n">group</span><span class="p">,</span> <span class="n">_id</span><span class="p">)</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">aggregated_datasets_dict</span><span class="o">.</span><span class="n">items</span><span class="p">()]</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">aggregated_datasets_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">record</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">AGGREGATED_DATASETS</span><span class="p">,</span> <span class="p">{})</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">attribution</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">record</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ATTRIBUTION</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">columns</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">schema</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_rows</span> <span class="k">else</span> <span class="p">[]</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">dataset_id</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">record</span><span class="p">[</span><span class="n">DATASET_ID</span><span class="p">]</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">description</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">record</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">DESCRIPTION</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">joined_datasets</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="c"># TODO: fetch all datasets in single DB call</span>
+        <span class="c"># (let Dataset.find take a list of IDs)</span>
+        <span class="k">return</span> <span class="p">[</span>
+            <span class="p">(</span><span class="n">direction</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">find_one</span><span class="p">(</span><span class="n">other_dataset_id</span><span class="p">),</span> <span class="n">on</span><span class="p">,</span>
+             <span class="bp">self</span><span class="o">.</span><span class="n">find_one</span><span class="p">(</span><span class="n">joined_dataset_id</span><span class="p">))</span>
+            <span class="k">for</span> <span class="n">direction</span><span class="p">,</span> <span class="n">other_dataset_id</span><span class="p">,</span> <span class="n">on</span><span class="p">,</span> <span class="n">joined_dataset_id</span> <span class="ow">in</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">joined_dataset_ids</span><span class="p">]</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">joined_dataset_ids</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">[</span>
+            <span class="nb">tuple</span><span class="p">(</span><span class="n">_list</span><span class="p">)</span> <span class="k">for</span> <span class="n">_list</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">record</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">JOINED_DATASETS</span><span class="p">,</span> <span class="p">[])</span>
+        <span class="p">]</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">label</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">record</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">LABEL</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">labels</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">column</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">LABEL</span><span class="p">]</span> <span class="k">for</span> <span class="n">column</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">schema</span><span class="o">.</span><span class="n">values</span><span class="p">()]</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">license</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">record</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">LICENSE</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">merged_datasets</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__linked_datasets</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">merged_dataset_ids</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">merged_datasets_with_map</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">results</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">merged_dataset_info</span>
+
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">results</span><span class="p">):</span>
+            <span class="n">mappings</span><span class="p">,</span> <span class="n">ids</span> <span class="o">=</span> <span class="nb">zip</span><span class="p">(</span><span class="o">*</span><span class="n">results</span><span class="p">)</span>
+            <span class="n">results</span> <span class="o">=</span> <span class="nb">zip</span><span class="p">(</span><span class="n">mappings</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">__linked_datasets</span><span class="p">(</span><span class="n">ids</span><span class="p">))</span>
+
+        <span class="k">return</span> <span class="n">results</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">merged_dataset_ids</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">results</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">merged_dataset_info</span>
+        <span class="k">return</span> <span class="nb">zip</span><span class="p">(</span><span class="o">*</span><span class="n">results</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="k">if</span> <span class="n">results</span> <span class="k">else</span> <span class="n">results</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">merged_dataset_info</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">record</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">MERGED_DATASETS</span><span class="p">,</span> <span class="p">[])</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">num_columns</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">record</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">NUM_COLUMNS</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">num_rows</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">record</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">NUM_ROWS</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">on_columns_for_rhs_of_joins</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">on</span> <span class="k">for</span> <span class="n">direction</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">on</span><span class="p">,</span> <span class="n">__</span> <span class="ow">in</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">joined_datasets</span> <span class="k">if</span> <span class="n">direction</span> <span class="o">==</span> <span class="s">&#39;left&#39;</span><span class="p">]</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">parent_ids</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">query_args</span> <span class="o">=</span> <span class="n">QueryArgs</span><span class="p">(</span><span class="n">select</span><span class="o">=</span><span class="p">{</span><span class="n">PARENT_DATASET_ID</span><span class="p">:</span> <span class="mi">1</span><span class="p">},</span>
+                               <span class="n">distinct</span><span class="o">=</span><span class="n">PARENT_DATASET_ID</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">observations</span><span class="p">(</span><span class="n">query_args</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">pending_updates</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">record</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">PENDING_UPDATES</span><span class="p">]</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">schema</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">schema_dict</span> <span class="o">=</span> <span class="p">{}</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">record</span><span class="p">:</span>
+            <span class="n">schema_dict</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">record</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">SCHEMA</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">Schema</span><span class="o">.</span><span class="n">safe_init</span><span class="p">(</span><span class="n">schema_dict</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">stats</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">record</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">STATS</span><span class="p">,</span> <span class="p">{})</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">updatable_keys</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">LABEL</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">DESCRIPTION</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">LICENSE</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">ATTRIBUTION</span><span class="p">]</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">__is_cached</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__dframe</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">create</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">dataset_id</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">super</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">cls</span><span class="p">)</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="n">dataset_id</span><span class="p">)</span>
+
+    <span class="nd">@classmethod</span>
+<div class="viewcode-block" id="Dataset.find"><a class="viewcode-back" href="../../../models.html#bamboo.models.dataset.Dataset.find">[docs]</a>    <span class="k">def</span> <span class="nf">find</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">dataset_id</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Return datasets for `dataset_id`.&quot;&quot;&quot;</span>
+        <span class="n">query_args</span> <span class="o">=</span> <span class="n">QueryArgs</span><span class="p">(</span><span class="n">query</span><span class="o">=</span><span class="p">{</span><span class="n">DATASET_ID</span><span class="p">:</span> <span class="n">dataset_id</span><span class="p">})</span>
+        <span class="k">return</span> <span class="nb">super</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">cls</span><span class="p">)</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="n">query_args</span><span class="p">)</span>
+</div>
+    <span class="nd">@classmethod</span>
+<div class="viewcode-block" id="Dataset.find_one"><a class="viewcode-back" href="../../../models.html#bamboo.models.dataset.Dataset.find_one">[docs]</a>    <span class="k">def</span> <span class="nf">find_one</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">dataset_id</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Return dataset for `dataset_id`.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">super</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">cls</span><span class="p">)</span><span class="o">.</span><span class="n">find_one</span><span class="p">({</span><span class="n">DATASET_ID</span><span class="p">:</span> <span class="n">dataset_id</span><span class="p">})</span>
+</div>
+    <span class="k">def</span> <span class="nf">__linked_datasets</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ids</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">find_one</span><span class="p">(</span><span class="n">_id</span><span class="p">)</span> <span class="k">for</span> <span class="n">_id</span> <span class="ow">in</span> <span class="n">ids</span><span class="p">]</span>
+
+<div class="viewcode-block" id="Dataset.add_joined_dataset"><a class="viewcode-back" href="../../../models.html#bamboo.models.dataset.Dataset.add_joined_dataset">[docs]</a>    <span class="k">def</span> <span class="nf">add_joined_dataset</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">new_data</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Add the ID of `new_dataset` to the list of joined datasets.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__add_linked_data</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">JOINED_DATASETS</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">joined_dataset_ids</span><span class="p">,</span>
+                               <span class="n">new_data</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="Dataset.add_merged_dataset"><a class="viewcode-back" href="../../../models.html#bamboo.models.dataset.Dataset.add_merged_dataset">[docs]</a>    <span class="k">def</span> <span class="nf">add_merged_dataset</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mapping</span><span class="p">,</span> <span class="n">new_dataset</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Add the ID of `new_dataset` to the list of merged datasets.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__add_linked_data</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">MERGED_DATASETS</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">merged_dataset_info</span><span class="p">,</span>
+                               <span class="p">[</span><span class="n">mapping</span><span class="p">,</span> <span class="n">new_dataset</span><span class="o">.</span><span class="n">dataset_id</span><span class="p">])</span>
+</div>
+<div class="viewcode-block" id="Dataset.add_observations"><a class="viewcode-back" href="../../../models.html#bamboo.models.dataset.Dataset.add_observations">[docs]</a>    <span class="k">def</span> <span class="nf">add_observations</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">new_data</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Update `dataset` with `new_data`.&quot;&quot;&quot;</span>
+        <span class="n">update_id</span> <span class="o">=</span> <span class="n">uuid</span><span class="o">.</span><span class="n">uuid4</span><span class="p">()</span><span class="o">.</span><span class="n">hex</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">add_pending_update</span><span class="p">(</span><span class="n">update_id</span><span class="p">)</span>
+
+        <span class="n">new_data</span> <span class="o">=</span> <span class="n">to_list</span><span class="p">(</span><span class="n">new_data</span><span class="p">)</span>
+
+        <span class="c"># fetch data before other updates</span>
+        <span class="n">new_dframe_raw</span> <span class="o">=</span> <span class="n">dframe_from_update</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">new_data</span><span class="p">)</span>
+
+        <span class="n">call_async</span><span class="p">(</span><span class="n">calculate_updates</span><span class="p">,</span> <span class="bp">self</span><span class="p">,</span> <span class="n">new_data</span><span class="p">,</span>
+                   <span class="n">new_dframe_raw</span><span class="o">=</span><span class="n">new_dframe_raw</span><span class="p">,</span> <span class="n">update_id</span><span class="o">=</span><span class="n">update_id</span><span class="p">)</span>
+</div>
+    <span class="k">def</span> <span class="nf">add_pending_update</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">update_id</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">collection</span><span class="o">.</span><span class="n">update</span><span class="p">(</span>
+            <span class="p">{</span><span class="s">&#39;_id&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">record</span><span class="p">[</span><span class="s">&#39;_id&#39;</span><span class="p">]},</span>
+            <span class="p">{</span><span class="s">&#39;$push&#39;</span><span class="p">:</span> <span class="p">{</span><span class="bp">self</span><span class="o">.</span><span class="n">PENDING_UPDATES</span><span class="p">:</span> <span class="n">update_id</span><span class="p">}})</span>
+
+    <span class="k">def</span> <span class="nf">aggregated_dataset</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">groups</span><span class="p">):</span>
+        <span class="n">groups</span> <span class="o">=</span> <span class="n">to_list</span><span class="p">(</span><span class="n">groups</span><span class="p">)</span>
+        <span class="n">_id</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">aggregated_datasets_dict</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">join_groups</span><span class="p">(</span><span class="n">groups</span><span class="p">))</span>
+
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">find_one</span><span class="p">(</span><span class="n">_id</span><span class="p">)</span> <span class="k">if</span> <span class="n">_id</span> <span class="k">else</span> <span class="bp">None</span>
+
+    <span class="k">def</span> <span class="nf">append_observations</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dframe</span><span class="p">):</span>
+        <span class="n">Observation</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">dframe</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="bp">self</span><span class="o">.</span><span class="n">NUM_ROWS</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_rows</span> <span class="o">+</span> <span class="nb">len</span><span class="p">(</span><span class="n">dframe</span><span class="p">)})</span>
+
+        <span class="c"># to update cardinalities here we need to refetch the full DataFrame.</span>
+        <span class="n">dframe</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dframe</span><span class="p">(</span><span class="n">keep_parent_ids</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">build_schema</span><span class="p">(</span><span class="n">dframe</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">update_stats</span><span class="p">(</span><span class="n">dframe</span><span class="p">)</span>
+
+<div class="viewcode-block" id="Dataset.build_schema"><a class="viewcode-back" href="../../../models.html#bamboo.models.dataset.Dataset.build_schema">[docs]</a>    <span class="k">def</span> <span class="nf">build_schema</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dframe</span><span class="p">,</span> <span class="n">overwrite</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">set_num_columns</span><span class="o">=</span><span class="bp">True</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Build schema for a dataset.</span>
+
+<span class="sd">        If no schema exists, build a schema from the passed `dframe` and store</span>
+<span class="sd">        that schema for this dataset.  Otherwise, if a schema does exist, build</span>
+<span class="sd">        a schema for the passed `dframe` and merge this schema with the current</span>
+<span class="sd">        schema.  Keys in the new schema replace keys in the current schema but</span>
+<span class="sd">        keys in the current schema not in the new schema are retained.</span>
+
+<span class="sd">        If `set_num_columns` is True the number of columns will be set to the</span>
+<span class="sd">        number of keys (columns) in the new schema.</span>
+
+<span class="sd">        :param dframe: The DataFrame whose schema to merge with the current</span>
+<span class="sd">            schema.</span>
+<span class="sd">        :param overwrite: If true replace schema, otherwise update.</span>
+<span class="sd">        :param set_num_columns: If True also set the number of columns.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">new_schema</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">schema</span><span class="o">.</span><span class="n">rebuild</span><span class="p">(</span><span class="n">dframe</span><span class="p">,</span> <span class="n">overwrite</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">set_schema</span><span class="p">(</span><span class="n">new_schema</span><span class="p">,</span>
+                        <span class="n">set_num_columns</span><span class="o">=</span><span class="p">(</span><span class="n">set_num_columns</span> <span class="ow">or</span> <span class="n">overwrite</span><span class="p">))</span>
+</div>
+<div class="viewcode-block" id="Dataset.calculations"><a class="viewcode-back" href="../../../models.html#bamboo.models.dataset.Dataset.calculations">[docs]</a>    <span class="k">def</span> <span class="nf">calculations</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">include_aggs</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">only_aggs</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Return the calculations for this dataset.</span>
+
+<span class="sd">        :param include_aggs: Include aggregations, default True.</span>
+<span class="sd">        :param only_aggs: Exclude non-aggregations, default False.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">Calculation</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">include_aggs</span><span class="p">,</span> <span class="n">only_aggs</span><span class="p">)</span>
+</div>
+    <span class="k">def</span> <span class="nf">cardinality</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">col</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">schema</span><span class="o">.</span><span class="n">cardinality</span><span class="p">(</span><span class="n">col</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">clear_cache</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__dframe</span> <span class="o">=</span> <span class="bp">None</span>
+
+        <span class="k">return</span> <span class="bp">self</span>
+
+    <span class="k">def</span> <span class="nf">clear_pending_updates</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">collection</span><span class="o">.</span><span class="n">update</span><span class="p">(</span>
+            <span class="p">{</span><span class="s">&#39;_id&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">record</span><span class="p">[</span><span class="s">&#39;_id&#39;</span><span class="p">]},</span>
+            <span class="p">{</span><span class="s">&#39;$set&#39;</span><span class="p">:</span> <span class="p">{</span><span class="bp">self</span><span class="o">.</span><span class="n">PENDING_UPDATES</span><span class="p">:</span> <span class="p">[]}})</span>
+
+<div class="viewcode-block" id="Dataset.clear_summary_stats"><a class="viewcode-back" href="../../../models.html#bamboo.models.dataset.Dataset.clear_summary_stats">[docs]</a>    <span class="k">def</span> <span class="nf">clear_summary_stats</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">group</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">column</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Remove summary stats for `group` and optional `column`.</span>
+
+<span class="sd">        By default will remove all stats.</span>
+
+<span class="sd">        :param group: The group to remove stats for, default None.</span>
+<span class="sd">        :param column: The column to remove stats for, default None.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">stats</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">stats</span>
+
+        <span class="k">if</span> <span class="n">stats</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">column</span><span class="p">:</span>
+                <span class="n">stats_for_field</span> <span class="o">=</span> <span class="n">stats</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">group</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">ALL</span><span class="p">)</span>
+
+                <span class="k">if</span> <span class="n">stats_for_field</span><span class="p">:</span>
+                    <span class="n">stats_for_field</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">column</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="n">group</span><span class="p">:</span>
+                <span class="n">stats</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">group</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">stats</span> <span class="o">=</span> <span class="p">{}</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="bp">self</span><span class="o">.</span><span class="n">STATS</span><span class="p">:</span> <span class="n">stats</span><span class="p">})</span>
+</div>
+<div class="viewcode-block" id="Dataset.count"><a class="viewcode-back" href="../../../models.html#bamboo.models.dataset.Dataset.count">[docs]</a>    <span class="k">def</span> <span class="nf">count</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">query_args</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Return the count of rows matching query in dataset.</span>
+
+<span class="sd">        :param query_args: An optional QueryArgs to hold the query arguments.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">query_args</span> <span class="o">=</span> <span class="n">query_args</span> <span class="ow">or</span> <span class="n">QueryArgs</span><span class="p">()</span>
+        <span class="n">obs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">observations</span><span class="p">(</span><span class="n">query_args</span><span class="p">,</span> <span class="n">as_cursor</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+
+        <span class="n">count</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">obs</span><span class="p">)</span> <span class="k">if</span> <span class="n">query_args</span><span class="o">.</span><span class="n">distinct</span> <span class="k">else</span> <span class="n">obs</span><span class="o">.</span><span class="n">count</span><span class="p">()</span>
+
+        <span class="n">limit</span> <span class="o">=</span> <span class="n">query_args</span><span class="o">.</span><span class="n">limit</span>
+        <span class="k">if</span> <span class="n">limit</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">count</span> <span class="o">&gt;</span> <span class="n">limit</span><span class="p">:</span>
+            <span class="n">count</span> <span class="o">=</span> <span class="n">limit</span>
+
+        <span class="k">return</span> <span class="n">count</span>
+</div>
+<div class="viewcode-block" id="Dataset.delete"><a class="viewcode-back" href="../../../models.html#bamboo.models.dataset.Dataset.delete">[docs]</a>    <span class="k">def</span> <span class="nf">delete</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">query</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">countdown</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Delete this dataset.</span>
+
+<span class="sd">        :param countdown: Delete dataset after this number of seconds.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">call_async</span><span class="p">(</span><span class="n">delete_task</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">clear_cache</span><span class="p">(),</span> <span class="n">query</span><span class="o">=</span><span class="n">query</span><span class="p">,</span>
+                   <span class="n">countdown</span><span class="o">=</span><span class="n">countdown</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="Dataset.delete_columns"><a class="viewcode-back" href="../../../models.html#bamboo.models.dataset.Dataset.delete_columns">[docs]</a>    <span class="k">def</span> <span class="nf">delete_columns</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">columns</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Delete column `column` from this dataset.</span>
+
+<span class="sd">        :param column: The column to delete.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">columns</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">schema</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span><span class="o">.</span><span class="n">intersection</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">to_list</span><span class="p">(</span><span class="n">columns</span><span class="p">)))</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">len</span><span class="p">(</span><span class="n">columns</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="n">ArgumentError</span><span class="p">(</span><span class="s">&quot;Columns: </span><span class="si">%s</span><span class="s"> not in dataset.&quot;</span><span class="p">)</span>
+
+        <span class="n">Observation</span><span class="o">.</span><span class="n">delete_columns</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">columns</span><span class="p">)</span>
+        <span class="n">new_schema</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">schema</span>
+
+        <span class="p">[</span><span class="n">new_schema</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">c</span><span class="p">)</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">columns</span><span class="p">]</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">set_schema</span><span class="p">(</span><span class="n">new_schema</span><span class="p">,</span> <span class="n">set_num_columns</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">columns</span>
+</div>
+<div class="viewcode-block" id="Dataset.delete_observation"><a class="viewcode-back" href="../../../models.html#bamboo.models.dataset.Dataset.delete_observation">[docs]</a>    <span class="k">def</span> <span class="nf">delete_observation</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">index</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Delete observation at index.</span>
+
+<span class="sd">        :params index: The index of an observation to delete.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">Observation</span><span class="o">.</span><span class="n">delete</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">index</span><span class="p">)</span>
+
+        <span class="n">dframe</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dframe</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="bp">self</span><span class="o">.</span><span class="n">NUM_ROWS</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">dframe</span><span class="p">)})</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">build_schema</span><span class="p">(</span><span class="n">dframe</span><span class="p">,</span> <span class="n">overwrite</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+        <span class="n">call_async</span><span class="p">(</span><span class="n">propagate</span><span class="p">,</span> <span class="bp">self</span><span class="p">,</span> <span class="n">update</span><span class="o">=</span><span class="p">{</span><span class="s">&#39;delete&#39;</span><span class="p">:</span> <span class="n">index</span><span class="p">})</span>
+</div>
+<div class="viewcode-block" id="Dataset.dframe"><a class="viewcode-back" href="../../../models.html#bamboo.models.dataset.Dataset.dframe">[docs]</a>    <span class="k">def</span> <span class="nf">dframe</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">query_args</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">keep_parent_ids</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">padded</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span>
+               <span class="n">index</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">reload_</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">keep_mongo_keys</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Fetch the dframe for this dataset.</span>
+
+<span class="sd">        :param query_args: An optional QueryArgs to hold the query arguments.</span>
+<span class="sd">        :param keep_parent_ids: Do not remove parent IDs from the dframe,</span>
+<span class="sd">            default False.</span>
+<span class="sd">        :param padded: Used for joining, default False.</span>
+<span class="sd">        :param index: Return the index with dframe, default False.</span>
+<span class="sd">        :param reload_: Force refresh of data, default False.</span>
+<span class="sd">        :param keep_mongo_keys: Used for updating documents, default False.</span>
+
+<span class="sd">        :returns: Return DataFrame with contents based on query parameters</span>
+<span class="sd">            passed to MongoDB. DataFrame will not have parent ids if</span>
+<span class="sd">            `keep_parent_ids` is False.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c"># bypass cache if we need specific version</span>
+        <span class="n">cacheable</span> <span class="o">=</span> <span class="ow">not</span> <span class="p">(</span><span class="n">query_args</span> <span class="ow">or</span> <span class="n">keep_parent_ids</span> <span class="ow">or</span> <span class="n">padded</span><span class="p">)</span>
+
+        <span class="c"># use cached copy if we have already fetched it</span>
+        <span class="k">if</span> <span class="n">cacheable</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">reload_</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">__is_cached</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__dframe</span>
+
+        <span class="n">query_args</span> <span class="o">=</span> <span class="n">query_args</span> <span class="ow">or</span> <span class="n">QueryArgs</span><span class="p">()</span>
+        <span class="n">observations</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">observations</span><span class="p">(</span><span class="n">query_args</span><span class="p">,</span> <span class="n">as_cursor</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">query_args</span><span class="o">.</span><span class="n">distinct</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">DataFrame</span><span class="p">(</span><span class="n">observations</span><span class="p">)</span>
+
+        <span class="n">dframe</span> <span class="o">=</span> <span class="n">Observation</span><span class="o">.</span><span class="n">batch_read_dframe_from_cursor</span><span class="p">(</span>
+            <span class="bp">self</span><span class="p">,</span> <span class="n">observations</span><span class="p">,</span> <span class="n">query_args</span><span class="o">.</span><span class="n">distinct</span><span class="p">,</span> <span class="n">query_args</span><span class="o">.</span><span class="n">limit</span><span class="p">)</span>
+
+        <span class="n">dframe</span> <span class="o">=</span> <span class="n">df_mongo_decode</span><span class="p">(</span><span class="n">dframe</span><span class="p">,</span> <span class="n">keep_mongo_keys</span><span class="o">=</span><span class="n">keep_mongo_keys</span><span class="p">)</span>
+
+        <span class="n">excluded</span> <span class="o">=</span> <span class="p">[</span><span class="n">keep_parent_ids</span> <span class="ow">and</span> <span class="n">PARENT_DATASET_ID</span><span class="p">,</span> <span class="n">index</span> <span class="ow">and</span> <span class="n">INDEX</span><span class="p">]</span>
+        <span class="n">dframe</span> <span class="o">=</span> <span class="n">remove_reserved_keys</span><span class="p">(</span><span class="n">dframe</span><span class="p">,</span> <span class="nb">filter</span><span class="p">(</span><span class="nb">bool</span><span class="p">,</span> <span class="n">excluded</span><span class="p">))</span>
+
+        <span class="k">if</span> <span class="n">index</span><span class="p">:</span>
+            <span class="n">dframe</span><span class="o">.</span><span class="n">rename</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="p">{</span><span class="n">INDEX</span><span class="p">:</span> <span class="s">&#39;index&#39;</span><span class="p">},</span> <span class="n">inplace</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+
+        <span class="n">dframe</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__maybe_pad</span><span class="p">(</span><span class="n">dframe</span><span class="p">,</span> <span class="n">padded</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">cacheable</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">__dframe</span> <span class="o">=</span> <span class="n">dframe</span>
+
+        <span class="k">return</span> <span class="n">dframe</span>
+</div>
+<div class="viewcode-block" id="Dataset.has_pending_updates"><a class="viewcode-back" href="../../../models.html#bamboo.models.dataset.Dataset.has_pending_updates">[docs]</a>    <span class="k">def</span> <span class="nf">has_pending_updates</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">update_id</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Check if this dataset has pending updates.</span>
+
+<span class="sd">        Call the update identfied by `update_id` the current update. A dataset</span>
+<span class="sd">        has pending updates if, not including the current update, there are any</span>
+<span class="sd">        pending updates and the update at the top of the queue is not the</span>
+<span class="sd">        current update.</span>
+
+<span class="sd">        :param update_id: An update to exclude when checking for pending</span>
+<span class="sd">            updates.</span>
+<span class="sd">        :returns: True if there are pending updates, False otherwise.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">reload</span><span class="p">()</span>
+        <span class="n">pending_updates</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">pending_updates</span>
+
+        <span class="k">return</span> <span class="n">pending_updates</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">!=</span> <span class="n">update_id</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span>
+            <span class="nb">set</span><span class="p">(</span><span class="n">pending_updates</span><span class="p">)</span> <span class="o">-</span> <span class="nb">set</span><span class="p">([</span><span class="n">update_id</span><span class="p">]))</span>
+</div>
+<div class="viewcode-block" id="Dataset.info"><a class="viewcode-back" href="../../../models.html#bamboo.models.dataset.Dataset.info">[docs]</a>    <span class="k">def</span> <span class="nf">info</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">update</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Return or update meta-data for this dataset.</span>
+
+<span class="sd">        :param update: Dictionary to update info with, default None.</span>
+<span class="sd">        :returns: Dictionary of info for this dataset.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">update</span><span class="p">:</span>
+            <span class="n">update_dict</span> <span class="o">=</span> <span class="p">{</span><span class="n">key</span><span class="p">:</span> <span class="n">value</span> <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">update</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+                           <span class="k">if</span> <span class="n">key</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">updatable_keys</span><span class="p">}</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">update_dict</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">ID</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataset_id</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">LABEL</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">label</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">DESCRIPTION</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">description</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">SCHEMA</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">schema</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">LICENSE</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">license</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">ATTRIBUTION</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">attribution</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">CREATED_AT</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">record</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">CREATED_AT</span><span class="p">),</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">UPDATED_AT</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">record</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">UPDATED_AT</span><span class="p">),</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">NUM_COLUMNS</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_columns</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">NUM_ROWS</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_rows</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">STATE</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">state</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">PARENT_IDS</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent_ids</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">PENDING_UPDATES</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">pending_updates</span><span class="p">,</span>
+        <span class="p">}</span>
+</div>
+    <span class="k">def</span> <span class="nf">is_dimension</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">col</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">schema</span><span class="o">.</span><span class="n">is_dimension</span><span class="p">(</span><span class="n">col</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">is_factor</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">col</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_dimension</span><span class="p">(</span><span class="n">col</span><span class="p">)</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">schema</span><span class="o">.</span><span class="n">is_date_simpletype</span><span class="p">(</span><span class="n">col</span><span class="p">)</span>
+
+<div class="viewcode-block" id="Dataset.join"><a class="viewcode-back" href="../../../models.html#bamboo.models.dataset.Dataset.join">[docs]</a>    <span class="k">def</span> <span class="nf">join</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">,</span> <span class="n">on</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Join with dataset `other` on the passed columns.</span>
+
+<span class="sd">        :param other: The other dataset to join.</span>
+<span class="sd">        :param on: The column in this and the `other` dataset to join on.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">merged_dframe</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dframe</span><span class="p">()</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">len</span><span class="p">(</span><span class="n">merged_dframe</span><span class="o">.</span><span class="n">columns</span><span class="p">):</span>
+            <span class="c"># Empty dataset, simulate columns</span>
+            <span class="n">merged_dframe</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">place_holder_dframe</span><span class="p">()</span>
+
+        <span class="n">merged_dframe</span> <span class="o">=</span> <span class="n">join_dataset</span><span class="p">(</span><span class="n">merged_dframe</span><span class="p">,</span> <span class="n">other</span><span class="p">,</span> <span class="n">on</span><span class="p">)</span>
+        <span class="n">merged_dataset</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">create</span><span class="p">()</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_rows</span> <span class="ow">and</span> <span class="n">other</span><span class="o">.</span><span class="n">num_rows</span><span class="p">:</span>
+            <span class="n">merged_dataset</span><span class="o">.</span><span class="n">save_observations</span><span class="p">(</span><span class="n">merged_dframe</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">merged_dataset</span><span class="o">.</span><span class="n">build_schema</span><span class="p">(</span><span class="n">merged_dframe</span><span class="p">,</span> <span class="n">set_num_columns</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+            <span class="n">merged_dataset</span><span class="o">.</span><span class="n">ready</span><span class="p">()</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">add_joined_dataset</span><span class="p">(</span>
+            <span class="p">(</span><span class="s">&#39;right&#39;</span><span class="p">,</span> <span class="n">other</span><span class="o">.</span><span class="n">dataset_id</span><span class="p">,</span> <span class="n">on</span><span class="p">,</span> <span class="n">merged_dataset</span><span class="o">.</span><span class="n">dataset_id</span><span class="p">))</span>
+        <span class="n">other</span><span class="o">.</span><span class="n">add_joined_dataset</span><span class="p">(</span>
+            <span class="p">(</span><span class="s">&#39;left&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataset_id</span><span class="p">,</span> <span class="n">on</span><span class="p">,</span> <span class="n">merged_dataset</span><span class="o">.</span><span class="n">dataset_id</span><span class="p">))</span>
+
+        <span class="k">return</span> <span class="n">merged_dataset</span>
+</div>
+<div class="viewcode-block" id="Dataset.observations"><a class="viewcode-back" href="../../../models.html#bamboo.models.dataset.Dataset.observations">[docs]</a>    <span class="k">def</span> <span class="nf">observations</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">query_args</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">as_cursor</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Return observations for this dataset.</span>
+
+<span class="sd">        :param query_args: An optional QueryArgs to hold the query arguments.</span>
+<span class="sd">        :param as_cursor: Return the observations as a cursor.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">Observation</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">query_args</span> <span class="ow">or</span> <span class="n">QueryArgs</span><span class="p">(),</span>
+                                <span class="n">as_cursor</span><span class="o">=</span><span class="n">as_cursor</span><span class="p">)</span>
+</div>
+    <span class="k">def</span> <span class="nf">place_holder_dframe</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dframe</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="n">columns</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">schema</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span>
+
+        <span class="k">if</span> <span class="n">dframe</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">columns</span> <span class="o">=</span> <span class="p">[</span><span class="n">c</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">columns</span> <span class="k">if</span> <span class="n">c</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">dframe</span><span class="o">.</span><span class="n">columns</span><span class="p">[</span><span class="mi">1</span><span class="p">:]]</span>
+
+        <span class="k">return</span> <span class="n">DataFrame</span><span class="p">([[</span><span class="s">&#39;&#39;</span><span class="p">]</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">columns</span><span class="p">)],</span> <span class="n">columns</span><span class="o">=</span><span class="n">columns</span><span class="p">)</span>
+
+<div class="viewcode-block" id="Dataset.reload"><a class="viewcode-back" href="../../../models.html#bamboo.models.dataset.Dataset.reload">[docs]</a>    <span class="k">def</span> <span class="nf">reload</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Reload the dataset from DB and clear any cache.&quot;&quot;&quot;</span>
+        <span class="n">dataset</span> <span class="o">=</span> <span class="n">Dataset</span><span class="o">.</span><span class="n">find_one</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dataset_id</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">record</span> <span class="o">=</span> <span class="n">dataset</span><span class="o">.</span><span class="n">record</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">clear_cache</span><span class="p">()</span>
+
+        <span class="k">return</span> <span class="bp">self</span>
+</div>
+<div class="viewcode-block" id="Dataset.remove_parent_observations"><a class="viewcode-back" href="../../../models.html#bamboo.models.dataset.Dataset.remove_parent_observations">[docs]</a>    <span class="k">def</span> <span class="nf">remove_parent_observations</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">parent_id</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Remove obervations for this dataset with the passed `parent_id`.</span>
+
+<span class="sd">        :param parent_id: Remove observations with this ID as their parent</span>
+<span class="sd">            dataset ID.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">Observation</span><span class="o">.</span><span class="n">delete_all</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="p">{</span><span class="n">PARENT_DATASET_ID</span><span class="p">:</span> <span class="n">parent_id</span><span class="p">})</span>
+        <span class="c"># clear the cached dframe</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__dframe</span> <span class="o">=</span> <span class="bp">None</span>
+</div>
+    <span class="k">def</span> <span class="nf">remove_pending_update</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">update_id</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">collection</span><span class="o">.</span><span class="n">update</span><span class="p">(</span>
+            <span class="p">{</span><span class="s">&#39;_id&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">record</span><span class="p">[</span><span class="s">&#39;_id&#39;</span><span class="p">]},</span>
+            <span class="p">{</span><span class="s">&#39;$pull&#39;</span><span class="p">:</span> <span class="p">{</span><span class="bp">self</span><span class="o">.</span><span class="n">PENDING_UPDATES</span><span class="p">:</span> <span class="n">update_id</span><span class="p">}})</span>
+
+<div class="viewcode-block" id="Dataset.replace_observations"><a class="viewcode-back" href="../../../models.html#bamboo.models.dataset.Dataset.replace_observations">[docs]</a>    <span class="k">def</span> <span class="nf">replace_observations</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dframe</span><span class="p">,</span> <span class="n">overwrite</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span>
+                             <span class="n">set_num_columns</span><span class="o">=</span><span class="bp">True</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Remove all rows for this dataset and save the rows in `dframe`.</span>
+
+<span class="sd">        :param dframe: Replace rows in this dataset with this DataFrame&#39;s rows.</span>
+<span class="sd">        :param overwrite: If true replace the schema, otherwise update it.</span>
+<span class="sd">            Default False.</span>
+<span class="sd">        :param set_num_columns: If true update the dataset stored number of</span>
+<span class="sd">            columns.  Default True.</span>
+
+<span class="sd">        :returns: DataFrame equivalent to the passed in `dframe`.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">build_schema</span><span class="p">(</span><span class="n">dframe</span><span class="p">,</span> <span class="n">overwrite</span><span class="o">=</span><span class="n">overwrite</span><span class="p">,</span>
+                          <span class="n">set_num_columns</span><span class="o">=</span><span class="n">set_num_columns</span><span class="p">)</span>
+        <span class="n">Observation</span><span class="o">.</span><span class="n">delete_all</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">save_observations</span><span class="p">(</span><span class="n">dframe</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="Dataset.resample"><a class="viewcode-back" href="../../../models.html#bamboo.models.dataset.Dataset.resample">[docs]</a>    <span class="k">def</span> <span class="nf">resample</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">date_column</span><span class="p">,</span> <span class="n">interval</span><span class="p">,</span> <span class="n">how</span><span class="p">,</span> <span class="n">query</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Resample a dataset given a new time frame.</span>
+
+<span class="sd">        :param date_column: The date column use as the index for resampling.</span>
+<span class="sd">        :param interval: The interval code for resampling.</span>
+<span class="sd">        :param how: How to aggregate in the resample.</span>
+<span class="sd">        :returns: A DataFrame of the resampled DataFrame for this dataset.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">query_args</span> <span class="o">=</span> <span class="n">QueryArgs</span><span class="p">(</span><span class="n">query</span><span class="o">=</span><span class="n">query</span><span class="p">)</span>
+        <span class="n">dframe</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dframe</span><span class="p">(</span><span class="n">query_args</span><span class="p">)</span><span class="o">.</span><span class="n">set_index</span><span class="p">(</span><span class="n">date_column</span><span class="p">)</span>
+        <span class="n">resampled</span> <span class="o">=</span> <span class="n">dframe</span><span class="o">.</span><span class="n">resample</span><span class="p">(</span><span class="n">interval</span><span class="p">,</span> <span class="n">how</span><span class="o">=</span><span class="n">how</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">resampled</span><span class="o">.</span><span class="n">reset_index</span><span class="p">()</span>
+</div>
+<div class="viewcode-block" id="Dataset.rolling"><a class="viewcode-back" href="../../../models.html#bamboo.models.dataset.Dataset.rolling">[docs]</a>    <span class="k">def</span> <span class="nf">rolling</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">win_type</span><span class="p">,</span> <span class="n">window</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Calculate a rolling window over all numeric columns.</span>
+
+<span class="sd">        :param win_type: The type of window, see pandas pandas.rolling_window.</span>
+<span class="sd">        :param window: The number of observations used for calculating the</span>
+<span class="sd">            window.</span>
+<span class="sd">        :returns: A DataFrame of the rolling window calculated for this</span>
+<span class="sd">            dataset.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">dframe</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dframe</span><span class="p">(</span><span class="n">QueryArgs</span><span class="p">(</span><span class="n">select</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">schema</span><span class="o">.</span><span class="n">numerics_select</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">rolling_window</span><span class="p">(</span><span class="n">dframe</span><span class="p">,</span> <span class="n">window</span><span class="p">,</span> <span class="n">win_type</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="Dataset.save"><a class="viewcode-back" href="../../../models.html#bamboo.models.dataset.Dataset.save">[docs]</a>    <span class="k">def</span> <span class="nf">save</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dataset_id</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Store dataset with `dataset_id` as the unique internal ID.</span>
+
+<span class="sd">        Store a new dataset with an ID given by `dataset_id` is exists,</span>
+<span class="sd">        otherwise reate a random UUID for this dataset. Additionally, set the</span>
+<span class="sd">        created at time to the current time and the state to pending.</span>
+
+<span class="sd">        :param dataset_id: The ID to store for this dataset, default is None.</span>
+
+<span class="sd">        :returns: A dict representing this dataset.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">dataset_id</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">dataset_id</span> <span class="o">=</span> <span class="n">uuid</span><span class="o">.</span><span class="n">uuid4</span><span class="p">()</span><span class="o">.</span><span class="n">hex</span>
+
+        <span class="n">record</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="n">DATASET_ID</span><span class="p">:</span> <span class="n">dataset_id</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">AGGREGATED_DATASETS</span><span class="p">:</span> <span class="p">{},</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">CREATED_AT</span><span class="p">:</span> <span class="n">strftime</span><span class="p">(</span><span class="s">&quot;%Y-%m-</span><span class="si">%d</span><span class="s"> %H:%M:%S&quot;</span><span class="p">,</span> <span class="n">gmtime</span><span class="p">()),</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">STATE</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">STATE_PENDING</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">PENDING_UPDATES</span><span class="p">:</span> <span class="p">[],</span>
+        <span class="p">}</span>
+
+        <span class="k">return</span> <span class="nb">super</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">__class__</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">record</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="Dataset.save_observations"><a class="viewcode-back" href="../../../models.html#bamboo.models.dataset.Dataset.save_observations">[docs]</a>    <span class="k">def</span> <span class="nf">save_observations</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dframe</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Save rows in `dframe` for this dataset.</span>
+
+<span class="sd">        :param dframe: DataFrame to save rows from.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">Observation</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">dframe</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="Dataset.set_olap_type"><a class="viewcode-back" href="../../../models.html#bamboo.models.dataset.Dataset.set_olap_type">[docs]</a>    <span class="k">def</span> <span class="nf">set_olap_type</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">column</span><span class="p">,</span> <span class="n">olap_type</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Set the OLAP Type for this `column` of dataset.</span>
+
+<span class="sd">        Only columns with an original OLAP Type of &#39;measure&#39; can be modified.</span>
+<span class="sd">        This includes columns with Simple Type integer, float, and datetime.</span>
+
+<span class="sd">        :param column: The column to set the OLAP Type for.</span>
+<span class="sd">        :param olap_type: The OLAP Type to set. Must be &#39;dimension&#39; or</span>
+<span class="sd">            &#39;measure&#39;.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">schema</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">schema</span>
+        <span class="n">schema</span><span class="o">.</span><span class="n">set_olap_type</span><span class="p">(</span><span class="n">column</span><span class="p">,</span> <span class="n">olap_type</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">set_schema</span><span class="p">(</span><span class="n">schema</span><span class="p">,</span> <span class="bp">False</span><span class="p">)</span>
+
+        <span class="c"># Build summary for new type.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">summarize</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dframe</span><span class="p">(),</span> <span class="n">update</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="Dataset.set_schema"><a class="viewcode-back" href="../../../models.html#bamboo.models.dataset.Dataset.set_schema">[docs]</a>    <span class="k">def</span> <span class="nf">set_schema</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">schema</span><span class="p">,</span> <span class="n">set_num_columns</span><span class="o">=</span><span class="bp">True</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Set the schema from an existing one.&quot;&quot;&quot;</span>
+        <span class="n">update_dict</span> <span class="o">=</span> <span class="p">{</span><span class="bp">self</span><span class="o">.</span><span class="n">SCHEMA</span><span class="p">:</span> <span class="n">schema</span><span class="p">}</span>
+
+        <span class="k">if</span> <span class="n">set_num_columns</span><span class="p">:</span>
+            <span class="n">update_dict</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="bp">self</span><span class="o">.</span><span class="n">NUM_COLUMNS</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">schema</span><span class="o">.</span><span class="n">keys</span><span class="p">())})</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">update_dict</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="Dataset.summarize"><a class="viewcode-back" href="../../../models.html#bamboo.models.dataset.Dataset.summarize">[docs]</a>    <span class="k">def</span> <span class="nf">summarize</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dframe</span><span class="p">,</span> <span class="n">groups</span><span class="o">=</span><span class="p">[],</span> <span class="n">no_cache</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">update</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span>
+                  <span class="n">flat</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Build and return a summary of the data in this dataset.</span>
+
+<span class="sd">        Return a summary of dframe grouped by `groups`, or the overall</span>
+<span class="sd">        summary if no groups are specified.</span>
+
+<span class="sd">        :param dframe: dframe to summarize</span>
+<span class="sd">        :param groups: A list of columns to group on.</span>
+<span class="sd">        :param no_cache: Do not fetch a cached summary.</span>
+<span class="sd">        :param flat: Return a flattened list of groups.</span>
+
+<span class="sd">        :returns: A summary of the dataset as a dict. Numeric columns will be</span>
+<span class="sd">            summarized by the arithmetic mean, standard deviation, and</span>
+<span class="sd">            percentiles. Dimensional columns will be summarized by counts.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">reload</span><span class="p">()</span>
+
+        <span class="n">summary</span> <span class="o">=</span> <span class="n">summarize</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dframe</span><span class="p">,</span> <span class="n">groups</span><span class="p">,</span> <span class="n">no_cache</span><span class="p">,</span> <span class="n">update</span><span class="o">=</span><span class="n">update</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">flat</span><span class="p">:</span>
+            <span class="n">flat_summary</span> <span class="o">=</span> <span class="p">[]</span>
+
+            <span class="k">for</span> <span class="n">cols</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">summary</span><span class="o">.</span><span class="n">iteritems</span><span class="p">():</span>
+                <span class="n">cols</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">split_groups</span><span class="p">(</span><span class="n">cols</span><span class="p">)</span>
+
+                <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">data</span> <span class="ow">in</span> <span class="n">v</span><span class="o">.</span><span class="n">iteritems</span><span class="p">():</span>
+                    <span class="n">col_values</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">split_groups</span><span class="p">(</span><span class="n">k</span><span class="p">)</span>
+                    <span class="n">col_values</span> <span class="o">=</span> <span class="p">[</span><span class="n">strip_pattern</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="s">&#39;,&#39;</span><span class="p">,</span> <span class="n">i</span><span class="p">)[</span><span class="mi">1</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+                                  <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">col_values</span><span class="p">]</span>
+                    <span class="n">flat_summary</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                        <span class="n">combine_dicts</span><span class="p">(</span><span class="nb">dict</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">cols</span><span class="p">,</span> <span class="n">col_values</span><span class="p">)),</span> <span class="n">data</span><span class="p">))</span>
+
+            <span class="n">summary</span> <span class="o">=</span> <span class="n">flat_summary</span>
+
+        <span class="k">return</span> <span class="n">summary</span>
+</div>
+<div class="viewcode-block" id="Dataset.update"><a class="viewcode-back" href="../../../models.html#bamboo.models.dataset.Dataset.update">[docs]</a>    <span class="k">def</span> <span class="nf">update</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">record</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Update dataset `dataset` with `record`.&quot;&quot;&quot;</span>
+        <span class="n">record</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">UPDATED_AT</span><span class="p">]</span> <span class="o">=</span> <span class="n">strftime</span><span class="p">(</span><span class="s">&quot;%Y-%m-</span><span class="si">%d</span><span class="s"> %H:%M:%S&quot;</span><span class="p">,</span> <span class="n">gmtime</span><span class="p">())</span>
+        <span class="nb">super</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">__class__</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">record</span><span class="p">)</span>
+</div>
+    <span class="k">def</span> <span class="nf">update_observation</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">index</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
+        <span class="c"># check that update is valid</span>
+        <span class="n">dframe_from_update</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="p">[</span><span class="n">data</span><span class="p">])</span>
+        <span class="n">Observation</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">index</span><span class="p">,</span> <span class="n">data</span><span class="p">)</span>
+        <span class="n">call_async</span><span class="p">(</span><span class="n">propagate</span><span class="p">,</span> <span class="bp">self</span><span class="p">,</span> <span class="n">update</span><span class="o">=</span><span class="p">{</span><span class="s">&#39;edit&#39;</span><span class="p">:</span> <span class="p">[</span><span class="n">index</span><span class="p">,</span> <span class="n">data</span><span class="p">]})</span>
+
+    <span class="k">def</span> <span class="nf">update_observations</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dframe</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">Observation</span><span class="o">.</span><span class="n">update_from_dframe</span><span class="p">(</span><span class="n">dframe</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span>
+
+<div class="viewcode-block" id="Dataset.update_complete"><a class="viewcode-back" href="../../../models.html#bamboo.models.dataset.Dataset.update_complete">[docs]</a>    <span class="k">def</span> <span class="nf">update_complete</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">update_id</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Remove `update_id` from this datasets list of pending updates.</span>
+
+<span class="sd">        :param update_id: The ID of the completed update.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">collection</span><span class="o">.</span><span class="n">update</span><span class="p">(</span>
+            <span class="p">{</span><span class="s">&#39;_id&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">record</span><span class="p">[</span><span class="s">&#39;_id&#39;</span><span class="p">]},</span>
+            <span class="p">{</span><span class="s">&#39;$pull&#39;</span><span class="p">:</span> <span class="p">{</span><span class="bp">self</span><span class="o">.</span><span class="n">PENDING_UPDATES</span><span class="p">:</span> <span class="n">update_id</span><span class="p">}})</span>
+</div>
+<div class="viewcode-block" id="Dataset.update_stats"><a class="viewcode-back" href="../../../models.html#bamboo.models.dataset.Dataset.update_stats">[docs]</a>    <span class="k">def</span> <span class="nf">update_stats</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dframe</span><span class="p">,</span> <span class="n">update</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Update store statistics for this dataset.</span>
+
+<span class="sd">         :param dframe: Use this DataFrame for summary statistics.</span>
+<span class="sd">         :param update: Update or replace summary statistics, default False.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">update</span><span class="p">({</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">NUM_ROWS</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">dframe</span><span class="p">),</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">STATE</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">STATE_READY</span><span class="p">,</span>
+        <span class="p">})</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">summarize</span><span class="p">(</span><span class="n">dframe</span><span class="p">,</span> <span class="n">update</span><span class="o">=</span><span class="n">update</span><span class="p">)</span>
+</div>
+    <span class="k">def</span> <span class="nf">__add_linked_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">link_key</span><span class="p">,</span> <span class="n">existing_data</span><span class="p">,</span> <span class="n">new_data</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="n">link_key</span><span class="p">:</span> <span class="n">existing_data</span> <span class="o">+</span> <span class="p">[</span><span class="n">new_data</span><span class="p">]})</span>
+
+    <span class="k">def</span> <span class="nf">__maybe_pad</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dframe</span><span class="p">,</span> <span class="n">pad</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">pad</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">dframe</span><span class="o">.</span><span class="n">columns</span><span class="p">):</span>
+                <span class="n">on</span> <span class="o">=</span> <span class="n">dframe</span><span class="o">.</span><span class="n">columns</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+                <span class="n">place_holder</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">place_holder_dframe</span><span class="p">(</span><span class="n">dframe</span><span class="p">)</span><span class="o">.</span><span class="n">set_index</span><span class="p">(</span><span class="n">on</span><span class="p">)</span>
+                <span class="n">dframe</span> <span class="o">=</span> <span class="n">dframe</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">place_holder</span><span class="p">,</span> <span class="n">on</span><span class="o">=</span><span class="n">on</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">dframe</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">place_holder_dframe</span><span class="p">()</span>
+
+        <span class="k">return</span> <span class="n">dframe</span></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">bamboo 0.6.3 alpha documentation</a> &raquo;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Module code</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &copy; Copyright 2013, Peter Lubell-Doughtie, Mark Johnston.
+    </div>
+  </body>
+</html>

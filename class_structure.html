@@ -1,0 +1,280 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Class Structure &mdash; bamboo 0.6.3 alpha documentation</title>
+    
+    <link rel="stylesheet" href="_static/nature.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '0.6.3 alpha',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="top" title="bamboo 0.6.3 alpha documentation" href="index.html" />
+    <link rel="next" title="Config" href="config.html" />
+    <link rel="prev" title="Aggregations" href="aggregations.html" /> 
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="config.html" title="Config"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="aggregations.html" title="Aggregations"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">bamboo 0.6.3 alpha documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="class-structure">
+<h1>Class Structure<a class="headerlink" href="#class-structure" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="core">
+<h2>Core<a class="headerlink" href="#core" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="aggregations">
+<h3>Aggregations<a class="headerlink" href="#aggregations" title="Permalink to this headline">¶</a></h3>
+<p>All aggregations inherit from <cite>Aggregations</cite> and by default they return a
+single column.  Those that return multiple columns inherit from the aggrgation
+<cite>MultiColumnAggregation</cite>.</p>
+<p class="graphviz">
+digraph inheritanced7207cf4d6 {
+rankdir=LR;
+size=&quot;8.0, 12.0&quot;;
+  &quot;bamboo.core.aggregations.Aggregation&quot; [style=&quot;setlinewidth(0.5)&quot;,URL=&quot;core.html#bamboo.core.aggregations.Aggregation&quot;,fontname=&quot;Vera Sans, DejaVu Sans, Liberation Sans, Arial, Helvetica, sans&quot;,tooltip=&quot;Abstract class for all aggregations.&quot;,height=0.25,shape=box,fontsize=10];
+  &quot;bamboo.core.aggregations.ArgMaxAggregation&quot; [style=&quot;setlinewidth(0.5)&quot;,URL=&quot;core.html#bamboo.core.aggregations.ArgMaxAggregation&quot;,fontname=&quot;Vera Sans, DejaVu Sans, Liberation Sans, Arial, Helvetica, sans&quot;,tooltip=&quot;Return the index for the maximum of a column.&quot;,height=0.25,shape=box,fontsize=10];
+  &quot;bamboo.core.aggregations.Aggregation&quot; -&gt; &quot;bamboo.core.aggregations.ArgMaxAggregation&quot; [arrowsize=0.5,style=&quot;setlinewidth(0.5)&quot;];
+  &quot;bamboo.core.aggregations.CountAggregation&quot; [style=&quot;setlinewidth(0.5)&quot;,URL=&quot;core.html#bamboo.core.aggregations.CountAggregation&quot;,fontname=&quot;Vera Sans, DejaVu Sans, Liberation Sans, Arial, Helvetica, sans&quot;,tooltip=&quot;Calculate the count of rows fulfilling the criteria in the formula.&quot;,height=0.25,shape=box,fontsize=10];
+  &quot;bamboo.core.aggregations.Aggregation&quot; -&gt; &quot;bamboo.core.aggregations.CountAggregation&quot; [arrowsize=0.5,style=&quot;setlinewidth(0.5)&quot;];
+  &quot;bamboo.core.aggregations.MaxAggregation&quot; [style=&quot;setlinewidth(0.5)&quot;,URL=&quot;core.html#bamboo.core.aggregations.MaxAggregation&quot;,fontname=&quot;Vera Sans, DejaVu Sans, Liberation Sans, Arial, Helvetica, sans&quot;,tooltip=&quot;Calculate the maximum.&quot;,height=0.25,shape=box,fontsize=10];
+  &quot;bamboo.core.aggregations.Aggregation&quot; -&gt; &quot;bamboo.core.aggregations.MaxAggregation&quot; [arrowsize=0.5,style=&quot;setlinewidth(0.5)&quot;];
+  &quot;bamboo.core.aggregations.MeanAggregation&quot; [style=&quot;setlinewidth(0.5)&quot;,URL=&quot;core.html#bamboo.core.aggregations.MeanAggregation&quot;,fontname=&quot;Vera Sans, DejaVu Sans, Liberation Sans, Arial, Helvetica, sans&quot;,tooltip=&quot;Calculate the arithmetic mean.&quot;,height=0.25,shape=box,fontsize=10];
+  &quot;bamboo.core.aggregations.RatioAggregation&quot; -&gt; &quot;bamboo.core.aggregations.MeanAggregation&quot; [arrowsize=0.5,style=&quot;setlinewidth(0.5)&quot;];
+  &quot;bamboo.core.aggregations.Aggregation&quot; -&gt; &quot;bamboo.core.aggregations.MeanAggregation&quot; [arrowsize=0.5,style=&quot;setlinewidth(0.5)&quot;];
+  &quot;bamboo.core.aggregations.MedianAggregation&quot; [style=&quot;setlinewidth(0.5)&quot;,URL=&quot;core.html#bamboo.core.aggregations.MedianAggregation&quot;,fontname=&quot;Vera Sans, DejaVu Sans, Liberation Sans, Arial, Helvetica, sans&quot;,tooltip=&quot;Calculate the median. Written as ``median(FORMULA)``.&quot;,height=0.25,shape=box,fontsize=10];
+  &quot;bamboo.core.aggregations.Aggregation&quot; -&gt; &quot;bamboo.core.aggregations.MedianAggregation&quot; [arrowsize=0.5,style=&quot;setlinewidth(0.5)&quot;];
+  &quot;bamboo.core.aggregations.MinAggregation&quot; [style=&quot;setlinewidth(0.5)&quot;,URL=&quot;core.html#bamboo.core.aggregations.MinAggregation&quot;,fontname=&quot;Vera Sans, DejaVu Sans, Liberation Sans, Arial, Helvetica, sans&quot;,tooltip=&quot;Calculate the minimum.&quot;,height=0.25,shape=box,fontsize=10];
+  &quot;bamboo.core.aggregations.Aggregation&quot; -&gt; &quot;bamboo.core.aggregations.MinAggregation&quot; [arrowsize=0.5,style=&quot;setlinewidth(0.5)&quot;];
+  &quot;bamboo.core.aggregations.NewestAggregation&quot; [style=&quot;setlinewidth(0.5)&quot;,URL=&quot;core.html#bamboo.core.aggregations.NewestAggregation&quot;,fontname=&quot;Vera Sans, DejaVu Sans, Liberation Sans, Arial, Helvetica, sans&quot;,tooltip=&quot;Return the second column's value at the newest row in the first column.&quot;,height=0.25,shape=box,fontsize=10];
+  &quot;bamboo.core.aggregations.Aggregation&quot; -&gt; &quot;bamboo.core.aggregations.NewestAggregation&quot; [arrowsize=0.5,style=&quot;setlinewidth(0.5)&quot;];
+  &quot;bamboo.core.aggregations.PearsonAggregation&quot; [style=&quot;setlinewidth(0.5)&quot;,URL=&quot;core.html#bamboo.core.aggregations.PearsonAggregation&quot;,fontname=&quot;Vera Sans, DejaVu Sans, Liberation Sans, Arial, Helvetica, sans&quot;,tooltip=&quot;Calculate the Pearson correlation and associatd p-value.&quot;,height=0.25,shape=box,fontsize=10];
+  &quot;bamboo.core.aggregations.Aggregation&quot; -&gt; &quot;bamboo.core.aggregations.PearsonAggregation&quot; [arrowsize=0.5,style=&quot;setlinewidth(0.5)&quot;];
+  &quot;bamboo.core.aggregations.RatioAggregation&quot; [style=&quot;setlinewidth(0.5)&quot;,URL=&quot;core.html#bamboo.core.aggregations.RatioAggregation&quot;,fontname=&quot;Vera Sans, DejaVu Sans, Liberation Sans, Arial, Helvetica, sans&quot;,tooltip=&quot;Calculate the ratio.&quot;,height=0.25,shape=box,fontsize=10];
+  &quot;bamboo.core.aggregations.Aggregation&quot; -&gt; &quot;bamboo.core.aggregations.RatioAggregation&quot; [arrowsize=0.5,style=&quot;setlinewidth(0.5)&quot;];
+  &quot;bamboo.core.aggregations.StandardDeviationAggregation&quot; [style=&quot;setlinewidth(0.5)&quot;,URL=&quot;core.html#bamboo.core.aggregations.StandardDeviationAggregation&quot;,fontname=&quot;Vera Sans, DejaVu Sans, Liberation Sans, Arial, Helvetica, sans&quot;,tooltip=&quot;Calculate the standard deviation. Written as ``std(FORMULA)``.&quot;,height=0.25,shape=box,fontsize=10];
+  &quot;bamboo.core.aggregations.Aggregation&quot; -&gt; &quot;bamboo.core.aggregations.StandardDeviationAggregation&quot; [arrowsize=0.5,style=&quot;setlinewidth(0.5)&quot;];
+  &quot;bamboo.core.aggregations.SumAggregation&quot; [style=&quot;setlinewidth(0.5)&quot;,URL=&quot;core.html#bamboo.core.aggregations.SumAggregation&quot;,fontname=&quot;Vera Sans, DejaVu Sans, Liberation Sans, Arial, Helvetica, sans&quot;,tooltip=&quot;Calculate the sum.&quot;,height=0.25,shape=box,fontsize=10];
+  &quot;bamboo.core.aggregations.Aggregation&quot; -&gt; &quot;bamboo.core.aggregations.SumAggregation&quot; [arrowsize=0.5,style=&quot;setlinewidth(0.5)&quot;];
+  &quot;bamboo.core.aggregations.VarianceAggregation&quot; [style=&quot;setlinewidth(0.5)&quot;,URL=&quot;core.html#bamboo.core.aggregations.VarianceAggregation&quot;,fontname=&quot;Vera Sans, DejaVu Sans, Liberation Sans, Arial, Helvetica, sans&quot;,tooltip=&quot;Calculate the variance. Written as ``var(FORMULA)``.&quot;,height=0.25,shape=box,fontsize=10];
+  &quot;bamboo.core.aggregations.Aggregation&quot; -&gt; &quot;bamboo.core.aggregations.VarianceAggregation&quot; [arrowsize=0.5,style=&quot;setlinewidth(0.5)&quot;];
+}
+</p>
+</div>
+<div class="section" id="frame">
+<h3>Frame<a class="headerlink" href="#frame" title="Permalink to this headline">¶</a></h3>
+<p><cite>BambooFrame</cite> inherits from Pandas&#8217; <cite>DataFrame</cite>.</p>
+<p class="graphviz">
+digraph inheritance1d920ae5f3 {
+rankdir=LR;
+size=&quot;8.0, 12.0&quot;;
+  &quot;bamboo.core.frame.NonUniqueJoinError&quot; [shape=box,style=&quot;setlinewidth(0.5)&quot;,fontsize=10,fontname=&quot;Vera Sans, DejaVu Sans, Liberation Sans, Arial, Helvetica, sans&quot;,height=0.25];
+}
+</p>
+</div>
+<div class="section" id="operations">
+<h3>Operations<a class="headerlink" href="#operations" title="Permalink to this headline">¶</a></h3>
+<p>All operations inherit from <cite>EvalTerm</cite>.  Those that return an arithmatic result
+and take two operands inherit from the operation <cite>EvalBinaryArithOp</cite>. Those
+that return a boolean result and take two operands inherit from the operation
+<cite>EvalBinaryBooleanOp</cite>.</p>
+<p class="graphviz">
+digraph inheritance6939470a7c {
+rankdir=LR;
+size=&quot;8.0, 12.0&quot;;
+  &quot;bamboo.core.operations.EvalAndOp&quot; [style=&quot;setlinewidth(0.5)&quot;,URL=&quot;core.html#bamboo.core.operations.EvalAndOp&quot;,fontname=&quot;Vera Sans, DejaVu Sans, Liberation Sans, Arial, Helvetica, sans&quot;,tooltip=&quot;Class to distinguish precedence of and expressions.&quot;,height=0.25,shape=box,fontsize=10];
+  &quot;bamboo.core.operations.EvalBinaryBooleanOp&quot; -&gt; &quot;bamboo.core.operations.EvalAndOp&quot; [arrowsize=0.5,style=&quot;setlinewidth(0.5)&quot;];
+  &quot;bamboo.core.operations.EvalBinaryArithOp&quot; [style=&quot;setlinewidth(0.5)&quot;,URL=&quot;core.html#bamboo.core.operations.EvalBinaryArithOp&quot;,fontname=&quot;Vera Sans, DejaVu Sans, Liberation Sans, Arial, Helvetica, sans&quot;,tooltip=&quot;Class for evaluating binary arithmetic operations.&quot;,height=0.25,shape=box,fontsize=10];
+  &quot;bamboo.core.operations.EvalTerm&quot; -&gt; &quot;bamboo.core.operations.EvalBinaryArithOp&quot; [arrowsize=0.5,style=&quot;setlinewidth(0.5)&quot;];
+  &quot;bamboo.core.operations.EvalBinaryBooleanOp&quot; [style=&quot;setlinewidth(0.5)&quot;,URL=&quot;core.html#bamboo.core.operations.EvalBinaryBooleanOp&quot;,fontname=&quot;Vera Sans, DejaVu Sans, Liberation Sans, Arial, Helvetica, sans&quot;,tooltip=&quot;Class for evaluating binary boolean operations.&quot;,height=0.25,shape=box,fontsize=10];
+  &quot;bamboo.core.operations.EvalTerm&quot; -&gt; &quot;bamboo.core.operations.EvalBinaryBooleanOp&quot; [arrowsize=0.5,style=&quot;setlinewidth(0.5)&quot;];
+  &quot;bamboo.core.operations.EvalCaseOp&quot; [style=&quot;setlinewidth(0.5)&quot;,URL=&quot;core.html#bamboo.core.operations.EvalCaseOp&quot;,fontname=&quot;Vera Sans, DejaVu Sans, Liberation Sans, Arial, Helvetica, sans&quot;,tooltip=&quot;Class to eval case statements.&quot;,height=0.25,shape=box,fontsize=10];
+  &quot;bamboo.core.operations.EvalTerm&quot; -&gt; &quot;bamboo.core.operations.EvalCaseOp&quot; [arrowsize=0.5,style=&quot;setlinewidth(0.5)&quot;];
+  &quot;bamboo.core.operations.EvalComparisonOp&quot; [style=&quot;setlinewidth(0.5)&quot;,URL=&quot;core.html#bamboo.core.operations.EvalComparisonOp&quot;,fontname=&quot;Vera Sans, DejaVu Sans, Liberation Sans, Arial, Helvetica, sans&quot;,tooltip=&quot;Class to evaluate comparison expressions.&quot;,height=0.25,shape=box,fontsize=10];
+  &quot;bamboo.core.operations.EvalTerm&quot; -&gt; &quot;bamboo.core.operations.EvalComparisonOp&quot; [arrowsize=0.5,style=&quot;setlinewidth(0.5)&quot;];
+  &quot;bamboo.core.operations.EvalConstant&quot; [style=&quot;setlinewidth(0.5)&quot;,URL=&quot;core.html#bamboo.core.operations.EvalConstant&quot;,fontname=&quot;Vera Sans, DejaVu Sans, Liberation Sans, Arial, Helvetica, sans&quot;,tooltip=&quot;Class to evaluate a parsed constant or variable.&quot;,height=0.25,shape=box,fontsize=10];
+  &quot;bamboo.core.operations.EvalTerm&quot; -&gt; &quot;bamboo.core.operations.EvalConstant&quot; [arrowsize=0.5,style=&quot;setlinewidth(0.5)&quot;];
+  &quot;bamboo.core.operations.EvalDate&quot; [style=&quot;setlinewidth(0.5)&quot;,URL=&quot;core.html#bamboo.core.operations.EvalDate&quot;,fontname=&quot;Vera Sans, DejaVu Sans, Liberation Sans, Arial, Helvetica, sans&quot;,tooltip=&quot;Class to evaluate date expressions.&quot;,height=0.25,shape=box,fontsize=10];
+  &quot;bamboo.core.operations.EvalFunction&quot; -&gt; &quot;bamboo.core.operations.EvalDate&quot; [arrowsize=0.5,style=&quot;setlinewidth(0.5)&quot;];
+  &quot;bamboo.core.operations.EvalExpOp&quot; [style=&quot;setlinewidth(0.5)&quot;,URL=&quot;core.html#bamboo.core.operations.EvalExpOp&quot;,fontname=&quot;Vera Sans, DejaVu Sans, Liberation Sans, Arial, Helvetica, sans&quot;,tooltip=&quot;Class to distinguish precedence of exponentiation expressions.&quot;,height=0.25,shape=box,fontsize=10];
+  &quot;bamboo.core.operations.EvalBinaryArithOp&quot; -&gt; &quot;bamboo.core.operations.EvalExpOp&quot; [arrowsize=0.5,style=&quot;setlinewidth(0.5)&quot;];
+  &quot;bamboo.core.operations.EvalFunction&quot; [style=&quot;setlinewidth(0.5)&quot;,URL=&quot;core.html#bamboo.core.operations.EvalFunction&quot;,fontname=&quot;Vera Sans, DejaVu Sans, Liberation Sans, Arial, Helvetica, sans&quot;,tooltip=&quot;Class to eval functions.&quot;,height=0.25,shape=box,fontsize=10];
+  &quot;bamboo.core.operations.EvalInOp&quot; [style=&quot;setlinewidth(0.5)&quot;,URL=&quot;core.html#bamboo.core.operations.EvalInOp&quot;,fontname=&quot;Vera Sans, DejaVu Sans, Liberation Sans, Arial, Helvetica, sans&quot;,tooltip=&quot;Class to eval in expressions.&quot;,height=0.25,shape=box,fontsize=10];
+  &quot;bamboo.core.operations.EvalTerm&quot; -&gt; &quot;bamboo.core.operations.EvalInOp&quot; [arrowsize=0.5,style=&quot;setlinewidth(0.5)&quot;];
+  &quot;bamboo.core.operations.EvalMapOp&quot; [style=&quot;setlinewidth(0.5)&quot;,URL=&quot;core.html#bamboo.core.operations.EvalMapOp&quot;,fontname=&quot;Vera Sans, DejaVu Sans, Liberation Sans, Arial, Helvetica, sans&quot;,tooltip=&quot;Class to eval map statements.&quot;,height=0.25,shape=box,fontsize=10];
+  &quot;bamboo.core.operations.EvalTerm&quot; -&gt; &quot;bamboo.core.operations.EvalMapOp&quot; [arrowsize=0.5,style=&quot;setlinewidth(0.5)&quot;];
+  &quot;bamboo.core.operations.EvalMultOp&quot; [style=&quot;setlinewidth(0.5)&quot;,URL=&quot;core.html#bamboo.core.operations.EvalMultOp&quot;,fontname=&quot;Vera Sans, DejaVu Sans, Liberation Sans, Arial, Helvetica, sans&quot;,tooltip=&quot;Class to distinguish precedence of multiplication/division expressions.&quot;,height=0.25,shape=box,fontsize=10];
+  &quot;bamboo.core.operations.EvalBinaryArithOp&quot; -&gt; &quot;bamboo.core.operations.EvalMultOp&quot; [arrowsize=0.5,style=&quot;setlinewidth(0.5)&quot;];
+  &quot;bamboo.core.operations.EvalNotOp&quot; [style=&quot;setlinewidth(0.5)&quot;,URL=&quot;core.html#bamboo.core.operations.EvalNotOp&quot;,fontname=&quot;Vera Sans, DejaVu Sans, Liberation Sans, Arial, Helvetica, sans&quot;,tooltip=&quot;Class to evaluate not expressions.&quot;,height=0.25,shape=box,fontsize=10];
+  &quot;bamboo.core.operations.EvalTerm&quot; -&gt; &quot;bamboo.core.operations.EvalNotOp&quot; [arrowsize=0.5,style=&quot;setlinewidth(0.5)&quot;];
+  &quot;bamboo.core.operations.EvalOrOp&quot; [style=&quot;setlinewidth(0.5)&quot;,URL=&quot;core.html#bamboo.core.operations.EvalOrOp&quot;,fontname=&quot;Vera Sans, DejaVu Sans, Liberation Sans, Arial, Helvetica, sans&quot;,tooltip=&quot;Class to distinguish precedence of or expressions.&quot;,height=0.25,shape=box,fontsize=10];
+  &quot;bamboo.core.operations.EvalBinaryBooleanOp&quot; -&gt; &quot;bamboo.core.operations.EvalOrOp&quot; [arrowsize=0.5,style=&quot;setlinewidth(0.5)&quot;];
+  &quot;bamboo.core.operations.EvalPercentile&quot; [style=&quot;setlinewidth(0.5)&quot;,URL=&quot;core.html#bamboo.core.operations.EvalPercentile&quot;,fontname=&quot;Vera Sans, DejaVu Sans, Liberation Sans, Arial, Helvetica, sans&quot;,tooltip=&quot;Class to evaluate percentile expressions.&quot;,height=0.25,shape=box,fontsize=10];
+  &quot;bamboo.core.operations.EvalFunction&quot; -&gt; &quot;bamboo.core.operations.EvalPercentile&quot; [arrowsize=0.5,style=&quot;setlinewidth(0.5)&quot;];
+  &quot;bamboo.core.operations.EvalPlusOp&quot; [style=&quot;setlinewidth(0.5)&quot;,URL=&quot;core.html#bamboo.core.operations.EvalPlusOp&quot;,fontname=&quot;Vera Sans, DejaVu Sans, Liberation Sans, Arial, Helvetica, sans&quot;,tooltip=&quot;Class to distinguish precedence of addition/subtraction expressions.&quot;,height=0.25,shape=box,fontsize=10];
+  &quot;bamboo.core.operations.EvalBinaryArithOp&quot; -&gt; &quot;bamboo.core.operations.EvalPlusOp&quot; [arrowsize=0.5,style=&quot;setlinewidth(0.5)&quot;];
+  &quot;bamboo.core.operations.EvalSignOp&quot; [style=&quot;setlinewidth(0.5)&quot;,URL=&quot;core.html#bamboo.core.operations.EvalSignOp&quot;,fontname=&quot;Vera Sans, DejaVu Sans, Liberation Sans, Arial, Helvetica, sans&quot;,tooltip=&quot;Class to evaluate expressions with a leading + or - sign.&quot;,height=0.25,shape=box,fontsize=10];
+  &quot;bamboo.core.operations.EvalTerm&quot; -&gt; &quot;bamboo.core.operations.EvalSignOp&quot; [arrowsize=0.5,style=&quot;setlinewidth(0.5)&quot;];
+  &quot;bamboo.core.operations.EvalString&quot; [style=&quot;setlinewidth(0.5)&quot;,URL=&quot;core.html#bamboo.core.operations.EvalString&quot;,fontname=&quot;Vera Sans, DejaVu Sans, Liberation Sans, Arial, Helvetica, sans&quot;,tooltip=&quot;Class to evaluate a parsed string.&quot;,height=0.25,shape=box,fontsize=10];
+  &quot;bamboo.core.operations.EvalTerm&quot; -&gt; &quot;bamboo.core.operations.EvalString&quot; [arrowsize=0.5,style=&quot;setlinewidth(0.5)&quot;];
+  &quot;bamboo.core.operations.EvalTerm&quot; [style=&quot;setlinewidth(0.5)&quot;,URL=&quot;core.html#bamboo.core.operations.EvalTerm&quot;,fontname=&quot;Vera Sans, DejaVu Sans, Liberation Sans, Arial, Helvetica, sans&quot;,tooltip=&quot;Base class for evaluation.&quot;,height=0.25,shape=box,fontsize=10];
+  &quot;bamboo.core.operations.EvalToday&quot; [style=&quot;setlinewidth(0.5)&quot;,URL=&quot;core.html#bamboo.core.operations.EvalToday&quot;,fontname=&quot;Vera Sans, DejaVu Sans, Liberation Sans, Arial, Helvetica, sans&quot;,tooltip=&quot;Class to produce te current date time.&quot;,height=0.25,shape=box,fontsize=10];
+  &quot;bamboo.core.operations.EvalTerm&quot; -&gt; &quot;bamboo.core.operations.EvalToday&quot; [arrowsize=0.5,style=&quot;setlinewidth(0.5)&quot;];
+}
+</p>
+</div>
+</div>
+<div class="section" id="controllers">
+<h2>Controllers<a class="headerlink" href="#controllers" title="Permalink to this headline">¶</a></h2>
+<p>All controllers inherit from <cite>AbstractController</cite>.</p>
+</div>
+<div class="section" id="models">
+<h2>Models<a class="headerlink" href="#models" title="Permalink to this headline">¶</a></h2>
+<p>All models inherit from <cite>AbstractModel</cite>.</p>
+<p class="graphviz">
+digraph inheritanceb912955f79 {
+rankdir=LR;
+size=&quot;8.0, 12.0&quot;;
+  &quot;bamboo.models.abstract_model.AbstractModel&quot; [style=&quot;setlinewidth(0.5)&quot;,URL=&quot;models.html#bamboo.models.abstract_model.AbstractModel&quot;,fontname=&quot;Vera Sans, DejaVu Sans, Liberation Sans, Arial, Helvetica, sans&quot;,tooltip=&quot;An abstact class for all MongoDB models.&quot;,height=0.25,shape=box,fontsize=10];
+  &quot;bamboo.models.calculation.CalculateTask&quot; [shape=box,style=&quot;setlinewidth(0.5)&quot;,fontsize=10,fontname=&quot;Vera Sans, DejaVu Sans, Liberation Sans, Arial, Helvetica, sans&quot;,height=0.25];
+  &quot;celery.task.base.Task&quot; -&gt; &quot;bamboo.models.calculation.CalculateTask&quot; [arrowsize=0.5,style=&quot;setlinewidth(0.5)&quot;];
+  &quot;bamboo.models.calculation.Calculation&quot; [style=&quot;setlinewidth(0.5)&quot;,URL=&quot;models.html#bamboo.models.calculation.Calculation&quot;,fontname=&quot;Vera Sans, DejaVu Sans, Liberation Sans, Arial, Helvetica, sans&quot;,height=0.25,shape=box,fontsize=10];
+  &quot;bamboo.models.abstract_model.AbstractModel&quot; -&gt; &quot;bamboo.models.calculation.Calculation&quot; [arrowsize=0.5,style=&quot;setlinewidth(0.5)&quot;];
+  &quot;bamboo.models.calculation.DependencyError&quot; [shape=box,style=&quot;setlinewidth(0.5)&quot;,fontsize=10,fontname=&quot;Vera Sans, DejaVu Sans, Liberation Sans, Arial, Helvetica, sans&quot;,height=0.25];
+  &quot;bamboo.models.calculation.UniqueCalculationError&quot; [shape=box,style=&quot;setlinewidth(0.5)&quot;,fontsize=10,fontname=&quot;Vera Sans, DejaVu Sans, Liberation Sans, Arial, Helvetica, sans&quot;,height=0.25];
+  &quot;celery.app.task.Task&quot; [style=&quot;setlinewidth(0.5)&quot;,fontname=&quot;Vera Sans, DejaVu Sans, Liberation Sans, Arial, Helvetica, sans&quot;,tooltip=&quot;Task base class.&quot;,height=0.25,shape=box,fontsize=10];
+  &quot;celery.task.base.Task&quot; [style=&quot;setlinewidth(0.5)&quot;,fontname=&quot;Vera Sans, DejaVu Sans, Liberation Sans, Arial, Helvetica, sans&quot;,tooltip=&quot;Deprecated Task base class.&quot;,height=0.25,shape=box,fontsize=10];
+  &quot;celery.app.task.Task&quot; -&gt; &quot;celery.task.base.Task&quot; [arrowsize=0.5,style=&quot;setlinewidth(0.5)&quot;];
+}
+</p>
+<p class="graphviz">
+digraph inheritance5cb4aab977 {
+rankdir=LR;
+size=&quot;8.0, 12.0&quot;;
+  &quot;bamboo.lib.readers.ImportableDataset&quot; [shape=box,style=&quot;setlinewidth(0.5)&quot;,fontsize=10,fontname=&quot;Vera Sans, DejaVu Sans, Liberation Sans, Arial, Helvetica, sans&quot;,height=0.25];
+  &quot;bamboo.models.abstract_model.AbstractModel&quot; [style=&quot;setlinewidth(0.5)&quot;,URL=&quot;models.html#bamboo.models.abstract_model.AbstractModel&quot;,fontname=&quot;Vera Sans, DejaVu Sans, Liberation Sans, Arial, Helvetica, sans&quot;,tooltip=&quot;An abstact class for all MongoDB models.&quot;,height=0.25,shape=box,fontsize=10];
+  &quot;bamboo.models.dataset.Dataset&quot; [style=&quot;setlinewidth(0.5)&quot;,URL=&quot;models.html#bamboo.models.dataset.Dataset&quot;,fontname=&quot;Vera Sans, DejaVu Sans, Liberation Sans, Arial, Helvetica, sans&quot;,height=0.25,shape=box,fontsize=10];
+  &quot;bamboo.models.abstract_model.AbstractModel&quot; -&gt; &quot;bamboo.models.dataset.Dataset&quot; [arrowsize=0.5,style=&quot;setlinewidth(0.5)&quot;];
+  &quot;bamboo.lib.readers.ImportableDataset&quot; -&gt; &quot;bamboo.models.dataset.Dataset&quot; [arrowsize=0.5,style=&quot;setlinewidth(0.5)&quot;];
+}
+</p>
+<p class="graphviz">
+digraph inheritance18b2b9e2e7 {
+rankdir=LR;
+size=&quot;8.0, 12.0&quot;;
+  &quot;bamboo.models.abstract_model.AbstractModel&quot; [style=&quot;setlinewidth(0.5)&quot;,URL=&quot;models.html#bamboo.models.abstract_model.AbstractModel&quot;,fontname=&quot;Vera Sans, DejaVu Sans, Liberation Sans, Arial, Helvetica, sans&quot;,tooltip=&quot;An abstact class for all MongoDB models.&quot;,height=0.25,shape=box,fontsize=10];
+  &quot;bamboo.models.observation.Observation&quot; [style=&quot;setlinewidth(0.5)&quot;,URL=&quot;models.html#bamboo.models.observation.Observation&quot;,fontname=&quot;Vera Sans, DejaVu Sans, Liberation Sans, Arial, Helvetica, sans&quot;,height=0.25,shape=box,fontsize=10];
+  &quot;bamboo.models.abstract_model.AbstractModel&quot; -&gt; &quot;bamboo.models.observation.Observation&quot; [arrowsize=0.5,style=&quot;setlinewidth(0.5)&quot;];
+}
+</p>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Class Structure</a><ul>
+<li><a class="reference internal" href="#core">Core</a><ul>
+<li><a class="reference internal" href="#aggregations">Aggregations</a></li>
+<li><a class="reference internal" href="#frame">Frame</a></li>
+<li><a class="reference internal" href="#operations">Operations</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#controllers">Controllers</a></li>
+<li><a class="reference internal" href="#models">Models</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="aggregations.html"
+                        title="previous chapter">Aggregations</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="config.html"
+                        title="next chapter">Config</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/class_structure.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="config.html" title="Config"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="aggregations.html" title="Aggregations"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">bamboo 0.6.3 alpha documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &copy; Copyright 2013, Peter Lubell-Doughtie, Mark Johnston.
+    </div>
+  </body>
+</html>

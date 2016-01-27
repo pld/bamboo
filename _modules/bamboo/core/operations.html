@@ -1,0 +1,406 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>bamboo.core.operations &mdash; bamboo 0.6.3 alpha documentation</title>
+    
+    <link rel="stylesheet" href="../../../_static/nature.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../',
+        VERSION:     '0.6.3 alpha',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="top" title="bamboo 0.6.3 alpha documentation" href="../../../index.html" />
+    <link rel="up" title="Module code" href="../../index.html" /> 
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">bamboo 0.6.3 alpha documentation</a> &raquo;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" accesskey="U">Module code</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for bamboo.core.operations</h1><div class="highlight"><pre>
+<span class="c"># future must be first</span>
+<span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">division</span>
+<span class="kn">import</span> <span class="nn">operator</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">scipy.stats</span> <span class="kn">import</span> <span class="n">percentileofscore</span>
+
+<span class="kn">from</span> <span class="nn">bamboo.lib.datetools</span> <span class="kn">import</span> <span class="n">now</span><span class="p">,</span> <span class="n">parse_date_to_unix_time</span><span class="p">,</span>\
+    <span class="n">parse_str_to_unix_time</span><span class="p">,</span> <span class="n">safe_parse_date_to_unix_time</span>
+<span class="kn">from</span> <span class="nn">bamboo.lib.query_args</span> <span class="kn">import</span> <span class="n">QueryArgs</span>
+<span class="kn">from</span> <span class="nn">bamboo.lib.utils</span> <span class="kn">import</span> <span class="n">parse_float</span>
+
+
+<span class="k">def</span> <span class="nf">extract_binary_children</span><span class="p">(</span><span class="n">parent</span><span class="p">):</span>
+    <span class="n">children</span> <span class="o">=</span> <span class="p">[</span><span class="n">parent</span><span class="o">.</span><span class="n">value</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span>
+
+    <span class="k">for</span> <span class="n">oper</span><span class="p">,</span> <span class="n">val</span> <span class="ow">in</span> <span class="n">parent</span><span class="o">.</span><span class="n">operator_operands</span><span class="p">(</span><span class="n">parent</span><span class="o">.</span><span class="n">value</span><span class="p">[</span><span class="mi">1</span><span class="p">:]):</span>
+        <span class="n">children</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">val</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">children</span>
+
+
+<div class="viewcode-block" id="EvalTerm"><a class="viewcode-back" href="../../../core.html#bamboo.core.operations.EvalTerm">[docs]</a><span class="k">class</span> <span class="nc">EvalTerm</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Base class for evaluation.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tokens</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">tokens</span> <span class="o">=</span> <span class="n">tokens</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">value</span> <span class="o">=</span> <span class="n">tokens</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+<div class="viewcode-block" id="EvalTerm.operator_operands"><a class="viewcode-back" href="../../../core.html#bamboo.core.operations.EvalTerm.operator_operands">[docs]</a>    <span class="k">def</span> <span class="nf">operator_operands</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tokenlist</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Generator to extract operators and operands in pairs.&quot;&quot;&quot;</span>
+        <span class="n">it</span> <span class="o">=</span> <span class="nb">iter</span><span class="p">(</span><span class="n">tokenlist</span><span class="p">)</span>
+
+        <span class="k">while</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="k">yield</span> <span class="p">(</span><span class="n">it</span><span class="o">.</span><span class="n">next</span><span class="p">(),</span> <span class="n">it</span><span class="o">.</span><span class="n">next</span><span class="p">())</span>
+            <span class="k">except</span> <span class="ne">StopIteration</span><span class="p">:</span>
+                <span class="k">break</span>
+</div>
+    <span class="k">def</span> <span class="nf">operation</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">oper</span><span class="p">,</span> <span class="n">result</span><span class="p">,</span> <span class="n">val</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">operations</span><span class="p">[</span><span class="n">oper</span><span class="p">](</span><span class="n">result</span><span class="p">,</span> <span class="n">val</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">get_children</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">[]</span>
+
+    <span class="k">def</span> <span class="nf">dependent_columns</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dataset</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">[]</span>
+
+</div>
+<div class="viewcode-block" id="EvalConstant"><a class="viewcode-back" href="../../../core.html#bamboo.core.operations.EvalConstant">[docs]</a><span class="k">class</span> <span class="nc">EvalConstant</span><span class="p">(</span><span class="n">EvalTerm</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Class to evaluate a parsed constant or variable.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">eval</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">row</span><span class="p">,</span> <span class="n">dataset</span><span class="p">):</span>
+        <span class="n">value</span> <span class="o">=</span> <span class="n">parse_float</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">value</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">value</span>
+
+        <span class="c"># it may be a variable</span>
+        <span class="n">field</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">field</span><span class="p">(</span><span class="n">row</span><span class="p">)</span>
+
+        <span class="c"># test is date and parse as date</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__parse_field</span><span class="p">(</span><span class="n">field</span><span class="p">,</span> <span class="n">dataset</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__parse_field</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">field</span><span class="p">,</span> <span class="n">dataset</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">dataset</span> <span class="ow">and</span> <span class="n">dataset</span><span class="o">.</span><span class="n">schema</span><span class="o">.</span><span class="n">is_date_simpletype</span><span class="p">(</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">value</span><span class="p">):</span>
+                <span class="n">field</span> <span class="o">=</span> <span class="n">safe_parse_date_to_unix_time</span><span class="p">(</span><span class="n">field</span><span class="p">)</span>
+
+            <span class="k">return</span> <span class="n">field</span>
+
+    <span class="k">def</span> <span class="nf">field</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">row</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">row</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">value</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">dependent_columns</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dataset</span><span class="p">):</span>
+        <span class="n">value</span> <span class="o">=</span> <span class="n">parse_float</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">value</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">[]</span>
+
+        <span class="c"># if value is not number or date, add as a column</span>
+        <span class="k">return</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">value</span><span class="p">]</span>
+
+</div>
+<div class="viewcode-block" id="EvalString"><a class="viewcode-back" href="../../../core.html#bamboo.core.operations.EvalString">[docs]</a><span class="k">class</span> <span class="nc">EvalString</span><span class="p">(</span><span class="n">EvalTerm</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Class to evaluate a parsed string.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">eval</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">row</span><span class="p">,</span> <span class="n">dataset</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">value</span>
+
+</div>
+<div class="viewcode-block" id="EvalSignOp"><a class="viewcode-back" href="../../../core.html#bamboo.core.operations.EvalSignOp">[docs]</a><span class="k">class</span> <span class="nc">EvalSignOp</span><span class="p">(</span><span class="n">EvalTerm</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Class to evaluate expressions with a leading + or - sign.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tokens</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sign</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">value</span> <span class="o">=</span> <span class="n">tokens</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+    <span class="k">def</span> <span class="nf">eval</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">row</span><span class="p">,</span> <span class="n">dataset</span><span class="p">):</span>
+        <span class="n">mult</span> <span class="o">=</span> <span class="p">{</span><span class="s">&#39;+&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s">&#39;-&#39;</span><span class="p">:</span> <span class="o">-</span><span class="mi">1</span><span class="p">}[</span><span class="bp">self</span><span class="o">.</span><span class="n">sign</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">mult</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">value</span><span class="o">.</span><span class="n">eval</span><span class="p">(</span><span class="n">row</span><span class="p">,</span> <span class="n">dataset</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">get_children</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">value</span><span class="p">]</span>
+
+</div>
+<div class="viewcode-block" id="EvalBinaryArithOp"><a class="viewcode-back" href="../../../core.html#bamboo.core.operations.EvalBinaryArithOp">[docs]</a><span class="k">class</span> <span class="nc">EvalBinaryArithOp</span><span class="p">(</span><span class="n">EvalTerm</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Class for evaluating binary arithmetic operations.&quot;&quot;&quot;</span>
+
+    <span class="n">operations</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s">&#39;+&#39;</span><span class="p">:</span> <span class="n">operator</span><span class="o">.</span><span class="n">__add__</span><span class="p">,</span>
+        <span class="s">&#39;-&#39;</span><span class="p">:</span> <span class="n">operator</span><span class="o">.</span><span class="n">__sub__</span><span class="p">,</span>
+        <span class="s">&#39;*&#39;</span><span class="p">:</span> <span class="n">operator</span><span class="o">.</span><span class="n">__mul__</span><span class="p">,</span>
+        <span class="s">&#39;/&#39;</span><span class="p">:</span> <span class="n">operator</span><span class="o">.</span><span class="n">__truediv__</span><span class="p">,</span>
+        <span class="s">&#39;^&#39;</span><span class="p">:</span> <span class="n">operator</span><span class="o">.</span><span class="n">__pow__</span><span class="p">,</span>
+    <span class="p">}</span>
+
+    <span class="k">def</span> <span class="nf">eval</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">row</span><span class="p">,</span> <span class="n">dataset</span><span class="p">):</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">value</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">eval</span><span class="p">(</span><span class="n">row</span><span class="p">,</span> <span class="n">dataset</span><span class="p">))</span>
+
+        <span class="k">for</span> <span class="n">oper</span><span class="p">,</span> <span class="n">val</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">operator_operands</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">value</span><span class="p">[</span><span class="mi">1</span><span class="p">:]):</span>
+            <span class="n">val</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">(</span><span class="n">val</span><span class="o">.</span><span class="n">eval</span><span class="p">(</span><span class="n">row</span><span class="p">,</span> <span class="n">dataset</span><span class="p">))</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">operation</span><span class="p">(</span><span class="n">oper</span><span class="p">,</span> <span class="n">result</span><span class="p">,</span> <span class="n">val</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">isinf</span><span class="p">(</span><span class="n">result</span><span class="p">):</span>
+                <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+
+        <span class="k">return</span> <span class="n">result</span>
+
+    <span class="k">def</span> <span class="nf">get_children</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">extract_binary_children</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+
+</div>
+<div class="viewcode-block" id="EvalMultOp"><a class="viewcode-back" href="../../../core.html#bamboo.core.operations.EvalMultOp">[docs]</a><span class="k">class</span> <span class="nc">EvalMultOp</span><span class="p">(</span><span class="n">EvalBinaryArithOp</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Class to distinguish precedence of multiplication/division expressions.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">pass</span>
+
+</div>
+<div class="viewcode-block" id="EvalPlusOp"><a class="viewcode-back" href="../../../core.html#bamboo.core.operations.EvalPlusOp">[docs]</a><span class="k">class</span> <span class="nc">EvalPlusOp</span><span class="p">(</span><span class="n">EvalBinaryArithOp</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Class to distinguish precedence of addition/subtraction expressions.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">pass</span>
+
+</div>
+<div class="viewcode-block" id="EvalExpOp"><a class="viewcode-back" href="../../../core.html#bamboo.core.operations.EvalExpOp">[docs]</a><span class="k">class</span> <span class="nc">EvalExpOp</span><span class="p">(</span><span class="n">EvalBinaryArithOp</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Class to distinguish precedence of exponentiation expressions.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">pass</span>
+
+</div>
+<div class="viewcode-block" id="EvalComparisonOp"><a class="viewcode-back" href="../../../core.html#bamboo.core.operations.EvalComparisonOp">[docs]</a><span class="k">class</span> <span class="nc">EvalComparisonOp</span><span class="p">(</span><span class="n">EvalTerm</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Class to evaluate comparison expressions.&quot;&quot;&quot;</span>
+
+    <span class="n">op_map</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s">&quot;&lt;&quot;</span><span class="p">:</span> <span class="k">lambda</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">:</span> <span class="n">a</span> <span class="o">&lt;</span> <span class="n">b</span><span class="p">,</span>
+        <span class="s">&quot;&lt;=&quot;</span><span class="p">:</span> <span class="k">lambda</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">:</span> <span class="n">a</span> <span class="o">&lt;=</span> <span class="n">b</span><span class="p">,</span>
+        <span class="s">&quot;&gt;&quot;</span><span class="p">:</span> <span class="k">lambda</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">:</span> <span class="n">a</span> <span class="o">&gt;</span> <span class="n">b</span><span class="p">,</span>
+        <span class="s">&quot;&gt;=&quot;</span><span class="p">:</span> <span class="k">lambda</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">:</span> <span class="n">a</span> <span class="o">&gt;=</span> <span class="n">b</span><span class="p">,</span>
+        <span class="s">&quot;!=&quot;</span><span class="p">:</span> <span class="k">lambda</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">:</span> <span class="n">a</span> <span class="o">!=</span> <span class="n">b</span><span class="p">,</span>
+        <span class="s">&quot;==&quot;</span><span class="p">:</span> <span class="k">lambda</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">:</span> <span class="n">a</span> <span class="o">==</span> <span class="n">b</span><span class="p">,</span>
+    <span class="p">}</span>
+
+    <span class="k">def</span> <span class="nf">eval</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">row</span><span class="p">,</span> <span class="n">dataset</span><span class="p">):</span>
+        <span class="n">val1</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">value</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">eval</span><span class="p">(</span><span class="n">row</span><span class="p">,</span> <span class="n">dataset</span><span class="p">))</span>
+
+        <span class="k">for</span> <span class="n">oper</span><span class="p">,</span> <span class="n">val</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">operator_operands</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">value</span><span class="p">[</span><span class="mi">1</span><span class="p">:]):</span>
+            <span class="n">fn</span> <span class="o">=</span> <span class="n">EvalComparisonOp</span><span class="o">.</span><span class="n">op_map</span><span class="p">[</span><span class="n">oper</span><span class="p">]</span>
+            <span class="n">val2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">(</span><span class="n">val</span><span class="o">.</span><span class="n">eval</span><span class="p">(</span><span class="n">row</span><span class="p">,</span> <span class="n">dataset</span><span class="p">))</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">fn</span><span class="p">(</span><span class="n">val1</span><span class="p">,</span> <span class="n">val2</span><span class="p">):</span>
+                <span class="k">break</span>
+            <span class="n">val1</span> <span class="o">=</span> <span class="n">val2</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">True</span>
+
+        <span class="k">return</span> <span class="bp">False</span>
+
+    <span class="k">def</span> <span class="nf">get_children</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">extract_binary_children</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+
+</div>
+<div class="viewcode-block" id="EvalNotOp"><a class="viewcode-back" href="../../../core.html#bamboo.core.operations.EvalNotOp">[docs]</a><span class="k">class</span> <span class="nc">EvalNotOp</span><span class="p">(</span><span class="n">EvalTerm</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Class to evaluate not expressions.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tokens</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">value</span> <span class="o">=</span> <span class="n">tokens</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span>
+
+    <span class="k">def</span> <span class="nf">eval</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">row</span><span class="p">,</span> <span class="n">dataset</span><span class="p">):</span>
+        <span class="k">return</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">value</span><span class="o">.</span><span class="n">eval</span><span class="p">(</span><span class="n">row</span><span class="p">,</span> <span class="n">dataset</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">get_children</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">value</span><span class="p">]</span>
+
+</div>
+<div class="viewcode-block" id="EvalBinaryBooleanOp"><a class="viewcode-back" href="../../../core.html#bamboo.core.operations.EvalBinaryBooleanOp">[docs]</a><span class="k">class</span> <span class="nc">EvalBinaryBooleanOp</span><span class="p">(</span><span class="n">EvalTerm</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Class for evaluating binary boolean operations.&quot;&quot;&quot;</span>
+
+    <span class="n">operations</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s">&#39;and&#39;</span><span class="p">:</span> <span class="k">lambda</span> <span class="n">p</span><span class="p">,</span> <span class="n">q</span><span class="p">:</span> <span class="n">p</span> <span class="ow">and</span> <span class="n">q</span><span class="p">,</span>
+        <span class="s">&#39;or&#39;</span><span class="p">:</span> <span class="k">lambda</span> <span class="n">p</span><span class="p">,</span> <span class="n">q</span><span class="p">:</span> <span class="n">p</span> <span class="ow">or</span> <span class="n">q</span><span class="p">,</span>
+    <span class="p">}</span>
+
+    <span class="k">def</span> <span class="nf">eval</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">row</span><span class="p">,</span> <span class="n">dataset</span><span class="p">):</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">bool_</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">value</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">eval</span><span class="p">(</span><span class="n">row</span><span class="p">,</span> <span class="n">dataset</span><span class="p">))</span>
+
+        <span class="k">for</span> <span class="n">oper</span><span class="p">,</span> <span class="n">val</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">operator_operands</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">value</span><span class="p">[</span><span class="mi">1</span><span class="p">:]):</span>
+            <span class="n">val</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">bool_</span><span class="p">(</span><span class="n">val</span><span class="o">.</span><span class="n">eval</span><span class="p">(</span><span class="n">row</span><span class="p">,</span> <span class="n">dataset</span><span class="p">))</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">operation</span><span class="p">(</span><span class="n">oper</span><span class="p">,</span> <span class="n">result</span><span class="p">,</span> <span class="n">val</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">result</span>
+
+    <span class="k">def</span> <span class="nf">get_children</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">extract_binary_children</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+
+</div>
+<div class="viewcode-block" id="EvalAndOp"><a class="viewcode-back" href="../../../core.html#bamboo.core.operations.EvalAndOp">[docs]</a><span class="k">class</span> <span class="nc">EvalAndOp</span><span class="p">(</span><span class="n">EvalBinaryBooleanOp</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Class to distinguish precedence of and expressions.&quot;&quot;&quot;</span>
+    <span class="k">pass</span>
+
+</div>
+<div class="viewcode-block" id="EvalOrOp"><a class="viewcode-back" href="../../../core.html#bamboo.core.operations.EvalOrOp">[docs]</a><span class="k">class</span> <span class="nc">EvalOrOp</span><span class="p">(</span><span class="n">EvalBinaryBooleanOp</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Class to distinguish precedence of or expressions.&quot;&quot;&quot;</span>
+    <span class="k">pass</span>
+
+</div>
+<div class="viewcode-block" id="EvalInOp"><a class="viewcode-back" href="../../../core.html#bamboo.core.operations.EvalInOp">[docs]</a><span class="k">class</span> <span class="nc">EvalInOp</span><span class="p">(</span><span class="n">EvalTerm</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Class to eval in expressions.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">eval</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">row</span><span class="p">,</span> <span class="n">dataset</span><span class="p">):</span>
+        <span class="n">val_to_test</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">value</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">eval</span><span class="p">(</span><span class="n">row</span><span class="p">,</span> <span class="n">dataset</span><span class="p">))</span>
+        <span class="n">val_list</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="k">for</span> <span class="n">val</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">value</span><span class="p">[</span><span class="mi">1</span><span class="p">:]:</span>
+            <span class="n">val_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">val</span><span class="o">.</span><span class="n">eval</span><span class="p">(</span><span class="n">row</span><span class="p">,</span> <span class="n">dataset</span><span class="p">))</span>
+
+        <span class="k">return</span> <span class="n">val_to_test</span> <span class="ow">in</span> <span class="n">val_list</span>
+
+    <span class="k">def</span> <span class="nf">get_children</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">value</span>
+
+</div>
+<div class="viewcode-block" id="EvalCaseOp"><a class="viewcode-back" href="../../../core.html#bamboo.core.operations.EvalCaseOp">[docs]</a><span class="k">class</span> <span class="nc">EvalCaseOp</span><span class="p">(</span><span class="n">EvalTerm</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Class to eval case statements.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">eval</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">row</span><span class="p">,</span> <span class="n">dataset</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">token</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">value</span><span class="p">:</span>
+            <span class="n">case_result</span> <span class="o">=</span> <span class="n">token</span><span class="o">.</span><span class="n">eval</span><span class="p">(</span><span class="n">row</span><span class="p">,</span> <span class="n">dataset</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">case_result</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">case_result</span>
+
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+
+    <span class="k">def</span> <span class="nf">get_children</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">value</span>
+
+</div>
+<div class="viewcode-block" id="EvalMapOp"><a class="viewcode-back" href="../../../core.html#bamboo.core.operations.EvalMapOp">[docs]</a><span class="k">class</span> <span class="nc">EvalMapOp</span><span class="p">(</span><span class="n">EvalTerm</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Class to eval map statements.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">eval</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">row</span><span class="p">,</span> <span class="n">dataset</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">tokens</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="s">&#39;default&#39;</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">tokens</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">eval</span><span class="p">(</span><span class="n">row</span><span class="p">,</span> <span class="n">dataset</span><span class="p">):</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">tokens</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">eval</span><span class="p">(</span><span class="n">row</span><span class="p">,</span> <span class="n">dataset</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="bp">False</span>
+
+    <span class="k">def</span> <span class="nf">get_children</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="c"># special &quot;default&quot; key returns the next token (value)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">tokens</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="s">&#39;default&#39;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">tokens</span><span class="p">[</span><span class="mi">1</span><span class="p">]]</span>
+
+        <span class="c"># otherwise, return the map key and value</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">tokens</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="mi">2</span><span class="p">]</span>
+
+</div>
+<div class="viewcode-block" id="EvalFunction"><a class="viewcode-back" href="../../../core.html#bamboo.core.operations.EvalFunction">[docs]</a><span class="k">class</span> <span class="nc">EvalFunction</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Class to eval functions.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tokens</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">value</span> <span class="o">=</span> <span class="n">tokens</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span>
+
+    <span class="k">def</span> <span class="nf">get_children</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">value</span><span class="p">]</span>
+
+    <span class="k">def</span> <span class="nf">dependent_columns</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dataset</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">[]</span>
+
+</div>
+<div class="viewcode-block" id="EvalDate"><a class="viewcode-back" href="../../../core.html#bamboo.core.operations.EvalDate">[docs]</a><span class="k">class</span> <span class="nc">EvalDate</span><span class="p">(</span><span class="n">EvalFunction</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Class to evaluate date expressions.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">eval</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">row</span><span class="p">,</span> <span class="n">dataset</span><span class="p">):</span>
+        <span class="c"># parse date from string</span>
+        <span class="k">return</span> <span class="n">parse_str_to_unix_time</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">value</span><span class="o">.</span><span class="n">eval</span><span class="p">(</span><span class="n">row</span><span class="p">,</span> <span class="n">dataset</span><span class="p">))</span>
+
+</div>
+<div class="viewcode-block" id="EvalToday"><a class="viewcode-back" href="../../../core.html#bamboo.core.operations.EvalToday">[docs]</a><span class="k">class</span> <span class="nc">EvalToday</span><span class="p">(</span><span class="n">EvalTerm</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Class to produce te current date time.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">eval</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">row</span><span class="p">,</span> <span class="n">dataset</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">parse_date_to_unix_time</span><span class="p">(</span><span class="n">now</span><span class="p">())</span>
+
+</div>
+<div class="viewcode-block" id="EvalPercentile"><a class="viewcode-back" href="../../../core.html#bamboo.core.operations.EvalPercentile">[docs]</a><span class="k">class</span> <span class="nc">EvalPercentile</span><span class="p">(</span><span class="n">EvalFunction</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Class to evaluate percentile expressions.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">eval</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">row</span><span class="p">,</span> <span class="n">dataset</span><span class="p">):</span>
+        <span class="c"># parse date from string</span>
+        <span class="n">col</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">value</span><span class="o">.</span><span class="n">value</span>
+        <span class="n">query_args</span> <span class="o">=</span> <span class="n">QueryArgs</span><span class="p">(</span><span class="n">select</span><span class="o">=</span><span class="p">{</span><span class="n">col</span><span class="p">:</span> <span class="mi">1</span><span class="p">})</span>
+        <span class="n">column</span> <span class="o">=</span> <span class="n">dataset</span><span class="o">.</span><span class="n">dframe</span><span class="p">(</span><span class="n">query_args</span><span class="o">=</span><span class="n">query_args</span><span class="p">)[</span><span class="n">col</span><span class="p">]</span>
+        <span class="n">field</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">value</span><span class="o">.</span><span class="n">field</span><span class="p">(</span><span class="n">row</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">percentileofscore</span><span class="p">(</span><span class="n">column</span><span class="p">,</span> <span class="n">field</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">get_children</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">[]</span>
+
+    <span class="k">def</span> <span class="nf">dependent_columns</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dataset</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">value</span><span class="o">.</span><span class="n">value</span><span class="p">]</span></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">bamboo 0.6.3 alpha documentation</a> &raquo;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Module code</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &copy; Copyright 2013, Peter Lubell-Doughtie, Mark Johnston.
+    </div>
+  </body>
+</html>
